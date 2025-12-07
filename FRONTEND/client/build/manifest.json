@@ -1,0 +1,108 @@
+{
+  "short_name": "TableTalk",
+  "name": "TableTalk - mEat Together",
+  "description": "Trova compagni per pranzi e cene, condividi esperienze culinarie e fai nuove amicizie",
+  "icons": [
+    {
+      "src": "assets/icons/icon-48.webp",
+      "type": "image/png",
+      "sizes": "48x48",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "assets/icons/icon-72.webp",
+      "type": "image/png",
+      "sizes": "72x72",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "assets/icons/icon-96.webp",
+      "type": "image/png",
+      "sizes": "96x96",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "assets/icons/icon-128.webp",
+      "type": "image/png",
+      "sizes": "128x128",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "assets/icons/icon-192.webp",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "assets/icons/icon-256.webp",
+      "type": "image/png",
+      "sizes": "256x256",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "assets/icons/icon-512.webp",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "orientation": "portrait",
+  "theme_color": "#FF6B6B",
+  "background_color": "#ffffff",
+  "categories": [
+    "social",
+    "food",
+    "lifestyle"
+  ],
+  "screenshots": [
+    {
+      "src": "screenshot1.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "platform": "wide",
+      "label": "Homepage di TableTalk"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Cerca TableTalk®",
+      "short_name": "Cerca",
+      "description": "Cerca nuovi TableTalk® disponibili",
+      "url": "/search",
+      "icons": [
+        {
+          "src": "search-icon.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "I Miei TableTalk®",
+      "short_name": "Miei TableTalk®",
+      "description": "Visualizza i tuoi TableTalk®",
+      "url": "/my-meals",
+      "icons": [
+        {
+          "src": "my-meals-icon.png",
+          "sizes": "192x192"
+        }
+      ]
+    }
+  ],
+  "lang": "it-IT",
+  "dir": "ltr",
+  "prefer_related_applications": false,
+  "related_applications": [],
+  "scope": "/",
+  "display_override": [
+    "window-controls-overlay"
+  ],
+  "launch_handler": {
+    "client_mode": [
+      "focus-existing",
+      "auto"
+    ]
+  }
+}

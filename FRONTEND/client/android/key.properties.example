@@ -1,0 +1,8 @@
+# File di esempio per key.properties
+# Copia questo file come "key.properties" e inserisci le tue credenziali reali
+# IMPORTANTE: Non committare mai il file key.properties nel repository!
+
+storeFile=tabletalk-release-key.keystore
+storePassword=LA_TUA_PASSWORD_QUI
+keyAlias=tabletalk-key-alias
+keyPassword=LA_TUA_PASSWORD_QUI

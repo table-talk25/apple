@@ -1,0 +1,2 @@
+"use strict";(self.webpackChunktable_talk_client=self.webpackChunktable_talk_client||[]).push([[842],{7842:(s,e,l)=>{l.d(e,{BrowserWeb:()=>t});var n=l(5403);class t extends n.E_{constructor(){super(),this._lastWindow=null}async open(s){this._lastWindow=window.open(s.url,s.windowName||"_blank")}async close(){return new Promise((s,e)=>{null!=this._lastWindow?(this._lastWindow.close(),this._lastWindow=null,s()):e("No active window to close!")})}}new t}}]);
+//# sourceMappingURL=842.216c00b2.chunk.js.map

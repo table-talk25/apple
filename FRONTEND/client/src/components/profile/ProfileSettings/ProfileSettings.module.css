@@ -1,0 +1,102 @@
+/* File: frontend/client/src/components/profile/ProfileSettings.module.css */
+
+.container {
+    background: white;
+    border-radius: 12px;
+    padding: 1rem 1.5rem;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+}
+
+.container h2 {
+    margin-top: 0;
+    margin-bottom: 1.5rem;
+    font-size: 1.4rem;
+    color: #333;
+}
+
+.section {
+    padding: 1.5rem 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+.section:last-of-type {
+    border-bottom: none;
+    padding-bottom: 0.5rem;
+}
+
+.sectionTitle {
+    font-size: 1.1rem;
+    color: #1a202c;
+    margin-top: 0;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.settingItem {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 0;
+}
+.settingItem p {
+    margin: 0;
+    color: #4a5568;
+}
+
+.actionButton {
+    width: 100%;
+    padding: 0.75rem;
+    margin-top: 0.75rem;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+    background-color: #f7fafc;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+.actionButton:hover {
+    background-color: #e2e8f0;
+    border-color: #cbd5e0;
+}
+
+.deleteBtn {
+    background-color: #fff5f5;
+    color: #c53030;
+    border-color: #fed7d7;
+}
+.deleteBtn:hover { background-color: #fed7d7; }
+
+.logoutBtn {
+    background-color: #ebf4ff;
+    color: #3182ce;
+    border-color: #bee3f8;
+}
+.logoutBtn:hover { background-color: #bee3f8; }
+
+.infoLink {
+    font-size: 0.9rem;
+    color: #718096;
+    margin-top: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+.infoLink a {
+    color: #3182ce;
+    text-decoration: none;
+    font-weight: 600;
+}
+.infoLink a:hover { text-decoration: underline; }
+
+/* Switch Toggle */
+.switch { position: relative; display: inline-block; width: 50px; height: 24px; flex-shrink: 0; }
+.switch input { opacity: 0; width: 0; height: 0; }
+.slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #cbd5e0; transition: .4s; border-radius: 24px; }
+.slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
+input:checked + .slider { background-color: #48bb78; }
+input:checked + .slider:before { transform: translateX(26px); }

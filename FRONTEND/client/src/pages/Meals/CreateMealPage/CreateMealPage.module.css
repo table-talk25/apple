@@ -1,0 +1,173 @@
+/* File: /src/pages/Meals/CreateMealPage/CreateMealPage.module.css (Nuovo Stile Moderno) */
+
+/* ========================================
+   STILI GENERALI E CONTENITORI
+   ======================================== */
+
+   .createMealPage {
+    width: 100%;
+  }
+  
+.topBar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  padding: 8px 12px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.95), rgba(255,255,255,0.85));
+  backdrop-filter: saturate(180%) blur(6px);
+}
+
+.backButton { transform: scale(0.85); }
+
+  .createMealHeader {
+    text-align: center;
+    margin-bottom: 2.5rem; /* Più spazio */
+    width: 100%;
+  }
+  
+  .createMealTitle {
+    color: #2d3748;
+    font-size: clamp(2rem, 5vw, 2.8rem); /* Più grande */
+    font-weight: 700;
+    margin-bottom: 1rem;
+  }
+  
+  .createMealSubtitle {
+    font-size: clamp(1rem, 2vw, 1.2rem); /* Più grande */
+    max-width: 650px;
+    margin: 0 auto;
+    line-height: 1.6;
+    color: #555;
+  }
+  
+  .createMealContent {
+    background: white;
+    border-radius: 20px; /* Bordi più arrotondati */
+    padding: clamp(2rem, 5vw, 3rem); /* Più padding interno */
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+    border: 1px solid #e9ecef;
+    width: 100%;
+  }
+  
+  /* ========================================
+     STILI DEL FORM (Restyling Moderno)
+     ======================================== */
+  
+  .formSection {
+    margin-bottom: 2.5rem;
+    padding-bottom: 2rem;
+    border-bottom: 1px solid #e9ecef;
+  }
+  .formSection:last-of-type {
+    margin-bottom: 0;
+    padding-bottom: 0;
+    border-bottom: none;
+  }
+  
+  .formSection h2 {
+    font-size: clamp(1.4rem, 3vw, 1.6rem); /* Titoli sezione più grandi */
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 2rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  
+  .formGroup {
+    margin-bottom: 2rem; /* Più spazio tra i gruppi */
+  }
+  
+  .formRow {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem; /* Più spazio tra le colonne */
+  }
+  
+  /* Stile moderno per le etichette, come per Login/Register */
+  .formGroup label {
+    display: block;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #4a5568;
+    margin-bottom: 0.75rem; /* Più spazio tra etichetta e input */
+  }
+  
+  /* Stile moderno per i campi, come per Login/Register */
+  .formGroup input,
+  .formGroup select,
+  .formGroup textarea {
+    width: 100%;
+    font-size: 1.1rem;
+    padding: 1rem 1.2rem;
+    border-radius: 12px;
+    border: 1px solid #ced4da;
+    background-color: #f8f9fa;
+    transition: all 0.2s ease;
+    font-family: inherit;
+  }
+  
+  .formGroup input:focus,
+  .formGroup select:focus,
+  .formGroup textarea:focus {
+    background-color: white;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(255, 107, 107, 0.15);
+    outline: none;
+  }
+  
+  .formGroup textarea {
+    resize: vertical;
+    min-height: 140px;
+  }
+  .formText {
+    display: block;
+    margin-top: 0.75rem;
+    font-size: 0.9rem;
+    color: #6c757d;
+  }
+  
+  /* Stile per i pulsanti di azione */
+  .formActions { 
+    display: flex; 
+    gap: 1rem; 
+    justify-content: flex-end; 
+    margin-top: 2rem; 
+    padding-top: 2rem;
+    border-top: 1px solid #e9ecef;
+    flex-wrap: wrap; 
+  }
+  .btn { 
+    padding: 1rem 2rem; 
+    border-radius: 12px; 
+    font-weight: 600; 
+    font-size: 1rem;
+    cursor: pointer; 
+    transition: all 0.2s ease; 
+    border: none; 
+  }
+  .btnPrimary { background-color: var(--primary-color); color: white; }
+  .btnPrimary:hover:not(:disabled) { background-color: var(--primary-dark); transform: translateY(-2px); }
+  .btnPrimary:disabled { background: #fcc2c2; cursor: not-allowed; }
+  
+  /* ========================================
+     MEDIA QUERIES
+     ======================================== */
+  
+  @media (max-width: 768px) {
+    .formRow {
+      grid-template-columns: 1fr;
+      gap: 1.5rem;
+    }
+    .btn {
+      width: 100%;
+    }
+  }
+  
+  @media (max-width: 480px) {
+    .createMealContent { padding: 1.5rem; }
+    .formSection h2 { font-size: 1.2rem; }
+  }

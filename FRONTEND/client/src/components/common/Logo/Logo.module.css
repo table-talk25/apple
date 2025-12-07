@@ -1,0 +1,47 @@
+.logo {
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+    transition: transform 0.3s ease;
+}
+
+.logo:hover {
+    transform: scale(1.05);
+}
+
+.logoFullImage {
+    height: clamp(55px, 8vw, 75px);
+    width: auto;
+    object-fit: contain;
+}
+
+/* Media Queries */
+@media (max-width: 768px) {
+    .logoFullImage {
+        height: clamp(40px, 7vw, 55px);
+    }
+}
+
+@media (max-width: 480px) {
+    .logoFullImage {
+        height: clamp(75px, 6vw, 95px);
+    }
+}
+
+/* Accessibilità */
+@media (prefers-reduced-motion: reduce) {
+    .logo {
+        transition: none;
+    }
+    
+    .logo:hover {
+        transform: none;
+    }
+}
+
+/* Focus state per accessibilità */
+.logo:focus {
+  outline: 3px solid var(--primary-color);
+    outline-offset: 2px;
+    border-radius: 4px;
+}

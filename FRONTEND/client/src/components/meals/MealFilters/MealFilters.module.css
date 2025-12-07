@@ -1,0 +1,108 @@
+/* src/components/meals/MealFilters/MealFilters.module.css */
+
+.filtersCard {
+  background: linear-gradient(180deg, #ffffff, #fcfdfd);
+  border: 1px solid #eef2f4;
+  border-radius: 14px;
+  padding: 8px 10px; /* più compatta e discreta */
+  box-shadow: 0 8px 24px rgba(16, 24, 40, 0.06);
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow-x: hidden;
+  max-width: 420px; /* più stretta */
+  margin: 0 auto; /* centrata */
+}
+
+.filtersHeader { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 6px; flex-wrap: wrap; }
+.filtersHeader h4 { margin: 0; font-size: clamp(0.9rem, 3.2vw, 1rem); font-weight: 700; color: #0f172a; text-align: center; flex: 1 1 100%; }
+.filtersHeader > div { display: flex; gap: 8px; flex-wrap: wrap; }
+
+.toggleBtn {
+  background: #f8fafc;
+  color: #334155;
+  border: 1px solid #e2e8f0;
+  border-radius: 999px;
+  padding: 5px 8px;
+  font-weight: 600;
+  font-size: 0.8rem;
+}
+.toggleBtn:active { transform: scale(0.98); }
+
+.compactBar {
+  /* Vista compatta: impila ogni chip su una riga (colonna singola) */
+  display: grid;
+  grid-template-columns: 1fr;
+  row-gap: 6px;
+  background: #f8fafc;
+  border: 1px dashed #e2e8f0;
+  padding: 8px 10px;
+  border-radius: 10px;
+  margin-bottom: 8px;
+  overflow-x: hidden;
+  width: 100%;
+  max-width: 100%;
+}
+.chip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  width: 100%;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  padding: 5px 9px;
+  border-radius: 999px;
+  color: #475569;
+  font-size: 0.8rem;
+  white-space: normal;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+.chipValue {
+  font-weight: 700;
+  color: #0f172a;
+  display: inline-block;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  text-align: right;
+}
+
+/* Consente ai figli del chip di restringersi e andare a capo */
+.chip > * { min-width: 0; }
+
+.filtersGrid {
+  /* Forza disposizione verticale: ogni filtro sotto l'altro */
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  max-width: 100%;
+}
+
+/* Label e select compatti */
+.filtersCard :global(.form-label) { font-weight: 600; color: #475569; margin-bottom: 6px; font-size: 0.82rem; }
+.select { width: 100%; height: 38px; border-radius: 10px; border-color: #e5e7eb; font-size: 0.9rem; }
+.select:focus { box-shadow: 0 0 0 3px rgba(134, 227, 220, 0.25); border-color: #86E3DC; }
+
+.resetButton {
+  display: inline-block;
+  background: transparent;
+  color: #64748b;
+  border: none;
+  padding: 5px 8px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+.resetButton:hover { color: #334155; background: #f1f5f9; }
+
+/* Mobile: impila i controlli header e mostra bene il toggle */
+@media (max-width: 480px) {
+  .filtersHeader { flex-direction: column; align-items: stretch; }
+  .filtersHeader > div { width: 100%; display: grid; grid-template-columns: 1fr; gap: 8px; }
+  .toggleBtn { width: 100%; }
+  .resetButton { width: 100%; text-align: center; }
+}

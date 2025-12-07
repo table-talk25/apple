@@ -1,0 +1,259 @@
+/* ========================================
+   HOMEPAGE STYLES - TableTalk App (Versione Ottimizzata)
+   ======================================== */
+
+/* Container principale della homepage */
+.homeContainer {
+  width: 100%;
+  overflow-x: hidden;
+  padding-top: 80px; /* Aggiunge spazio per la navbar fissa */
+}
+
+/* ========================================
+   SEZIONE HERO
+   ======================================== */
+.heroSection {
+  text-align: center;
+  padding: clamp(32px, 7vh, 64px) 18px;
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.95) 0%, rgba(118, 75, 162, 0.95) 100%),
+              linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  position: relative;
+  margin-top: 0; /* Rimosso il margine, da gestire nel layout globale se necessario */
+}
+
+/* Effetto decorativo di sfondo */
+.heroSection::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: 
+    radial-gradient(circle at 20% 80%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.1) 0%, transparent 50%);
+  pointer-events: none;
+}
+
+.heroSection h1 {
+  font-size: clamp(2.0rem, 4.5vw, 3.2rem);
+  font-weight: 700;
+  margin-bottom: clamp(16px, 3vh, 24px);
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+  animation: fadeInUp 1s ease-out;
+}
+
+.heroSection p {
+  font-size: clamp(0.95rem, 2.2vw, 1.1rem);
+  max-width: min(650px, 90%);
+  margin: 0 auto clamp(30px, 5vh, 40px);
+  line-height: 1.6;
+  opacity: 0.95;
+  animation: fadeInUp 1s ease-out 0.2s both;
+}
+
+/* Bottoni della sezione hero */
+.heroButtons {
+  display: flex;
+  gap: clamp(15px, 2vw, 20px);
+  justify-content: center;
+  flex-wrap: wrap;
+  animation: fadeInUp 1s ease-out 0.4s both;
+}
+
+.heroButtons .btn {
+  padding: clamp(10px, 2vw, 14px) clamp(24px, 4vw, 32px);
+  font-size: clamp(0.85rem, 1.8vw, 1rem);
+  font-weight: 600;
+  border-radius: 50px;
+  transition: all 0.3s ease;
+  text-decoration: none;
+  display: inline-block;
+  border: 2px solid transparent;
+}
+
+.heroButtons .btn:first-child {
+  background: white;
+  color: #667eea;
+}
+
+.heroButtons .btn:last-child {
+  background: transparent;
+  border-color: white;
+  color: white;
+}
+
+.heroButtons .btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+/* ========================================
+   SEZIONE FEATURES
+   ======================================== */
+.featuresSection {
+  padding: clamp(40px, 7vh, 80px) 18px;
+  background: white;
+}
+
+.featuresSection h2 {
+  text-align: center;
+  font-size: clamp(1.6rem, 3.6vw, 2.5rem);
+  color: #2d3748;
+  margin-bottom: clamp(40px, 6vh, 70px);
+}
+
+.featuresGrid {
+  display: grid;
+  /* Questa singola riga gestisce desktop, tablet e mobile in modo fluido. */
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: clamp(20px, 3.5vw, 36px);
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.featureCard {
+  background: #f8f9fa;
+  padding: clamp(20px, 3.5vw, 30px);
+  border-radius: 15px;
+  border: 1px solid #e9ecef;
+  text-align: center;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.featureCard:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+}
+
+.featureIcon {
+  font-size: clamp(2.0rem, 3.6vw, 2.5rem);
+  color: var(--primary-color, #FF6B6B);
+  margin-bottom: clamp(15px, 3vh, 20px);
+}
+
+.featureCard h3 {
+  font-size: clamp(1.1rem, 2.2vw, 1.4rem);
+  color: #2d3748;
+  margin-bottom: clamp(10px, 2vh, 15px);
+}
+
+.featureCard p {
+  color: #4a5568;
+  line-height: 1.6;
+  font-size: clamp(0.85rem, 1.8vw, 0.95rem);
+}
+
+/* ========================================
+   SEZIONE CTA (Call To Action)
+   ======================================== */
+.ctaSection {
+  text-align: center;
+  padding: clamp(40px, 7vh, 80px) 18px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.ctaSection h2 {
+  font-size: clamp(1.6rem, 3.6vw, 2.3rem);
+  margin-bottom: clamp(15px, 3vh, 25px);
+  font-weight: 700;
+}
+
+.ctaSection p {
+  font-size: clamp(0.95rem, 2.2vw, 1.1rem);
+  max-width: min(550px, 90%);
+  margin: 0 auto clamp(30px, 4vh, 40px);
+  line-height: 1.6;
+  opacity: 0.9;
+}
+
+.ctaButtons {
+  display: flex;
+  justify-content: center;
+}
+
+.ctaButtons .btn {
+  padding: clamp(10px, 2vw, 14px) clamp(24px, 4vw, 32px);
+  font-size: clamp(0.85rem, 1.8vw, 1rem);
+  font-weight: 600;
+  border-radius: 50px;
+  transition: all 0.3s ease;
+  text-decoration: none;
+  background: white;
+  color: #667eea;
+  border: none;
+}
+
+.ctaButtons .btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 4px 15px rgba(255, 255, 255, 0.3);
+}
+
+/* ========================================
+   ANIMAZIONI
+   ======================================== */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ========================================
+   MEDIA QUERIES E RESPONSIVITÀ
+   ======================================== */
+
+/* Tablet (e schermi intermedi) */
+@media (max-width: 1024px) {
+  .heroSection, .featuresSection, .ctaSection {
+    /* Riduciamo leggermente il padding verticale su tablet */
+    padding-top: clamp(40px, 6vh, 80px);
+    padding-bottom: clamp(40px, 6vh, 80px);
+  }
+}
+
+/* Mobile */
+@media (max-width: 480px) {
+  .heroButtons {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .heroButtons .btn {
+    width: 100%;
+    max-width: 300px;
+    text-align: center;
+  }
+}
+
+/* Accessibilità e preferenze utente */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ========================================
+   ACCESSIBILITÀ E FOCUS
+   ======================================== */
+/* NOTA: Corretto selettore '.featureCard' */
+.btn:focus,
+.featureCard:focus {
+  outline: 3px solid var(--primary-color, #FF6B6B);
+  outline-offset: 3px;
+  border-radius: inherit; /* Assicura che l'outline segua il bordo */
+}
+
+/* Smooth scrolling per i link interni */
+html {
+  scroll-behavior: smooth;
+}

@@ -1,0 +1,23 @@
+name: Deploy Privacy Pages to external repo (tabletalk-privacy)
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'FRONTEND/client/src/pages/privacy-pages/**'
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Deploy to external repository (tabletalk-privacy)
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          personal_token: ${{ secrets.PRIVACY_PAGES_PAT }}
+          external_repository: table-talk25/tabletalk-privacy
+          publish_dir: ./FRONTEND/client/src/pages/privacy-pages
+          publish_branch: gh-pages

@@ -1,0 +1,97 @@
+services:
+  # Backend API Service
+  - type: web
+    name: tabletalk-backend
+    runtime: node
+    plan: starter  # Puoi cambiare in "standard" o "pro" se necessario
+    region: frankfurt  # Scegli la regione più vicina (frankfurt, oregon, singapore, etc.)
+    rootDir: BACKEND
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /health  # Endpoint pubblico per health check
+    envVars:
+      # ⚠️ OBBLIGATORIE - Devi impostarle su Render Dashboard
+      - key: NODE_ENV
+        value: production
+      - key: MONGO_URI
+        sync: false  # Imposta manualmente su Render Dashboard
+      - key: JWT_SECRET
+        sync: false  # Imposta manualmente su Render Dashboard (usa una stringa sicura casuale)
+      
+      # 🌐 CORS e URL - IMPORTANTI per produzione
+      - key: CORS_ORIGIN
+        sync: false  # Imposta con i tuoi domini separati da virgola, es: "https://app.tuodominio.it,capacitor://localhost"
+      - key: FRONTEND_URL
+        sync: false  # URL del frontend se hai una web app, altrimenti lascia vuoto o metti l'URL dell'API
+      - key: API_URL
+        sync: false  # Render lo genererà automaticamente, ma puoi impostarlo manualmente se vuoi
+      
+      # 🔥 Firebase (OBBLIGATORIO per notifiche push)
+      - key: FIREBASE_PROJECT_ID
+        value: tabletalk-social
+        sync: false  # Modifica se il tuo progetto Firebase ha un nome diverso
+      
+      # 🔥 Firebase Credentials - METODO 1: JSON completo (CONSIGLIATO)
+      # Copia l'intero contenuto del file firebase-service-account.json come stringa JSON
+      - key: FIREBASE_SERVICE_ACCOUNT_JSON
+        sync: false  # ⚠️ IMPOSTA QUESTA VARIABILE con il JSON completo da Firebase Console
+      
+      # 🔥 Firebase Credentials - METODO 2: Variabili separate (alternativa)
+      # Usa questo metodo se preferisci variabili separate invece del JSON completo
+      - key: FIREBASE_CLIENT_EMAIL
+        sync: false  # Es: firebase-adminsdk-xxxxx@tabletalk-social.iam.gserviceaccount.com
+      - key: FIREBASE_PRIVATE_KEY
+        sync: false  # La chiave privata completa (con \n per i newline)
+      - key: FIREBASE_PRIVATE_KEY_ID
+        sync: false  # Opzionale
+      - key: FIREBASE_CLIENT_ID
+        sync: false  # Opzionale
+      
+      # 📧 Email (opzionale - se non configurato, le email non funzioneranno)
+      - key: EMAIL_SERVICE
+        value: gmail
+        sync: false
+      - key: EMAIL_USER
+        sync: false
+      - key: EMAIL_PASSWORD
+        sync: false
+      - key: EMAIL_FROM
+        value: noreply@tabletalk.app
+        sync: false
+      
+      # 📹 Twilio Video (opzionale - se non configurato, le videochiamate non funzioneranno)
+      - key: TWILIO_ACCOUNT_SID
+        sync: false
+      - key: TWILIO_API_KEY
+        sync: false
+      - key: TWILIO_API_SECRET
+        sync: false
+      
+      # 🔐 JWT Expiration (opzionale - default 7 giorni)
+      - key: JWT_EXPIRES_IN
+        value: 7d
+      
+      # 📍 Port (Render lo setta automaticamente, ma lo lasciamo per sicurezza)
+      - key: PORT
+        fromService:
+          type: web
+          name: tabletalk-backend
+          property: port
+
+  # Frontend Static Site (se deployato come servizio separato)
+  - type: web
+    name: tabletalk-frontend
+    runtime: node
+    plan: starter
+    region: frankfurt
+    rootDir: FRONTEND/client
+    buildCommand: npm install && npm run build
+    startCommand: npx serve -s build -l $PORT
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: REACT_APP_API_URL
+        value: https://tabletalk-app-backend.onrender.com/api
+      - key: REACT_APP_ANDROID_API_URL
+        value: https://tabletalk-app-backend.onrender.com
+

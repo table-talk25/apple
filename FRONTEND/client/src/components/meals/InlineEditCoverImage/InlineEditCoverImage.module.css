@@ -1,0 +1,153 @@
+.coverImageContainer {
+  margin: 20px 0;
+}
+
+.imageWrapper {
+  position: relative;
+  display: inline-block;
+}
+
+.coverImage {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.editButton {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: rgba(255, 255, 255, 0.9);
+  border: none;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #007bff;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.editButton:hover {
+  background: rgba(255, 255, 255, 1);
+  color: #0056b3;
+  transform: scale(1.1);
+  text-decoration: none;
+}
+
+.noImagePlaceholder {
+  width: 100%;
+  height: 200px;
+  background: #f8f9fa;
+  border: 2px dashed #dee2e6;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #6c757d;
+  gap: 10px;
+}
+
+.noImageIcon {
+  font-size: 2rem;
+  color: #adb5bd;
+}
+
+.inlineEditContainer {
+  margin: 20px 0;
+}
+
+.imagePreviewContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.imagePreview {
+  width: 100%;
+  height: 200px;
+  border: 2px solid #007bff;
+  border-radius: 8px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.previewImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.imageControls {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: center;
+}
+
+.selectImageButton {
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-weight: 500;
+}
+
+.hiddenFileInput {
+  display: none;
+}
+
+.fileInfo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  color: #666;
+  font-size: 0.875rem;
+}
+
+.editButtons {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  margin-top: 15px;
+}
+
+.saveButton {
+  padding: 6px 12px;
+  border-radius: 6px;
+}
+
+.cancelButton {
+  padding: 6px 12px;
+  border-radius: 6px;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .coverImage,
+  .noImagePlaceholder,
+  .imagePreview {
+    height: 150px;
+  }
+  
+  .editButton {
+    width: 32px;
+    height: 32px;
+    top: 8px;
+    right: 8px;
+  }
+  
+  .imageControls {
+    align-items: stretch;
+  }
+  
+  .selectImageButton {
+    width: 100%;
+  }
+}

@@ -1,0 +1,112 @@
+/* ProfileSectionWrapper.module.css */
+
+.profileSectionWrapper {
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+  box-sizing: border-box;
+  margin-bottom: 1.5rem;
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 1.5rem;
+}
+
+.sectionTitle {
+  margin: 0;
+  font-size: clamp(1.1rem, 3.5vw, 1.4rem);
+  flex: 1 1 auto;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: #333;
+  font-weight: 600;
+}
+
+.btn {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.2s ease;
+  font-size: 0.9rem;
+}
+
+.btnEdit {
+  background-color: #f0f0f0;
+  color: #333;
+}
+
+.btnEdit:hover {
+  background-color: #e0e0e0;
+  transform: translateY(-1px);
+}
+
+.btnCancel {
+  background-color: #ffebee;
+  color: #c62828;
+}
+
+.btnCancel:hover {
+  background-color: #ffcdd2;
+  transform: translateY(-1px);
+}
+
+.btnSave {
+  background-color: #e8f5e9;
+  color: #2e7d32;
+}
+
+.btnSave:hover {
+  background-color: #c8e6c9;
+  transform: translateY(-1px);
+}
+
+.editButtons {
+  display: flex;
+  gap: 8px;
+}
+
+.sectionContent {
+  /* Il contenuto della sezione viene gestito dai componenti figli */
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .profileSectionWrapper {
+    padding: 1rem;
+  }
+  
+  .sectionHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  
+  .editButtons {
+    width: 100%;
+    justify-content: flex-end;
+  }
+}
+
+@media (max-width: 576px) {
+  .btn {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.8rem;
+  }
+  
+  .editButtons {
+    gap: 6px;
+  }
+}

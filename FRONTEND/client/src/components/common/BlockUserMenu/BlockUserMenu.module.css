@@ -1,0 +1,104 @@
+.menuContainer {
+  position: relative;
+  display: inline-block;
+}
+
+.kebabButton {
+  background: none;
+  border: none;
+  font-size: 1.2rem;
+  color: #4a5568;
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.kebabButton:hover {
+  background-color: #f7fafc;
+  color: #2d3748;
+}
+
+.kebabButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  min-width: 180px;
+  margin-top: 0.5rem;
+}
+
+.menuItem {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: background-color 0.2s ease;
+  text-align: left;
+}
+
+.menuItem:hover {
+  background-color: #f7fafc;
+}
+
+.menuItem:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.blockButton {
+  color: #e53e3e;
+}
+
+.blockButton:hover {
+  background-color: #fed7d7;
+}
+
+.unblockButton {
+  color: #38a169;
+}
+
+.unblockButton:hover {
+  background-color: #c6f6d5;
+}
+
+.reportButton {
+  color: #f6ad55;
+}
+
+.reportButton:hover {
+  background-color: #fef5e7;
+}
+
+/* Animazione per il dropdown */
+.dropdown {
+  animation: slideDown 0.2s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+} 

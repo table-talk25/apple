@@ -1,0 +1,8 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">TableTalk</string>
+    <string name="title_activity_main">TableTalk</string>
+    <string name="package_name">com.tabletalk.socialapp</string>
+    <string name="custom_url_scheme">com.tabletalk.socialapp</string>
+    <string name="server_client_id">925236799140-op5ejjto2gitab71egav5voossk36h1b.apps.googleusercontent.com</string>
+</resources>

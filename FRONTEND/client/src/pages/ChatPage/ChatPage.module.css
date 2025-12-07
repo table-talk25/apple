@@ -1,0 +1,247 @@
+/* File: src/pages/ChatPage/ChatPage.module.css */
+
+
+.chatPage {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;       /* Fallback */
+  height: 100dvh;      /* Dynamic Viewport Height: ignora la barra indirizzi mobile */
+  overflow: hidden;    /* Evita lo scroll della pagina intera */
+  background-color: #f5f7fb;
+  position: relative;
+}
+
+/* --- Header --- */
+.chatHeader {
+  flex-shrink: 0; /* L'header non deve mai rimpicciolirsi */
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 15px;
+  background: white;
+  border-bottom: 1px solid #eee;
+  z-index: 10;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.backButton { transform: scale(0.9); }
+
+.chatTitle { margin: 0; color: #111827; font-weight: 700; font-size: 1rem; }
+.headerMeta { display: flex; align-items: center; gap: 10px; margin-top: 2px; }
+.headerAvatar { width: 28px; height: 28px; border-radius: 50%; object-fit: cover; border: 2px solid #f3f4f6; }
+.participantsSummary { color: #6b7280; font-size: 0.9rem; }
+
+.menuButton { /* Stile per il pulsante del menu a tre puntini */
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: #65676b;
+}
+
+/* --- Lista Messaggi --- */
+/* Alias per il contenitore messaggi usato nel JSX */
+.messagesContainer, .messagesList {
+  flex: 1; /* Occupa tutto lo spazio rimanente */
+  overflow-y: auto; /* Abilita lo scroll solo qui dentro */
+  padding: 15px;
+  padding-bottom: 10px; /* Padding minimo dal form */
+  display: flex;
+  flex-direction: column;
+}
+
+/* Alias per l'elemento messaggio usato nel JSX */
+.message, .messageItem {
+  display: flex;
+  margin-bottom: 0.75rem;
+  max-width: 75%;
+}
+
+.messageAvatar, .avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  margin-right: 12px;
+  align-self: flex-end; /* Allinea l'avatar in basso */
+}
+
+.messageContent, .messageBubble {
+  padding: 0.7rem 1rem;
+  border-radius: 18px;
+  position: relative;
+}
+
+.messageAuthor, .senderName {
+  font-weight: bold;
+  font-size: 0.8rem;
+  margin-bottom: 0.25rem;
+  color: #333;
+}
+
+.messageText {
+  word-wrap: break-word;
+  line-height: 1.4;
+}
+
+.messageTime, .timestamp {
+  font-size: 0.7rem;
+  color: rgba(0, 0, 0, 0.4);
+  text-align: right;
+  margin-top: 5px;
+  display: block;
+}
+
+/* Stili per i messaggi degli altri */
+.otherMessage {
+  align-self: flex-start;
+}
+.otherMessage .messageContent, .otherMessage .messageBubble {
+  background-color: #ffffff;
+  border: 1px solid #e9e9eb;
+  border-bottom-left-radius: 4px; /* Angolo appuntito per la "coda" della bolla */
+}
+
+/* Stili per i nostri messaggi */
+.ownMessage, .myMessage {
+  align-self: flex-end;
+  flex-direction: row-reverse; /* Inverte l'ordine per i nostri messaggi */
+}
+.ownMessage .messageContent, .myMessage .messageBubble {
+  background-color: #0084ff; /* Un blu moderno */
+  color: white;
+  border-bottom-right-radius: 4px;
+}
+.ownMessage .messageAvatar, .myMessage .avatar {
+  display: none; /* Nascondiamo il nostro avatar */
+}
+.ownMessage .messageTime, .myMessage .timestamp {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.optimistic {
+  opacity: 0.6;
+}
+
+/* --- Form di invio --- */
+.messageForm {
+  flex-shrink: 0; /* Il form non deve sparire */
+  background: white;
+  padding: 10px;
+  border-top: 1px solid #eee;
+  display: flex;
+  align-items: center;
+  gap: 10px; /* IMPORTANTE: Rimuovi position: fixed/absolute se presenti. Ora è un elemento statico alla fine del flex container */
+  position: relative;
+  z-index: 10;
+}
+
+.messageInput, .chatInput {
+  flex: 1; /* I tuoi stili input */
+  border-radius: 20px;
+  padding: 10px 15px;
+  border: 1px solid #ddd;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.messageInput:focus, .chatInput:focus {
+  border-color: #0084ff;
+}
+
+.sendButton {
+  background: #0084ff;
+  border: none;
+  color: white;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  font-size: 1.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+.sendButton:hover {
+  background: #0073e0;
+}
+.sendButton:disabled {
+  background: #aeb4bb;
+  cursor: not-allowed;
+}
+
+/* In: ChatPage.module.css */
+/* Aggiungi questo blocco alla fine del file */
+
+/* ▼▼▼ Stili per la Responsività Mobile ▼▼▼ */
+/* Queste regole si attiveranno solo su schermi larghi al massimo 768px */
+@media (max-width: 768px) {
+  
+  /* Riduciamo lo spazio nell'header per guadagnare altezza */
+  .chatHeader { padding: 10px 12px; gap: 8px; }
+  .backButton { transform: scale(0.85); }
+  .chatTitle { font-size: 0.95rem; }
+  .headerAvatar { width: 24px; height: 24px; }
+  .participantsSummary { font-size: 0.85rem; }
+
+  /* Titolo leggermente più piccolo per non essere ingombrante */
+  .chatTitle {
+    font-size: 1.1rem; 
+  }
+
+  /* Meno padding nella lista dei messaggi */
+  .messagesList {
+    padding: 1rem 0.75rem;
+  }
+
+  /* Le "bolle" dei messaggi possono occupare un po' più di larghezza */
+  .messageItem {
+    max-width: 85%;
+  }
+
+  .messageBubble {
+    padding: 0.6rem 0.9rem;
+  }
+
+  /* Form di invio più compatto */
+  .messageForm {
+    padding: 0.75rem;
+  }
+}
+
+/* In: ChatPage.module.css */
+/* Aggiungi alla fine del file */
+
+/* Stile per il contenitore del menu a tendina */
+.dropdownMenu {
+  border-radius: 8px;
+  border: 1px solid #e9e9eb;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  padding: 0.5rem 0; /* Aggiunge un po' di spazio sopra e sotto */
+}
+
+/* Stile per ogni singola voce del menu */
+.dropdownItem {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem; /* Crea spazio tra l'icona e il testo */
+  font-weight: 500; /* Rende il testo leggermente più corposo */
+  padding: 0.6rem 1.2rem;
+}
+
+/* Stile specifico per la voce "pericolosa" (es. Lascia la chat) */
+.dangerItem {
+  color: #d93025; /* Un rosso più leggibile */
+}
+
+/* Cambia colore al passaggio del mouse per evidenziare l'azione */
+.dangerItem:hover, .dangerItem:focus {
+  color: white;
+  background-color: #d93025;
+}
+
+.typingIndicator {
+  padding: 0.25rem 1rem;
+  font-style: italic;
+  color: #65676b;
+  height: 20px; /* Dà un'altezza fissa per non far "saltare" il layout */
+}

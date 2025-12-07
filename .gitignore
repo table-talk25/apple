@@ -1,0 +1,19 @@
+# File: .gitignore (nella cartella principale)
+
+# --- AGGIUNTE DI SICUREZZA ---
+
+# File di configurazione sensibili
+.env
+/BACKEND/.env
+/FRONTEND/client/.env
+/android/app/google-services.json
+/BACKEND/firebase-service-account.json
+
+# Keystore di firma Android
+*.keystore
+/GOOGLE_PLAY_RELEASE/
+
+# File di proprietà locali (che conterranno le password)
+key.properties
+/FRONTEND/client/android/key.properties
+node_modules

@@ -1,0 +1,123 @@
+/* File: frontend/client/src/components/profile/PersonalInfo.module.css */
+
+.container {
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+  box-sizing: border-box;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap; /* permette al bottone di andare a capo su schermi stretti */
+  margin-bottom: 1.5rem;
+}
+
+.header h2 {
+  margin: 0;
+  font-size: clamp(1.1rem, 3.5vw, 1.4rem);
+  flex: 1 1 auto; /* lascia spazio al bottone */
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.btn { padding: 0.5rem 1rem; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; }
+.btnEdit { background-color: #f0f0f0; color: #333; }
+.btnCancel { background-color: #ffebee; color: #c62828; }
+.btnSave { background-color: #e8f5e9; color: #2e7d32; }
+
+/* Stili per la modalità visualizzazione */
+.infoDisplay { display: flex; flex-direction: column; gap: 0.8rem; }
+.infoRow { display: flex; flex-wrap: wrap; }
+.infoLabel { font-weight: 600; color: #555; margin-right: 0.5rem; }
+.infoValue { color: #333; }
+.infoValueBio { color: #555; font-style: italic; width: 100%; margin-top: 0.25rem; }
+
+/* Stili per la modalità modifica */
+.form { display: flex; flex-direction: column; gap: 1rem; }
+.input, .textarea {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  font-size: 1rem;
+}
+.textarea { min-height: 80px; resize: vertical; }
+.divider { border: none; border-top: 1px solid #eee; margin: 0.5rem 0; }
+
+/* Layout per campo + pulsante privacy */
+.fieldWithPrivacy {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.fieldWithPrivacy .input {
+  flex-grow: 1; /* L'input occupa tutto lo spazio disponibile */
+}
+.privacyBtn {
+  flex-shrink: 0; /* Il pulsante non si restringe */
+  background: #f0f0f0;
+  border: 1px solid #ccc;
+  height: 45px;
+  width: 45px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  font-size: 1.2rem;
+  color: #555;
+}
+
+/* 🔄 LOCATION GEOJSON: Stili per la gestione avanzata della location */
+.locationInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.coordinatesInfo {
+  color: #666;
+  font-size: 0.8rem;
+  font-family: monospace;
+  background: #f8f9fa;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  border: 1px solid #e9ecef;
+}
+
+.locationInputContainer {
+  position: relative;
+  flex-grow: 1;
+  display: flex;
+  align-items: center;
+}
+
+.locationStatus {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  z-index: 5;
+}
+
+.coordinatesStatus {
+  color: #28a745;
+  font-size: 1rem;
+}
+
+.noCoordinatesStatus {
+  color: #ffc107;
+  font-size: 1rem;
+}
+
+/* Miglioramenti mobile molto piccoli */
+@media (max-width: 420px) {
+  .btn { padding: 0.4rem 0.6rem; font-size: 0.9rem; }
+}

@@ -1,0 +1,49 @@
+.container {
+  width: 100%;
+}
+
+.joinButton {
+  width: 100%;
+  padding: 0.75rem;
+  background: var(--primary-color);
+  border: none;
+  border-radius: 6px;
+  color: white;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.joinButton:hover:not(:disabled) {
+  background: var(--primary-dark);
+  transform: translateY(-2px);
+}
+
+.joinButton:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+.loadingContent,
+.buttonContent {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.spinner {
+  margin-right: 0.5rem;
+}
+
+.errorAlert {
+  margin-top: 1rem;
+  padding: 0.75rem;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.errorAlert i {
+  font-size: 1.1rem;
+} 

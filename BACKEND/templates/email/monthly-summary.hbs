@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Riepilogo Mensile - TableTalk</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8fafc;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 12px;
+            padding: 40px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            border: 1px solid #e2e8f0;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .logo {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+        
+        .title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 10px;
+        }
+        
+        .subtitle {
+            color: #6b7280;
+            font-size: 1rem;
+        }
+        
+        .greeting {
+            font-size: 1.1rem;
+            margin-bottom: 20px;
+            color: #374151;
+        }
+        
+        .monthly-highlights {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            border-radius: 12px;
+            padding: 25px;
+            margin: 25px 0;
+            text-align: center;
+        }
+        
+        .highlight-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+        
+        .highlight-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            gap: 20px;
+        }
+        
+        .highlight-item {
+            text-align: center;
+        }
+        
+        .highlight-number {
+            font-size: 1.8rem;
+            font-weight: 700;
+            display: block;
+            margin-bottom: 5px;
+        }
+        
+        .highlight-label {
+            font-size: 0.85rem;
+            opacity: 0.9;
+        }
+        
+        .achievement-section {
+            background: #fef3c7;
+            border: 1px solid #f59e0b;
+            border-radius: 12px;
+            padding: 25px;
+            margin: 25px 0;
+            text-align: center;
+        }
+        
+        .achievement-title {
+            color: #92400e;
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 15px;
+        }
+        
+        .achievement-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .achievement-item {
+            background: white;
+            border-radius: 8px;
+            padding: 15px;
+            border: 1px solid #f59e0b;
+        }
+        
+        .achievement-icon {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+        
+        .achievement-text {
+            color: #78350f;
+            font-weight: 500;
+        }
+        
+        .monthly-comparison {
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            border-radius: 12px;
+            padding: 25px;
+            margin: 25px 0;
+        }
+        
+        .comparison-title {
+            color: #1e40af;
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .comparison-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 20px;
+        }
+        
+        .comparison-item {
+            text-align: center;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid #bfdbfe;
+        }
+        
+        .comparison-label {
+            color: #1e3a8a;
+            font-size: 0.9rem;
+            margin-bottom: 8px;
+        }
+        
+        .comparison-value {
+            color: #1e40af;
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+        
+        .comparison-change {
+            font-size: 0.8rem;
+            margin-top: 5px;
+        }
+        
+        .change-positive {
+            color: #059669;
+        }
+        
+        .change-negative {
+            color: #dc2626;
+        }
+        
+        .top-meals {
+            background: #fdf2f8;
+            border: 1px solid #f9a8d4;
+            border-radius: 12px;
+            padding: 25px;
+            margin: 25px 0;
+        }
+        
+        .top-meals-title {
+            color: #be185d;
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .meal-ranking {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            background: white;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            border: 1px solid #f9a8d4;
+        }
+        
+        .meal-rank {
+            background: #be185d;
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            margin-right: 15px;
+            flex-shrink: 0;
+        }
+        
+        .meal-info {
+            flex: 1;
+        }
+        
+        .meal-name {
+            color: #be185d;
+            font-weight: 600;
+            margin-bottom: 3px;
+        }
+        
+        .meal-stats {
+            color: #9d174d;
+            font-size: 0.9rem;
+        }
+        
+        .social-growth {
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            border-radius: 12px;
+            padding: 25px;
+            margin: 25px 0;
+        }
+        
+        .growth-title {
+            color: #166534;
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .growth-metrics {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 15px;
+        }
+        
+        .growth-item {
+            text-align: center;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid #bbf7d0;
+        }
+        
+        .growth-number {
+            color: #166534;
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+        
+        .growth-label {
+            color: #059669;
+            font-size: 0.85rem;
+        }
+        
+        .fun-facts {
+            background: #fef2f8;
+            border: 1px solid #f9a8d4;
+            border-radius: 12px;
+            padding: 25px;
+            margin: 25px 0;
+        }
+        
+        .fun-facts-title {
+            color: #be185d;
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .fun-fact {
+            color: #9d174d;
+            margin-bottom: 15px;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid #f9a8d4;
+            position: relative;
+            padding-left: 50px;
+        }
+        
+        .fun-fact::before {
+            content: '🎉';
+            position: absolute;
+            left: 15px;
+            font-size: 1.2rem;
+        }
+        
+        .next-month-preview {
+            background: #fef3c7;
+            border: 1px solid #f59e0b;
+            border-radius: 12px;
+            padding: 25px;
+            margin: 25px 0;
+            text-align: center;
+        }
+        
+        .preview-title {
+            color: #92400e;
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 15px;
+        }
+        
+        .preview-text {
+            color: #78350f;
+            margin-bottom: 20px;
+        }
+        
+        .cta-button {
+            display: inline-block;
+            background: #f59e0b;
+            color: white;
+            text-decoration: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+        
+        .cta-button:hover {
+            background: #d97706;
+            transform: translateY(-1px);
+        }
+        
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #e5e7eb;
+            color: #6b7280;
+            font-size: 0.9rem;
+        }
+        
+        .social-links {
+            margin: 20px 0;
+            text-align: center;
+        }
+        
+        .social-links a {
+            display: inline-block;
+            margin: 0 10px;
+            color: #6b7280;
+            text-decoration: none;
+            font-size: 0.9rem;
+        }
+        
+        .social-links a:hover {
+            color: #667eea;
+        }
+        
+        .unsubscribe {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f3f4f6;
+            border-radius: 6px;
+            text-align: center;
+        }
+        
+        .unsubscribe a {
+            color: #6b7280;
+            text-decoration: none;
+            font-size: 0.8rem;
+        }
+        
+        .unsubscribe a:hover {
+            text-decoration: underline;
+        }
+        
+        @media (max-width: 600px) {
+            body {
+                padding: 10px;
+            }
+            
+            .container {
+                padding: 20px;
+            }
+            
+            .highlight-stats,
+            .comparison-grid,
+            .growth-metrics {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 15px;
+            }
+            
+            .achievement-list {
+                grid-template-columns: 1fr;
+            }
+            
+            .cta-button {
+                display: block;
+                width: 100%;
+                text-align: center;
+                box-sizing: border-box;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <div class="logo">🍽️ TableTalk</div>
+            <h1 class="title">Il Tuo Riepilogo Mensile</h1>
+            <p class="subtitle">{{monthName}} {{year}}</p>
+        </div>
+        
+        <!-- Saluto personalizzato -->
+        <p class="greeting">Ciao {{name}} {{surname}},</p>
+        <p>Ecco un riepilogo completo di tutto quello che hai vissuto su TableTalk questo mese! 🎉</p>
+        
+        <!-- Highlights mensili -->
+        <div class="monthly-highlights">
+            <h3 class="highlight-title">🌟 I Tuoi Highlights di {{monthName}}</h3>
+            <div class="highlight-stats">
+                <div class="highlight-item">
+                    <span class="highlight-number">{{stats.totalMeals}}</span>
+                    <span class="highlight-label">Pasti Totali</span>
+                </div>
+                <div class="highlight-item">
+                    <span class="highlight-number">{{stats.newFriends}}</span>
+                    <span class="highlight-label">Nuovi Amici</span>
+                </div>
+                <div class="highlight-item">
+                    <span class="highlight-number">{{stats.totalMessages}}</span>
+                    <span class="highlight-label">Messaggi</span>
+                </div>
+                <div class="highlight-item">
+                    <span class="highlight-number">{{stats.achievements}}</span>
+                    <span class="highlight-label">Achievement</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Achievement e milestone -->
+        {{#if achievements.length}}
+        <div class="achievement-section">
+            <h3 class="achievement-title">🏆 I Tuoi Achievement di {{monthName}}</h3>
+            <div class="achievement-list">
+                {{#each achievements}}
+                <div class="achievement-item">
+                    <div class="achievement-icon">{{icon}}</div>
+                    <div class="achievement-text">{{description}}</div>
+                </div>
+                {{/each}}
+            </div>
+        </div>
+        {{/if}}
+        
+        <!-- Confronto con mese precedente -->
+        <div class="monthly-comparison">
+            <h3 class="comparison-title">📈 Confronto con {{previousMonthName}}</h3>
+            <div class="comparison-grid">
+                <div class="comparison-item">
+                    <div class="comparison-label">Pasti Partecipati</div>
+                    <div class="comparison-value">{{comparison.mealsParticipated}}</div>
+                    <div class="comparison-change {{#if comparison.mealsParticipatedChange_positive}}change-positive{{else}}change-negative{{/if}}">
+                        {{comparison.mealsParticipatedChange}}
+                    </div>
+                </div>
+                <div class="comparison-item">
+                    <div class="comparison-label">Nuove Connessioni</div>
+                    <div class="comparison-value">{{comparison.newConnections}}</div>
+                    <div class="comparison-change {{#if comparison.newConnectionsChange_positive}}change-positive{{else}}change-negative{{/if}}">
+                        {{comparison.newConnectionsChange}}
+                    </div>
+                </div>
+                <div class="comparison-item">
+                    <div class="comparison-label">Messaggi Scambiati</div>
+                    <div class="comparison-value">{{comparison.totalMessages}}</div>
+                    <div class="comparison-change {{#if comparison.totalMessagesChange_positive}}change-positive{{else}}change-negative{{/if}}">
+                        {{comparison.totalMessagesChange}}
+                    </div>
+                </div>
+                <div class="comparison-item">
+                    <div class="comparison-label">Pasti Creati</div>
+                    <div class="comparison-value">{{comparison.mealsCreated}}</div>
+                    <div class="comparison-change {{#if comparison.mealsCreatedChange_positive}}change-positive{{else}}change-negative{{/if}}">
+                        {{comparison.mealsCreatedChange}}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Top pasti del mese -->
+        {{#if topMeals.length}}
+        <div class="top-meals">
+            <h3 class="top-meals-title">🥇 I Tuoi Pasti Più Popolari</h3>
+            {{#each topMeals}}
+            <div class="meal-ranking">
+                <div class="meal-rank">{{rank}}</div>
+                <div class="meal-info">
+                    <div class="meal-name">{{title}}</div>
+                    <div class="meal-stats">
+                        {{participantsCount}} partecipanti • {{formatDate date}} • {{location.address}}
+                    </div>
+                </div>
+            </div>
+            {{/each}}
+        </div>
+        {{/if}}
+        
+        <!-- Crescita sociale -->
+        <div class="social-growth">
+            <h3 class="growth-title">👥 La Tua Crescita Social</h3>
+            <div class="growth-metrics">
+                <div class="growth-item">
+                    <div class="growth-number">{{socialGrowth.followers}}</div>
+                    <div class="growth-label">Follower Totali</div>
+                </div>
+                <div class="growth-item">
+                    <div class="growth-number">{{socialGrowth.profileViews}}</div>
+                    <div class="growth-label">Visualizzazioni Profilo</div>
+                </div>
+                <div class="growth-item">
+                    <div class="growth-number">{{socialGrowth.connections}}</div>
+                    <div class="growth-label">Connessioni Totali</div>
+                </div>
+                <div class="growth-item">
+                    <div class="growth-number">{{socialGrowth.reputation}}</div>
+                    <div class="growth-label">Punteggio Reputazione</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Fatti divertenti -->
+        <div class="fun-facts">
+            <h3 class="fun-facts-title">🎊 Fatti Divertenti di {{monthName}}</h3>
+            {{#each funFacts}}
+            <div class="fun-fact">{{this}}</div>
+            {{/each}}
+        </div>
+        
+        <!-- Anteprima prossimo mese -->
+        <div class="next-month-preview">
+            <h3 class="preview-title">🔮 Cosa Ti Aspetta il Prossimo Mese</h3>
+            <div class="preview-text">
+                {{#if upcomingEvents}}
+                Hai {{upcomingEvents.count}} eventi programmati e {{upcomingEvents.invitations}} inviti in arrivo!
+                {{else}}
+                È il momento perfetto per creare nuovi pasti e incontrare nuove persone!
+                {{/if}}
+            </div>
+            <a href="{{appUrl}}/meals" class="cta-button">Pianifica il Prossimo Mese</a>
+        </div>
+        
+        <!-- Call to action -->
+        <div style="text-align: center; margin: 30px 0;">
+            <a href="{{appUrl}}" class="cta-button" style="background: #667eea;">
+                🚀 Continua la Tua Avventura
+            </a>
+        </div>
+        
+        <!-- Footer -->
+        <div class="footer">
+            <p>Grazie per aver reso {{monthName}} un mese speciale su TableTalk!</p>
+            
+            <div class="social-links">
+                <a href="https://tabletalk.app">🌐 Sito Web</a>
+                <a href="mailto:support@tabletalk.app">📧 Supporto</a>
+                <a href="https://tabletalk.app/privacy">🔒 Privacy</a>
+            </div>
+            
+            <div class="unsubscribe">
+                <a href="{{appUrl}}/settings/notifications">Gestisci le tue notifiche email</a>
+            </div>
+            
+            <p style="margin-top: 20px; font-size: 0.8rem; color: #9ca3af;">
+                © {{currentYear}} TableTalk. Tutti i diritti riservati.
+            </p>
+        </div>
+    </div>
+</body>
+</html>

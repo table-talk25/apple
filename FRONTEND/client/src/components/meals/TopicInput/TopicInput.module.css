@@ -1,0 +1,87 @@
+/* Stile per il nostro nuovo componente di input per tag */
+.topicInputContainer {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    padding: 10px;
+    border-radius: 12px;
+    border: 1px solid #ced4da;
+    background-color: #f8f9fa;
+    transition: all 0.2s ease;
+    cursor: text;
+}
+
+.topicInputContainer:focus-within {
+    background-color: white;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(255, 107, 107, 0.15);
+}
+
+.topicTag {
+    display: flex;
+    align-items: center;
+    background-color: var(--primary-color);
+    color: white;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.removeTagButton {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 1.2rem;
+    margin-left: 8px;
+    cursor: pointer;
+    padding: 0;
+    line-height: 1;
+}
+
+.topicInput {
+    flex-grow: 1;
+    border: none;
+    background: transparent;
+    padding: 6px;
+    font-size: 1rem;
+    min-width: 150px;
+}
+
+.topicInput:focus {
+    outline: none;
+}
+
+/* 🔒 STATI ERRORE: Stili per input e messaggi di errore */
+.topicInput.inputError {
+    border: 1px solid #dc3545;
+    background-color: #fff5f5;
+}
+
+.topicInputContainer.hasError {
+    border-color: #dc3545;
+    background-color: #fff5f5;
+}
+
+.errorMessage {
+    color: #dc3545;
+    font-size: 0.85rem;
+    margin-top: 4px;
+    padding: 4px 8px;
+    background-color: #fff5f5;
+    border-radius: 4px;
+    border-left: 3px solid #dc3545;
+    animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-5px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}

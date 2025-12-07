@@ -1,0 +1,264 @@
+/* File: src/components/layout/Navbar/Navbar.module.css (Versione Finale Responsive) */
+
+.navbar {
+  background: rgba(255, 255, 255, 0.85);
+  height: 80px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 1.1rem;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 1000;
+  transition: all 0.3s ease;
+  border-bottom: 1px solid #e2e8f0;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  -webkit-backdrop-filter: saturate(180%) blur(10px);
+  backdrop-filter: saturate(180%) blur(10px);
+}
+.navbar.scrolled {
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.12);
+  border-bottom: 2px solid var(--primary-color);
+}
+
+.navContainer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 100%;
+  width: 100%;
+  max-width: 1400px;
+  padding: 0 2rem;
+}
+
+.navLogo {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 700;
+  font-size: 1.3rem;
+  color: #333;
+  text-decoration: none;
+}
+
+/* Navigazione centrale per DESKTOP */
+.navMenuDesktop {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.navLink {
+  color: #4a5568;
+  text-decoration: none;
+  font-weight: 500;
+  position: relative;
+  padding: 0.5rem 0;
+}
+.navLink::after {
+  content: ''; position: absolute; bottom: 0; left: 0;
+  width: 0; height: 2px; background-color: var(--primary-color);
+  transition: width 0.3s ease;
+}
+.navLink:hover::after, .navLinkActive::after {
+  width: 100%;
+}
+.navLinkActive {
+  color: var(--primary-color);
+}
+
+/* Sezione destra con azioni utente e login/register */
+.rightSection {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+/* Container per il menu lingua */
+.languageMenuContainer {
+  display: flex;
+  align-items: center;
+}
+
+/* Stili per le azioni utente (loggato) su DESKTOP */
+.desktopActions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+.profileAvatar {
+  width: 42px; height: 42px; border-radius: 50%;
+  object-fit: cover; cursor: pointer; border: 2px solid #eee;
+}
+
+/* Menu Kebab */
+.kebabMenuContainer {
+  position: relative;
+}
+
+.kebabButton {
+  background: #f8f9fa;
+  border: 1px solid #e2e8f0;
+  font-size: 1.2rem;
+  color: #4a5568;
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+}
+
+.kebabButton:hover {
+  background-color: #f7fafc;
+}
+
+.kebabDropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  min-width: 200px;
+  z-index: 1001;
+  margin-top: 0.5rem;
+}
+
+.kebabItem {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.kebabItem:last-child {
+  border-bottom: none;
+}
+
+.logoutButtonKebab {
+  background: none;
+  border: none;
+  color: #e53e3e;
+  cursor: pointer;
+  font-size: 0.9rem;
+  width: 100%;
+  text-align: left;
+  padding: 0;
+}
+
+.logoutButtonKebab:hover {
+  color: #c53030;
+}
+
+/* Menu Kebab Mobile */
+.kebabButtonMobile {
+  background: none;
+  border: none;
+  color: #4a5568;
+  cursor: pointer;
+  font-size: 1rem;
+  padding: 0.75rem 1rem;
+  width: 100%;
+  text-align: left;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.kebabButtonMobile:hover {
+  background-color: #f7fafc;
+}
+
+.kebabDropdownMobile {
+  background: #f8f9fa;
+  border-radius: 8px;
+  margin: 0.5rem 0;
+  overflow: hidden;
+}
+
+.kebabDropdownMobile .kebabItem {
+  padding: 0.5rem 1rem;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.kebabDropdownMobile .kebabItem:last-child {
+  border-bottom: none;
+}
+
+/* Stili per le azioni utente (non loggato) su DESKTOP */
+.guestActions {
+    display: flex;
+    gap: 0.75rem;
+}
+.loginButton {
+    background: none; border: 1px solid #667eea;
+    padding: 0.5rem 1rem; border-radius: 8px; cursor: pointer;
+    text-decoration: none; color: #667eea;
+    transition: all 0.3s ease;
+}
+.loginButton:hover {
+    background-color: #667eea;
+    color: white;
+}
+.registerButton {
+    background-color: #667eea; color: white;
+    padding: 0.5rem 1rem; border-radius: 8px; text-decoration: none;
+    transition: all 0.3s ease;
+}
+.registerButton:hover {
+    background-color: #5a67d8;
+    transform: translateY(-1px);
+}
+
+/* Stili per le azioni utente su MOBILE */
+.mobileActions {
+  display: none; /* Nascosto di default */
+  align-items: center;
+  gap: 0.75rem;
+}
+.menuIcon {
+  font-size: 1.8rem;
+  cursor: pointer;
+}
+
+/* Menu a tendina che si apre su MOBILE */
+.navMenuMobile {
+  display: flex; flex-direction: column; width: 100%;
+  position: absolute; top: 80px; left: 0;
+  background: #fff; list-style: none; padding: 1rem 0;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+  border-top: 1px solid #f0f0f0;
+}
+.navItem {
+  padding: 1rem 2rem; width: 100%; text-align: center;
+}
+.logoutButtonMobile {
+    background: var(--primary-color); color: white; border: none;
+    width: 80%; padding: 0.8rem; border-radius: 8px; font-size: 1rem;
+    margin-top: 1rem;
+}
+
+/* ==================================
+   MEDIA QUERY per la responsività
+   ================================== */
+@media screen and (max-width: 960px) {
+  .navMenuDesktop, .desktopActions, .guestActions {
+    display: none; /* Nascondiamo tutto ciò che è solo per desktop */
+  }
+  .mobileActions {
+    display: flex; /* Mostriamo il blocco con campanella e hamburger */
+  }
+  
+  /* Assicuriamoci che il LanguageMenu rimanga visibile su mobile */
+  .languageMenuContainer {
+    display: flex;
+  }
+  
+  /* Aggiustiamo il gap per mobile */
+  .rightSection {
+    gap: 0.5rem;
+  }
+}

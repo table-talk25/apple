@@ -1,0 +1,54 @@
+/* File: src/components/meals/MealsList/MealsList.module.css (Versione con Card Responsive) */
+
+/* Il contenitore del nostro carosello */
+.carousel {
+  display: flex;
+  overflow-x: auto;
+  gap: 1.5rem;
+  padding: 1rem 0;
+  
+  /* Nasconde la barra di scorrimento ma la lascia funzionante */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.carousel::-webkit-scrollbar {
+  display: none;
+}
+
+
+/* Stile per ogni elemento nel carosello */
+.carouselItem {
+  /* --- STILE DI DEFAULT (per Desktop) --- */
+  /* Su schermi grandi, le card hanno una larghezza comoda */
+  flex: 0 0 320px; 
+}
+
+
+/* --- NUOVA REGOLA SPECIFICA PER I TELEFONI --- */
+/* Questa regola si applica solo se la larghezza dello schermo è 767px o inferiore */
+@media (max-width: 767px) {
+  .carouselItem {
+    /* Su mobile, riduciamo la larghezza fissa della card.
+       Una larghezza di 240px è ideale per mostrare una card e mezza o quasi due,
+       a seconda della larghezza esatta del telefono, ottenendo l'effetto che desideri. */
+    flex-basis: 240px; 
+  }
+
+  /* Aggiungiamo un po' di padding laterale al carosello su mobile
+     per non far iniziare le card esattamente dal bordo dello schermo */
+  .carousel {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+}
+
+
+/* Messaggio da mostrare quando non ci sono TableTalk® */
+.emptyState {
+  text-align: center;
+  padding: 3rem 1rem;
+  background-color: #f8f9fa;
+  border-radius: 12px;
+  color: #555;
+  border: 1px dashed #e0e0e0;
+}

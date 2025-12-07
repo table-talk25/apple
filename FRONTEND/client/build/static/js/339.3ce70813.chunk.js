@@ -1,0 +1,2 @@
+"use strict";(self.webpackChunktable_talk_client=self.webpackChunktable_talk_client||[]).push([[339],{3339:(a,e,n)=>{n.d(e,{LocalNotifications:()=>i});var t,d=n(5403);!function(a){a[a.Sunday=1]="Sunday",a[a.Monday=2]="Monday",a[a.Tuesday=3]="Tuesday",a[a.Wednesday=4]="Wednesday",a[a.Thursday=5]="Thursday",a[a.Friday=6]="Friday",a[a.Saturday=7]="Saturday"}(t||(t={}));const i=(0,d.F3)("LocalNotifications",{web:()=>n.e(640).then(n.bind(n,8640)).then(a=>new a.LocalNotificationsWeb)})}}]);
+//# sourceMappingURL=339.3ce70813.chunk.js.map

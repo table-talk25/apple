@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>URGENTE: Multiple Segnalazioni - TableTalk</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 700px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+        .container {
+            background-color: #ffffff;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .header {
+            text-align: center;
+            border-bottom: 3px solid #dc3545;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+        .logo {
+            font-size: 28px;
+            font-weight: bold;
+            color: #dc3545;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            color: #6c757d;
+            font-size: 16px;
+        }
+        .urgent-alert {
+            background-color: #f8d7da;
+            border: 2px solid #f5c6cb;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            color: #721c24;
+            text-align: center;
+        }
+        .urgent-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
+        .urgent-title {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .urgent-message {
+            font-size: 16px;
+            line-height: 1.5;
+        }
+        .user-profile {
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            border-left: 4px solid #dc3545;
+        }
+        .user-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .user-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background-color: #dc3545;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            font-weight: bold;
+            margin-right: 15px;
+        }
+        .user-info h3 {
+            margin: 0;
+            color: #dc3545;
+        }
+        .user-stats {
+            color: #6c757d;
+            font-size: 14px;
+        }
+        .reports-list {
+            background-color: #fff;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            border: 1px solid #e9ecef;
+        }
+        .report-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #e9ecef;
+        }
+        .report-item:last-child {
+            border-bottom: none;
+        }
+        .report-info {
+            flex: 1;
+        }
+        .report-reporter {
+            font-weight: 600;
+            color: #495057;
+        }
+        .report-reason {
+            color: #6c757d;
+            font-size: 14px;
+            margin-top: 4px;
+        }
+        .report-time {
+            font-size: 12px;
+            color: #6c757d;
+            text-align: right;
+        }
+        .action-button {
+            display: inline-block;
+            background-color: #dc3545;
+            color: white;
+            padding: 15px 30px;
+            text-decoration: none;
+            border-radius: 5px;
+            margin: 20px 0;
+            font-weight: 600;
+            font-size: 16px;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #e9ecef;
+            color: #6c757d;
+            font-size: 14px;
+        }
+        .warning-box {
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 20px 0;
+            color: #856404;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">🚨 TableTalk</div>
+            <div class="subtitle">NOTIFICA URGENTE - Richiede Attenzione Immediata</div>
+        </div>
+
+        <div class="urgent-alert">
+            <div class="urgent-icon">⚠️</div>
+            <div class="urgent-title">ATTENZIONE AMMINISTRATORI!</div>
+            <div class="urgent-message">
+                L'utente <strong>{{reportedUserNickname}}</strong> ha ricevuto <strong>{{reportCount}} segnalazioni</strong> 
+                che richiedono la vostra revisione immediata. Questo pattern potrebbe indicare un comportamento problematico 
+                che necessita di intervento tempestivo.
+            </div>
+        </div>
+
+        <div class="user-profile">
+            <div class="user-header">
+                <div class="user-avatar">
+                    {{substring reportedUserNickname 0 1}}
+                </div>
+                <div class="user-info">
+                    <h3>{{reportedUserNickname}}</h3>
+                    <div class="user-stats">
+                        ID: {{reportedUserId}} | {{reportCount}} segnalazioni attive
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="warning-box">
+            <strong>⚠️ Raccomandazioni:</strong><br>
+            • Verificare immediatamente il profilo dell'utente<br>
+            • Controllare la cronologia delle segnalazioni<br>
+            • Valutare se sono necessarie azioni disciplinari<br>
+            • Considerare la sospensione temporanea se appropriato
+        </div>
+
+        {{#if recentReports.length}}
+        <div class="reports-list">
+            <h3 style="margin-top: 0; color: #dc3545;">📋 Ultime Segnalazioni</h3>
+            {{#each recentReports}}
+            <div class="report-item">
+                <div class="report-info">
+                    <div class="report-reporter">
+                        Segnalato da: <strong>{{this.reporter.nickname}}</strong>
+                    </div>
+                    <div class="report-reason">
+                        Motivo: {{this.reason}}
+                        {{#if this.details}}
+                        <br>Dettagli: {{this.details}}
+                        {{/if}}
+                    </div>
+                </div>
+                <div class="report-time">
+                    {{#if this.createdAt}}
+                        {{formatTime this.createdAt}}
+                    {{else}}
+                        Oggi
+                    {{/if}}
+                </div>
+            </div>
+            {{/each}}
+        </div>
+        {{/if}}
+
+        <div style="text-align: center;">
+            <a href="{{adminDashboardUrl}}" class="action-button">
+                🔍 Rivedi Immediatamente nella Dashboard
+            </a>
+        </div>
+
+        <div class="footer">
+            <p><strong>TableTalk - Team di Moderazione</strong></p>
+            <p>Questa notifica è stata inviata automaticamente per segnalazioni multiple.</p>
+            <p>Per assistenza immediata, contatta il team tecnico.</p>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,171 @@
+.container {
+  position: relative;
+  display: inline-block;
+}
+
+.languageButton {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.9rem;
+  min-width: 120px;
+}
+
+.languageButton:hover {
+  background: #f8f9fa;
+  border-color: #007bff;
+}
+
+.currentLanguage {
+  font-weight: 600;
+  color: #007bff;
+  font-size: 0.8rem;
+}
+
+.languageName {
+  flex: 1;
+  text-align: left;
+  color: #495057;
+  font-size: 0.85rem;
+}
+
+.arrow {
+  font-size: 0.7rem;
+  color: #6c757d;
+  transition: transform 0.2s ease;
+}
+
+.arrowUp {
+  transform: rotate(180deg);
+}
+
+.dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  margin-top: 0.25rem;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.languageOption {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  text-align: left;
+  font-size: 0.9rem;
+}
+
+.languageOption:hover {
+  background: #f8f9fa;
+}
+
+.languageOption.active {
+  background: #e3f2fd;
+  color: #007bff;
+  cursor: default;
+}
+
+.languageOption:disabled {
+  cursor: default;
+}
+
+.languageCode {
+  font-weight: 600;
+  color: #007bff;
+  font-size: 0.8rem;
+  min-width: 25px;
+}
+
+.languageOption .languageName {
+  flex: 1;
+  color: inherit;
+}
+
+.checkmark {
+  color: #28a745;
+  font-weight: bold;
+  font-size: 0.9rem;
+}
+
+.noLanguages {
+  color: #6c757d;
+  font-style: italic;
+  font-size: 0.85rem;
+  padding: 0.5rem;
+}
+
+/* Animazioni */
+.dropdown {
+  animation: slideDown 0.2s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .languageButton {
+    min-width: 100px;
+    padding: 0.4rem 0.6rem;
+  }
+  
+  .languageName {
+    display: none; /* Nascondi il nome della lingua su mobile */
+  }
+  
+  .dropdown {
+    min-width: 150px;
+    left: auto;
+    right: 0;
+  }
+  
+  .languageOption {
+    padding: 0.6rem 0.8rem;
+  }
+}
+
+/* Scrollbar personalizzata per il dropdown */
+.dropdown::-webkit-scrollbar {
+  width: 6px;
+}
+
+.dropdown::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+.dropdown::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+}
+
+.dropdown::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+} 

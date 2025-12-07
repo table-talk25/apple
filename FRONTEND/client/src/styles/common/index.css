@@ -1,0 +1,53 @@
+/* File: src/styles/common/index.css (Versione Unificata e Finale) */
+
+/* 1. Import dei Font */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
+
+/* 2. Definizione di TUTTE le variabili globali */
+:root {
+  /* Palette più tenue ispirata alla Home */
+  --primary-color: #FF7F7F;      /* rosso corallo ammorbidito */
+  --primary-dark: #FF5C5C;       /* variante scura coerente */
+  --secondary-color: #86E3DC;    /* turchese più soft */
+  --font-primary: 'Poppins', sans-serif;
+  --font-secondary: 'Inter', sans-serif;
+  --background-primary: #ffffff;
+  --background-secondary: #f8f9fa;
+  --text-primary: #333333;
+  --text-secondary: #6c757d;
+  --border-radius-md: 0.5rem;
+  --border-radius-lg: 1rem;
+  --box-shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.08);
+}
+
+/* 3. Reset CSS di base e stili per gli elementi fondamentali */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--font-secondary);
+  background-color: var(--background-secondary);
+  color: var(--text-primary);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+a {
+  color: var(--primary-color);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+a:hover {
+  color: var(--primary-dark);
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}

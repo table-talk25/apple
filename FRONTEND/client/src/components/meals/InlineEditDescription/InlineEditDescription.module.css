@@ -1,0 +1,103 @@
+.descriptionContainer {
+  margin: 20px 0;
+}
+
+.descriptionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.descriptionHeader h4 {
+  margin: 0;
+  color: #333;
+}
+
+.editButton {
+  padding: 4px 8px;
+  color: #6c757d;
+  transition: color 0.2s ease;
+}
+
+.editButton:hover {
+  color: #007bff;
+  text-decoration: none;
+}
+
+.description {
+  margin: 0;
+  line-height: 1.6;
+  color: #555;
+  white-space: pre-wrap;
+}
+
+.noDescription {
+  margin: 0;
+  color: #999;
+  font-style: italic;
+}
+
+.inlineEditContainer {
+  margin: 20px 0;
+}
+
+.editTextarea {
+  width: 100%;
+  border: 2px solid #007bff;
+  border-radius: 8px;
+  padding: 12px;
+  font-size: 1rem;
+  line-height: 1.5;
+  resize: vertical;
+  min-height: 100px;
+  transition: border-color 0.2s ease;
+}
+
+.editTextarea:focus {
+  border-color: #0056b3;
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+  outline: none;
+}
+
+.editButtons {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+  justify-content: flex-end;
+}
+
+.saveButton {
+  padding: 6px 12px;
+  border-radius: 6px;
+}
+
+.cancelButton {
+  padding: 6px 12px;
+  border-radius: 6px;
+}
+
+.helpText {
+  display: block;
+  margin-top: 8px;
+  color: #6c757d;
+  font-size: 0.875rem;
+  text-align: center;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .descriptionHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  
+  .editButtons {
+    justify-content: center;
+  }
+  
+  .editTextarea {
+    min-height: 80px;
+  }
+}

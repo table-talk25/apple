@@ -1,0 +1,29 @@
+mealmeet/
+├── client/                   # Frontend React
+│   ├── public/
+│   │   ├── index.html
+│   │   └── assets/
+│   │       └── images/
+│   └── src/
+│       ├── components/
+│       │   ├── auth/
+│       │   ├── layout/
+│       │   ├── meals/
+│       │   └── profile/
+│       ├── pages/
+│       ├── context/
+│       ├── services/
+│       ├── utils/
+│       ├── App.js
+│       └── index.js
+└── server/                   # Backend Node.js/Express
+    ├── config/
+    ├── controllers/
+    ├── middleware/
+    ├── models/
+    ├── routes/
+    ├── services/
+    ├── utils/
+    ├── .env
+    ├── package.json
+    └── server.js

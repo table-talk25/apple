@@ -1,0 +1,56 @@
+.meal-item {
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border-left: 4px solid transparent;
+  }
+  
+  .meal-item:hover {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+  }
+  
+  .meal-item.selected {
+    border-left-color: #007bff;
+    background-color: rgba(0, 123, 255, 0.05);
+  }
+  
+  .meal-item.full {
+    opacity: 0.7;
+  }
+  
+  .meal-badges {
+    display: flex;
+    gap: 5px;
+  }
+  
+  .meal-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 15px;
+  }
+  
+  .meal-host {
+    display: flex;
+    align-items: center;
+  }
+  
+  .host-avatar, .participant-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin-right: 8px;
+  }
+  
+  .meal-stats {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+  }
+  
+  .participants-count {
+    font-size: 0.9rem;
+    color: #6c757d;
+    margin-bottom: 5px;
+  }

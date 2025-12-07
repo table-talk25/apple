@@ -1,0 +1,170 @@
+/* Stile Unificato per le Pagine di Autenticazione */
+
+.page {
+  width: 100%;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center; /* Centra la card verticalmente */
+  padding: 2rem 1rem;
+  background-color: #f8f9fa;
+  overflow-x: hidden; /* Evita overflow orizzontale su mobile */
+}
+
+.card {
+  background: white;
+  border-radius: 20px;
+  padding: clamp(2rem, 5vw, 3rem);
+  width: 100%;
+  max-width: 500px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+  border: 1px solid #e9ecef;
+}
+
+.logoContainer {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 2rem;
+}
+
+.logoLink {
+  text-decoration: none;
+  transition: transform 0.2s ease;
+}
+
+.logoLink:hover {
+  transform: scale(1.05);
+}
+
+.title {
+  color: #2d3748;
+  font-size: clamp(1.8rem, 5vw, 2.2rem);
+  font-weight: 700;
+  margin-bottom: 2.5rem;
+  text-align: center;
+}
+
+.formLabel {
+  display: block; /* Assicura che l'etichetta stia sopra il campo */
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #4a5568;
+  margin-bottom: 0.5rem; /* Spazio tra etichetta e campo */
+}
+
+.formInput {
+  font-size: 1rem;
+  padding: 0.8rem 1rem;
+  border-radius: 10px;
+  border: 1px solid #ced4da;
+  background-color: #f8f9fa;
+  transition: all 0.2s ease;
+  width: 100%;
+  min-width: 0; /* permette di restringersi in container flessibili */
+  box-sizing: border-box;
+}
+
+.formInput:focus {
+  background-color: white;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+  outline: none;
+}
+
+.passwordToggle {
+  cursor: pointer;
+  background-color: #f8f9fa;
+  border: 1px solid #ced4da;
+  border-left: none;
+  padding: 0 1rem;
+  display: grid;
+  place-items: center;
+  color: #6c757d;
+  flex: 0 0 auto; /* evita che l'icona allarghi il gruppo */
+}
+
+/* Assicura che gruppi di input a destra/sinistra non sforino */
+.inputGroup {
+  width: 100%;
+  display: flex;
+  flex-wrap: nowrap;
+}
+
+@media (max-width: 380px) {
+  .card {
+    padding: 1.5rem; /* compattiamo su telefoni molto piccoli */
+  }
+}
+
+.passwordRequirements {
+  margin-top: -0.75rem;
+  margin-bottom: 1.5rem;
+  padding: 0.75rem;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  color: #6c757d;
+}
+.passwordRequirements ul { list-style-type: none; padding: 0; margin: 0; }
+
+.termsContainer {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.termsLabel {
+  font-size: 0.9rem;
+  color: #4a5568;
+  line-height: 1.5;
+  margin-bottom: 0;
+}
+
+.termsLabel a {
+  color: var(--primary-color);
+  text-decoration: underline;
+  font-weight: 500;
+}
+
+.submitButton {
+  width: 100%;
+  background-color: var(--primary-color);
+  border: none;
+  padding: 0.9rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+  border-radius: 12px;
+  color: white;
+  margin-top: 1.5rem;
+  transition: all 0.2s ease;
+}
+
+.submitButton:hover:not(:disabled) {
+  background-color: var(--primary-dark);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.submitButton:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+.bottomLink {
+  text-align: center;
+  margin-top: 2rem;
+  font-size: 1rem;
+  color: #6c757d;
+}
+
+.bottomLink a {
+  color: var(--primary-color);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.bottomLink a:hover {
+  text-decoration: underline;
+}

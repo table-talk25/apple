@@ -1,0 +1,169 @@
+/* File: frontend/client/src/components/profile/InterestsSection.module.css (Nomi corretti) */
+
+.interestsContainer {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    /* Rimosso padding e margin-bottom per essere controllati dalla griglia genitore */
+}
+
+.sectionHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+}
+
+.sectionHeader h2 {
+    font-size: clamp(1.1rem, 3.5vw, 1.4rem);
+    color: #333;
+    margin: 0;
+    flex: 1 1 auto;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.editButton, .saveButton, .cancelButton {
+    border: none;
+    cursor: pointer;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.editButton { background-color: #f0f0f0; color: #333; }
+.editButton:hover { background: #e9ecef; }
+.saveButton { background-color: #e8f5e9; color: #2e7d32; }
+.saveButton:hover { background: #d9f0db; }
+.cancelButton { background-color: #ffebee; color: #c62828; }
+.cancelButton:hover { background: #ffd9de; }
+.editButtons { display: flex; gap: 8px; }
+
+/* Sezioni Interessi e Lingue */
+.interestsSection, .languagesSection, .cuisineSection {
+    margin-bottom: 24px;
+}
+
+.interestsSection h3, .languagesSection h3, .cuisineSection h3 {
+    font-size: 1.1rem;
+    color: #555;
+    margin-bottom: 12px;
+}
+
+.inputGroup { display: flex; gap: 8px; margin-bottom: 12px; }
+.inputGroup input { flex: 1; padding: 8px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 0.9rem; }
+.inputGroup button { background: #4CAF50; color: white; border: none; border-radius: 6px; padding: 8px 12px; cursor: pointer; transition: background 0.2s ease; }
+.inputGroup button:hover { background: #45a049; }
+.inputGroup button:disabled { background: #ccc; cursor: not-allowed; }
+
+/* 🔄 COMPONENTI RIUTILIZZABILI: Stili per modalità pubblica */
+.disabledButton {
+  opacity: 0.6;
+  cursor: not-allowed !important;
+  background: #f5f5f5 !important;
+  color: #999 !important;
+}
+
+.disabledButton:hover {
+  background: #f5f5f5 !important;
+  transform: none !important;
+}
+
+/* Autocomplete Styles */
+.autocompleteContainer {
+    position: relative;
+    flex: 1;
+}
+
+.autocompleteInput {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    background-color: white;
+}
+
+.autocompleteInput:focus {
+    outline: none;
+    border-color: #4CAF50;
+    box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2);
+}
+
+.suggestionsList {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: white;
+    border: 1px solid #ddd;
+    border-top: none;
+    border-radius: 0 0 6px 6px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.suggestionItem {
+    padding: 8px 12px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.suggestionItem:last-child {
+    border-bottom: none;
+}
+
+.suggestionItem:hover {
+    background-color: #f5f5f5;
+}
+
+.suggestionItem:active {
+    background-color: #e0e0e0;
+}
+
+/* Tags List */
+.tagsList { display: flex; flex-wrap: wrap; gap: 8px; }
+
+.interestTag, .languageTag, .cuisineTag {
+    display: inline-flex;
+    align-items: center;
+    background: #f0f0f0;
+    padding: 4px 10px;
+    border-radius: 16px;
+    font-size: 0.85rem;
+    color: #555;
+    gap: 6px;
+}
+
+.interestTag button, .languageTag button { background: none; border: none; color: #999; cursor: pointer; padding: 2px; font-size: 0.8rem; display: flex; align-items: center; justify-content: center; border-radius: 50%; transition: all 0.2s ease; }
+.interestTag button:hover, .languageTag button:hover { background: #e0e0e0; color: #f44336; }
+
+/* Altri stili... (rimangono invariati) */
+.cuisineSelect { width: 100%; padding: 8px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 0.9rem; color: #555; background-color: white; }
+.cuisineSelect:focus { outline: none; border-color: #4CAF50; }
+.noItems { color: #999; font-size: 0.9rem; font-style: italic; margin: 8px 0; }
+.suggestedInterests { margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #f0f0f0; }
+.suggestedTitle { font-size: 0.9rem; font-weight: 600; color: #555; margin-bottom: 0.75rem; }
+.suggestedTags { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.suggestedTag { background-color: #e9ecef; color: #495057; border: 1px solid transparent; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.85rem; cursor: pointer; transition: all 0.2s ease; }
+.suggestedTag:hover:not(:disabled) { background-color: #ced4da; transform: translateY(-1px); }
+.suggestedTag:disabled { background-color: var(--primary-color); color: white; cursor: not-allowed; opacity: 0.7; }
+
+/* Responsive */
+@media (max-width: 768px) {
+    .interestsContainer { padding: 16px; }
+    .sectionHeader h2 { font-size: 1.3rem; }
+    .interestTag, .languageTag, .cuisineTag { font-size: 0.8rem; padding: 3px 8px; }
+    .suggestionsList { max-height: 150px; }
+    .suggestionItem { padding: 6px 10px; font-size: 0.85rem; }
+}

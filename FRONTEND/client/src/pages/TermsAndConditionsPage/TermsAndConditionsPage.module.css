@@ -1,0 +1,39 @@
+.container {
+  max-width: 800px;
+  margin: 40px auto;
+  padding: 20px 40px; /* padding interno per non stare attaccati ai bordi */
+  background-color: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+  line-height: 1.7;
+  color: #333;
+}
+
+.topBar {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.backButton {
+  background-color: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 5px;
+  padding: 8px 16px;
+  font-size: 0.9em;
+  font-weight: bold;
+  color: #495057;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  margin-bottom: 10px;
+}
+
+.backButton:hover {
+  background-color: #e9ecef;
+}
+
+.title { font-size: 1.75rem; }
+.lead { font-size: 0.95rem; }
+.h3 { font-size: 1.15rem; }
+.text { font-size: 0.95rem; }
+
+

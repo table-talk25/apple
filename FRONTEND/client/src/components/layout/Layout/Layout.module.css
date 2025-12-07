@@ -1,0 +1,43 @@
+/* File: src/components/layout/Layout/Layout.module.css (Versione Finale Ottimizzata) */
+
+/* Definiamo l'altezza della navbar come variabile globale.
+   Se la cambieremo in futuro, basterà modificarla qui! */
+   :root {
+    --navbar-height: 80px; /* Altezza per desktop */
+  }
+  
+  .layout {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    background-color: #f8f9fa; /* Un colore di sfondo neutro per tutta l'app */
+  }
+  
+  /* mainContent gestisce lo spazio per la navbar e il padding verticale */
+  .mainContent {
+    flex: 1; /* Occupa tutto lo spazio disponibile */
+    padding-top: var(--navbar-height); /* Usa la variabile per la spaziatura! */
+    padding-bottom: 3rem; /* Spazio extra in fondo alla pagina */
+    display: flex;
+    flex-direction: column;
+    align-items: center; /* Centra il contenitore della pagina */
+  }
+  
+  /* pageContainer gestisce la larghezza massima e i padding laterali */
+  .pageContainer {
+    width: 100%;
+    max-width: 1200px; /* Larghezza massima per i contenuti */
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+  
+  /* Media query per mobile */
+  @media (max-width: 768px) {
+    :root {
+      --navbar-height: 70px; /* La navbar su mobile è leggermente più bassa */
+    }
+    .pageContainer {
+      padding-left: 1rem;
+      padding-right: 1rem;
+    }
+  }

@@ -1,0 +1,30 @@
+.sidebar {
+  width: 220px;
+  background: #f7f7f7;
+  padding: 2rem 1rem;
+  height: 100vh;
+  position: fixed;
+  top: 64px; /* altezza della navbar */
+  left: 0;
+  box-shadow: 2px 0 8px rgba(0,0,0,0.05);
+}
+
+.sidebar ul {
+  list-style: none;
+  padding: 0;
+}
+
+.sidebar li {
+  margin-bottom: 1.5rem;
+}
+
+.sidebar a {
+  color: #333;
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.2s;
+}
+
+.sidebar a:hover {
+  color: #0070f3;
+} 

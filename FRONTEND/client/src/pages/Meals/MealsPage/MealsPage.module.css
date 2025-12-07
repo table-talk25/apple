@@ -1,0 +1,173 @@
+.mealsPage {
+  min-height: 100vh;
+  background-color: #f5f7fb;
+  padding: 0;
+  padding-bottom: 80px; /* Spazio per navbar inferiore */
+}
+
+.topBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 15px 20px;
+  background: white;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.pageTitle {
+  font-size: 1.2rem;
+  font-weight: 700;
+  margin: 0;
+  color: #2c3e50;
+}
+
+.searchWrapper {
+  padding: 10px 20px;
+  background: white;
+  border-bottom: 1px solid #f0f0f0;
+  position: sticky;
+  top: 60px; /* Subito sotto la topbar */
+  z-index: 99;
+}
+
+.searchContainer {
+  display: flex;
+  align-items: center;
+  background-color: #f0f2f5;
+  border-radius: 25px;
+  padding: 10px 15px;
+}
+
+.searchIcon {
+  color: #adb5bd;
+  margin-right: 10px;
+}
+
+.searchInput {
+  border: none;
+  background: transparent;
+  width: 100%;
+  outline: none;
+  font-size: 0.95rem;
+  color: #495057;
+}
+
+.content {
+  padding: 20px 0; /* Rimosso padding laterale perché i caroselli devono toccare i bordi */
+}
+
+.sectionWrapper {
+  margin-bottom: 30px;
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+  margin-bottom: 15px;
+}
+
+.sectionTitle {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #343a40;
+  margin: 0;
+}
+
+.sectionCount {
+  background: #e9ecef;
+  color: #6c757d;
+  font-size: 0.8rem;
+  padding: 2px 8px;
+  border-radius: 10px;
+  margin-left: 10px;
+  font-weight: 600;
+}
+
+/* Empty State */
+.emptyFeed {
+  padding: 20px;
+  display: flex;
+  justify-content: center;
+}
+
+.heroCard {
+  background: white;
+  border-radius: 20px;
+  padding: 40px 20px;
+  text-align: center;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+  max-width: 400px;
+  width: 100%;
+}
+
+.ctaPrimary {
+  display: inline-block;
+  margin-top: 20px;
+  padding: 12px 30px;
+  background-color: #ff6b6b;
+  color: white;
+  border-radius: 30px;
+  text-decoration: none;
+  font-weight: 600;
+  box-shadow: 0 4px 10px rgba(255, 107, 107, 0.3);
+  transition: all 0.2s;
+}
+
+.fabButton {
+  position: fixed;
+  bottom: 90px; /* Sopra la navbar */
+  right: 20px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background-color: #ff6b6b;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 15px rgba(255, 107, 107, 0.4);
+  text-decoration: none;
+  z-index: 1000;
+  transition: transform 0.2s;
+}
+
+.fabButton:active {
+  transform: scale(0.95);
+}
+
+.fabIcon {
+  font-size: 30px;
+  font-weight: 300;
+  margin-top: -4px; /* Correzione ottica */
+}
+
+/* Sezione Raccomandata */
+.recommendedSection {
+  background: linear-gradient(to bottom, #fff9f9, #ffffff);
+  padding-top: 15px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #f0f0f0;
+  margin-bottom: 20px !important;
+}
+
+.sectionSubtitle {
+  padding: 0 20px;
+  margin-top: -10px;
+  margin-bottom: 15px;
+  font-size: 0.85rem;
+  color: #888;
+}
+
+/* Animazione sottile per l'icona magica */
+.recommendedSection h3 svg {
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.2); opacity: 0.8; }
+  100% { transform: scale(1); opacity: 1; }
+}

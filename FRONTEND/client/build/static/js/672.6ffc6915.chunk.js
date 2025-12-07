@@ -1,0 +1,2 @@
+"use strict";(self.webpackChunktable_talk_client=self.webpackChunktable_talk_client||[]).push([[672],{8672:(e,t,n)=>{n.d(t,{Browser:()=>s});const s=(0,n(5403).F3)("Browser",{web:()=>n.e(842).then(n.bind(n,7842)).then(e=>new e.BrowserWeb)})}}]);
+//# sourceMappingURL=672.6ffc6915.chunk.js.map

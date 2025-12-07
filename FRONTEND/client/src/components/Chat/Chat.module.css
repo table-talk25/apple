@@ -1,0 +1,125 @@
+/* FRONTEND/client/src/components/Chat/Chat.module.css */
+
+.chatContainer {
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    height: 60vh;
+    min-height: 400px;
+    max-height: 700px;
+    background-color: #f9f9f9;
+    margin-top: 2rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  }
+  
+  .chatTitle {
+    padding: 1rem;
+    border-bottom: 1px solid #e0e0e0;
+    margin: 0;
+    font-size: 1.2rem;
+    color: #333;
+    background-color: #fff;
+    border-radius: 8px 8px 0 0;
+    text-align: center;
+  }
+  
+  .messagesList {
+    flex-grow: 1;
+    overflow-y: auto;
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .message {
+    display: flex;
+    align-items: flex-start;
+    max-width: 75%;
+    gap: 10px;
+  }
+  
+  .avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+  }
+  
+  .messageContent {
+    background-color: #fff;
+    padding: 10px 15px;
+    border-radius: 18px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  }
+  
+  .messageContent p {
+    margin: 0;
+    word-wrap: break-word;
+  }
+  
+  .senderName {
+    font-weight: bold;
+    font-size: 0.9rem;
+    color: #555;
+    margin-bottom: 4px;
+  }
+  
+  .timestamp {
+    font-size: 0.75rem;
+    color: #999;
+    display: block;
+    text-align: right;
+    margin-top: 5px;
+  }
+  
+  /* Stile per i messaggi dell'utente loggato */
+  .myMessage {
+    align-self: flex-end;
+    flex-direction: row-reverse;
+  }
+  
+  .myMessage .messageContent {
+    background-color: #dcf8c6;
+  }
+  
+  /* Stile per i messaggi degli altri utenti */
+  .otherMessage {
+    align-self: flex-start;
+  }
+  
+  .otherMessage .messageContent {
+    background-color: #ffffff;
+  }
+  
+  .messageForm {
+    display: flex;
+    padding: 1rem;
+    border-top: 1px solid #e0e0e0;
+    background-color: #fff;
+  }
+  
+  .messageInput {
+    flex-grow: 1;
+    padding: 12px;
+    border: 1px solid #ccc;
+    border-radius: 20px;
+    margin-right: 10px;
+    font-size: 1rem;
+  }
+  
+  .sendButton {
+    padding: 12px 20px;
+    border: none;
+    background-color: #007bff;
+    color: white;
+    border-radius: 20px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: background-color 0.2s;
+  }
+  
+  .sendButton:hover {
+    background-color: #0056b3;
+  }

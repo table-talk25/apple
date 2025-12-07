@@ -1,0 +1,192 @@
+.header {
+  background-color: #dc3545;
+  color: white;
+  border-bottom: none;
+}
+
+.title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 600;
+}
+
+.warningIcon {
+  font-size: 1.2rem;
+}
+
+.body {
+  padding: 1.5rem;
+}
+
+.warningAlert {
+  border: none;
+  background-color: #f8d7da;
+  color: #721c24;
+  margin-bottom: 1.5rem;
+}
+
+.userInfo {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+}
+
+.userAvatar {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #dee2e6;
+}
+
+.userInfo h6 {
+  margin: 0;
+  color: #495057;
+}
+
+.userInfo small {
+  color: #6c757d;
+}
+
+.sectionTitle {
+  font-weight: 600;
+  color: #495057;
+  margin-bottom: 1rem;
+}
+
+.consequencesList {
+  margin-bottom: 1.5rem;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+}
+
+.consequenceItem {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  border: none;
+  border-bottom: 1px solid #e9ecef;
+  background-color: #fff;
+  color: #495057;
+}
+
+.consequenceItem:last-child {
+  border-bottom: none;
+}
+
+.consequenceIcon {
+  color: #dc3545;
+  font-size: 0.9rem;
+  flex-shrink: 0;
+}
+
+.checkboxes {
+  margin-bottom: 1.5rem;
+}
+
+.checkbox {
+  margin-bottom: 0.75rem;
+}
+
+.checkbox .form-check-input:checked {
+  background-color: #dc3545;
+  border-color: #dc3545;
+}
+
+.checkbox .form-check-label {
+  font-weight: 500;
+  color: #495057;
+}
+
+.actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+  margin-top: 1.5rem;
+}
+
+.successStep {
+  text-align: center;
+  padding: 2rem 1rem;
+}
+
+.successIcon {
+  width: 80px;
+  height: 80px;
+  background-color: #28a745;
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  margin: 0 auto 1.5rem;
+  animation: successPulse 2s ease-in-out;
+}
+
+.successStep h5 {
+  color: #28a745;
+  margin-bottom: 1rem;
+}
+
+.successStep p {
+  color: #6c757d;
+  margin-bottom: 0.5rem;
+}
+
+@keyframes successPulse {
+  0% {
+    transform: scale(0.8);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Animazioni per il modale */
+.modal {
+  animation: modalSlideIn 0.3s ease-out;
+}
+
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9) translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .body {
+    padding: 1rem;
+  }
+  
+  .actions {
+    flex-direction: column;
+  }
+  
+  .userInfo {
+    flex-direction: column;
+    text-align: center;
+    gap: 0.5rem;
+  }
+  
+  .consequenceItem {
+    padding: 0.5rem;
+  }
+} 
