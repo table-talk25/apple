@@ -68,6 +68,11 @@ const fileFilter = (req, file, cb) => {
 // Esportiamo direttamente l'istanza di multer configurata
 module.exports = multer({
   storage: storage,
-  limits: { fileSize: 10 * 1024 * 1024 }, // Aumentato a 10MB per corrispondere al limite del frontend
+  limits: { 
+    fileSize: 10 * 1024 * 1024, // 10MB per i file
+    fieldSize: 2 * 1024 * 1024, // 2MB per i campi (per gestire location JSON e altri dati)
+    fields: 50, // Numero massimo di campi non-file
+    fieldNameSize: 100 // Lunghezza massima del nome del campo
+  },
   fileFilter: fileFilter
 });
