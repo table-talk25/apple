@@ -17,6 +17,9 @@
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   -webkit-backdrop-filter: saturate(180%) blur(10px);
   backdrop-filter: saturate(180%) blur(10px);
+  /* Supporto per safe area iOS (notch/status bar) */
+  padding-top: env(safe-area-inset-top);
+  height: calc(80px + env(safe-area-inset-top));
 }
 .navbar.scrolled {
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.12);
@@ -227,10 +230,17 @@
 /* Menu a tendina che si apre su MOBILE */
 .navMenuMobile {
   display: flex; flex-direction: column; width: 100%;
-  position: absolute; top: 80px; left: 0;
+  position: absolute; 
+  top: calc(80px + env(safe-area-inset-top)); 
+  left: 0;
   background: #fff; list-style: none; padding: 1rem 0;
   box-shadow: 0 5px 15px rgba(0,0,0,0.1);
   border-top: 1px solid #f0f0f0;
+  /* Assicura che il menu sia accessibile anche con safe area */
+  max-height: calc(100vh - calc(80px + env(safe-area-inset-top)));
+  overflow-y: auto;
+  /* Supporto per safe area inferiore iOS */
+  padding-bottom: calc(1rem + env(safe-area-inset-bottom));
 }
 .navItem {
   padding: 1rem 2rem; width: 100%; text-align: center;

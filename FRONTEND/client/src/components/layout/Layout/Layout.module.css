@@ -16,8 +16,8 @@
   /* mainContent gestisce lo spazio per la navbar e il padding verticale */
   .mainContent {
     flex: 1; /* Occupa tutto lo spazio disponibile */
-    padding-top: var(--navbar-height); /* Usa la variabile per la spaziatura! */
-    padding-bottom: 3rem; /* Spazio extra in fondo alla pagina */
+    padding-top: calc(var(--navbar-height) + env(safe-area-inset-top)); /* Usa la variabile per la spaziatura + safe area iOS */
+    padding-bottom: calc(3rem + env(safe-area-inset-bottom)); /* Spazio extra in fondo alla pagina + safe area iOS */
     display: flex;
     flex-direction: column;
     align-items: center; /* Centra il contenitore della pagina */
