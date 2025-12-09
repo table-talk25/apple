@@ -28,13 +28,25 @@ const ProfilePage = () => {
     const [isUpdating, setIsUpdating] = useState(false);
     const [error, setError] = useState('');
 
+    // Usa un ref per tracciare se il profilo è già stato caricato
+    const hasLoadedRef = React.useRef(false);
+    const loadingRef = React.useRef(false);
+
     const loadProfile = useCallback(async () => {
         console.log('[ProfilePage] loadProfile chiamato, user?.id:', user?.id);
         if (!user?.id) {
             console.warn('[ProfilePage] ⚠️ User ID non presente, salto il caricamento');
             return;
         }
+        
+        // Evita caricamenti multipli simultanei
+        if (loadingRef.current) {
+            console.log('[ProfilePage] ⚠️ Caricamento già in corso, salto');
+            return;
+        }
+        
         try {
+            loadingRef.current = true;
             setLoading(true);
             setError('');
             console.log('[ProfilePage] Caricamento profilo per user ID:', user.id);
@@ -45,8 +57,12 @@ const ProfilePage = () => {
                 nickname: data?.nickname
             });
             setProfileData(data);
-            // Aggiorna anche lo stato globale
-            updateUser(data);
+            // Aggiorna anche lo stato globale solo se i dati sono diversi
+            // Usa una versione stabile di updateUser per evitare loop
+            if (data && (!hasLoadedRef.current || JSON.stringify(data) !== JSON.stringify(user))) {
+                updateUser(data);
+                hasLoadedRef.current = true;
+            }
         } catch (err) {
             console.error('[ProfilePage] ❌ Errore nel caricamento profilo:', {
                 message: err.message,
@@ -62,12 +78,18 @@ const ProfilePage = () => {
             }
         } finally {
             setLoading(false);
+            loadingRef.current = false;
         }
-    }, [user?.id, t, updateUser]);
+    }, [user?.id, t]); // Rimossa updateUser dalle dipendenze per evitare loop
 
     useEffect(() => {
-        loadProfile();
-    }, [loadProfile]);
+        // Reset del ref quando cambia l'utente
+        if (user?.id && !hasLoadedRef.current) {
+            hasLoadedRef.current = false;
+            loadProfile();
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [user?.id]); // Dipende solo da user?.id, non da loadProfile per evitare loop
 
     const handleProfileUpdate = async (updatedData) => {
         setIsUpdating(true);
