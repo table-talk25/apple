@@ -83,9 +83,9 @@ const ProfilePage = () => {
     }, [user?.id, t]); // Rimossa updateUser dalle dipendenze per evitare loop
 
     useEffect(() => {
-        // Reset del ref quando cambia l'utente
-        if (user?.id && !hasLoadedRef.current) {
-            hasLoadedRef.current = false;
+        // Carica il profilo quando l'utente è disponibile e non è già stato caricato
+        if (user?.id && !hasLoadedRef.current && !loadingRef.current) {
+            console.log('[ProfilePage] useEffect: Caricamento profilo per user:', user.id);
             loadProfile();
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -129,14 +129,17 @@ const ProfilePage = () => {
     };
 
     // --- LOGICA DI RENDER PRINCIPALE ---
+    console.log('[ProfilePage] Render - authLoading:', authLoading, 'user:', !!user, 'loading:', loading, 'error:', error, 'profileData:', !!profileData);
 
     // Se l'autenticazione è ancora in caricamento, mostra spinner
     if (authLoading) {
+        console.log('[ProfilePage] Mostrando spinner per authLoading');
         return <Spinner fullscreen label={t('common.loading') || 'Caricamento...'} />;
     }
 
     // Se non c'è un utente autenticato, mostra errore
     if (!user) {
+        console.log('[ProfilePage] Nessun utente, mostrando errore');
         return (
             <Container>
                 <Alert variant="warning">
@@ -148,15 +151,20 @@ const ProfilePage = () => {
 
     // Se il profilo è ancora in caricamento, mostra spinner
     if (loading) {
+        console.log('[ProfilePage] Mostrando spinner per loading');
         return <Spinner fullscreen label={t('common.loadingProfile') || 'Caricamento profilo...'} />;
     }
 
     // Se c'è un errore, mostralo
     if (error) {
+        console.log('[ProfilePage] Mostrando errore:', error);
         return (
             <Container>
                 <Alert variant="danger">{error}</Alert>
-                <Button onClick={() => loadProfile()} className="mt-3">
+                <Button onClick={() => {
+                    hasLoadedRef.current = false;
+                    loadProfile();
+                }} className="mt-3">
                     {t('common.retry') || 'Riprova'}
                 </Button>
             </Container>
@@ -219,22 +227,29 @@ const ProfilePage = () => {
     // Usa profileData se disponibile, altrimenti usa user come fallback
     const displayData = profileData || user;
     
+    console.log('[ProfilePage] displayData:', !!displayData, 'user.profileCompleted:', user?.profileCompleted);
+    
     if (!displayData) {
+        console.log('[ProfilePage] Nessun displayData disponibile');
         return (
             <Container>
                 <Alert variant="warning">
                     {t('profile.noData') || 'Impossibile caricare i dati del profilo.'}
                 </Alert>
-                <Button onClick={() => loadProfile()} className="mt-3">
+                <Button onClick={() => {
+                    hasLoadedRef.current = false;
+                    loadProfile();
+                }} className="mt-3">
                     {t('common.retry') || 'Riprova'}
                 </Button>
             </Container>
         );
     }
 
+    console.log('[ProfilePage] Renderizzando pagina profilo completa');
     return (
         <ErrorBoundary componentName="ProfilePage">
-            <Container fluid className={styles.profilePage}>
+            <Container fluid className={styles.profilePage} style={{ minHeight: '100vh', backgroundColor: '#f8f9fa' }}>
                 <div className={styles.header}>
                     <BackButton className={styles.smallBackButton} />
                 </div>

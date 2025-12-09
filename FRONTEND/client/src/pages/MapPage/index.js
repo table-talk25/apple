@@ -128,7 +128,7 @@ const MapPage = () => {
           onMarkerClick={handleMarkerClick}
           onMapClick={handleMapClick}
           userLocation={userLocation ? { lat: userLocation[0], lng: userLocation[1] } : null}
-          height="100%"
+          height="100vh"
           width="100%"
         />
       </div>

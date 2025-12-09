@@ -132,10 +132,7 @@ const AppWrapper = () => {
       <HashRouter>
         <AuthProvider>
           <MealsProvider>
-            <div style={{ minHeight: '100vh', background: '#fff', padding: '20px' }}>
-              <h1 style={{ color: '#000' }}>TEST: Se vedi questo, React funziona!</h1>
-              <App />
-            </div>
+            <App />
           </MealsProvider>
         </AuthProvider>
       </HashRouter>
