@@ -72,38 +72,6 @@ const OpenStreetMapComponent = ({
   width = '100%',
   center = [45.4642, 9.1900] // Milano di default
 }) => {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState([]);
-  const [isSearching, setIsSearching] = useState(false);
-
-  // Funzione ricerca luoghi (API gratuita Nominatim)
-  const searchPlaces = async (query) => {
-    if (!query || query.length < 3) return;
-    
-    setIsSearching(true);
-    try {
-      const response = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5&countrycodes=it&addressdetails=1`
-      );
-      const results = await response.json();
-      
-      const formattedResults = results.map(place => ({
-        id: place.place_id,
-        name: place.display_name,
-        lat: parseFloat(place.lat),
-        lng: parseFloat(place.lon),
-        address: place.display_name
-      }));
-      
-      setSearchResults(formattedResults);
-    } catch (error) {
-      console.error('Errore ricerca luoghi:', error);
-      setSearchResults([]);
-    } finally {
-      setIsSearching(false);
-    }
-  };
-
   return (
     <div style={{ width: '100%', height: '100%' }}>
       {/* Mappa */}
