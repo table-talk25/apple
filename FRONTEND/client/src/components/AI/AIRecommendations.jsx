@@ -26,7 +26,8 @@ const AIRecommendations = ({ userLocation, onMealSelect, showTitle = true }) => 
           longitude: userLocation.longitude,
           limit: 4
         },
-        suppressErrorAlert: true
+        suppressErrorAlert: true,
+        timeout: 60000 // Timeout più lungo per questa richiesta (può richiedere più tempo)
       });
       setRecommendations(data?.recommendations || data?.data || []);
       

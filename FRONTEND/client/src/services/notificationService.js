@@ -341,7 +341,10 @@ class NotificationService {
         ...params
       }).toString();
       
-      const response = await apiClient.get(`/notifications?${queryParams}`);
+      const response = await apiClient.get(`/notifications?${queryParams}`, {
+        timeout: 60000, // Timeout più lungo per permettere wake-up server Render
+        suppressErrorAlert: true // Sopprimi alert per questa richiesta non critica
+      });
       return response.data?.data || [];
     } catch (error) {
       console.error('[NotificationService] Errore nel caricamento notifiche:', error);

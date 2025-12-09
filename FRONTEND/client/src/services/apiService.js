@@ -173,6 +173,35 @@ apiClient.interceptors.response.use(
       } catch (nativeErr) {
         // Continua con la gestione standard se anche il nativo fallisce
         console.error('[API] Retry nativo fallito:', nativeErr);
+        // Se è ancora un timeout e siamo al primo tentativo, prova un altro retry con timeout ancora più lungo
+        if (retryCount === 1 && (nativeErr.code === 'ECONNABORTED' || nativeErr.message?.includes('timeout'))) {
+          console.log('[API] Secondo retry con timeout esteso (90s) per wake-up server Render');
+          try {
+            const fullUrl = buildFullUrl(error.config || {});
+            let headers = { ...(error?.config?.headers || {}) };
+            const token = await authPreferences.getToken();
+            if (token) headers['Authorization'] = `Bearer ${token}`;
+            if (!headers['Content-Type']) headers['Content-Type'] = 'application/json';
+            
+            const nativeResp2 = await CapacitorHttp.get({
+              url: fullUrl,
+              headers,
+              params: error?.config?.params || undefined,
+              connectTimeout: 90000, // 90s per il secondo tentativo
+              readTimeout: 90000,
+            });
+            return Promise.resolve({
+              data: nativeResp2.data,
+              status: nativeResp2.status,
+              statusText: nativeResp2.statusText || '',
+              headers: nativeResp2.headers || {},
+              config: error.config,
+              request: null,
+            });
+          } catch (nativeErr2) {
+            console.error('[API] Secondo retry fallito:', nativeErr2);
+          }
+        }
       }
     }
 
