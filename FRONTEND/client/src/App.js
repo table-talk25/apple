@@ -45,6 +45,24 @@ const App = () => {
   console.log('--- L\'APP SI STA CARICANDO ---'); // <-- AGGIUNGI QUESTA RIGA
 
   const navigate = useNavigate();
+  
+  // Rimuovi il loader quando l'app si monta
+  React.useEffect(() => {
+    const loader = document.getElementById('app-loader');
+    if (loader) {
+      console.log('✅ [App] Rimuovo loader iniziale');
+      loader.style.display = 'none';
+      loader.style.visibility = 'hidden';
+      loader.style.opacity = '0';
+      setTimeout(() => {
+        try {
+          loader.remove();
+        } catch (e) {
+          console.warn('Errore rimozione loader:', e);
+        }
+      }, 300);
+    }
+  }, []);
 
   useEffect(() => {
     const initializeApp = async () => {

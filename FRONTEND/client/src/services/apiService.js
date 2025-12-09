@@ -64,7 +64,7 @@ const apiClient = axios.create({
   // 2. Usiamo direttamente la nuova variabile API_URL
   // (che contiene già /api alla fine, grazie alla nostra nuova logica)
   baseURL: API_URL, 
-  timeout: 30000,
+  timeout: 15000, // Ridotto a 15s per evitare attese troppo lunghe
   headers: {
     'Content-Type': 'application/json',
   }
@@ -122,9 +122,13 @@ apiClient.interceptors.response.use(
     });
 
     // Retry nativo su ERR_NETWORK/ECONNABORTED (bypass WebView/CORS) per GET
+    // Aumenta timeout per il primo wake-up del server Render (può richiedere fino a 60s)
     const isNetworkLike = code === 'ERR_NETWORK' || code === 'ECONNABORTED' || (!status && !error.response);
     const isGet = method === 'GET';
-    if (isNetworkLike && isGet && Capacitor.isNativePlatform()) {
+    const isFirstRequest = !error?.config?._retryCount;
+    const retryCount = (error?.config?._retryCount || 0) + 1;
+    
+    if (isNetworkLike && isGet && Capacitor.isNativePlatform() && retryCount <= 2) {
       try {
         const fullUrl = buildFullUrl(error.config || {});
         // IMPORTANTE: Recupera sempre il token per le richieste native
@@ -133,7 +137,7 @@ apiClient.interceptors.response.use(
           const token = await authPreferences.getToken();
           if (token) {
             headers['Authorization'] = `Bearer ${token}`;
-            console.log('[API] Token incluso nel retry nativo');
+            console.log('[API] Token incluso nel retry nativo (tentativo', retryCount, ')');
           } else {
             console.warn('[API] Token non trovato per il retry nativo');
           }
@@ -146,12 +150,16 @@ apiClient.interceptors.response.use(
           headers['Content-Type'] = 'application/json';
         }
         
+        // Per il primo tentativo, aumenta il timeout per permettere il wake-up del server Render
+        const timeout = isFirstRequest ? 60000 : 20000; // 60s per il primo, 20s per i successivi
+        
+        console.log(`[API] Retry nativo tentativo ${retryCount} con timeout ${timeout}ms`);
         const nativeResp = await CapacitorHttp.get({
           url: fullUrl,
           headers,
           params: error?.config?.params || undefined,
-          connectTimeout: 30000,
-          readTimeout: 30000,
+          connectTimeout: timeout,
+          readTimeout: timeout,
         });
         // Adatta la risposta nativa al formato Axios
         return Promise.resolve({

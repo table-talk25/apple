@@ -80,17 +80,24 @@ function removeLoader() {
   try {
     const loader = document.getElementById('app-loader');
     if (loader && loader.parentNode) {
-      console.log("🔴 [DEBUG] Rimuovo loader HTML");
-      alert("🔴 [DEBUG] Rimuovo loader HTML - React dovrebbe essere montato");
-      // NON rimuovere fisicamente, solo nascondi per debug
+      console.log("✅ [DEBUG] Rimuovo loader HTML");
       loader.style.display = 'none';
+      loader.style.visibility = 'hidden';
+      loader.style.opacity = '0';
       safeLog('info', 'Loader HTML nascosto');
+      // Rimuovi dopo un breve delay per transizione smooth
+      setTimeout(() => {
+        try {
+          loader.remove();
+        } catch (e) {
+          console.warn('Errore rimozione loader:', e);
+        }
+      }, 300);
     } else {
       console.warn("⚠️ [DEBUG] Loader non trovato o già rimosso");
     }
   } catch (error) {
     safeLog('warn', 'Impossibile rimuovere loader HTML:', error);
-    alert("⚠️ [DEBUG] Errore rimozione loader: " + error.message);
   }
 }
 
@@ -144,6 +151,15 @@ try {
   console.log("🔴 [DEBUG] Chiamata root.render()...");
   root.render(<AppWrapper />);
   console.log("✅ [DEBUG] root.render() completato");
+  
+  // Forza la rimozione del loader dopo un breve delay per sicurezza
+  setTimeout(() => {
+    const rootElement = document.getElementById('root');
+    if (rootElement && rootElement.children.length > 0) {
+      console.log("✅ [DEBUG] Root ha contenuto, rimuovo loader");
+      removeLoader();
+    }
+  }, 500);
   safeLog('info', 'App renderizzata con successo');
   
   // React normalmente si monta in < 100ms, ma verifichiamo più volte per sicurezza

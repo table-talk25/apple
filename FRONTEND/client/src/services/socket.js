@@ -13,12 +13,15 @@ export const connectSocket = async () => {
 
     socket = io(SERVER_URL, {
         auth: { token },
-        transports: ['websocket'], // Evita polling error
+        transports: ['websocket', 'polling'], // Fallback a polling se websocket non disponibile
         reconnection: true,
         reconnectionAttempts: Infinity,
         reconnectionDelay: 3000,
         timeout: 20000,
-        autoConnect: true
+        autoConnect: true,
+        // Evita errori "Channel create" su iOS
+        forceNew: false,
+        upgrade: true
     });
 
     socket.on('connect', () => {
