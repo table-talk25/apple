@@ -66,10 +66,29 @@
 
 .searchInput {
   border: none;
-  width: 100%;
+  flex: 1;
   outline: none;
   font-size: 1rem;
   color: #333;
+  min-width: 0;
+}
+
+.searchButton {
+  background: #FF6B35 !important;
+  color: white !important;
+  border: none !important;
+  padding: 8px 16px !important;
+  border-radius: 0 25px 25px 0 !important;
+  cursor: pointer !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  margin-left: 10px !important;
+  white-space: nowrap;
+}
+
+.searchButton:disabled {
+  background: #ccc !important;
+  cursor: not-allowed !important;
 }
 
 /* Controlli Fluttuanti (GPS, Cerca Qui) */

@@ -12,13 +12,32 @@ L.Icon.Default.mergeOptions({
 });
 
 // Componente per centrare la mappa su una posizione specifica
-function FlyToMarker({ position }) {
+function FlyToMarker({ position, zoom }) {
   const map = useMap();
   useEffect(() => {
-    if (position) {
-      map.setView([position.lat, position.lng], map.getZoom());
+    if (position && position.lat && position.lng) {
+      const targetZoom = zoom || map.getZoom();
+      // Usa flyTo per animazione smooth invece di setView
+      map.flyTo([position.lat, position.lng], targetZoom, {
+        duration: 1.5 // Animazione di 1.5 secondi
+      });
     }
-  }, [position, map]);
+  }, [position?.lat, position?.lng, zoom, map]);
+  return null;
+}
+
+// Componente per reagire ai cambiamenti di center prop
+function CenterUpdater({ center, zoom }) {
+  const map = useMap();
+  useEffect(() => {
+    if (center && Array.isArray(center) && center.length === 2) {
+      const [lat, lng] = center;
+      const targetZoom = zoom || map.getZoom();
+      map.flyTo([lat, lng], targetZoom, {
+        duration: 1.5
+      });
+    }
+  }, [center, zoom, map]);
   return null;
 }
 
@@ -86,85 +105,7 @@ const OpenStreetMapComponent = ({
   };
 
   return (
-    <div style={{ width: '100%' }}>
-      {/* Barra di ricerca */}
-      <div style={{ marginBottom: '10px' }}>
-        <div style={{ position: 'relative' }}>
-          <input
-            type="text"
-            placeholder="🔍 Cerca ristoranti, indirizzi..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            onKeyPress={(e) => e.key === 'Enter' && searchPlaces(searchQuery)}
-            style={{
-              width: '100%',
-              padding: '12px',
-              border: '2px solid #ddd',
-              borderRadius: '8px',
-              fontSize: '16px'
-            }}
-          />
-          <button
-            onClick={() => searchPlaces(searchQuery)}
-            disabled={isSearching}
-            style={{
-              position: 'absolute',
-              right: '8px',
-              top: '50%',
-              transform: 'translateY(-50%)',
-              background: '#FF6B35',
-              color: 'white',
-              border: 'none',
-              padding: '8px 12px',
-              borderRadius: '6px',
-              cursor: 'pointer'
-            }}
-          >
-            {isSearching ? '...' : 'Cerca'}
-          </button>
-        </div>
-        
-        {/* Risultati ricerca */}
-        {searchResults.length > 0 && (
-          <div style={{
-            position: 'absolute',
-            zIndex: 1000,
-            background: 'white',
-            border: '1px solid #ddd',
-            borderRadius: '8px',
-            marginTop: '5px',
-            maxHeight: '200px',
-            overflowY: 'auto',
-            width: '100%'
-          }}>
-            {searchResults.map(result => (
-              <div
-                key={result.id}
-                onClick={() => {
-                  onLocationSelect && onLocationSelect({
-                    lat: result.lat,
-                    lng: result.lng,
-                    address: result.address
-                  });
-                  setSearchResults([]);
-                  setSearchQuery(result.name.split(',')[0]);
-                }}
-                style={{
-                  padding: '10px',
-                  cursor: 'pointer',
-                  borderBottom: '1px solid #eee',
-                  fontSize: '14px'
-                }}
-                onMouseEnter={(e) => e.target.style.backgroundColor = '#f5f5f5'}
-                onMouseLeave={(e) => e.target.style.backgroundColor = 'white'}
-              >
-                📍 {result.name}
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
+    <div style={{ width: '100%', height: '100%' }}>
       {/* Mappa */}
       <MapContainer 
         center={center} 
@@ -176,11 +117,14 @@ const OpenStreetMapComponent = ({
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         />
         
+        {/* Aggiorna il centro quando cambia il prop center */}
+        <CenterUpdater center={center} zoom={zoom} />
+        
         {/* Gestione click per selezionare posizione e chiudere card */}
         <LocationPicker onLocationSelect={onLocationSelect} onMapClick={onMapClick} />
         
         {/* Centra la mappa sulla posizione selezionata */}
-        {selectedLocation && <FlyToMarker position={selectedLocation} />}
+        {selectedLocation && <FlyToMarker position={selectedLocation} zoom={zoom} />}
         
         {/* Marker per posizione utente */}
         {userLocation && (

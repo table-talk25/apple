@@ -23,6 +23,7 @@ const MapPage = () => {
   const [selectedMeal, setSelectedMeal] = useState(null);
   const [userLocation, setUserLocation] = useState(null);
   const [searchRadius, setSearchRadius] = useState(15); // km
+  const [searchQuery, setSearchQuery] = useState('');
 
   // 1. Ottieni Posizione Utente
   useEffect(() => {
@@ -96,11 +97,50 @@ const MapPage = () => {
     if (selectedMeal) setSelectedMeal(null);
   };
 
-  // Ricarica nell'area corrente (simulato)
+  // Ricarica nell'area corrente
   const handleSearchHere = () => {
-    // In una implementazione avanzata, OpenStreetMapComponent dovrebbe esporre il centro attuale
-    // Per ora, usiamo l'ultimo centro noto o quello utente
     fetchMealsForMap(center[0], center[1], searchRadius);
+  };
+
+  // Handler per ricerca città/luogo
+  const handleLocationSearch = async (query) => {
+    if (!query || query.length < 3) return;
+    
+    try {
+      setLoading(true);
+      // Usa Nominatim API per geocoding
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1&countrycodes=it&addressdetails=1`
+      );
+      const results = await response.json();
+      
+      if (results && results.length > 0) {
+        const place = results[0];
+        const newCenter = [parseFloat(place.lat), parseFloat(place.lon)];
+        setCenter(newCenter);
+        setZoom(14); // Zoom più vicino quando si cerca un luogo
+        // Ricarica i pasti nella nuova posizione
+        fetchMealsForMap(newCenter[0], newCenter[1], searchRadius);
+        toast.success(`Mappa centrata su ${place.display_name}`);
+      } else {
+        toast.warn('Luogo non trovato. Prova con un altro nome.');
+      }
+    } catch (error) {
+      console.error('Errore ricerca luogo:', error);
+      toast.error('Errore durante la ricerca del luogo');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Handler per selezione posizione dalla mappa
+  const handleLocationSelect = (location) => {
+    if (location && location.lat && location.lng) {
+      const newCenter = [location.lat, location.lng];
+      setCenter(newCenter);
+      setZoom(14);
+      fetchMealsForMap(location.lat, location.lng, searchRadius);
+    }
   };
 
   return (
@@ -112,10 +152,23 @@ const MapPage = () => {
           <FaSearch className={styles.searchIcon} />
           <input 
             type="text" 
-            placeholder={t('map.searchPlaceholder') || "Cerca zona..."} 
+            placeholder={t('map.searchPlaceholder') || "Cerca città o zona..."} 
             className={styles.searchInput}
-            // Qui potresti collegare un autocomplete per spostare la mappa
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            onKeyPress={(e) => {
+              if (e.key === 'Enter') {
+                handleLocationSearch(searchQuery);
+              }
+            }}
           />
+          <button
+            onClick={() => handleLocationSearch(searchQuery)}
+            disabled={loading || !searchQuery.trim()}
+            className={styles.searchButton}
+          >
+            {loading ? '...' : 'Cerca'}
+          </button>
         </div>
       </div>
 
@@ -127,7 +180,9 @@ const MapPage = () => {
           markers={mapMarkers}
           onMarkerClick={handleMarkerClick}
           onMapClick={handleMapClick}
+          onLocationSelect={handleLocationSelect}
           userLocation={userLocation ? { lat: userLocation[0], lng: userLocation[1] } : null}
+          selectedLocation={center ? { lat: center[0], lng: center[1] } : null}
           height="100vh"
           width="100%"
         />
