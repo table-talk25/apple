@@ -1,0 +1,2 @@
+"use strict";(self.webpackChunktable_talk_client=self.webpackChunktable_talk_client||[]).push([[760],{5760:(e,a,l)=>{l.d(a,{DialogWeb:()=>s});var n=l(5403);class s extends n.E_{async alert(e){window.alert(e.message)}async prompt(e){const a=window.prompt(e.message,e.inputText||"");return{value:null!==a?a:"",cancelled:null===a}}async confirm(e){return{value:window.confirm(e.message)}}}}}]);
+//# sourceMappingURL=760.6c522401.chunk.js.map

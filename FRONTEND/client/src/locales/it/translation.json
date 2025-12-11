@@ -18,7 +18,9 @@
     "dateNotAvailable": "Data non disponibile",
     "invalidDate": "Data non valida",
     "errorFormattingDate": "Errore nella formattazione della data",
-    "share": "Condividi"
+    "share": "Condividi",
+    "noMealsFound": "Nessun TableTalk® trovato",
+    "errorLoading": "Errore nel caricamento"
   },
   "auth": {
     "login": "Accedi",
@@ -432,6 +434,7 @@
       "hosting": "Organizzo io",
       "joining": "Partecipo"
     },
+    "myMeals": "I Miei TableTalk®",
     "noHostedMeals": "Non hai ancora organizzato nessun TableTalk.",
     "noJoinedMeals": "Non ti sei ancora iscritto a nessun TableTalk.",
     "settings": {

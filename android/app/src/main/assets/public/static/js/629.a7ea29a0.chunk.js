@@ -1,0 +1,2 @@
+"use strict";(self.webpackChunktable_talk_client=self.webpackChunktable_talk_client||[]).push([[629],{629:(t,s,e)=>{e.d(s,{PushNotifications:()=>i});const i=(0,e(5403).F3)("PushNotifications",{})}}]);
+//# sourceMappingURL=629.a7ea29a0.chunk.js.map

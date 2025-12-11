@@ -49,6 +49,16 @@
 	<string>TableTalk ha bisogno della tua posizione per mostrarti pasti nelle vicinanze e raccomandazioni personalizzate.</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
 	<string>TableTalk ha bisogno della tua posizione per mostrarti pasti nelle vicinanze e raccomandazioni personalizzate.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>TableTalk ha bisogno di accedere alla fotocamera per scattare foto dei tuoi TableTalk®.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>TableTalk ha bisogno di accedere alla tua libreria foto per selezionare immagini per i tuoi TableTalk®.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>TableTalk ha bisogno di salvare le foto nella tua libreria.</string>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>remote-notification</string>
+	</array>
 	<key>NSAppTransportSecurity</key>
 	<dict>
 		<key>NSAllowsArbitraryLoads</key>

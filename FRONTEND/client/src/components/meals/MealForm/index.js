@@ -6,7 +6,8 @@ import { useTranslation } from 'react-i18next';
 import { mealTypeOptions } from '../../../constants/mealConstants';
 import styles from './MealForm.module.css'; 
 // import dayjs from 'dayjs'; // Rimosso: non utilizzato
-// import { Camera, CameraResultType, CameraSource } from '@capacitor/camera'; // Rimosso: non più utilizzato
+import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
+import { Capacitor } from '@capacitor/core';
 import TopicInput from '../TopicInput';
 import OpenStreetMapComponent from '../../maps/OpenStreetMapComponent';
 // import PlacesAutocompleteInput from '../../Map/PlacesAutocompleteInput'; // Rimosso: manteniamo solo OpenStreetMap
@@ -207,13 +208,78 @@ const MealForm = ({ initialData, onSubmit, onCancel, isLoading, isSubmitting, su
     }));
   };
 
-  // ✅ AGGIUNGI: Handler per selezione location
-  const handleLocationSelect = (location) => {
-    setSelectedLocation(location);
+  // ✅ AGGIUNGI: Funzione per geocodificare un indirizzo (testo -> coordinate)
+  const geocodeAddress = async (address) => {
+    if (!address || address.trim().length < 3) {
+      return null;
+    }
+
+    try {
+      // Usa Nominatim API (OpenStreetMap) per geocodificare
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=1&addressdetails=1`,
+        {
+          headers: {
+            'User-Agent': 'TableTalk App' // Richiesto da Nominatim
+          }
+        }
+      );
+      
+      const data = await response.json();
+      
+      if (data && data.length > 0) {
+        const result = data[0];
+        return {
+          lat: parseFloat(result.lat),
+          lng: parseFloat(result.lon),
+          address: result.display_name || address
+        };
+      }
+      
+      return null;
+    } catch (error) {
+      console.error('Errore geocodifica indirizzo:', error);
+      return null;
+    }
+  };
+
+  // ✅ AGGIUNGI: Handler per selezione location dalla mappa
+  const handleLocationSelect = async (location) => {
+    // Se non c'è un indirizzo, prova a fare reverse geocoding
+    let address = location.address;
+    
+    if (!address && location.lat && location.lng) {
+      try {
+        // Reverse geocoding: coordinate -> indirizzo
+        const response = await fetch(
+          `https://nominatim.openstreetmap.org/reverse?format=json&lat=${location.lat}&lon=${location.lng}&addressdetails=1`,
+          {
+            headers: {
+              'User-Agent': 'TableTalk App'
+            }
+          }
+        );
+        
+        const data = await response.json();
+        if (data && data.display_name) {
+          address = data.display_name;
+        }
+      } catch (error) {
+        console.error('Errore reverse geocoding:', error);
+      }
+    }
+
+    const finalAddress = address || `${location.lat.toFixed(4)}, ${location.lng.toFixed(4)}`;
+    
+    setSelectedLocation({
+      ...location,
+      address: finalAddress
+    });
+    
     setFormData(prev => ({
       ...prev,
       location: {
-        address: location.address || `${location.lat.toFixed(4)}, ${location.lng.toFixed(4)}`,
+        address: finalAddress,
         coordinates: [location.lng, location.lat] // MongoDB usa [lng, lat]
       }
     }));
@@ -225,15 +291,79 @@ const MealForm = ({ initialData, onSubmit, onCancel, isLoading, isSubmitting, su
     }));
   };
 
-  // Funzione handlePhotoSelect rimossa - ora usiamo solo l'input file standard
+  // ✅ AGGIUNGI: Handler per quando l'utente digita l'indirizzo manualmente
+  const handleAddressChange = async (e) => {
+    const address = e.target.value;
+    
+    // Aggiorna il campo indirizzo nel formData
+    setFormData(prev => ({
+      ...prev,
+      location: prev.location ? {
+        ...prev.location,
+        address: address
+      } : {
+        address: address,
+        coordinates: null
+      }
+    }));
 
-  // 📁 Gestione upload file dal computer (per browser)
-  const handleFileSelect = async (event) => {
-    const file = event.target.files[0];
-    if (!file) return;
+    // Se l'indirizzo è vuoto, resetta la location
+    if (!address || address.trim().length === 0) {
+      setSelectedLocation(null);
+      setFormData(prev => ({
+        ...prev,
+        location: null
+      }));
+      return;
+    }
+  };
 
+  // ✅ AGGIUNGI: Handler per quando l'utente finisce di digitare l'indirizzo (blur o Enter)
+  const handleAddressBlur = async (e) => {
+    const address = e.target.value.trim();
+    
+    if (!address || address.length < 3) {
+      return;
+    }
+
+    // Mostra un indicatore di caricamento
+    setErrors(prev => ({
+      ...prev,
+      location: 'Ricerca indirizzo...'
+    }));
+
+    // Geocodifica l'indirizzo
+    const location = await geocodeAddress(address);
+    
+    if (location) {
+      // Aggiorna la mappa con la posizione trovata
+      setSelectedLocation(location);
+      setFormData(prev => ({
+        ...prev,
+        location: {
+          address: location.address,
+          coordinates: [location.lng, location.lat]
+        }
+      }));
+      
+      // Rimuovi errori
+      setErrors(prev => ({
+        ...prev,
+        location: null
+      }));
+    } else {
+      // Indirizzo non trovato
+      setErrors(prev => ({
+        ...prev,
+        location: 'Indirizzo non trovato. Prova a selezionarlo dalla mappa.'
+      }));
+    }
+  };
+
+  // ✅ Funzione per processare un file immagine (usata sia per web che mobile)
+  const processImageFile = async (file, fileName = 'image.jpg') => {
     // Verifica che sia un'immagine
-    if (!file.type.startsWith('image/')) {
+    if (!file.type || !file.type.startsWith('image/')) {
       alert('Seleziona solo file immagine');
       return;
     }
@@ -256,7 +386,7 @@ const MealForm = ({ initialData, onSubmit, onCancel, isLoading, isSubmitting, su
       let processedFile = file;
       if (file.size > 4 * 1024 * 1024) {
         const blob = await compressImageBlob(file, { maxWidth: 1600, quality: 0.7 });
-        processedFile = new File([blob], file.name, { type: 'image/jpeg' });
+        processedFile = new File([blob], fileName, { type: 'image/jpeg' });
       }
 
       setImageFile(processedFile);
@@ -271,6 +401,55 @@ const MealForm = ({ initialData, onSubmit, onCancel, isLoading, isSubmitting, su
     } catch (error) {
       console.error("Errore elaborazione file", error);
     }
+  };
+
+  // ✅ Funzione per selezionare foto usando Capacitor Camera (mobile)
+  const handleCameraSelect = async (source = CameraSource.Photos) => {
+    try {
+      // Richiedi permessi esplicitamente
+      const permissionStatus = await Camera.checkPermissions();
+      
+      if (permissionStatus.camera === 'denied' || permissionStatus.photos === 'denied') {
+        // Richiedi permessi se non concessi
+        const requestResult = await Camera.requestPermissions({
+          permissions: ['camera', 'photos']
+        });
+        
+        if (requestResult.camera === 'denied' || requestResult.photos === 'denied') {
+          alert('I permessi per fotocamera e libreria foto sono necessari per caricare le immagini.');
+          return;
+        }
+      }
+
+      // Apri la fotocamera o la libreria foto
+      const image = await Camera.getPhoto({
+        quality: 90,
+        allowEditing: false,
+        resultType: CameraResultType.DataUrl,
+        source: source,
+        width: 1600,
+        height: 1600
+      });
+
+      if (image && image.dataUrl) {
+        // Converti dataUrl in File
+        const response = await fetch(image.dataUrl);
+        const blob = await response.blob();
+        const file = new File([blob], `photo_${Date.now()}.jpg`, { type: 'image/jpeg' });
+        
+        await processImageFile(file, file.name);
+      }
+    } catch (error) {
+      console.error('Errore selezione foto:', error);
+      alert('Errore durante la selezione della foto. Riprova.');
+    }
+  };
+
+  // 📁 Gestione upload file dal computer (per browser web)
+  const handleFileSelect = async (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+    await processImageFile(file);
   };
 
   // Comprimi immagine usando canvas
@@ -602,18 +781,28 @@ const MealForm = ({ initialData, onSubmit, onCancel, isLoading, isSubmitting, su
               <Form.Group>
                 <Form.Label className={styles.formLabel}>{t('meals.form.addressLabel')}</Form.Label>
                 <Form.Control 
-                  className={`${styles.formControl} ${errors.location ? 'is-invalid' : ''}`}
+                  className={`${styles.formControl} ${errors.location && errors.location !== 'Ricerca indirizzo...' ? 'is-invalid' : ''}`}
                   type="text" 
-                  name="location" 
+                  name="address" 
                   value={formData.location?.address || ''} 
-                  onChange={handleChange}
-                  onBlur={handleBlur}
+                  onChange={handleAddressChange}
+                  onBlur={handleAddressBlur}
+                  onKeyDown={(e) => {
+                    // Quando l'utente preme Enter, geocodifica l'indirizzo
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleAddressBlur(e);
+                    }
+                  }}
                   placeholder={t('meals.form.addressPlaceholder')}
-                  readOnly
                 />
-                {errors.location && <div className="invalid-feedback">{errors.location}</div>}
+                {errors.location && (
+                  <div className={errors.location === 'Ricerca indirizzo...' ? 'text-info' : 'invalid-feedback'}>
+                    {errors.location}
+                  </div>
+                )}
                 <Form.Text className="text-muted">
-                  📍 L'indirizzo viene selezionato dalla mappa sottostante
+                  📍 Inserisci l'indirizzo manualmente o selezionalo dalla mappa sottostante
                 </Form.Text>
               </Form.Group>
             )}
@@ -666,17 +855,44 @@ const MealForm = ({ initialData, onSubmit, onCancel, isLoading, isSubmitting, su
         <Form.Label>{t('meals.form.coverImageLabel')}</Form.Label>
         {imagePreview && <img src={imagePreview} alt={t('meals.form.coverImageAlt')} className={styles.imagePreview} />}
         
-        {/* 📁 Input file unificato per tutti i dispositivi */}
-        <Form.Control
-          type="file"
-          accept="image/*"
-          onChange={handleFileSelect}
-          className="mt-2"
-          style={{ fontSize: '0.9em' }}
-        />
-        <Form.Text className="text-muted">
-          Seleziona un'immagine dal tuo dispositivo (max 10MB)
-        </Form.Text>
+        {/* 📱 Su mobile (Capacitor), mostra pulsanti per fotocamera/libreria */}
+        {Capacitor.isNativePlatform() ? (
+          <div className="mt-2">
+            <div className="d-flex gap-2 flex-wrap">
+              <Button
+                variant="outline-primary"
+                onClick={() => handleCameraSelect(CameraSource.Camera)}
+                style={{ fontSize: '0.9em' }}
+              >
+                📷 Fotocamera
+              </Button>
+              <Button
+                variant="outline-primary"
+                onClick={() => handleCameraSelect(CameraSource.Photos)}
+                style={{ fontSize: '0.9em' }}
+              >
+                🖼️ Libreria Foto
+              </Button>
+            </div>
+            <Form.Text className="text-muted d-block mt-2">
+              Seleziona una foto dalla fotocamera o dalla libreria (max 10MB)
+            </Form.Text>
+          </div>
+        ) : (
+          /* 📁 Su web, usa input file standard */
+          <>
+            <Form.Control
+              type="file"
+              accept="image/*"
+              onChange={handleFileSelect}
+              className="mt-2"
+              style={{ fontSize: '0.9em' }}
+            />
+            <Form.Text className="text-muted">
+              Seleziona un'immagine dal tuo dispositivo (max 10MB)
+            </Form.Text>
+          </>
+        )}
         
         {/* 🔄 Indicatore stato immagine */}
         {imageFile && (
