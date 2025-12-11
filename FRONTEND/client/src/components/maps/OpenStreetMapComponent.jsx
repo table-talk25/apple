@@ -72,17 +72,33 @@ const OpenStreetMapComponent = ({
   width = '100%',
   center = [45.4642, 9.1900] // Milano di default
 }) => {
+  // Verifica che Leaflet sia caricato correttamente
+  useEffect(() => {
+    if (typeof window !== 'undefined' && !window.L) {
+      console.error('❌ [Map] Leaflet non è disponibile');
+    } else {
+      console.log('✅ [Map] Leaflet caricato correttamente');
+    }
+  }, []);
+
   return (
-    <div style={{ width: '100%', height: '100%' }}>
+    <div style={{ width: '100%', height: '100%', position: 'relative' }}>
       {/* Mappa */}
       <MapContainer 
         center={center} 
         zoom={zoom} 
         style={{ height, width, borderRadius: '8px' }}
+        whenReady={() => {
+          console.log('✅ [Map] Mappa Leaflet pronta');
+        }}
+        whenCreated={(mapInstance) => {
+          console.log('✅ [Map] Istanza mappa creata');
+        }}
       >
         <TileLayer
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+          errorTileUrl="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='256' height='256'%3E%3Crect fill='%23ddd' width='256' height='256'/%3E%3Ctext fill='%23999' font-family='sans-serif' font-size='18' x='50%25' y='50%25' text-anchor='middle' dominant-baseline='middle'%3EErrore caricamento mappa%3C/text%3E%3C/svg%3E"
         />
         
         {/* Aggiorna il centro quando cambia il prop center */}
