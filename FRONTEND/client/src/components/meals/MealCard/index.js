@@ -32,11 +32,14 @@ const MealCard = ({ meal, onLeaveSuccess, compact = false }) => {
   const isParticipant = user && meal.participants && meal.participants.some(p => p._id === user.id);
 
   const imageUrl = getMealCoverImageUrl(meal.imageUrl);
-  const hostAvatarUrl = getHostAvatarUrl(meal.host.profileImage);
   
-  // Debug per l'ID dell'host
-  console.log('👤 [MealCard] Host ID:', meal.host._id || meal.host.id);
+  // Debug per l'host e la sua immagine
   console.log('👤 [MealCard] Host object:', meal.host);
+  console.log('👤 [MealCard] Host profileImage:', meal.host?.profileImage);
+  console.log('👤 [MealCard] Host ID:', meal.host?._id || meal.host?.id);
+  
+  const hostAvatarUrl = getHostAvatarUrl(meal.host?.profileImage);
+  console.log('🖼️ [MealCard] Avatar URL generato:', hostAvatarUrl);
 
   const truncatedDescription = meal.description && meal.description.length > 80
     ? meal.description.substring(0, 80) + '...'
@@ -101,7 +104,15 @@ const MealCard = ({ meal, onLeaveSuccess, compact = false }) => {
           {meal.mealType === 'physical' && meal.location && (
             <div className={styles.cardDetail}>
               <span className={styles.locationIcon}>📍</span>
-              <span className={styles.locationText}>{meal.location}</span>
+              <span className={styles.locationText}>
+                {typeof meal.location === 'string'
+                  ? meal.location
+                  : (meal.location?.address ||
+                     meal.location?.name ||
+                     (Array.isArray(meal.location?.coordinates)
+                       ? `${meal.location.coordinates[1]}, ${meal.location.coordinates[0]}`
+                       : 'Posizione'))}
+              </span>
             </div>
           )}
           

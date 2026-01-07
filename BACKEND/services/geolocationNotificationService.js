@@ -60,9 +60,13 @@ class GeolocationNotificationService {
 
             const [mealLng, mealLat] = mealLocation.coordinates;
 
-            // Trova tutti gli utenti con notifiche geolocalizzate abilitate
+            // Trova tutti gli utenti con matching in tempo reale abilitato (showLocationOnMap) 
+            // OPPURE con notifiche geolocalizzate abilitate
             const users = await User.find({
-                'settings.notifications.geolocation.enabled': true,
+                $or: [
+                    { 'settings.privacy.showLocationOnMap': true },
+                    { 'settings.notifications.geolocation.enabled': true }
+                ],
                 'location.coordinates': { $exists: true, $ne: null },
                 'location.coordinates.0': { $exists: true },
                 'location.coordinates.1': { $exists: true }

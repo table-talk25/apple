@@ -5,7 +5,10 @@ const config: CapacitorConfig = {
   appName: 'TableTalk',
   webDir: 'FRONTEND/client/build',
   server: {
-    androidScheme: 'https'
+    // 🔄 LIVE RELOAD: Configurazione per vedere modifiche in tempo reale
+    // ⚠️ IMPORTANTE: Rimuovi questa sezione prima di generare l'APK per la release!
+    url: 'http://192.168.1.57:3000', // IP del tuo Mac sulla rete locale
+    cleartext: true // Permette HTTP (necessario per sviluppo locale)
   },
   plugins: {
     GoogleAuth: {  // ← AGGIUNGI QUESTA SEZIONE

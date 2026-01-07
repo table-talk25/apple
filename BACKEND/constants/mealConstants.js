@@ -9,7 +9,7 @@
 // ======================================================
 
 // Chiavi e valori usati nel codice e nel database
-export const MEAL_TYPES = {
+const MEAL_TYPES = {
   BREAKFAST: 'breakfast',
   LUNCH: 'lunch',
   DINNER: 'dinner',
@@ -17,7 +17,7 @@ export const MEAL_TYPES = {
 };
 
 // Etichette per la visualizzazione nell'interfaccia utente
-export const MEAL_TYPE_LABELS = {
+const MEAL_TYPE_LABELS = {
   [MEAL_TYPES.BREAKFAST]: 'Colazione',
   [MEAL_TYPES.LUNCH]: 'Pranzo',
   [MEAL_TYPES.DINNER]: 'Cena',
@@ -25,7 +25,7 @@ export const MEAL_TYPE_LABELS = {
 };
 
 // Colori per la UI
-export const MEAL_TYPE_COLORS = {
+const MEAL_TYPE_COLORS = {
   [MEAL_TYPES.BREAKFAST]: '#FFD54F', // Giallo
   [MEAL_TYPES.LUNCH]: '#4CAF50',     // Verde
   [MEAL_TYPES.DINNER]: '#5C6BC0',    // Blu
@@ -33,7 +33,7 @@ export const MEAL_TYPE_COLORS = {
 };
 
 // Opzioni per i menu a tendina
-export const mealTypeOptions = [
+const mealTypeOptions = [
   { value: MEAL_TYPES.BREAKFAST, label: MEAL_TYPE_LABELS[MEAL_TYPES.BREAKFAST] },
   { value: MEAL_TYPES.LUNCH,     label: MEAL_TYPE_LABELS[MEAL_TYPES.LUNCH] },
   { value: MEAL_TYPES.DINNER,    label: MEAL_TYPE_LABELS[MEAL_TYPES.DINNER] },
@@ -44,14 +44,14 @@ export const mealTypeOptions = [
 // ======================================================
 // STATI DEI PASTI (il tuo codice qui era già perfetto)
 // ======================================================
-export const MEAL_STATUS = {
+const MEAL_STATUS = {
   UPCOMING: 'upcoming',
   ONGOING: 'ongoing',
   COMPLETED: 'completed',
   CANCELLED: 'cancelled',
 };
 
-export const MEAL_STATUS_LABELS = {
+const MEAL_STATUS_LABELS = {
   [MEAL_STATUS.UPCOMING]: 'In programma',
   [MEAL_STATUS.ONGOING]: 'In corso',
   [MEAL_STATUS.COMPLETED]: 'Completato',
@@ -62,7 +62,7 @@ export const MEAL_STATUS_LABELS = {
 // ======================================================
 // VINCOLI E MESSAGGI (il tuo codice qui era già perfetto)
 // ======================================================
-export const MEAL_CONSTRAINTS = {
+const MEAL_CONSTRAINTS = {
   MAX_TITLE_LENGTH: 100,
   MIN_TITLE_LENGTH: 3,
   MAX_DESCRIPTION_LENGTH: 1000,
@@ -71,8 +71,20 @@ export const MEAL_CONSTRAINTS = {
   MIN_PARTICIPANTS: 2,
 };
 
-export const MEAL_ERROR_MESSAGES = {
+const MEAL_ERROR_MESSAGES = {
   TITLE_TOO_SHORT: `Il titolo deve essere di almeno ${MEAL_CONSTRAINTS.MIN_TITLE_LENGTH} caratteri`,
   // ... e tutti gli altri tuoi ottimi messaggi
+};
+
+// Esporta tutto usando CommonJS
+module.exports = {
+  MEAL_TYPES,
+  MEAL_TYPE_LABELS,
+  MEAL_TYPE_COLORS,
+  mealTypeOptions,
+  MEAL_STATUS,
+  MEAL_STATUS_LABELS,
+  MEAL_CONSTRAINTS,
+  MEAL_ERROR_MESSAGES,
 };
 

@@ -20,6 +20,9 @@
   z-index: 1;
 }
 
+/* Stili per i controlli zoom di Leaflet - evita sovrapposizione */
+/* Nota: Gli stili Leaflet devono essere applicati globalmente, non tramite CSS Modules */
+
 /* Top Bar Fluttuante */
 .topBar {
   position: absolute;
@@ -45,6 +48,8 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  /* Sposta il pulsante più a destra per evitare sovrapposizione con i controlli zoom */
+  margin-left: 50px; /* Lascia spazio per i controlli zoom di Leaflet (che sono ~45px) */
 }
 
 .searchContainer {

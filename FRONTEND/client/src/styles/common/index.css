@@ -51,3 +51,15 @@ img {
   height: auto;
   display: block;
 }
+
+/* Stili per i controlli zoom di Leaflet nella pagina mappa - evita sovrapposizione con BackButton */
+.leaflet-control-zoom {
+  margin-top: calc(env(safe-area-inset-top) + 10px) !important;
+  margin-left: 10px !important;
+  z-index: 10 !important;
+}
+
+.leaflet-top.leaflet-left {
+  top: calc(env(safe-area-inset-top) + 10px) !important;
+  left: 10px !important;
+}

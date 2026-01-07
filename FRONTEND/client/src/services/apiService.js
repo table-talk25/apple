@@ -74,12 +74,25 @@ const apiClient = axios.create({
 apiClient.interceptors.request.use(
   async (config) => {
     try {
-      const token = await authPreferences.getToken();
-      if (token) {
-        config.headers['Authorization'] = `Bearer ${token}`;
-        console.log('[API] Token incluso nella richiesta:', config.method?.toUpperCase(), config.url);
+      // Non aggiungere il token per le route di autenticazione (login, register, logout)
+      // Queste route non richiedono un token e aggiungerlo causerebbe errori 401
+      const authRoutes = ['/auth/login', '/auth/register', '/auth/logout', '/auth/forgot-password', '/auth/reset-password'];
+      const isAuthRoute = authRoutes.some(route => (config.url || '').includes(route));
+      
+      // Se è una route di logout, rimuovi esplicitamente il token dall'header se presente
+      if ((config.url || '').includes('/auth/logout')) {
+        delete config.headers['Authorization'];
+        console.log('[API] Route logout: token rimosso esplicitamente dalla richiesta');
+      } else if (!isAuthRoute) {
+        const token = await authPreferences.getToken();
+        if (token) {
+          config.headers['Authorization'] = `Bearer ${token}`;
+          console.log('[API] Token incluso nella richiesta:', config.method?.toUpperCase(), config.url);
+        } else {
+          console.warn('[API] Token non trovato per la richiesta:', config.method?.toUpperCase(), config.url);
+        }
       } else {
-        console.warn('[API] Token non trovato per la richiesta:', config.method?.toUpperCase(), config.url);
+        console.log('[API] Route di autenticazione: token non aggiunto alla richiesta:', config.url);
       }
       // Se stiamo inviando FormData, lascia che Axios imposti automaticamente il boundary
       if (typeof FormData !== 'undefined' && config.data instanceof FormData) {
@@ -211,11 +224,19 @@ apiClient.interceptors.response.use(
       // Non fare redirect immediato se la richiesta è stata marcata per gestione manuale
       const suppressRedirect = Boolean(error?.config?.suppressErrorAlert);
       
-      // Non fare redirect se siamo già sulla pagina di login o durante la verifica iniziale
+      // Non fare redirect se siamo già sulla pagina di login, durante la verifica iniziale, o durante il logout
       const isLoginPage = typeof window !== 'undefined' && window.location.pathname === '/login';
       const isAuthCheck = (url || '').includes('/auth/me') || (url || '').includes('/auth/verify');
+      const isLogout = (url || '').includes('/auth/logout');
       
-      if (!suppressRedirect && !isLoginPage && !isAuthCheck) {
+      // Per il logout, ignora completamente gli errori 401/403 (non sono critici)
+      if (isLogout) {
+        console.log('[API] Errore 401/403 durante logout ignorato (non critico)');
+        // Non fare nulla, il logout locale è già stato gestito
+        return Promise.reject(error);
+      }
+      
+      if (!suppressRedirect && !isLoginPage && !isAuthCheck && !isLogout) {
         try {
           // Pulisci le credenziali
           await authPreferences.clearAuth();

@@ -8,6 +8,7 @@ import { toast } from 'react-toastify';
 import DeleteAccountModal from '../../common/DeleteAccountModal';
 import ChangePasswordModal from '../../common/ChangePasswordModal';
 import authService from '../../../services/authService';
+import profileService from '../../../services/profileService';
 import styles from './ProfileSettings.module.css';
 
 const ProfileSettings = ({ profileData, onUpdate, onLogout, onDeleteAccount }) => {
@@ -53,23 +54,108 @@ const ProfileSettings = ({ profileData, onUpdate, onLogout, onDeleteAccount }) =
   };
 
   // --- 3. GESTORE CLICK AGGIORNATO ---
-  const handleLocationToggle = () => {
-    // Aggiorniamo prima lo stato locale per un'interfaccia super reattiva
+  const handleLocationToggle = async () => {
     const newSetting = !showLocation;
-    setShowLocation(newSetting);
     
-    // Poi chiamiamo la funzione del genitore per salvare il dato nel backend
-    onUpdate({
-        settings: {
+    // Se si sta abilitando il matching, richiedi e salva la posizione
+    if (newSetting === true) {
+      try {
+        // Mostra un messaggio informativo
+        toast.info(t('profile.settings.requestingLocation') || 'Richiesta posizione per il matching...');
+        
+        // Richiedi la posizione
+        let latitude, longitude;
+        
+        // Su mobile, usa Capacitor Geolocation
+        const { Capacitor } = await import('@capacitor/core');
+        if (Capacitor.isNativePlatform()) {
+          const { Geolocation } = await import('@capacitor/geolocation');
+          
+          // Controlla permessi
+          let permissionStatus = await Geolocation.checkPermissions();
+          
+          // Richiedi permessi se non concessi
+          if (permissionStatus.location !== 'granted') {
+            permissionStatus = await Geolocation.requestPermissions();
+            
+            if (permissionStatus.location !== 'granted') {
+              toast.error(t('profile.settings.locationPermissionDenied') || 'Permesso posizione negato. Il matching non funzionerà senza la posizione.');
+              return; // Non abilitare il matching se i permessi sono negati
+            }
+          }
+          
+          // Ottieni posizione
+          const position = await Geolocation.getCurrentPosition({
+            enableHighAccuracy: true,
+            timeout: 15000,
+            maximumAge: 60000
+          });
+          
+          latitude = position.coords.latitude;
+          longitude = position.coords.longitude;
+        } else {
+          // Su web, usa navigator.geolocation
+          if (!navigator.geolocation) {
+            toast.error(t('profile.settings.geolocationNotSupported') || 'Geolocalizzazione non supportata dal browser.');
+            return;
+          }
+          
+          const position = await new Promise((resolve, reject) => {
+            navigator.geolocation.getCurrentPosition(resolve, reject, {
+              enableHighAccuracy: true,
+              timeout: 15000,
+              maximumAge: 60000
+            });
+          });
+          
+          latitude = position.coords.latitude;
+          longitude = position.coords.longitude;
+        }
+        
+        // Salva la posizione nel backend
+        await profileService.updateUserLocation({
+          latitude,
+          longitude
+        });
+        
+        console.log('✅ [ProfileSettings] Posizione salvata per matching:', { latitude, longitude });
+        
+        // Aggiorna lo stato locale
+        setShowLocation(newSetting);
+        
+        // Salva l'impostazione di privacy
+        await onUpdate({
+          settings: {
             ...profileData.settings,
             privacy: {
-                ...profileData.settings.privacy,
-                showLocationOnMap: newSetting
+              ...profileData.settings.privacy,
+              showLocationOnMap: newSetting
             }
+          }
+        });
+        
+        toast.success(t('profile.settings.locationEnabled') || 'Posizione abilitata! Il matching in tempo reale è attivo.');
+      } catch (error) {
+        console.error('❌ [ProfileSettings] Errore durante richiesta posizione:', error);
+        toast.error(t('profile.settings.locationError') || 'Errore durante la richiesta della posizione. Riprova.');
+        // Non aggiornare lo stato se c'è stato un errore
+      }
+    } else {
+      // Se si sta disabilitando, salva solo l'impostazione
+      setShowLocation(newSetting);
+      
+      onUpdate({
+        settings: {
+          ...profileData.settings,
+          privacy: {
+            ...profileData.settings.privacy,
+            showLocationOnMap: newSetting
+          }
         }
-    });
-
-    toast.info(t('profile.settings.locationUpdated'));
+      });
+      
+      toast.info(t('profile.settings.locationDisabled') || 'Matching in tempo reale disabilitato.');
+    }
   };
 
   const handleLogoutClick = () => {

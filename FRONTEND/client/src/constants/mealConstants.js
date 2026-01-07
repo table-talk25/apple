@@ -132,19 +132,36 @@ export const getMealCoverImageUrl = (imagePath) => {
  * @returns {string} - L'URL completo dell'immagine.
  */
 export const getHostAvatarUrl = (profileImage) => {
-  // Se non c'è un'immagine o è quella di default, usa il placeholder locale
-  if (!profileImage || typeof profileImage !== 'string' || profileImage.includes('default')) {
-    return '/assets/images/default-avatar.jpg';
+  console.log('🖼️ [getHostAvatarUrl] Input:', profileImage);
+  
+  // Se non c'è un'immagine o è quella di default, usa l'URL completo del backend per l'avatar di default
+  if (!profileImage || typeof profileImage !== 'string' || profileImage === 'null' || profileImage === 'undefined' || profileImage.includes('default-avatar.jpg')) {
+    const baseUrl = (API_URL || '').replace(/\/api\/?$/, '');
+    const defaultUrl = `${baseUrl}/uploads/profile-images/default-avatar.jpg`;
+    console.log('🖼️ [getHostAvatarUrl] Usando avatar di default dal backend:', defaultUrl);
+    return defaultUrl;
   }
+  
   // Caso Capacitor (foto locale su device)
   if (typeof profileImage === 'string' && profileImage.startsWith('capacitor://')) {
+    console.log('🖼️ [getHostAvatarUrl] URL Capacitor:', profileImage);
     return profileImage;
   }
+  
   // Caso URL assoluto (già pronto)
   if (typeof profileImage === 'string' && profileImage.startsWith('http')) {
+    console.log('🖼️ [getHostAvatarUrl] URL assoluto:', profileImage);
     return profileImage;
   }
+  
   // Caso path relativo dal backend - usa la configurazione corretta
-  const baseUrl = isNative ? DEV_SERVER_URL : SERVER_URL;
-  return `${baseUrl}/${profileImage}`;
+  // Rimuoviamo '/api' dalla fine di API_URL perché la cartella uploads è alla radice
+  const baseUrl = (API_URL || '').replace(/\/api\/?$/, '');
+  const cleanPath = profileImage.startsWith('/') ? profileImage : `/${profileImage}`;
+  // Aggiungi timestamp per forzare il refresh dell'immagine
+  const timestamp = new Date().getTime();
+  const fullUrl = `${baseUrl}${cleanPath}?t=${timestamp}`;
+  
+  console.log('🖼️ [getHostAvatarUrl] URL costruito:', fullUrl);
+  return fullUrl;
 };

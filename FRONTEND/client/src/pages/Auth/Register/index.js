@@ -89,7 +89,20 @@ const RegisterPage = () => {
             toast.success(t('auth.registerSuccess'));
             navigate('/meals', { replace: true });
         } catch (err) {
-            if (err.errors && err.errors.length > 0) {
+            // Gestione errore email già esistente
+            const errorMessage = err.message || '';
+            if (errorMessage.includes('esiste già') || errorMessage.includes('already exists') || errorMessage.includes('email')) {
+                // Mostra messaggio specifico per email duplicata con suggerimento di login
+                const baseMessage = errorMessage.includes('Hai già un account') 
+                    ? errorMessage 
+                    : `${errorMessage} Hai già un account?`;
+                toast.error(baseMessage, { autoClose: 6000 });
+                // Imposta errore sul campo email (senza ripetere il suggerimento, sarà nel link)
+                setErrors(prev => ({ 
+                    ...prev, 
+                    email: baseMessage 
+                }));
+            } else if (err.errors && err.errors.length > 0) {
                 const backendErrors = {};
                 err.errors.forEach(error => {
                     if(error.path) { backendErrors[error.path] = error.msg; }
@@ -130,7 +143,16 @@ const RegisterPage = () => {
                     <Form.Group className="mb-3">
                         <Form.Label className={styles.formLabel}>Email</Form.Label>
                         <Form.Control className={styles.formInput} type="email" name="email" value={formData.email} onChange={handleChange} isInvalid={!!errors.email} autoComplete="email" inputMode="email" autoCapitalize="none" autoCorrect="off" spellCheck={false} required />
-                        <Form.Control.Feedback type="invalid">{errors.email}</Form.Control.Feedback>
+                        <Form.Control.Feedback type="invalid">
+                            {errors.email}
+                            {errors.email && (errors.email.includes('esiste già') || errors.email.includes('already exists')) && (
+                                <div style={{ marginTop: '8px' }}>
+                                    <Link to="/login" style={{ color: '#dc3545', textDecoration: 'underline', fontSize: '0.875rem' }}>
+                                        Vai alla pagina di login →
+                                    </Link>
+                                </div>
+                            )}
+                        </Form.Control.Feedback>
                     </Form.Group>
                     
                     <Form.Group className="mb-3">

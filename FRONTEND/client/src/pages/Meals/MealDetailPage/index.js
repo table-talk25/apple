@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Container, Row, Col, Button, Badge, Spinner, Alert, Modal } from 'react-bootstrap';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'react-toastify';
-import { FaMapMarkerAlt, FaCalendarAlt, FaClock, FaUser, FaUsers, FaComment, FaVideo, FaShareAlt, FaArrowLeft } from 'react-icons/fa';
+import { FaMapMarkerAlt, FaCalendarAlt, FaClock, FaUser, FaUsers, FaComment, FaVideo, FaShareAlt, FaArrowLeft, FaTrash } from 'react-icons/fa';
 
 import mealService from '../../../services/mealService';
 import { useAuth } from '../../../contexts/AuthContext';
@@ -24,6 +24,8 @@ const MealDetailPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showShareModal, setShowShareModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Caricamento Dati Pasto
   const fetchMeal = useCallback(async () => {
@@ -84,7 +86,8 @@ const MealDetailPage = () => {
     if (meal.chatId) {
       // meal.chatId può essere un oggetto o una stringa
       const targetId = typeof meal.chatId === 'object' ? meal.chatId._id : meal.chatId;
-      navigate(`/chats/${targetId}`);
+      // Usa /chat/ (singolare) non /chats/ (plurale) - corrisponde alla route in App.js
+      navigate(`/chat/${targetId}`);
     } else {
       toast.error(t('chat.notAvailable') || 'Chat non ancora disponibile');
     }
@@ -93,6 +96,25 @@ const MealDetailPage = () => {
   // Navigazione Video
   const handleVideoClick = () => {
     navigate(`/meals/${meal._id}/video`);
+  };
+
+  // Eliminazione TableTalk
+  const handleDeleteMeal = async () => {
+    if (!meal || !isHost) return;
+    
+    setIsDeleting(true);
+    try {
+      await mealService.deleteMeal(meal._id);
+      toast.success(t('meals.detail.deleteSuccess') || 'TableTalk® eliminato con successo!');
+      navigate('/meals', { replace: true });
+    } catch (err) {
+      console.error('Errore eliminazione pasto:', err);
+      const errorMsg = err.response?.data?.message || err.message || t('meals.detail.deleteError') || 'Errore durante l\'eliminazione';
+      toast.error(errorMsg);
+    } finally {
+      setIsDeleting(false);
+      setShowDeleteModal(false);
+    }
   };
 
   return (
@@ -122,7 +144,7 @@ const MealDetailPage = () => {
             <div className={styles.card}>
               <div className={styles.hostInfo}>
                 <img 
-                  src={getHostAvatarUrl(meal.host)} 
+                  src={getHostAvatarUrl(meal.host?.profileImage)} 
                   alt={meal.host?.nickname} 
                   className={styles.hostAvatar} 
                 />
@@ -150,15 +172,18 @@ const MealDetailPage = () => {
                 <div className={styles.infoItem}>
                   <FaUsers className={styles.icon} />
                   <div>
-                    <label>{t('meals.detail.participants')}</label>
-                    <p>{meal.participants?.length || 0} / {meal.maxParticipants}</p>
+                    <label>{t('meals.detail.participantsList')}</label>
+                    <p>{t('meals.detail.participantsText', { 
+                      current: meal.participants?.length || 0, 
+                      max: meal.maxParticipants 
+                    })}</p>
                   </div>
                 </div>
               </div>
 
               <hr />
               
-              <h3>{t('meals.form.descriptionLabel')}</h3>
+              <h3>{t('meals.detail.description')}</h3>
               <p className={styles.description}>{meal.description}</p>
 
               {/* Sezione Argomenti (Topics) */}
@@ -259,7 +284,7 @@ const MealDetailPage = () => {
               {/* 4. Pulsante Condividi */}
               <Button 
                 variant="outline-secondary" 
-                className="w-100"
+                className="w-100 mb-3"
                 onClick={() => {
                   if (navigator.share) {
                     navigator.share({
@@ -276,19 +301,30 @@ const MealDetailPage = () => {
                 <FaShareAlt className="me-2" /> {t('common.share')}
               </Button>
 
+              {/* 5. Pulsante Elimina (Solo per Host) */}
+              {isHost && !isPast && (
+                <Button 
+                  variant="danger" 
+                  className="w-100"
+                  onClick={() => setShowDeleteModal(true)}
+                >
+                  <FaTrash className="me-2" /> {t('meals.detail.deleteMeal') || 'Elimina TableTalk®'}
+                </Button>
+              )}
+
               {/* Partecipanti Lista */}
               <div className="mt-4">
                 <h5>{t('meals.detail.participantsList')} ({meal.participants?.length || 0})</h5>
                 <div className={styles.avatarList}>
                   {/* Mostra Host */}
                   <div className={styles.participantItem} title={`Host: ${meal.host?.nickname}`}>
-                    <img src={getHostAvatarUrl(meal.host)} className={styles.miniAvatar} style={{ border: '2px solid #ff6b6b' }} alt="Host" />
+                    <img src={getHostAvatarUrl(meal.host?.profileImage)} className={styles.miniAvatar} style={{ border: '2px solid #ff6b6b' }} alt="Host" />
                   </div>
                   {/* Mostra Altri */}
                   {meal.participants?.map(p => (
                     (p._id || p) !== (meal.host._id || meal.host) && (
                       <div key={p._id || p} className={styles.participantItem} title={p.nickname}>
-                        <img src={getHostAvatarUrl(p)} className={styles.miniAvatar} alt={p.nickname || 'User'} />
+                        <img src={getHostAvatarUrl(p?.profileImage)} className={styles.miniAvatar} alt={p.nickname || 'User'} />
                       </div>
                     )
                   ))}
@@ -298,6 +334,42 @@ const MealDetailPage = () => {
           </Col>
         </Row>
       </Container>
+
+      {/* Modal Conferma Eliminazione */}
+      <Modal show={showDeleteModal} onHide={() => setShowDeleteModal(false)} centered>
+        <Modal.Header closeButton>
+          <Modal.Title>{t('meals.detail.deleteMeal') || 'Elimina TableTalk®'}</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <p>{t('meals.detail.deleteMealConfirmation') || 'Sei sicuro di voler eliminare questo TableTalk®? Questa azione non può essere annullata.'}</p>
+          {meal && (
+            <div className="mt-3 p-3 bg-light rounded">
+              <strong>{meal.title}</strong>
+              <br />
+              <small className="text-muted">
+                {new Date(meal.date).toLocaleDateString()} alle {new Date(meal.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+              </small>
+            </div>
+          )}
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowDeleteModal(false)} disabled={isDeleting}>
+            {t('common.cancel') || 'Annulla'}
+          </Button>
+          <Button variant="danger" onClick={handleDeleteMeal} disabled={isDeleting}>
+            {isDeleting ? (
+              <>
+                <Spinner animation="border" size="sm" className="me-2" />
+                {t('meals.detail.deleting') || 'Eliminazione...'}
+              </>
+            ) : (
+              <>
+                <FaTrash className="me-2" /> {t('meals.detail.deleteMeal') || 'Elimina'}
+              </>
+            )}
+          </Button>
+        </Modal.Footer>
+      </Modal>
     </div>
   );
 };

@@ -25,27 +25,95 @@ const MapPage = () => {
   const [searchRadius, setSearchRadius] = useState(15); // km
   const [searchQuery, setSearchQuery] = useState('');
 
-  // 1. Ottieni Posizione Utente
-  useEffect(() => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const { latitude, longitude } = position.coords;
-          const userCoords = [latitude, longitude];
-          setCenter(userCoords);
-          setUserLocation(userCoords);
-          fetchMealsForMap(latitude, longitude, searchRadius);
-        },
-        (error) => {
-          console.warn("Geolocalizzazione non disponibile o negata:", error);
-          toast.info("Impossibile rilevare la posizione. Mostro Roma.");
-          // Carica comunque i pasti sulla posizione di default
-          fetchMealsForMap(41.9028, 12.4964, searchRadius);
+  // Funzione per ottenere la posizione (riutilizzabile)
+  const getCurrentLocation = async () => {
+    try {
+      setLoading(true);
+      // Su mobile, usa Capacitor Geolocation
+      const { Capacitor } = await import('@capacitor/core');
+      if (Capacitor.isNativePlatform()) {
+        const { Geolocation } = await import('@capacitor/geolocation');
+        
+        // Controlla permessi
+        let permissionStatus = await Geolocation.checkPermissions();
+        console.log('📍 [MapPage] Stato permessi posizione:', permissionStatus);
+        
+        // Richiedi permessi se non concessi
+        if (permissionStatus.location !== 'granted') {
+          console.log('📍 [MapPage] Richiesta permessi posizione...');
+          permissionStatus = await Geolocation.requestPermissions();
+          console.log('📍 [MapPage] Risultato richiesta permessi:', permissionStatus);
+          
+          if (permissionStatus.location !== 'granted') {
+            toast.warn("Permesso posizione negato. Abilitalo nelle impostazioni per usare la tua posizione.");
+            setLoading(false);
+            return false;
+          }
         }
-      );
-    } else {
-      fetchMealsForMap(41.9028, 12.4964, searchRadius);
+        
+        // Ottieni posizione con Capacitor
+        console.log('📍 [MapPage] Richiesta posizione corrente...');
+        const position = await Geolocation.getCurrentPosition({
+          enableHighAccuracy: true,
+          timeout: 15000,
+          maximumAge: 60000 // Accetta posizioni fino a 1 minuto fa
+        });
+        
+        console.log('📍 [MapPage] Posizione ottenuta:', position.coords);
+        const { latitude, longitude } = position.coords;
+        const userCoords = [latitude, longitude];
+        setCenter(userCoords);
+        setUserLocation(userCoords);
+        setZoom(14); // Zoom più vicino quando si ottiene la posizione
+        await fetchMealsForMap(latitude, longitude, searchRadius);
+        toast.success("Posizione aggiornata!");
+        setLoading(false);
+        return true;
+      } else {
+        // Su web, usa navigator.geolocation
+        if (navigator.geolocation) {
+          return new Promise((resolve) => {
+            navigator.geolocation.getCurrentPosition(
+              async (position) => {
+                const { latitude, longitude } = position.coords;
+                const userCoords = [latitude, longitude];
+                setCenter(userCoords);
+                setUserLocation(userCoords);
+                setZoom(14);
+                await fetchMealsForMap(latitude, longitude, searchRadius);
+                toast.success("Posizione aggiornata!");
+                setLoading(false);
+                resolve(true);
+              },
+              (error) => {
+                console.warn("Geolocalizzazione non disponibile o negata:", error);
+                toast.warn("Impossibile rilevare la posizione. Usa il pulsante per cercare manualmente.");
+                setLoading(false);
+                resolve(false);
+              },
+              { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 }
+            );
+          });
+        } else {
+          toast.warn("Geolocalizzazione non supportata dal browser.");
+          setLoading(false);
+          return false;
+        }
+      }
+    } catch (error) {
+      console.error('📍 [MapPage] Errore geolocalizzazione:', error);
+      toast.error(`Errore: ${error.message || 'Impossibile ottenere la posizione'}`);
+      setLoading(false);
+      return false;
     }
+  };
+
+  // 1. Prova a ottenere la posizione all'avvio (senza forzare)
+  useEffect(() => {
+    getCurrentLocation().catch(() => {
+      // Se fallisce, mostra Roma di default
+      fetchMealsForMap(41.9028, 12.4964, searchRadius);
+    });
     // eslint-disable-next-line
   }, []);
 
@@ -53,6 +121,8 @@ const MapPage = () => {
   const fetchMealsForMap = async (lat, lng, radius) => {
     try {
       setLoading(true);
+      console.log('🗺️ [MapPage] Ricerca pasti fisici:', { lat, lng, radius });
+      
       // Usiamo il service dedicato che abbiamo controllato prima
       const response = await mealService.getMealsForMap(
         { latitude: lat, longitude: lng },
@@ -61,11 +131,21 @@ const MapPage = () => {
       );
       
       const mealsData = response.data || response;
-      console.log(`🗺️ Trovati ${mealsData.length} pasti sulla mappa`);
-      setMeals(mealsData);
+      const count = Array.isArray(mealsData) ? mealsData.length : 0;
+      console.log(`🗺️ [MapPage] Trovati ${count} TableTalk fisici nella zona`);
+      
+      setMeals(Array.isArray(mealsData) ? mealsData : []);
+      
+      // Mostra feedback
+      if (count > 0) {
+        toast.success(`Trovati ${count} TableTalk nella zona! 🍽️`, { autoClose: 3000 });
+      } else {
+        toast.info("Nessun TableTalk trovato in questa zona. Prova a spostare la mappa.", { autoClose: 3000 });
+      }
     } catch (error) {
-      console.error('Errore mappa:', error);
-      toast.error(t('map.loadError') || 'Errore caricamento mappa');
+      console.error('❌ [MapPage] Errore caricamento mappa:', error);
+      const errorMsg = error.response?.data?.message || error.message || 'Errore caricamento mappa';
+      toast.error(errorMsg);
     } finally {
       setLoading(false);
     }
@@ -98,8 +178,27 @@ const MapPage = () => {
   };
 
   // Ricarica nell'area corrente
-  const handleSearchHere = () => {
-    fetchMealsForMap(center[0], center[1], searchRadius);
+  const handleSearchHere = async () => {
+    if (!center || center.length !== 2) {
+      toast.warn("Posizione non valida. Sposta la mappa e riprova.");
+      return;
+    }
+    
+    const [lat, lng] = center;
+    console.log('🔄 [MapPage] Cerca qui - Coordinate:', { lat, lng, radius: searchRadius });
+    
+    // Mostra feedback visivo
+    toast.info(`Cercando TableTalk fisici nella zona...`, { autoClose: 2000 });
+    
+    try {
+      setLoading(true);
+      await fetchMealsForMap(lat, lng, searchRadius);
+      // Il toast di successo viene mostrato in fetchMealsForMap
+    } catch (error) {
+      console.error('❌ [MapPage] Errore ricerca pasti:', error);
+      toast.error("Errore durante la ricerca. Riprova.");
+      setLoading(false);
+    }
   };
 
   // Handler per ricerca città/luogo
@@ -143,6 +242,15 @@ const MapPage = () => {
     }
   };
 
+  // Handler per aggiornare il centro quando la mappa viene spostata
+  const handleMapMove = (location) => {
+    if (location && location.lat && location.lng) {
+      const newCenter = [location.lat, location.lng];
+      setCenter(newCenter);
+      console.log('📍 [MapPage] Mappa spostata - Nuovo centro:', newCenter);
+    }
+  };
+
   return (
     <div className={styles.mapPage}>
       {/* Header Fluttuante */}
@@ -181,6 +289,7 @@ const MapPage = () => {
           onMarkerClick={handleMarkerClick}
           onMapClick={handleMapClick}
           onLocationSelect={handleLocationSelect}
+          onMapMove={handleMapMove}
           userLocation={userLocation ? { lat: userLocation[0], lng: userLocation[1] } : null}
           selectedLocation={center ? { lat: center[0], lng: center[1] } : null}
           height="100vh"
@@ -196,14 +305,13 @@ const MapPage = () => {
         <Button 
           variant="light" 
           className={styles.fab}
-          onClick={() => {
-            if (userLocation) {
-              setCenter(userLocation);
-              setZoom(14);
-            } else {
-              toast.warn("Posizione non disponibile");
+          onClick={async () => {
+            const success = await getCurrentLocation();
+            if (!success) {
+              toast.info("Sposta la mappa manualmente o usa il pulsante 'Cerca qui' per cercare nella zona visibile.");
             }
           }}
+          title="Ottieni la mia posizione"
         >
           <FaLocationArrow color="#007bff" />
         </Button>

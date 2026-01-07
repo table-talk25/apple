@@ -122,23 +122,12 @@ const Navbar = () => {
                         <li className={styles.navItem}><NavLink to="/map" className={({ isActive }) => (isActive ? `${styles.navLink} ${styles.navLinkActive}` : styles.navLink)} onClick={closeMobileMenu}><FaMapMarkerAlt /> Mappa</NavLink></li>
                         <li className={styles.navItem}><NavLink to="/impostazioni/profilo" className={({ isActive }) => (isActive ? `${styles.navLink} ${styles.navLinkActive}` : styles.navLink)} onClick={closeMobileMenu}>Il Mio Profilo</NavLink></li>
                         <li className={styles.navItem}>
-                            <div className={styles.kebabMenuContainer} ref={kebabMenuRef}>
-                                <button 
-                                    className={styles.kebabButtonMobile}
-                                    onClick={() => setIsKebabMenuOpen(!isKebabMenuOpen)}
-                                >
-                                    <FaEllipsisV /> Opzioni
-                                </button>
-                                {isKebabMenuOpen && (
-                                    <div className={styles.kebabDropdownMobile}>
-                                        <div className={styles.kebabItem}>
-                                            <button className={styles.logoutButtonKebab} onClick={handleLogout}>
-                                                Logout
-                                            </button>
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
+                            <button 
+                                className={styles.logoutButtonKebab}
+                                onClick={handleLogout}
+                            >
+                                Logout
+                            </button>
                         </li>
                     </>
                 ) : null}

@@ -86,11 +86,25 @@ export const login = async (credentials) => {
  */
 export const logout = async () => {
   try {
-    await apiClient.post('/auth/logout', undefined, { suppressErrorAlert: true });
-  } catch (error) {
-    console.error('Logout fallito sul server, ma il logout locale verrà eseguito:', error);
+    // Prova prima a notificare il server (se il token è ancora valido)
+    // Usa suppressErrorAlert per evitare alert e redirect automatici
+    // L'interceptor di apiService non aggiungerà il token per /auth/logout
+    try {
+      await apiClient.post('/auth/logout', {}, { 
+        suppressErrorAlert: true,
+        // Forza la rimozione del token dall'header se presente
+        headers: {
+          'Authorization': ''
+        }
+      });
+    } catch (serverError) {
+      // Ignora errori del server durante il logout (non è critico)
+      console.log('⚠️ [Logout] Errore server non critico (logout locale verrà eseguito comunque):', serverError?.message || serverError);
+    }
   } finally {
+    // SEMPRE pulisci le credenziali locali, anche se il server ha dato errore
     await authPreferences.clearAuth();
+    console.log('✅ [Logout] Credenziali locali rimosse');
   }
 };
 

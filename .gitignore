@@ -17,3 +17,12 @@
 key.properties
 /FRONTEND/client/android/key.properties
 node_modules
+
+# Cartelle di backup e duplicati
+app_old_backup/
+android_old_backup_duplicate/
+
+# File IDE
+.idea/
+*.iml
+.DS_Store

@@ -41,8 +41,10 @@ function CenterUpdater({ center, zoom }) {
   return null;
 }
 
-// Componente per gestire click sulla mappa
-function LocationPicker({ onLocationSelect, onMapClick }) {
+// Componente per gestire click sulla mappa e aggiornare il centro quando la mappa viene spostata
+function LocationPicker({ onLocationSelect, onMapClick, onMapMove }) {
+  const map = useMap();
+  
   useMapEvents({
     click(e) {
       const { lat, lng } = e.latlng;
@@ -55,6 +57,13 @@ function LocationPicker({ onLocationSelect, onMapClick }) {
         onLocationSelect({ lat, lng });
       }
     },
+    moveend() {
+      // Quando la mappa viene spostata, aggiorna il centro
+      if (onMapMove) {
+        const center = map.getCenter();
+        onMapMove({ lat: center.lat, lng: center.lng });
+      }
+    },
   });
   return null;
 }
@@ -65,6 +74,7 @@ const OpenStreetMapComponent = ({
   onLocationSelect, 
   onMarkerClick, // Nuova prop per gestire click sui marker
   onMapClick, // Nuova prop per gestire click sulla mappa
+  onMapMove, // Nuova prop per gestire movimento della mappa
   selectedLocation,
   userLocation = null, // Nuova prop per posizione utente
   zoom = 13, // Nuova prop per zoom
@@ -105,7 +115,11 @@ const OpenStreetMapComponent = ({
         <CenterUpdater center={center} zoom={zoom} />
         
         {/* Gestione click per selezionare posizione e chiudere card */}
-        <LocationPicker onLocationSelect={onLocationSelect} onMapClick={onMapClick} />
+        <LocationPicker 
+          onLocationSelect={onLocationSelect} 
+          onMapClick={onMapClick}
+          onMapMove={onMapMove}
+        />
         
         {/* Centra la mappa sulla posizione selezionata */}
         {selectedLocation && <FlyToMarker position={selectedLocation} zoom={zoom} />}

@@ -31,7 +31,12 @@ const errorHandler = (err, req, res, next) => {
   // Errore di campo duplicato (es. email già esistente)
   if (err.code === 11000) {
     const field = Object.keys(err.keyValue)[0];
-    const message = `Un account con questo ${field} esiste già. Per favore, usane un altro.`;
+    let message;
+    if (field === 'email') {
+      message = 'Un account con questa email esiste già. Hai già un account? Prova ad accedere invece.';
+    } else {
+      message = `Un account con questo ${field} esiste già. Per favore, usane un altro.`;
+    }
     error = new ErrorResponse(message, 400);
   }
 

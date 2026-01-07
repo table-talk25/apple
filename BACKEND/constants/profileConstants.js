@@ -1,5 +1,5 @@
 // Lingue disponibili
-export const availableLanguages = [
+const availableLanguages = [
     { code: 'it', name: 'Italiano' },
     { code: 'en', name: 'Inglese' },
     { code: 'fr', name: 'Francese' },
@@ -13,7 +13,7 @@ export const availableLanguages = [
   ];
   
   // Cucine disponibili
-  export const availableCuisines = [
+  const availableCuisines = [
     'Italiana',
     'Giapponese',
     'Cinese',
@@ -34,4 +34,10 @@ export const availableLanguages = [
     'Sostenibile',
     'Biologica',
     'Slow Food'
-  ]; 
+  ];
+
+// Esporta tutto usando CommonJS
+module.exports = {
+  availableLanguages,
+  availableCuisines,
+}; 
