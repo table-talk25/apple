@@ -8,7 +8,6 @@ import { useAuth } from '../../../contexts/AuthContext';
 import { getPreference, savePreference, removePreference, PREFERENCE_KEYS } from '../../../utils/preferences';
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
 import Logo from '../../../components/common/Logo';
-import SocialLoginButtons from '../../../components/common/SocialLoginButtons';
 import styles from './LoginPage.module.css';
 import BackButton from '../../../components/common/BackButton';
 import { useRedirectAfterAuth } from '../../../hooks/useRedirectAfterAuth';
@@ -90,7 +89,12 @@ const LoginPage = () => {
     } catch (err) {
       console.error('🔥 Normal login error:', err);
       console.error('Errore durante il login:', err);
-      setError(err.message || t('auth.loginError'));
+      setError(
+        err?.response?.data?.message ||
+        err?.response?.data?.error ||
+        err?.message ||
+        t('auth.loginError')
+      );
     } finally {
       console.log('🔥 Normal login finished');
       setIsLoading(false);
@@ -211,18 +215,7 @@ const LoginPage = () => {
                 </p>
             </div>
 
-            {/* Pulsanti di login social */}
-            <SocialLoginButtons
-                onSuccess={(result) => {
-                    console.log('Login social completato:', result);
-                    // 🔄 REDIRECT INTELLIGENTE: Usa lo stesso sistema del login normale
-                    redirectAfterAuth('/meals');
-                }}
-                onError={(errorMessage) => {
-                    setError(errorMessage);
-                }}
-                disabled={isLoading}
-            />
+            {/* Pulsanti di login social - RIMOSSI */}
 
             <div className={styles.links}>
                 <Link to="/forgot-password" className={styles.link}>
