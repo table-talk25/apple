@@ -87,19 +87,17 @@ exports.login = asyncHandler(async (req, res, next) => {
     const { email, password } = req.body;
     const user = await User.findOne({ email }).select('+password');
 
-    if (!user || !(await user.comparePassword(password))) {
-        // Incrementa i tentativi falliti solo se l'utente esiste ma la password è sbagliata
-        if (user) await user.incrementLoginAttempts();
+    if (!user) {
         return next(new ErrorResponse('Credenziali non valide', 401));
     }
-
-    // 🔒 SICUREZZA: Verifica che l'email sia stata verificata
-    // if (!user.isEmailVerified) {
-    //     return next(new ErrorResponse('Account non verificato. Controlla la tua email e clicca sul link di verifica per completare la registrazione. Se non hai ricevuto l\'email, puoi richiederne una nuova.', 403));
-    // }
-
+    
     if (user.isLocked()) {
         return next(new ErrorResponse('Account bloccato a causa di troppi tentativi falliti. Riprova più tardi.', 403));
+    }
+    
+    if (!(await user.comparePassword(password))) {
+        await user.incrementLoginAttempts();
+        return next(new ErrorResponse('Credenziali non valide', 401));
     }
 
     await user.resetLoginAttempts();
