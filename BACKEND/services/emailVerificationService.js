@@ -9,6 +9,7 @@
 
 const User = require('../models/User');
 const sendEmail = require('../utils/sendEmail');
+const crypto = require('crypto');
 const path = require('path');
 const fs = require('fs').promises;
 
@@ -30,7 +31,7 @@ class EmailVerificationService {
       console.log(`🔐 [EmailVerification] Invio email verifica per utente: ${user._id}`);
 
       // Genera token di verifica
-      const verificationToken = user.generateEmailVerificationToken();
+      const verificationToken = user.generateVerificationToken();
       
       // Salva l'utente con il token
       await user.save();
@@ -104,21 +105,17 @@ class EmailVerificationService {
       };
 
       // Invia l'email
-      const result = await sendEmail(emailOptions);
+      const result = await sendEmail.sendEmail({
+        to: email,
+        subject: '🍽️ Verifica la tua Email - TableTalk',
+        template: 'email-verification', // Assicurati che questo file .hbs esista
+        context: data // 'context' è il nome corretto usato in sendEmail.js
+      });
       
-      return {
-        success: true,
-        message: 'Email inviata con successo',
-        result: result
-      };
-
+      return { success: true, message: 'Email inviata', result: result };
     } catch (error) {
-      console.error(`❌ [EmailVerification] Errore template email:`, error);
-      return {
-        success: false,
-        message: 'Errore nella preparazione template email',
-        error: error.message
-      };
+      console.error(`❌ [EmailVerification] Errore template:`, error);
+      return { success: false, message: 'Errore preparazione email', error: error.message };
     }
   }
 
@@ -132,8 +129,9 @@ class EmailVerificationService {
       console.log(`🔍 [EmailVerification] Verifica token: ${token.substring(0, 8)}...`);
 
       // Trova l'utente con questo token
+      const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
       const user = await User.findOne({
-        verificationToken: token,
+        verificationToken: hashedToken,
         verificationTokenExpires: { $gt: new Date() }
       });
 
@@ -147,7 +145,7 @@ class EmailVerificationService {
       }
 
       // Verifica che il token sia ancora valido
-      if (!user.isEmailVerificationTokenValid(token)) {
+      if (!user.isEmailVerificationTokenValid(hashedToken)) {
         console.log(`❌ [EmailVerification] Token non valido per utente: ${user._id}`);
         return {
           success: false,
