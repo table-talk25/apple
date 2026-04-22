@@ -30,7 +30,7 @@ const registerLimiter = rateLimit({
 
 // --- DEFINIZIONE DELLE ROTTE ---
 
-router.post('/register', /* registerLimiter, */ registerValidation, authController.register);
+router.post('/register', registerLimiter, registerValidation, authController.register);
 
 router.post('/login', loginLimiter, loginValidation, authController.login);
 
