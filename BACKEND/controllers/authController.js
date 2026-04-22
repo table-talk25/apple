@@ -285,12 +285,10 @@ exports.resendVerification = asyncHandler(async (req, res, next) => {
             console.log(`❌ [AuthController] Rinvio verifica fallito: ${result.message}`);
             
             // Gestisci i diversi tipi di errore
-            if (result.code === 'USER_NOT_FOUND') {
-                return next(new ErrorResponse('Utente non trovato', 404));
-            } else if (result.code === 'ALREADY_VERIFIED') {
+            if (result.code === 'USER_NOT_FOUND' || result.code === 'ALREADY_VERIFIED') {
                 return res.status(200).json({
                     success: true,
-                    message: 'Account già verificato. Puoi effettuare il login normalmente.'
+                    message: 'Se l\'email è registrata, riceverai un link di verifica.'
                 });
             } else if (result.code === 'COOLDOWN_ACTIVE') {
                 return next(new ErrorResponse(result.message, 429, null, 'COOLDOWN_ACTIVE'));
