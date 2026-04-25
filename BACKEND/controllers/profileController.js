@@ -141,15 +141,21 @@ exports.updateAvatar = asyncHandler(async (req, res, next) => {
  }
 
  const defaultImagePath = 'uploads/profile-images/default-avatar.jpg';
- if (user.profileImage && user.profileImage !== defaultImagePath) {
+ 
+ const currentProfileImage = user.profileImage ? user.profileImage.replace(/\\/g, '/') : '';
+  
+ if (currentProfileImage && currentProfileImage !== defaultImagePath) {
    try {
      await fs.unlink(path.resolve(user.profileImage));
    } catch (err) {
-     console.error(`Errore nell'eliminazione del vecchio file ${user.profileImage}:`, err.message);
+     console.error(`Errore nell'eliminazione del vecchio file:`, err.message);
    }
  }
 
- user.profileImage = req.file.path;
+ // ⚠️ FIX IMPORTANTE: Sostituisci i backslash (\) con slash (/) per compatibilità URL
+ // Questo assicura che il DB salvi "uploads/profile-images/foto.jpg" e non "uploads\profile-images\foto.jpg"
+ user.profileImage = req.file.path.replace(/\\/g, '/');
+ 
  await user.save();
 
  console.log('✅ [UpdateAvatar] Avatar aggiornato con successo per utente:', req.user.id);

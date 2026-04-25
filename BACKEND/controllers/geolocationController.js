@@ -32,7 +32,7 @@ exports.updateGeolocationSettings = asyncHandler(async (req, res, next) => {
     }
 
     // Validazione dei tipi di pasto
-    const validMealTypes = ['breakfast', 'lunch', 'dinner', 'aperitif'];
+    const validMealTypes = ['breakfast', 'brunch', 'lunch', 'dinner', 'aperitif'];
     if (mealTypes && mealTypes.some(type => !validMealTypes.includes(type))) {
         return next(new ErrorResponse(`Tipi di pasto non validi. Valori consentiti: ${validMealTypes.join(', ')}`, 400));
     }
@@ -79,7 +79,7 @@ exports.getGeolocationSettings = asyncHandler(async (req, res, next) => {
             enabled: false,
             radius: 10,
             maxDistance: 10,
-            mealTypes: ['breakfast', 'lunch', 'dinner', 'aperitif']
+            mealTypes: ['breakfast', 'brunch', 'lunch', 'dinner', 'aperitif']
         };
 
         const hasLocation = user.location && 

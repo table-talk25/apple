@@ -34,7 +34,7 @@ const availableLanguages = [
     'Sostenibile',
     'Biologica',
     'Slow Food'
-  ];
+  ]; 
 
 // Esporta tutto usando CommonJS
 module.exports = {

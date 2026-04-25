@@ -195,7 +195,7 @@ class NotificationPreferencesService {
                     enabled: false,
                     radius: 10,
                     maxDistance: 10,
-                    mealTypes: ['breakfast', 'lunch', 'dinner', 'aperitif']
+                    mealTypes: ['breakfast', 'brunch','lunch', 'dinner', 'aperitif']
                 }
             };
 
@@ -344,7 +344,7 @@ class NotificationPreferencesService {
                     enabled: false,
                     radius: 10,
                     maxDistance: 10,
-                    mealTypes: ['breakfast', 'lunch', 'dinner', 'aperitif']
+                    mealTypes: ['breakfast', 'brunch', 'lunch', 'dinner', 'aperitif']
                 }
             };
 

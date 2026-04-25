@@ -69,7 +69,7 @@ const REALISTIC_DATA = {
           geolocation: {
             enabled: true,
             radius: 10,
-            mealTypes: ['breakfast', 'lunch', 'dinner', 'aperitif'],
+            mealTypes: ['breakfast', 'brunch', 'lunch', 'dinner', 'aperitif'],
             maxDistance: 10
           }
         },
@@ -133,7 +133,7 @@ const REALISTIC_DATA = {
           geolocation: {
             enabled: true,
             radius: 10,
-            mealTypes: ['breakfast', 'lunch', 'dinner', 'aperitif'],
+            mealTypes: ['breakfast', 'brunch', 'lunch', 'dinner', 'aperitif'],
             maxDistance: 10
           }
         },
@@ -197,7 +197,7 @@ const REALISTIC_DATA = {
           geolocation: {
             enabled: true,
             radius: 10,
-            mealTypes: ['breakfast', 'lunch', 'dinner', 'aperitif'],
+            mealTypes: ['breakfast', 'brunch', 'lunch', 'dinner', 'aperitif'],
             maxDistance: 10
           }
         },
@@ -261,7 +261,7 @@ const REALISTIC_DATA = {
           geolocation: {
             enabled: true,
             radius: 10,
-            mealTypes: ['breakfast', 'lunch', 'dinner', 'aperitif'],
+            mealTypes: ['breakfast', 'brunch', 'lunch', 'dinner', 'aperitif'],
             maxDistance: 10
           }
         },
@@ -325,7 +325,7 @@ const REALISTIC_DATA = {
           geolocation: {
             enabled: true,
             radius: 10,
-            mealTypes: ['breakfast', 'lunch', 'dinner', 'aperitif'],
+            mealTypes: ['breakfast', 'brunch', 'lunch', 'dinner', 'aperitif'],
             maxDistance: 10
           }
         },

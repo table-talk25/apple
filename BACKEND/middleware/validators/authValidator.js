@@ -27,9 +27,29 @@ exports.registerValidation = [
         .isLength({ min: 8 })
         .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/)
         .withMessage('La password deve contenere almeno 8 caratteri, una lettera maiuscola, una minuscola, un numero e un carattere speciale'),
-    
+
     check('confirmPassword', 'Le password non coincidono')
-        .custom((value, { req }) => value === req.body.password)
+        .custom((value, { req }) => value === req.body.password),
+
+    check('dateOfBirth', 'Data di nascita obbligatoria')
+        .notEmpty()
+        .isISO8601().withMessage('Data di nascita non valida')
+        .custom((value) => {
+            const ms = Date.now() - new Date(value).getTime();
+            const ageYears = ms / (365.25 * 24 * 60 * 60 * 1000);
+            if (ageYears < 18) {
+                throw new Error('Devi avere almeno 18 anni per registrarti');
+            }
+            if (ageYears > 120) {
+                throw new Error('Data di nascita non valida');
+            }
+            return true;
+        }),
+
+    check('terms', 'Devi accettare termini e privacy per registrarti')
+        .toBoolean()
+        .equals('true')
+        .withMessage('Devi accettare termini e privacy per registrarti'),
 ];
 
 /**

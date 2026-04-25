@@ -199,6 +199,7 @@ class GeolocationNotificationService {
     createNotificationMessage(meal, distance, mealLocation) {
         const mealTypeLabels = {
             'breakfast': 'colazione',
+            'brunch': 'brunch',
             'lunch': 'pranzo',
             'dinner': 'cena',
             'aperitif': 'aperitivo'

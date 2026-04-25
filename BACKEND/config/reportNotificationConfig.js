@@ -171,7 +171,7 @@ const REPORT_NOTIFICATION_CONFIG = {
         DEFAULT_LANGUAGE: 'it',
         
         // Lingue supportate
-        SUPPORTED_LANGUAGES: ['it', 'en', 'es', 'fr', 'de'],
+        SUPPORTED_LANGUAGES: ['it', 'en', 'es', 'fr', 'de', 'ar', 'zh', 'ja'],
         
         // Formato data predefinito
         DATE_FORMAT: 'it-IT',

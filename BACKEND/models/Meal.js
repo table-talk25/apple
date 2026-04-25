@@ -29,8 +29,8 @@ const MealSchema = new mongoose.Schema({
     type: String,
     required: [true, 'Il tipo di pasto è obbligatorio'],
     enum: {
-      values: ['breakfast', 'lunch', 'dinner', 'aperitif'],
-      message: 'Il tipo di pasto deve essere uno tra: colazione, pranzo, cena, aperitivo' 
+      values: ['breakfast', 'brunch', 'lunch', 'dinner', 'aperitif'],
+      message: 'Il tipo di pasto deve essere uno tra: colazione, brunch, pranzo, cena, aperitivo' 
     }
   },
   description: {

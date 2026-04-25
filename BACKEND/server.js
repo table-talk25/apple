@@ -21,7 +21,7 @@ const startMealStatusUpdater = require('./jobs/mealStatusUpdater');
 const mealStatusService = require('./services/mealStatusService');
 const dailyReportSummaryJob = require('./jobs/dailyReportSummary');
 const twilio = require('twilio');
-
+const startCronJobs = require('./utils/cronJobs');
 
 // --- INIZIALIZZAZIONE FIREBASE ADMIN ---
 const admin = require('firebase-admin');
@@ -360,6 +360,40 @@ app.get('/health', (req, res) => {
   });
 });
 
+// 📧 Health-check SMTP: verifica che l'invio email sia configurato correttamente.
+// Utile per debug post-deploy: se questo endpoint risponde 200, le email partono.
+app.get('/health/email', async (req, res) => {
+  try {
+    const nodemailer = require('nodemailer');
+    const transporter = nodemailer.createTransport({
+      host: process.env.SMTP_HOST,
+      port: process.env.SMTP_PORT,
+      secure: process.env.SMTP_SECURE === 'true',
+      auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
+    });
+    await transporter.verify();
+    return res.status(200).json({
+      status: 'ok',
+      smtpHost: process.env.SMTP_HOST || null,
+      smtpUser: process.env.SMTP_USER ? '***@' + (process.env.SMTP_USER.split('@')[1] || '') : null,
+      hasFrom: !!process.env.EMAIL_FROM,
+    });
+  } catch (err) {
+    return res.status(500).json({
+      status: 'error',
+      message: err && err.message ? err.message : String(err),
+      smtpHost: process.env.SMTP_HOST || null,
+      missingEnv: {
+        SMTP_HOST: !process.env.SMTP_HOST,
+        SMTP_PORT: !process.env.SMTP_PORT,
+        SMTP_USER: !process.env.SMTP_USER,
+        SMTP_PASS: !process.env.SMTP_PASS,
+        EMAIL_FROM: !process.env.EMAIL_FROM,
+      },
+    });
+  }
+});
+
 // Rotte API
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/profile', require('./routes/profile'));
@@ -525,10 +559,14 @@ initializeSocket(server);
 // Inizializza il notificationService dopo che il server è stato creato
 notificationService.initialize(connectedUsers);
 
+// Avvia i Cron Jobs per le email automatiche
+startCronJobs();
+
 server.listen(PORT, HOST, () => {
   console.log(`\n🚀 Server TableTalk in esecuzione su http://localhost:${PORT}`);
   console.log(`🌍 [SERVER] HOST: ${HOST}`);
   console.log(`🔌 [SERVER] PORT: ${PORT}`);
   console.log(`🛡️ [SERVER] CORS configurato per:`, allowedOrigins);
   console.log(`📡 [SERVER] Server pronto per ricevere richieste!`);
+  
 });

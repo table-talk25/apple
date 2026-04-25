@@ -21,17 +21,30 @@ exports.register = asyncHandler(async (req, res, next) => {
       return next(new ErrorResponse('Uno o più campi non sono validi', 400, errors.array()));
     }
     
-    const { name, surname, email, password, dateOfBirth } = req.body;
+    const { name, surname, email, password, dateOfBirth, terms } = req.body;
 
     console.log('\n--- TENTATIVO DI REGISTRAZIONE RICEVUTO ---');
-    console.log('Dati ricevuti per la registrazione:', { name, surname, email, dateOfBirth });
+    console.log('Dati ricevuti per la registrazione:', { name, surname, email, dateOfBirth, terms });
+
+    // 🛡️ GDPR: il consenso a Termini e Privacy deve essere esplicito (checkbox spuntato).
+    if (!terms) {
+      return next(new ErrorResponse('Devi accettare termini e privacy per registrarti', 400));
+    }
 
     // Lasciamo che sia il nostro errorHandler (con la regola per il codice 11000)
     // a gestire il caso dell'email duplicata per dare un messaggio specifico.
-    
+
     // Passiamo la password in chiaro. Il modello User.js si occuperà di criptarla
     // UNA SOLA VOLTA prima di salvare, grazie al middleware pre-save.
-    const user = await User.create({ name, surname, email, password, dateOfBirth });
+    const now = new Date();
+    const clientIp = req.ip || req.headers['x-forwarded-for'] || req.connection?.remoteAddress;
+    const user = await User.create({
+      name, surname, email, password, dateOfBirth,
+      // 🛡️ GDPR: registriamo timestamp del consenso a Termini e Privacy
+      termsAcceptedAt: now,
+      privacyAcceptedAt: now,
+      registrationIp: clientIp,
+    });
     
     console.log('✅ Utente creato con successo nel database!');
     console.log('Dettagli utente salvato:', user);

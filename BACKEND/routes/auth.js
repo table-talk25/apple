@@ -5,7 +5,6 @@ const router = express.Router();
 const { check } = require('express-validator'); 
 const rateLimit = require('express-rate-limit'); // <-- IMPORT NECESSARIO
 const authController = require('../controllers/authController');
-const socialAuthController = require('../controllers/socialAuthController');
 const { protect } = require('../middleware/auth');
 
 const { 
@@ -56,7 +55,5 @@ router.get('/password-reset-stats', protect, authController.getPasswordResetStat
 router.post('/cleanup-expired-reset-tokens', protect, authController.cleanupExpiredResetTokens);
 
 // Social Authentication Routes
-router.post('/google', socialAuthController.googleAuth);
-router.post('/apple', socialAuthController.appleAuth);
 
 module.exports = router;

@@ -83,6 +83,14 @@ const UserSchema = new mongoose.Schema(
     loginAttempts: { type: Number, default: 0 },
     lockUntil: { type: Date },
 
+    // --- GDPR / CONSENSO ---
+    // Tracciamo il consenso a Termini e Privacy per audit & compliance Google Play.
+    termsAcceptedAt: { type: Date },
+    termsVersion: { type: String, default: '1.0' },
+    privacyAcceptedAt: { type: Date },
+    privacyVersion: { type: String, default: '1.0' },
+    registrationIp: { type: String },
+
         // NOTIFICHE PUSH ▼▼▼
         fcmTokens: {
           type: [String],

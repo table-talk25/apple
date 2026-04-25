@@ -27,6 +27,7 @@ const userPreferenceSchema = new mongoose.Schema({
   // ⏰ PREFERENZE ORARIO
   timePreferences: {
     breakfast: { type: Number, default: 0.1, min: -1, max: 1 },
+    brunch: { type: Number, default: 0.1, min: -1, max: 1 },
     lunch: { type: Number, default: 0.4, min: -1, max: 1 },
     aperitivo: { type: Number, default: 0.3, min: -1, max: 1 },
     dinner: { type: Number, default: 0.6, min: -1, max: 1 }

@@ -45,7 +45,7 @@ exports.updateNotificationPreferences = asyncHandler(async (req, res, next) => {
         // Validazione preferenze push granulari
         if (pushPreferences) {
             const validCategories = ['meals', 'chat', 'social', 'system', 'moderation'];
-            const validMealTypes = ['breakfast', 'lunch', 'dinner', 'aperitif'];
+            const validMealTypes = ['breakfast', 'brunch', 'lunch', 'dinner', 'aperitif'];
 
             for (const category of Object.keys(pushPreferences)) {
                 if (!validCategories.includes(category)) {

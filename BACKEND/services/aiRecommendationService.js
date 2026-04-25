@@ -111,6 +111,7 @@ class SmartAIRecommendationService {
     
     let timeSlot;
     if (mealHour >= 7 && mealHour < 10) timeSlot = 'breakfast';
+    else if (mealHour >= 10 && mealHour < 12) timeSlot = 'brunch';
     else if (mealHour >= 12 && mealHour < 15) timeSlot = 'lunch';
     else if (mealHour >= 17 && mealHour < 19) timeSlot = 'aperitivo';
     else if (mealHour >= 19 && mealHour <= 23) timeSlot = 'dinner';
