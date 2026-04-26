@@ -85,7 +85,9 @@ const EmailVerificationBanner = () => {
   return (
     <div role="status" style={styles.bar} data-testid="email-verification-banner">
       <span style={styles.text}>
-        📧 Conferma la tua email <strong>{user.email}</strong> per non perdere notifiche e funzionalità.
+        📧 Ti abbiamo inviato un'email di verifica a <strong>{user.email}</strong>. Apri il link per attivare l'account e non perdere notifiche e funzionalità.
+        {' '}
+        <span style={styles.smallHint}>Non l'hai ricevuta?</span>
       </span>
       <span style={styles.actions}>
         <button
@@ -94,7 +96,7 @@ const EmailVerificationBanner = () => {
           disabled={sending}
           style={styles.resendBtn}
         >
-          {sending ? 'Invio…' : 'Reinvia email'}
+          {sending ? 'Invio…' : 'Reinvia'}
         </button>
         <button
           type="button"
@@ -132,6 +134,7 @@ const styles = {
     gap: '10px',
   },
   text: { flex: '1 1 auto', minWidth: 0 },
+  smallHint: { color: '#7a6500', fontSize: '0.85rem', whiteSpace: 'nowrap' },
   actions: { display: 'flex', alignItems: 'center', gap: '8px', flex: '0 0 auto' },
   resendBtn: {
     background: '#f5b400',
