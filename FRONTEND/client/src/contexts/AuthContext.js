@@ -98,9 +98,18 @@ export const AuthProvider = ({ children }) => {
 
                         setIsAuthenticated(true);
 
-                        // Verifica token in background
+                        // 🔄 Verifica token in background AND aggiorna lo state in memoria
+                        // se il backend ha dati più freschi (es. email verificata da
+                        // un altro browser/tab nel frattempo). Senza questo, banner
+                        // "Conferma email" rimaneva anche dopo la verifica avvenuta.
 
-                        authService.verifyToken().catch(e => console.log('Verifica background:', e));
+                        authService.verifyToken()
+                            .then(freshUser => {
+                                if (isMounted && freshUser) {
+                                    setUser(freshUser);
+                                }
+                            })
+                            .catch(e => console.log('Verifica background:', e));
 
                     } else {
 
@@ -143,6 +152,34 @@ export const AuthProvider = ({ children }) => {
         return () => { isMounted = false; };
 
     }, []);
+
+
+
+    // 👁️ Quando la finestra torna in focus, rinfresca i dati utente dal server.
+    // Così se l'utente ha verificato l'email in un altro browser/tab/dispositivo,
+    // appena torna su questa scheda il banner "Conferma email" sparisce subito,
+    // senza richiedere refresh manuale.
+
+    useEffect(() => {
+
+        if (!isAuthenticated) return;
+
+        const handleFocus = () => {
+
+            authService.verifyToken()
+                .then(freshUser => {
+                    if (freshUser) setUser(freshUser);
+                })
+                .catch(() => { /* silenzioso, non disturbiamo l'utente */ });
+
+        };
+
+        window.addEventListener('focus', handleFocus);
+
+        return () => window.removeEventListener('focus', handleFocus);
+
+    }, [isAuthenticated]);
+
 
 
 
