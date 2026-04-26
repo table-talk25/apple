@@ -88,9 +88,13 @@ const VerifyEmailPage = () => {
               Grazie {user && user.name ? user.name : ''}, il tuo account è ora completamente attivo.
             </p>
             <p style={styles.text}>
-              Puoi tornare nell'app TableTalk per continuare.
+              Continua dove avevi lasciato: completa il tuo profilo per iniziare a usare TableTalk.
             </p>
-            <Link to="/meals" style={styles.button}>Apri TableTalk</Link>
+            {/* Coerente col flusso scelto: nuovo utente → onboarding profilo.
+                Se il profilo è già completo, ProfilePage mostra automaticamente
+                la modalità "modifica" invece del benvenuto, quindi il link è
+                sicuro anche per utenti veterani. */}
+            <Link to="/impostazioni/profilo?firstTime=1" style={styles.button}>Vai al tuo profilo</Link>
           </>
         )}
 
