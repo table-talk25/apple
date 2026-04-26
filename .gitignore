@@ -26,3 +26,6 @@ android_old_backup_duplicate/
 .idea/
 *.iml
 .DS_Store
+
+# Cartelle temporanee di archivio post-cleanup
+_ARCHIVE_DELETE_AFTER_REVIEW/
