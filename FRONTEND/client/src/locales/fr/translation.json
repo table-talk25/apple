@@ -53,6 +53,7 @@
     "privacyPolicy": "Politique de confidentialité",
     "registering": "Inscription...",
     "alreadyHaveAccount": "Vous avez déjà un compte ?",
+    "noAccount": "Vous n'avez pas de compte ?",
     "loginToTableTalk": "Se connecter à TableTalk",
     "emailPlaceholder": "votre@email.adresse",
     "passwordPlaceholder": "Votre mot de passe",
@@ -363,7 +364,9 @@
       "bioPlaceholder": "Votre bio...",
       "locationVisibility": "Visibilité de la localisation",
       "ageVisibility": "Visibilité de l'âge",
-      "updateError": "Erreur lors de la mise à jour du profil"
+      "updateError": "Erreur lors de la mise à jour du profil",
+      "noLocationSet": "Localisation non définie",
+      "updateLocation": "Mettre à jour la localisation"
     },
     "interests": {
       "title": "Intérêts et Préférences",

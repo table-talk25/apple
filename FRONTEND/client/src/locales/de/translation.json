@@ -53,6 +53,7 @@
     "privacyPolicy": "Datenschutzerklärung",
     "registering": "Registrierung...",
     "alreadyHaveAccount": "Haben Sie bereits ein Konto?",
+    "noAccount": "Sie haben noch kein Konto?",
     "loginToTableTalk": "Bei TableTalk anmelden",
     "emailPlaceholder": "ihre@email.adresse",
     "passwordPlaceholder": "Ihr Passwort",
@@ -325,11 +326,6 @@
     "notifications": "Benachrichtigungen"
   },
   "profile": {
-    "personalInfo": "Persönliche Informationen",
-    "interests": "Interessen",
-    "languages": "Sprachen",
-    "mealHistory": "TableTalk® Verlauf",
-    "settings": "Einstellungen",
     "pageTitle": "Mein Profil",
     "loadError": "Profil konnte nicht geladen werden. Bitte versuchen Sie es später erneut.",
     "updateSuccess": "Profil aktualisiert!",
@@ -368,7 +364,9 @@
       "bioPlaceholder": "Ihre Bio...",
       "locationVisibility": "Standort-Sichtbarkeit",
       "ageVisibility": "Alter-Sichtbarkeit",
-      "updateError": "Fehler beim Aktualisieren des Profils"
+      "updateError": "Fehler beim Aktualisieren des Profils",
+      "noLocationSet": "Standort nicht festgelegt",
+      "updateLocation": "Standort aktualisieren"
     },
     "interests": {
       "title": "Interessen und Präferenzen",

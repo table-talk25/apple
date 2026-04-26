@@ -53,6 +53,7 @@
     "privacyPolicy": "隐私政策",
     "registering": "注册中...",
     "alreadyHaveAccount": "已有账户？",
+    "noAccount": "还没有账户？",
     "loginToTableTalk": "登录TableTalk",
     "emailPlaceholder": "您的@邮箱.地址",
     "passwordPlaceholder": "您的密码",
@@ -133,6 +134,7 @@
     },
     "mealTypes": {
       "breakfast": "早餐",
+      "brunch": "早午餐",
       "lunch": "午餐",
       "dinner": "晚餐",
       "aperitif": "开胃酒"
@@ -363,7 +365,9 @@
       "bioPlaceholder": "您的个人简介...",
       "locationVisibility": "位置可见性",
       "ageVisibility": "年龄可见性",
-      "updateError": "更新个人资料时出错"
+      "updateError": "更新个人资料时出错",
+      "noLocationSet": "未设置位置",
+      "updateLocation": "更新位置"
     },
     "interests": {
       "title": "兴趣和偏好",

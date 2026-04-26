@@ -53,6 +53,7 @@
     "privacyPolicy": "Privacy Policy",
     "registering": "Registering...",
     "alreadyHaveAccount": "Already have an account?",
+    "noAccount": "Don't have an account?",
     "loginToTableTalk": "Login to TableTalk",
     "emailPlaceholder": "your@email.address",
     "passwordPlaceholder": "Your password",
@@ -368,7 +369,9 @@
       "bioPlaceholder": "Your bio...",
       "locationVisibility": "Location Visibility",
       "ageVisibility": "Age Visibility",
-      "updateError": "Error updating profile"
+      "updateError": "Error updating profile",
+      "noLocationSet": "Location not set",
+      "updateLocation": "Update Location"
     },
     "interests": {
       "title": "Interests and Preferences",

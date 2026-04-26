@@ -53,6 +53,7 @@
     "privacyPolicy": "Política de privacidad",
     "registering": "Registrando...",
     "alreadyHaveAccount": "¿Ya tienes una cuenta?",
+    "noAccount": "¿No tienes una cuenta?",
     "loginToTableTalk": "Iniciar sesión en TableTalk",
     "emailPlaceholder": "tu@email.direccion",
     "passwordPlaceholder": "Tu contraseña",
@@ -325,11 +326,6 @@
     "notifications": "Notificaciones"
   },
   "profile": {
-    "personalInfo": "Información Personal",
-    "interests": "Intereses",
-    "languages": "Idiomas",
-    "mealHistory": "Historial TableTalk®",
-    "settings": "Configuración",
     "pageTitle": "Mi Perfil",
     "loadError": "No se pudo cargar el perfil. Inténtalo de nuevo más tarde.",
     "updateSuccess": "¡Perfil actualizado!",
@@ -368,7 +364,9 @@
       "bioPlaceholder": "Tu biografía...",
       "locationVisibility": "Visibilidad de ubicación",
       "ageVisibility": "Visibilidad de edad",
-      "updateError": "Error al actualizar el perfil"
+      "updateError": "Error al actualizar el perfil",
+      "noLocationSet": "Ubicación no establecida",
+      "updateLocation": "Actualizar Ubicación"
     },
     "interests": {
       "title": "Intereses y Preferencias",

@@ -53,6 +53,7 @@
     "privacyPolicy": "سياسة الخصوصية",
     "registering": "جاري التسجيل...",
     "alreadyHaveAccount": "هل لديك حساب بالفعل؟",
+    "noAccount": "ليس لديك حساب؟",
     "loginToTableTalk": "تسجيل الدخول إلى TableTalk",
     "emailPlaceholder": "بريدك@الإلكتروني.عنوان",
     "passwordPlaceholder": "كلمة المرور الخاصة بك",
@@ -133,6 +134,7 @@
     },
     "mealTypes": {
       "breakfast": "الإفطار",
+      "brunch": "الإفطار الصباحي",
       "lunch": "الغداء",
       "dinner": "العشاء",
       "aperitif": "المقبلات"
@@ -325,11 +327,6 @@
     "notifications": "الإشعارات"
   },
   "profile": {
-    "personalInfo": "المعلومات الشخصية",
-    "interests": "الاهتمامات",
-    "languages": "اللغات",
-    "mealHistory": "سجل TableTalk®",
-    "settings": "الإعدادات",
     "pageTitle": "ملفي الشخصي",
     "loadError": "تعذر تحميل الملف الشخصي. يرجى المحاولة مرة أخرى لاحقًا.",
     "updateSuccess": "تم تحديث الملف الشخصي!",
@@ -368,7 +365,9 @@
       "bioPlaceholder": "سيرتك الذاتية...",
       "locationVisibility": "رؤية الموقع",
       "ageVisibility": "رؤية العمر",
-      "updateError": "خطأ في تحديث الملف الشخصي"
+      "updateError": "خطأ في تحديث الملف الشخصي",
+      "noLocationSet": "الموقع غير محدد",
+      "updateLocation": "تحديث الموقع"
     },
     "interests": {
       "title": "الاهتمامات والتفضيلات",
