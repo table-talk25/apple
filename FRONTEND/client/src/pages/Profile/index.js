@@ -1,11 +1,13 @@
 // File: /src/pages/Profile/index.js (Versione Unificata e Corretta)
 
+// File: /src/pages/Profile/index.js (Versione FINALE: Senza bottone grande e con fix Lingue)
+
 import React, { useState, useEffect, useCallback } from 'react';
-import { Container, Alert, Spinner, Button } from 'react-bootstrap';
+import { Container, Spinner } from 'react-bootstrap';
 import { toast } from 'react-toastify';
 import { useTranslation } from 'react-i18next';
-import { FaUsers, FaRegSmile, FaCheckCircle } from 'react-icons/fa';
 
+// Rimosso FaPencilAlt e FaSave perché ora sono dentro i componenti figli
 import { useAuth } from '../../contexts/AuthContext';
 import profileService from '../../services/profileService';
 import ErrorBoundary from '../../components/common/ErrorBoundary';
@@ -17,94 +19,78 @@ import LanguagesSection from '../../components/profile/LanguagesSection';
 import ProfileSettings from '../../components/profile/ProfileSettings';
 import BackButton from '../../components/common/BackButton';
 
-import styles from './ProfilePage.module.css'; // Useremo solo lo stile della pagina profilo
+import styles from './ProfilePage.module.css';
+
+const isProfileComplete = (profile) => {
+    if (!profile) return false;
+    if (profile.profileCompleted === true) return true;
+
+    return Boolean(
+        profile.nickname &&
+        profile.nickname.trim().length >= 3 &&
+        profile.bio &&
+        profile.bio.trim().length >= 10 &&
+        Array.isArray(profile.interests) &&
+        profile.interests.length >= 1
+    );
+};
 
 const ProfilePage = () => {
     const { t } = useTranslation();
     const { user, updateUser, loading: authLoading, logout, deleteAccount } = useAuth();
     
+    // STATI
     const [profileData, setProfileData] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [loadError, setLoadError] = useState('');
     const [isUpdating, setIsUpdating] = useState(false);
-    const [error, setError] = useState('');
+    const userId = user?.id || user?._id;
+    
+    // RIMOSSO: const [isEditing, setIsEditing] = useState(false); -> Non serve più!
 
-    // Usa un ref per tracciare se il profilo è già stato caricato
-    const hasLoadedRef = React.useRef(false);
-    const loadingRef = React.useRef(false);
-
+    // CARICAMENTO PROFILO
     const loadProfile = useCallback(async () => {
-        console.log('[ProfilePage] loadProfile chiamato, user?.id:', user?.id);
-        if (!user?.id) {
-            console.warn('[ProfilePage] ⚠️ User ID non presente, salto il caricamento');
-            return;
-        }
-        
-        // Evita caricamenti multipli simultanei
-        if (loadingRef.current) {
-            console.log('[ProfilePage] ⚠️ Caricamento già in corso, salto');
+        if (!userId) {
+            setLoading(false);
             return;
         }
         
         try {
-            loadingRef.current = true;
-            setLoading(true);
-            setError('');
-            console.log('[ProfilePage] Caricamento profilo per user ID:', user.id);
+            setLoadError('');
+            if (!profileData) setLoading(true);
+            
             const data = await profileService.getProfile();
-            console.log('[ProfilePage] Profilo caricato:', {
-                hasData: !!data,
-                userId: data?.id,
-                nickname: data?.nickname
-            });
             setProfileData(data);
-            // Aggiorna anche lo stato globale solo se i dati sono diversi
-            // Usa una versione stabile di updateUser per evitare loop
-            if (data && (!hasLoadedRef.current || JSON.stringify(data) !== JSON.stringify(user))) {
+            
+            if (JSON.stringify(data) !== JSON.stringify(user)) {
                 updateUser(data);
-                hasLoadedRef.current = true;
             }
         } catch (err) {
-            console.error('[ProfilePage] ❌ Errore nel caricamento profilo:', {
-                message: err.message,
-                status: err?.response?.status,
-                statusText: err?.response?.statusText,
-                data: err?.response?.data
-            });
-            const errorMessage = err?.response?.data?.message || err.message || t('profile.loadError');
-            setError(errorMessage);
-            // Se è un errore 401, potrebbe essere necessario fare logout
-            if (err?.response?.status === 401) {
-                console.warn('[ProfilePage] ⚠️ Errore 401, potrebbe essere necessario fare logout');
-            }
+            console.error('Errore caricamento profilo:', err);
+            setLoadError(err.response?.data?.message || 'Non siamo riusciti a caricare il profilo. Puoi comunque completarlo qui sotto.');
         } finally {
             setLoading(false);
-            loadingRef.current = false;
         }
-    }, [user?.id, t]); // Rimossa updateUser dalle dipendenze per evitare loop
+    }, [user, userId, updateUser, profileData]);
 
     useEffect(() => {
-        // Carica il profilo quando l'utente è disponibile e non è già stato caricato
-        if (user?.id && !hasLoadedRef.current && !loadingRef.current) {
-            console.log('[ProfilePage] useEffect: Caricamento profilo per user:', user.id);
+        if (userId) {
             loadProfile();
+        } else if (!authLoading) {
+            setLoading(false);
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [user?.id]); // Dipende solo da user?.id, non da loadProfile per evitare loop
+    }, [userId, authLoading]); // Rimosso loadProfile per evitare loop
 
+    // GESTIONE AGGIORNAMENTI
     const handleProfileUpdate = async (updatedData) => {
         setIsUpdating(true);
         try {
             const freshProfile = await profileService.updateProfile(updatedData);
             setProfileData(freshProfile);
-            updateUser(freshProfile); // Aggiorna il context
-            toast.success(t('profile.updateSuccess'));
-
-            // Se il profilo era incompleto, ora è completo!
-            if (!user.profileCompleted) {
-                // Potresti mostrare un messaggio di successo e reindirizzare
-            }
+            updateUser(freshProfile);
+            toast.success(t('profile.updateSuccess') || 'Profilo aggiornato!');
         } catch (err) {
-            toast.error(err.response?.data?.message || t('profile.updateError'));
+            toast.error(err.response?.data?.message || t('profile.updateError') || 'Errore aggiornamento');
         } finally {
             setIsUpdating(false);
         }
@@ -113,152 +99,122 @@ const ProfilePage = () => {
     const handleImageUpdate = async (formData) => {
         setIsUpdating(true);
         try {
-            console.log('🖼️ [Profile] Inizio upload immagine profilo...');
             const updatedProfile = await profileService.updateProfileImage(formData);
-            console.log('✅ [Profile] Immagine profilo aggiornata:', updatedProfile);
-            
             setProfileData(updatedProfile);
-            updateUser(updatedProfile); // Aggiorna il context
-            toast.success(t('profile.imageUpdateSuccess') || 'Immagine profilo aggiornata con successo!');
+            updateUser(updatedProfile);
+            toast.success(t('profile.imageUpdateSuccess') || 'Foto aggiornata!');
         } catch (err) {
-            console.error('❌ [Profile] Errore upload immagine:', err);
-            toast.error(err.response?.data?.message || t('profile.imageUpdateError') || 'Errore durante l\'aggiornamento dell\'immagine');
+            toast.error(t('profile.imageUpdateError') || 'Errore aggiornamento foto');
         } finally {
             setIsUpdating(false);
         }
     };
 
-    // --- LOGICA DI RENDER PRINCIPALE ---
-    console.log('[ProfilePage] Render - authLoading:', authLoading, 'user:', !!user, 'loading:', loading, 'error:', error, 'profileData:', !!profileData);
+    // --- RENDER ---
 
-    // Se l'autenticazione è ancora in caricamento, mostra spinner
-    if (authLoading) {
-        console.log('[ProfilePage] Mostrando spinner per authLoading');
-        return <Spinner fullscreen label={t('common.loading') || 'Caricamento...'} />;
-    }
+    if (authLoading) return <div className="d-flex justify-content-center mt-5"><Spinner animation="border" variant="primary" /></div>;
 
-    // Se non c'è un utente autenticato, mostra errore
-    if (!user) {
-        console.log('[ProfilePage] Nessun utente, mostrando errore');
+    const currentProfile = profileData || user;
+    const profileComplete = isProfileComplete(currentProfile);
+
+    // SCENARIO 1: Benvenuto (Profilo Incompleto)
+    if (user && !profileComplete) {
+        // Prepariamo i dati corretti per lo scenario 1
+        const welcomeData = profileData || user; 
+
         return (
-            <Container>
-                <Alert variant="warning">
-                    {t('profile.notAuthenticated') || 'Devi essere autenticato per visualizzare il profilo.'}
-                </Alert>
-            </Container>
-        );
-    }
-
-    // Se il profilo è ancora in caricamento, mostra spinner
-    if (loading) {
-        console.log('[ProfilePage] Mostrando spinner per loading');
-        return <Spinner fullscreen label={t('common.loadingProfile') || 'Caricamento profilo...'} />;
-    }
-
-    // Se c'è un errore, mostralo
-    if (error) {
-        console.log('[ProfilePage] Mostrando errore:', error);
-        return (
-            <Container>
-                <Alert variant="danger">{error}</Alert>
-                <Button onClick={() => {
-                    hasLoadedRef.current = false;
-                    loadProfile();
-                }} className="mt-3">
-                    {t('common.retry') || 'Riprova'}
-                </Button>
-            </Container>
-        );
-    }
-
-    // SCENARIO 1: L'utente è loggato ma il profilo NON è completo
-    if (user && !user.profileCompleted) {
-        return (
-            <div className={styles.welcomePage}>
-                <div className={styles.header}>
-                    <h1 className={styles.title}>Un ultimo passo!</h1>
-                    <p className={styles.subtitle}>
-                        Completa il tuo profilo per rendere la tua esperienza su TableTalk unica.
-                    </p>
-                </div>
-
-                <div className={styles.benefitsGrid}>
-                    <div className={styles.benefitCard}>
-                        <FaUsers className={styles.icon} size={40} />
-                        <h3 className={styles.cardTitle}>Trova le Persone Giuste</h3>
-                        <p className={styles.cardText}>
-                            Aggiungendo i tuoi interessi, ti aiuteremo a trovare pasti con persone simili a te.
-                        </p>
+            <ErrorBoundary componentName="ProfileWelcomePage">
+                <div className={styles.welcomePage}>
+                    <div className={styles.header}>
+                        <h1 className={styles.title}>Benvenuto!</h1>
+                        <p className={styles.subtitle}>Completa il tuo profilo per iniziare.</p>
                     </div>
-                    <div className={styles.benefitCard}>
-                        <FaRegSmile className={styles.icon} size={40} />
-                        <h3 className={styles.cardTitle}>Fai una Bella Impressione</h3>
-                        <p className={styles.cardText}>
-                            Una bio e una foto profilo aiutano gli altri a conoscerti meglio prima di un pasto.
-                        </p>
-                    </div>
-                    <div className={styles.benefitCard}>
-                        <FaCheckCircle className={styles.icon} size={40} />
-                        <h3 className={styles.cardTitle}>Ottieni Più Inviti</h3>
-                        <p className={styles.cardText}>
-                            I profili completi hanno il 75% in più di probabilità di essere invitati a pasti esclusivi.
-                        </p>
+                    
+                    <div className={styles.profilePage} style={{ paddingTop: '2rem' }}>
+                        <div className={styles.content}>
+                            {loadError && (
+                                <div role="alert" style={{
+                                    background: '#fff7e0',
+                                    color: '#5b4a00',
+                                    border: '1px solid #ffe28a',
+                                    borderRadius: '8px',
+                                    padding: '10px 12px',
+                                    marginBottom: '14px',
+                                    fontSize: '0.9rem',
+                                }}>
+                                    {loadError}
+                                </div>
+                            )}
+
+                            {/* Qui forziamo isEditing=true sui componenti che lo supportano ancora come prop esterna */}
+                            <ProfileHeader profile={welcomeData} onUpdateImage={handleImageUpdate} isEditing={true} />
+                            <PersonalInfo profileData={welcomeData} onUpdate={handleProfileUpdate} isUpdating={isUpdating} isEditing={true} />
+                            
+                            {/* FIX: Corretto il passaggio dati e rimosso isEditing (gestito internamente) */}
+                            <LanguagesSection 
+                                profileData={welcomeData} 
+                                onUpdate={handleProfileUpdate} 
+                            />
+                            
+                            <InterestsSection profileData={welcomeData} onUpdate={handleProfileUpdate} isUpdating={isUpdating} isEditing={true} />
+                        </div>
                     </div>
                 </div>
-
-                {/* Mostriamo direttamente il form di modifica sotto! */}
-                <div className={styles.profilePage} style={{ paddingTop: '2rem' }}>
-                    <div className={styles.content}>
-                        {/* Aggiunta ProfileHeader per permettere upload foto immediato */}
-                        <ProfileHeader 
-                            profile={profileData || user} 
-                            onUpdateImage={handleImageUpdate} 
-                            isEditing={true} // Opzionale: forza modalità edit se il componente lo supporta
-                        />
-                        <PersonalInfo profileData={profileData || user} onUpdate={handleProfileUpdate} isUpdating={isUpdating} />
-                        <InterestsSection profileData={profileData || user} onUpdate={handleProfileUpdate} isUpdating={isUpdating} />
-                    </div>
-                </div>
-            </div>
-        );
-    }
-    
-    // SCENARIO 2: Il profilo è completo, mostra la pagina di modifica standard
-    // Usa profileData se disponibile, altrimenti usa user come fallback
-    const displayData = profileData || user;
-    
-    console.log('[ProfilePage] displayData:', !!displayData, 'user.profileCompleted:', user?.profileCompleted);
-    
-    if (!displayData) {
-        console.log('[ProfilePage] Nessun displayData disponibile');
-        return (
-            <Container>
-                <Alert variant="warning">
-                    {t('profile.noData') || 'Impossibile caricare i dati del profilo.'}
-                </Alert>
-                <Button onClick={() => {
-                    hasLoadedRef.current = false;
-                    loadProfile();
-                }} className="mt-3">
-                    {t('common.retry') || 'Riprova'}
-                </Button>
-            </Container>
+            </ErrorBoundary>
         );
     }
 
-    console.log('[ProfilePage] Renderizzando pagina profilo completa');
+    // SCENARIO 2: Profilo Completo
+    const displayData = currentProfile;
+
+    if (!displayData) return <div className="p-5 text-center">Caricamento profilo...</div>;
+
     return (
         <ErrorBoundary componentName="ProfilePage">
-            <Container fluid className={styles.profilePage} style={{ minHeight: '100vh', backgroundColor: '#f8f9fa' }}>
-                <div className={styles.header}>
-                    <BackButton className={styles.smallBackButton} />
+            <Container fluid className={styles.profilePage} style={{ minHeight: '100vh', backgroundColor: '#f8f9fa', paddingBottom: '80px' }}>
+                
+                {/* HEADER PULITO: Solo tasto indietro, niente più tasto "Modifica" gigante */}
+                <div className="d-flex align-items-center mb-3 pt-2 px-2">
+                    <BackButton />
                 </div>
+
+                {loading && <div className="text-center py-2"><Spinner animation="border" size="sm" /></div>}
+
                 <div className={styles.content}>
-                    <ProfileHeader profile={displayData} onUpdateImage={handleImageUpdate} />
-                    <PersonalInfo profileData={displayData} onUpdate={handleProfileUpdate} isUpdating={isUpdating} />
-                    <InterestsSection profileData={displayData} onUpdate={handleProfileUpdate} isUpdating={isUpdating} />
-                    <LanguagesSection profileData={displayData} onUpdate={handleProfileUpdate} isUpdating={isUpdating} />
-                    <ProfileSettings profileData={displayData} onUpdate={handleProfileUpdate} onLogout={logout} onDeleteAccount={deleteAccount} />
+                    <ProfileHeader 
+                        profile={displayData} 
+                        onUpdateImage={handleImageUpdate} 
+                        isEditing={true} 
+                    />
+                    
+                    {/* Nota: PersonalInfo e Interests potrebbero volere ancora la loro logica interna, 
+                        ma per ora lasciamoli in visualizzazione finché non li clicchi se supportano edit locale */}
+                    <PersonalInfo 
+                        profileData={displayData} 
+                        onUpdate={handleProfileUpdate} 
+                        isUpdating={isUpdating} 
+                        isEditing={false} /* Disattivato qui, si spera abbiano la loro matitina o si attivi diversamente */
+                    />
+                    
+                    {/* ✅ LINGUE: Ora è perfetto. Si gestisce da solo con la sua matitina. */}
+                    <LanguagesSection 
+                        profileData={displayData} 
+                        onUpdate={handleProfileUpdate} 
+                    />
+
+                    <InterestsSection 
+                        profileData={displayData} 
+                        onUpdate={handleProfileUpdate} 
+                        isUpdating={isUpdating} 
+                        isEditing={false} 
+                    />
+                    
+                    <ProfileSettings 
+                        profileData={displayData} 
+                        onUpdate={handleProfileUpdate} 
+                        onLogout={logout} 
+                        onDeleteAccount={deleteAccount} 
+                    />
                 </div>
             </Container>
         </ErrorBoundary>
