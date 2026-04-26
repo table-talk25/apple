@@ -1,67 +1,23 @@
 // File: src/components/layout/EmailVerificationBanner/index.js
 // Banner non bloccante mostrato in cima al Layout finché l'utente non
 // ha verificato la propria email. Strategia "Soft" — niente azioni bloccate.
+//
+// 📡 SINGLE SOURCE OF TRUTH: questo componente NON polla più /auth/me.
+// L'aggiornamento dello stato utente è gestito centralmente in AuthContext
+// (focus / visibilitychange / Capacitor appStateChange listeners).
+// Quando l'utente verifica l'email in altro browser/tab e torna qui,
+// AuthContext rinfresca lo state → user.isEmailVerified diventa true
+// → questo banner si nasconde automaticamente al prossimo render.
 
-import React, { useEffect, useState } from 'react';
-import { App as CapacitorApp } from '@capacitor/app';
-import { Capacitor } from '@capacitor/core';
+import React, { useState } from 'react';
 import { useAuth } from '../../../contexts/AuthContext';
-import { resendVerification, verifyToken } from '../../../services/authService';
+import { resendVerification } from '../../../services/authService';
 import { toast } from 'react-toastify';
 
 const EmailVerificationBanner = () => {
-  const { user, isAuthenticated, updateUser } = useAuth();
+  const { user, isAuthenticated } = useAuth();
   const [sending, setSending] = useState(false);
   const [dismissed, setDismissed] = useState(false);
-
-  useEffect(() => {
-    if (!isAuthenticated || !user || user.isEmailVerified || dismissed) return;
-
-    let cancelled = false;
-    let appStateListener;
-
-    const refreshVerificationState = async () => {
-      try {
-        const freshUser = await verifyToken();
-        if (cancelled || !freshUser) return;
-
-        if (freshUser.isEmailVerified) {
-          await updateUser(freshUser);
-          setDismissed(true);
-        }
-      } catch (_) {
-        // Silenzioso: il banner non deve mostrare errori se il server è in cold start.
-      }
-    };
-
-    refreshVerificationState();
-
-    const handleVisibilityChange = () => {
-      if (!document.hidden) refreshVerificationState();
-    };
-
-    window.addEventListener('focus', refreshVerificationState);
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-
-    if (Capacitor.isNativePlatform()) {
-      CapacitorApp.addListener('appStateChange', ({ isActive }) => {
-        if (isActive) refreshVerificationState();
-      }).then(listener => {
-        appStateListener = listener;
-      }).catch(() => {});
-    }
-
-    // Copre il caso in cui il browser/email non rimandi un evento affidabile alla WebView.
-    const intervalId = window.setInterval(refreshVerificationState, 10000);
-
-    return () => {
-      cancelled = true;
-      window.clearInterval(intervalId);
-      window.removeEventListener('focus', refreshVerificationState);
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-      if (appStateListener) appStateListener.remove();
-    };
-  }, [isAuthenticated, user, dismissed, updateUser]);
 
   // Mostra il banner solo per utenti loggati con email NON verificata
   if (!isAuthenticated || !user) return null;
