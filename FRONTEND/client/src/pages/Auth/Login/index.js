@@ -261,13 +261,10 @@ const LoginPage = () => {
                 </Link>
             </div>
 
-            {/* "Non hai un account? Registrati" — UNICO prompt verso /register
-                NB: usiamo la chiave i18n `auth.noAccount`. Se non esiste in qualche
-                lingua scatta il fallback italiano. La vecchia chiave `alreadyHaveAccount`
-                è semanticamente per la pagina Register e sul Login dava il testo sbagliato. */}
+            {/* "Non hai un account? Registrati" — UNICO prompt verso /register */}
             <div className="mt-3 text-center">
                 <p className="text-muted">
-                    {t('auth.noAccount') || 'Non hai un account?'}
+                    {t('auth.noAccount', { defaultValue: 'Non hai un account?' })}
                     {' '}
                     <Link to="/register" className="text-primary fw-bold" style={{ textDecoration: 'none' }}>
                         {t('auth.register') || 'Registrati'}
