@@ -3,16 +3,18 @@
 import React from 'react';
 import { Outlet } from 'react-router-dom';
 import Navbar from '../Navbar';
+import EmailVerificationBanner from '../EmailVerificationBanner';
 import styles from './Layout.module.css';
 
 const Layout = () => {
   return (
     <div className={styles.layout}>
       <Navbar />
+      <EmailVerificationBanner />
       <main className={styles.mainContent}>
         {/* Questo contenitore interno standardizza larghezza e padding per TUTTE le pagine */}
         <div className={styles.pageContainer}>
-          <Outlet /> 
+          <Outlet />
         </div>
       </main>
     </div>

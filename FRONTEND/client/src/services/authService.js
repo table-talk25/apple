@@ -1,10 +1,11 @@
-// File: /services/authService.js (Versione Definitiva e Sicura)
+// File: /services/authService.js (Versione Soft: l'utente entra subito + banner conferma email)
 
 /**
- * 🔒 IMPORTANTE: Questo servizio implementa la verifica email obbligatoria
- * - La registrazione NON logga automaticamente l'utente
- * - L'utente deve verificare l'email prima di poter accedere
- * - Solo dopo la verifica email viene generato e salvato il token
+ * 📩 Strategia "Soft" per Google Play:
+ * - La registrazione logga l'utente immediatamente (token salvato)
+ * - In parallelo il backend invia un'email di verifica
+ * - Finché user.isEmailVerified === false, il Layout mostra un banner non bloccante
+ * - Niente azioni bloccate per ora (decisione Soft, scelta in fase di onboarding)
  */
 
 import apiClient, { suppressAlertsFor } from './apiService';
@@ -15,30 +16,26 @@ import { authPreferences } from '../utils/preferences';
 // NOTA: Ogni funzione accetta un singolo oggetto 'data' per coerenza
 
 /**
- * Registra un nuovo utente.
- * @param {object} registrationData - Oggetto con { name, surname, email, password }
- * @returns {object} Dati di registrazione SENZA token (utente NON loggato)
+ * Registra un nuovo utente e lo logga immediatamente.
+ * @param {object} registrationData - { name, surname, email, password, confirmPassword, dateOfBirth, terms }
+ * @returns {object} { success, token, user, message, requiresEmailVerification }
  */
 export const register = async (registrationData) => {
-  // Percorso corretto: /auth/register
   const response = await apiClient.post('/auth/register', registrationData);
-  
-  // 🔒 SICUREZZA: NON salviamo token né dati utente
-  // L'utente deve verificare l'email prima di poter accedere
-  
-  // Restituiamo solo i dati essenziali per il frontend
-  const registrationResult = {
-    success: response.data.success,
-    message: 'Registrazione quasi completata! Controlla la tua email per attivare il tuo account.',
-    user: {
-      _id: response.data.user._id,
-      email: response.data.user.email,
-      name: response.data.user.name,
-      surname: response.data.user.surname
-    }
-  };
-  
-  return registrationResult;
+
+  // 📩 STRATEGIA SOFT: salviamo subito token e user, l'utente entra direttamente.
+  // L'email di verifica arriva in parallelo. Il banner "Conferma email" nel Layout
+  // ricorderà all'utente di completare la verifica.
+  if (response.data && response.data.token) {
+    await authPreferences.saveToken(response.data.token);
+    await authPreferences.saveUser(response.data.user);
+    suppressAlertsFor(4000);
+
+    // Invia il token FCM pendente se presente (parallelo al login)
+    await sendPendingFcmToken();
+  }
+
+  return response.data;
 };
 
 /**
@@ -53,6 +50,10 @@ export const login = async (credentials) => {
     await authPreferences.saveUser(response.data.user);
     // Silenzia gli alert per i prossimi 4s mentre partono le richieste di bootstrap
     suppressAlertsFor(4000);
+    
+    // Invia il token FCM pendente se presente
+    await sendPendingFcmToken();
+    
     return response.data;
   } catch (error) {
     const isNetworkError = (error && (error.code === 'ERR_NETWORK' || !error.response));
@@ -74,12 +75,34 @@ export const login = async (credentials) => {
         await authPreferences.saveUser(nativeResp.data.user);
         // Silenzia gli alert per i prossimi 4s mentre partono le richieste di bootstrap (meals/profile/notifiche)
         suppressAlertsFor(4000);
+        
+        // Invia il token FCM pendente se presente
+        await sendPendingFcmToken();
+        
         return nativeResp.data;
       }
     }
     throw error;
   }
 };
+
+/**
+ * Invia il token FCM pendente al backend dopo il login
+ */
+async function sendPendingFcmToken() {
+  try {
+    const pendingToken = localStorage.getItem('pending_fcm_token');
+    if (pendingToken) {
+      console.log('🔥 [Auth] Invio token FCM pendente dopo login...');
+      await apiClient.post('/profile/me/fcm-token', { token: pendingToken }, { suppressErrorAlert: true });
+      localStorage.removeItem('pending_fcm_token');
+      console.log('✅ [Auth] Token FCM pendente inviato con successo');
+    }
+  } catch (error) {
+    console.error('❌ [Auth] Errore nell\'invio token FCM pendente:', error);
+    // Non bloccare il login se l'invio del token fallisce
+  }
+}
 
 /**
  * Esegue il logout.
@@ -145,7 +168,8 @@ export const resendVerification = async (data) => {
  * @param {string} token - Token di verifica ricevuto via email
  */
 export const verifyEmail = async (token) => {
-  const response = await apiClient.post(`/auth/verify-email/${token}`);
+  // L'endpoint backend è GET /auth/verify-email?token=...
+  const response = await apiClient.get(`/auth/verify-email`, { params: { token } });
   return response.data;
 };
 
