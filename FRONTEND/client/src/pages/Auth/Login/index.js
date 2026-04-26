@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Form, Button, Alert, InputGroup } from 'react-bootstrap';
 import { useTranslation } from 'react-i18next';
+import { toast } from 'react-toastify';
 import { useAuth } from '../../../contexts/AuthContext';
 import { getPreference, savePreference, removePreference, PREFERENCE_KEYS } from '../../../utils/preferences';
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
@@ -28,6 +29,7 @@ const LoginPage = () => {
   });
   const [rememberEmail, setRememberEmail] = useState(false);
   const [error, setError] = useState('');
+  const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false); 
 
@@ -64,6 +66,7 @@ const LoginPage = () => {
     console.log('🔥 Normal login started');
     e.preventDefault();
     setError('');
+    setErrors({});
     setIsLoading(true);
 
     try {
@@ -89,12 +92,40 @@ const LoginPage = () => {
     } catch (err) {
       console.error('🔥 Normal login error:', err);
       console.error('Errore durante il login:', err);
-      setError(
-        err?.response?.data?.message ||
-        err?.response?.data?.error ||
-        err?.message ||
-        t('auth.loginError')
-      );
+
+      const serverData = (err && err.response && err.response.data) || {};
+      const serverMessage = (serverData.message || '').toString();
+      const serverErrors = Array.isArray(serverData.errors) ? serverData.errors : [];
+      const lowerMsg = serverMessage.toLowerCase();
+      const isNetworkError = !err.response || err.code === 'ERR_NETWORK' || err.code === 'ECONNABORTED';
+
+      if (serverErrors.length > 0) {
+        const backendErrors = {};
+        serverErrors.forEach((e) => {
+          if (e && e.path) backendErrors[e.path] = e.msg;
+        });
+        setErrors(backendErrors);
+        const firstMsg = (serverErrors[0] && serverErrors[0].msg) || serverMessage || 'Controlla i campi del form';
+        toast.error(firstMsg, { autoClose: 7000 });
+        setError(firstMsg);
+      } else if (lowerMsg.includes('credenziali') || lowerMsg.includes('bloccato')) {
+        const msg = serverMessage || t('auth.loginError') || 'Credenziali non valide';
+        toast.error(msg, { autoClose: 8000 });
+        setErrors({ email: msg, password: msg });
+        setError(msg);
+      } else if (isNetworkError) {
+        const msg = 'Impossibile contattare il server. Controlla la connessione e riprova.';
+        toast.error(msg, { autoClose: 7000 });
+        setErrors((prev) => ({ ...prev, _form: msg }));
+        setError(msg);
+      } else if (serverMessage) {
+        toast.error(serverMessage, { autoClose: 7000 });
+        setError(serverMessage);
+      } else {
+        const msg = t('auth.loginError') || 'Errore durante il login. Riprova tra poco.';
+        toast.error(msg, { autoClose: 6000 });
+        setError(msg);
+      }
     } finally {
       console.log('🔥 Normal login finished');
       setIsLoading(false);
@@ -113,6 +144,19 @@ const LoginPage = () => {
                 </Link>
             </div>
             <h2 className={styles.title}>{t('auth.loginToTableTalk')}</h2>
+            {errors._form && (
+              <div role="alert" style={{
+                background: '#fdecea',
+                color: '#a32424',
+                border: '1px solid #f5b7b1',
+                borderRadius: '8px',
+                padding: '10px 12px',
+                marginBottom: '14px',
+                fontSize: '0.9rem',
+              }}>
+                {errors._form}
+              </div>
+            )}
             
             {/* Messaggio sessione scaduta */}
             {reason === 'session_expired' && (
@@ -159,8 +203,10 @@ const LoginPage = () => {
                             autoCapitalize="none"
                             autoCorrect="off"
                             spellCheck={false}
+                        isInvalid={!!errors.email}
                         required
                     />
+                    <Form.Control.Feedback type="invalid">{errors.email}</Form.Control.Feedback>
                 </Form.Group>
 
                 <Form.Group className="mb-3">
@@ -184,6 +230,7 @@ const LoginPage = () => {
                             onChange={handleChange}
                             placeholder={t('auth.passwordPlaceholder')}
                             autoComplete="current-password"
+                            isInvalid={!!errors.password}
                             required
                         />
                         <InputGroup.Text
@@ -193,6 +240,9 @@ const LoginPage = () => {
                             {showPassword ? <FaEyeSlash /> : <FaEye />}
                         </InputGroup.Text>
                     </InputGroup>
+                    {errors.password && (
+                      <div className="invalid-feedback d-block">{errors.password}</div>
+                    )}
                 </Form.Group>
 
                 <Button 
@@ -204,26 +254,25 @@ const LoginPage = () => {
                 </Button>
             </Form>
 
-            {/* Blocco registrazione */}
-            <div className="mt-4 text-center">
-                <p className="text-muted">
-                    {t('auth.alreadyHaveAccount') || 'Non hai ancora un account?'}
-                    {' '}
-                    <Link to="/register" className="text-primary fw-bold" style={{ textDecoration: 'none' }}>
-                        {t('auth.register') || 'Registrati ora'}
-                    </Link>
-                </p>
+            {/* "Password dimenticata?" — link isolato sotto il bottone Accedi */}
+            <div className={styles.links} style={{ justifyContent: 'center' }}>
+                <Link to="/forgot-password" className={styles.link}>
+                    {t('auth.forgotPassword') || 'Password dimenticata?'}
+                </Link>
             </div>
 
-            {/* Pulsanti di login social - RIMOSSI */}
-
-            <div className={styles.links}>
-                <Link to="/forgot-password" className={styles.link}>
-                    {t('auth.forgotPassword')}
-                </Link>
-                <Link to="/register" className={styles.link}>
-                    {t('auth.alreadyHaveAccount')}
-                </Link>
+            {/* "Non hai un account? Registrati" — UNICO prompt verso /register
+                NB: usiamo la chiave i18n `auth.noAccount`. Se non esiste in qualche
+                lingua scatta il fallback italiano. La vecchia chiave `alreadyHaveAccount`
+                è semanticamente per la pagina Register e sul Login dava il testo sbagliato. */}
+            <div className="mt-3 text-center">
+                <p className="text-muted">
+                    {t('auth.noAccount') || 'Non hai un account?'}
+                    {' '}
+                    <Link to="/register" className="text-primary fw-bold" style={{ textDecoration: 'none' }}>
+                        {t('auth.register') || 'Registrati'}
+                    </Link>
+                </p>
             </div>
         </div>
     </div>
