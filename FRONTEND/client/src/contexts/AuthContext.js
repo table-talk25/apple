@@ -1,4 +1,6 @@
 import React, { createContext, useState, useEffect, useContext, useMemo } from 'react';
+import { App as CapacitorApp } from '@capacitor/app';
+import { Capacitor } from '@capacitor/core';
 
 import Spinner from '../components/common/Spinner';
 
@@ -155,16 +157,17 @@ export const AuthProvider = ({ children }) => {
 
 
 
-    // 👁️ Quando la finestra torna in focus, rinfresca i dati utente dal server.
-    // Così se l'utente ha verificato l'email in un altro browser/tab/dispositivo,
-    // appena torna su questa scheda il banner "Conferma email" sparisce subito,
-    // senza richiedere refresh manuale.
+    // 👁️ Quando la finestra/app torna attiva, rinfresca i dati utente dal server.
+    // Su mobile Capacitor il rientro dall'email/browser non sempre scatena "focus",
+    // quindi ascoltiamo anche appStateChange per far sparire subito il banner.
 
     useEffect(() => {
 
         if (!isAuthenticated) return;
 
-        const handleFocus = () => {
+        let appStateListener;
+
+        const refreshUser = () => {
 
             authService.verifyToken()
                 .then(freshUser => {
@@ -174,9 +177,26 @@ export const AuthProvider = ({ children }) => {
 
         };
 
-        window.addEventListener('focus', handleFocus);
+        const handleVisibilityChange = () => {
+            if (!document.hidden) refreshUser();
+        };
 
-        return () => window.removeEventListener('focus', handleFocus);
+        window.addEventListener('focus', refreshUser);
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+
+        if (Capacitor.isNativePlatform()) {
+            CapacitorApp.addListener('appStateChange', ({ isActive }) => {
+                if (isActive) refreshUser();
+            }).then(listener => {
+                appStateListener = listener;
+            }).catch(() => { /* plugin non disponibile: focus/visibility bastano sul web */ });
+        }
+
+        return () => {
+            window.removeEventListener('focus', refreshUser);
+            document.removeEventListener('visibilitychange', handleVisibilityChange);
+            if (appStateListener) appStateListener.remove();
+        };
 
     }, [isAuthenticated]);
 
