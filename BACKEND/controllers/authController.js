@@ -247,13 +247,21 @@ exports.verifyEmail = asyncHandler(async (req, res, next) => {
     
     try {
         const verificationResult = await emailVerificationService.verifyEmailToken(token);
-        
+
         if (verificationResult.success) {
             console.log(`✅ [AuthController] Email verificata con successo per utente: ${verificationResult.userId}`);
-            
+
+            // 🔑 AUTO-LOGIN dopo conferma email: ricarichiamo l'utente come Mongoose doc
+            // così possiamo emettere un JWT, e il frontend lo salva senza chiedere login.
+            // Il link è single-use (token bruciato in verifyEmailToken) e scade in 24h,
+            // stessa security surface di un magic-link.
+            const userDoc = await User.findById(verificationResult.userId);
+            const authToken = userDoc ? userDoc.generateAuthToken() : undefined;
+
             res.status(200).json({
                 success: true,
                 message: 'Email verificata con successo! Ora puoi accedere a tutte le funzionalità di TableTalk.',
+                token: authToken,
                 user: verificationResult.user
             });
         } else {

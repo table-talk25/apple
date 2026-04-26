@@ -21,7 +21,7 @@ const VerifyEmailPage = () => {
   const [searchParams] = useSearchParams();
   const token = searchParams.get('token');
   const { t } = useTranslation();
-  const { user, updateUser, isAuthenticated } = useAuth();
+  const { user, updateUser, isAuthenticated, loginFromVerification } = useAuth();
 
   const [status, setStatus] = useState(STATUS.LOADING);
   const [errorMessage, setErrorMessage] = useState('');
@@ -39,8 +39,14 @@ const VerifyEmailPage = () => {
         if (cancelled) return;
         if (data && data.success) {
           setStatus(STATUS.SUCCESS);
-          // Se l'utente è già loggato in questo browser, aggiorna lo stato locale
-          if (isAuthenticated && updateUser) {
+          // 🔑 Auto-login: il backend manda un JWT insieme alla conferma email.
+          // Lo salviamo via AuthContext così l'utente è subito loggato anche se
+          // ha aperto il link da un browser/dispositivo diverso da quello della
+          // registrazione. Funziona anche se era già loggato (rinfresca il token).
+          if (data.token && data.user && loginFromVerification) {
+            try { await loginFromVerification(data); } catch (_) {}
+          } else if (isAuthenticated && updateUser) {
+            // Fallback: vecchio backend senza token nella response
             try { await updateUser({ isEmailVerified: true }); } catch (_) {}
           }
         } else {
@@ -59,7 +65,7 @@ const VerifyEmailPage = () => {
 
     run();
     return () => { cancelled = true; };
-  }, [token, isAuthenticated, updateUser]);
+  }, [token, isAuthenticated, updateUser, loginFromVerification]);
 
   return (
     <div style={styles.page}>

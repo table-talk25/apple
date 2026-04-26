@@ -174,6 +174,23 @@ export const AuthProvider = ({ children }) => {
 
 
 
+    /**
+     * 🔑 Auto-login da verifica email: salva token + user e aggiorna lo stato.
+     * Chiamato dalla pagina /verify-email quando il backend ritorna un JWT
+     * insieme alla conferma. Così l'utente non deve fare login manualmente
+     * dopo aver cliccato il link nell'email.
+     */
+    const loginFromVerification = async (data) => {
+        if (!data || !data.token || !data.user) return;
+        try {
+            await authPreferences.saveToken(data.token);
+            await authPreferences.saveUser(data.user);
+        } catch (e) { console.error(e); }
+        setUser(data.user); setToken(data.token); setIsAuthenticated(true);
+    };
+
+
+
     const logout = async () => {
 
         setUser(null); setToken(null); setIsAuthenticated(false);
@@ -214,7 +231,7 @@ export const AuthProvider = ({ children }) => {
 
         user, token, isAuthenticated, loading, error,
 
-        login, logout, register, deleteAccount, updateUser
+        login, logout, register, deleteAccount, updateUser, loginFromVerification
 
       }), [user, token, isAuthenticated, loading, error]);
 
