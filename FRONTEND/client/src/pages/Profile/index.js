@@ -35,6 +35,22 @@ const isProfileComplete = (profile) => {
     );
 };
 
+const hasSavedProfileDetails = (profile) => {
+    if (!profile) return false;
+
+    const hasCustomImage = profile.profileImage &&
+        !profile.profileImage.includes('default-avatar');
+
+    return Boolean(
+        (profile.nickname && profile.nickname.trim().length >= 3) ||
+        (profile.bio && profile.bio.trim().length > 0) ||
+        (Array.isArray(profile.interests) && profile.interests.length > 0) ||
+        (Array.isArray(profile.languages) && profile.languages.length > 0) ||
+        (profile.preferredCuisine && profile.preferredCuisine.trim().length > 0) ||
+        hasCustomImage
+    );
+};
+
 const ProfilePage = () => {
     const { t } = useTranslation();
     const { user, updateUser, loading: authLoading, logout, deleteAccount } = useAuth();
@@ -114,11 +130,16 @@ const ProfilePage = () => {
 
     if (authLoading) return <div className="d-flex justify-content-center mt-5"><Spinner animation="border" variant="primary" /></div>;
 
+    if (loading && !profileData) {
+        return <div className="d-flex justify-content-center mt-5"><Spinner animation="border" variant="primary" /></div>;
+    }
+
     const currentProfile = profileData || user;
     const profileComplete = isProfileComplete(currentProfile);
+    const showOnboardingHeader = !profileComplete && !hasSavedProfileDetails(currentProfile);
 
     // SCENARIO 1: Benvenuto (Profilo Incompleto)
-    if (user && !profileComplete) {
+    if (user && showOnboardingHeader) {
         // Prepariamo i dati corretti per lo scenario 1
         const welcomeData = profileData || user; 
 
