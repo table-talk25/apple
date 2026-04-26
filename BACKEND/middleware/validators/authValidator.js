@@ -46,10 +46,15 @@ exports.registerValidation = [
             return true;
         }),
 
-    check('terms', 'Devi accettare termini e privacy per registrarti')
-        .toBoolean()
-        .equals('true')
-        .withMessage('Devi accettare termini e privacy per registrarti'),
+    check('terms')
+        .custom((value) => {
+            // Accetta sia booleano true che stringa "true" (axios manda boolean,
+            // ma alcuni form encoder potrebbero serializzarlo come stringa).
+            if (value === true || value === 'true' || value === 1 || value === '1') {
+                return true;
+            }
+            throw new Error('Devi accettare termini e privacy per registrarti');
+        }),
 ];
 
 /**
