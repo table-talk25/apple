@@ -89,28 +89,42 @@ const RegisterPage = () => {
             toast.success(t('auth.registerSuccess'));
             navigate('/meals', { replace: true });
         } catch (err) {
-            // Gestione errore email già esistente
-            const errorMessage = err.message || '';
-            if (errorMessage.includes('esiste già') || errorMessage.includes('already exists') || errorMessage.includes('email')) {
-                // Mostra messaggio specifico per email duplicata con suggerimento di login
-                const baseMessage = errorMessage.includes('Hai già un account') 
-                    ? errorMessage 
-                    : `${errorMessage} Hai già un account?`;
-                toast.error(baseMessage, { autoClose: 6000 });
-                // Imposta errore sul campo email (senza ripetere il suggerimento, sarà nel link)
-                setErrors(prev => ({ 
-                    ...prev, 
-                    email: baseMessage 
-                }));
-            } else if (err.errors && err.errors.length > 0) {
+            // 🩹 FIX UX: il messaggio del server sta in err.response.data, NON in err.message
+            // (err.message è solo "Request failed with status code 400" di axios — inutile per l'utente).
+            const serverData = (err && err.response && err.response.data) || {};
+            const serverMessage = (serverData.message || '').toString();
+            const serverErrors = Array.isArray(serverData.errors) ? serverData.errors : [];
+            const lowerMsg = serverMessage.toLowerCase();
+            const isNetworkError = !err.response || err.code === 'ERR_NETWORK' || err.code === 'ECONNABORTED';
+
+            // 1) Errori di validazione campo-per-campo (express-validator)
+            if (serverErrors.length > 0) {
                 const backendErrors = {};
-                err.errors.forEach(error => {
-                    if(error.path) { backendErrors[error.path] = error.msg; }
+                serverErrors.forEach((e) => {
+                    if (e && e.path) backendErrors[e.path] = e.msg;
                 });
                 setErrors(backendErrors);
-                toast.error(t('common.pleaseCorrectErrors'));
-            } else {
-                toast.error(err.message || t('auth.registerError'));
+                const firstMsg = (serverErrors[0] && serverErrors[0].msg) || serverMessage || 'Controlla i campi del form';
+                toast.error(firstMsg, { autoClose: 7000 });
+            }
+            // 2) Email duplicata (errore Mongo 11000 → backend manda "esiste già")
+            else if (lowerMsg.includes('esiste già') || lowerMsg.includes('already exists')) {
+                toast.error(serverMessage, { autoClose: 8000 });
+                setErrors((prev) => ({ ...prev, email: serverMessage }));
+            }
+            // 3) Errore di rete / server non raggiungibile
+            else if (isNetworkError) {
+                const msg = 'Impossibile contattare il server. Controlla la connessione e riprova.';
+                toast.error(msg, { autoClose: 7000 });
+                setErrors((prev) => ({ ...prev, _form: msg }));
+            }
+            // 4) Altro errore con messaggio dal server
+            else if (serverMessage) {
+                toast.error(serverMessage, { autoClose: 7000 });
+            }
+            // 5) Fallback (non dovremmo mai arrivarci, ma meglio essere sicuri)
+            else {
+                toast.error(t('auth.registerError') || 'Errore durante la registrazione. Riprova tra poco.', { autoClose: 6000 });
             }
         } finally {
             setIsLoading(false);
@@ -129,6 +143,19 @@ const RegisterPage = () => {
                     </Link>
                 </div>
                 <h2 className={styles.title}>{t('auth.createAccount')}</h2>
+                {errors._form && (
+                    <div role="alert" style={{
+                        background: '#fdecea',
+                        color: '#a32424',
+                        border: '1px solid #f5b7b1',
+                        borderRadius: '8px',
+                        padding: '10px 12px',
+                        marginBottom: '14px',
+                        fontSize: '0.9rem',
+                    }}>
+                        {errors._form}
+                    </div>
+                )}
                 <Form onSubmit={handleSubmit} noValidate>
                     <Form.Group className="mb-3">
                         <Form.Label className={styles.formLabel}>{t('auth.name')}</Form.Label>
