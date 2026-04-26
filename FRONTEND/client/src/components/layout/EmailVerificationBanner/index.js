@@ -60,16 +60,25 @@ const EmailVerificationBanner = () => {
 
 const styles = {
   bar: {
+    // Il banner sta DENTRO mainContent (vedi Layout/index.js): è già protetto
+    // dalla Navbar fixed, ma mainContent ha `align-items: center` quindi forziamo
+    // la larghezza piena con `alignSelf: stretch` + width 100%.
+    alignSelf: 'stretch',
+    width: '100%',
     background: '#fff7e0',
     color: '#5b4a00',
-    borderBottom: '1px solid #ffe28a',
-    padding: '8px 12px',
+    border: '1px solid #ffe28a',
+    borderRadius: '0', // tagliato dai bordi della pagina, sembra una "barra di sistema"
+    borderLeft: 'none',
+    borderRight: 'none',
+    padding: '10px 16px',
+    marginBottom: '12px',
     fontSize: '0.9rem',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
     flexWrap: 'wrap',
-    gap: '8px',
+    gap: '10px',
   },
   text: { flex: '1 1 auto', minWidth: 0 },
   actions: { display: 'flex', alignItems: 'center', gap: '8px', flex: '0 0 auto' },

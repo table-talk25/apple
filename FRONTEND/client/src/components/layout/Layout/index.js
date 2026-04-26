@@ -10,8 +10,10 @@ const Layout = () => {
   return (
     <div className={styles.layout}>
       <Navbar />
-      <EmailVerificationBanner />
       <main className={styles.mainContent}>
+        {/* Banner email DENTRO mainContent: il padding-top della navbar lo protegge
+            e così non finisce mai coperto dalla Navbar position:fixed (z-index: 1000). */}
+        <EmailVerificationBanner />
         {/* Questo contenitore interno standardizza larghezza e padding per TUTTE le pagine */}
         <div className={styles.pageContainer}>
           <Outlet />
