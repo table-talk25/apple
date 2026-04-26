@@ -28,10 +28,10 @@ const RegisterPage = () => {
     const [loadingHint, setLoadingHint] = useState(''); // messaggio dopo qualche secondo se il server tarda
     const [showPassword, setShowPassword] = useState(false);
 
-    // Se già autenticato, evita la pagina e vai ai pasti
+    // Se già autenticato, evita la pagina e vai al profilo
     React.useEffect(() => {
         if (isAuthenticated) {
-            navigate('/meals', { replace: true });
+            navigate('/impostazioni/profilo', { replace: true });
         }
     }, [isAuthenticated, navigate]);
 
@@ -94,8 +94,17 @@ const RegisterPage = () => {
 
         try {
             await register({ ...formData });
-            toast.success(t('auth.registerSuccess'));
-            navigate('/meals', { replace: true });
+            // 🎯 ONBOARDING: dopo la registrazione l'utente atterra sul profilo per
+            // completarlo (nickname/bio/interessi). PrivateRoute con requireCompleteProfile
+            // blocca comunque mappa/create-meal/my-meals finché il profilo non è completo,
+            // quindi se non lo facciamo qui, lo costringiamo a tornarci comunque.
+            // ?firstTime=1 lascia alla ProfilePage la possibilità di mostrare una
+            // header di benvenuto invece dell'header standard di modifica.
+            toast.success(
+                'Benvenuto su TableTalk! Completa il tuo profilo per iniziare.',
+                { autoClose: 6000 }
+            );
+            navigate('/impostazioni/profilo?firstTime=1', { replace: true });
         } catch (err) {
             // 🩹 FIX UX: il messaggio del server sta in err.response.data, NON in err.message
             // (err.message è solo "Request failed with status code 400" di axios — inutile per l'utente).
