@@ -19,9 +19,15 @@ import { authPreferences } from '../utils/preferences';
  * Registra un nuovo utente e lo logga immediatamente.
  * @param {object} registrationData - { name, surname, email, password, confirmPassword, dateOfBirth, terms }
  * @returns {object} { success, token, user, message, requiresEmailVerification }
+ *
+ * 🛌 RENDER COLD START: Render free tier mette il backend in sleep dopo ~15min
+ * di inattività. La prima chiamata può metterci 50-60s a svegliare il servizio.
+ * Per non far andare in timeout la registrazione, qui usiamo 75s di timeout.
  */
 export const register = async (registrationData) => {
-  const response = await apiClient.post('/auth/register', registrationData);
+  const response = await apiClient.post('/auth/register', registrationData, {
+    timeout: 75000, // 75s per gestire il cold start di Render
+  });
 
   // 📩 STRATEGIA SOFT: salviamo subito token e user, l'utente entra direttamente.
   // L'email di verifica arriva in parallelo. Il banner "Conferma email" nel Layout
@@ -44,8 +50,8 @@ export const register = async (registrationData) => {
  */
 export const login = async (credentials) => {
   try {
-    // Tentativo 1: Axios (Web)
-    const response = await apiClient.post('/auth/login', credentials);
+    // Tentativo 1: Axios (Web) — 75s per gestire il cold start di Render free tier
+    const response = await apiClient.post('/auth/login', credentials, { timeout: 75000 });
     await authPreferences.saveToken(response.data.token);
     await authPreferences.saveUser(response.data.user);
     // Silenzia gli alert per i prossimi 4s mentre partono le richieste di bootstrap

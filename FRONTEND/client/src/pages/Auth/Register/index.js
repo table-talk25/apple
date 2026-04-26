@@ -25,6 +25,7 @@ const RegisterPage = () => {
     });
     const [errors, setErrors] = useState({});
     const [isLoading, setIsLoading] = useState(false);
+    const [loadingHint, setLoadingHint] = useState(''); // messaggio dopo qualche secondo se il server tarda
     const [showPassword, setShowPassword] = useState(false);
 
     // Se già autenticato, evita la pagina e vai ai pasti
@@ -73,6 +74,7 @@ const RegisterPage = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         setIsLoading(true);
+        setLoadingHint('');
         setErrors({});
 
         // Validazione frontend per l'età
@@ -83,6 +85,12 @@ const RegisterPage = () => {
             toast.error(t('common.pleaseCorrectErrors'));
             return;
         }
+
+        // 🛌 Hint per cold start di Render: se dopo 6s la chiamata non è ancora tornata,
+        // mostra all'utente che il server si sta svegliando. Sparisce nel finally.
+        const hintTimer = setTimeout(() => {
+            setLoadingHint('Stiamo svegliando il server, può richiedere fino a 1 minuto la prima volta…');
+        }, 6000);
 
         try {
             await register({ ...formData });
@@ -127,6 +135,8 @@ const RegisterPage = () => {
                 toast.error(t('auth.registerError') || 'Errore durante la registrazione. Riprova tra poco.', { autoClose: 6000 });
             }
         } finally {
+            clearTimeout(hintTimer);
+            setLoadingHint('');
             setIsLoading(false);
         }
     };
@@ -237,6 +247,20 @@ const RegisterPage = () => {
                     <Button type="submit" className={styles.submitButton} disabled={isLoading || !formData.terms}>
                         {isLoading ? t('auth.registering') : t('auth.register')}
                     </Button>
+                    {loadingHint && (
+                        <div role="status" aria-live="polite" style={{
+                            marginTop: '10px',
+                            fontSize: '0.85rem',
+                            color: '#5b4a00',
+                            background: '#fff7e0',
+                            border: '1px solid #ffe28a',
+                            borderRadius: '6px',
+                            padding: '8px 10px',
+                            textAlign: 'center',
+                        }}>
+                            ⏳ {loadingHint}
+                        </div>
+                    )}
     
                     <div className={styles.bottomLink}>
                         {t('auth.alreadyHaveAccount')} <Link to="/login">{t('auth.login')}</Link>
