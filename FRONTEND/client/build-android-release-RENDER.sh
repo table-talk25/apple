@@ -22,6 +22,31 @@ fi
 # Vai nella directory del client
 cd "$(dirname "$0")" || exit 1
 
+# 🛑 PRE-FLIGHT CHECK: blocca il build se capacitor.config.ts ha live-reload attivo
+ROOT_CAP_CONFIG="../../capacitor.config.ts"
+if [ -f "$ROOT_CAP_CONFIG" ]; then
+    if grep -E "^[[:space:]]*url:[[:space:]]*['\"]http" "$ROOT_CAP_CONFIG" > /dev/null 2>&1; then
+        echo ""
+        echo "❌ STOP: $ROOT_CAP_CONFIG ha ancora server.url attivo (live-reload)."
+        echo "   Commenta il blocco 'server: { url, cleartext }' prima del build di release."
+        exit 1
+    fi
+fi
+
+# 🛑 PRE-FLIGHT CHECK: blocca il build se versionName è inferiore all'ultimo pubblicato
+LAST_PUBLISHED_VERSION_NAME="1.2.4"
+CURRENT_VERSION_NAME=$(grep 'versionName' android/app/build.gradle | sed -E 's/.*versionName[[:space:]]+"([^"]+)".*/\1/')
+if [ "$(printf '%s\n%s\n' "$LAST_PUBLISHED_VERSION_NAME" "$CURRENT_VERSION_NAME" | sort -V | tail -1)" != "$CURRENT_VERSION_NAME" ]; then
+    echo ""
+    echo "❌ STOP: versionName attuale ($CURRENT_VERSION_NAME) è <= ultimo pubblicato ($LAST_PUBLISHED_VERSION_NAME)."
+    echo "   Bumpa versionName in android/app/build.gradle prima di buildare."
+    exit 1
+fi
+
+# 🛑 NOTA: questo script tocca SOLO la cartella android/. La cartella ios/ NON è
+# mai sincronizzata né inclusa nel pacchetto Android — è gestita separatamente
+# dallo script build-ios-release.sh.
+
 echo "📦 Passo 1/5: Installazione dipendenze npm..."
 npm install
 

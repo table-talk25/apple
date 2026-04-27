@@ -1,3 +1,10 @@
+// ⚠️ ATTENZIONE: questo file NON viene usato per il build Android.
+// Il build Android è guidato da /capacitor.config.ts (root) con appId
+// "com.tabletalk.socialapp", che combacia con l'app pubblicata su Google Play.
+// Questo file resta solo per riferimento storico / iOS legacy.
+// Se devi cambiare configurazione runtime dell'app Android, modifica
+// /capacitor.config.ts nella root del progetto, NON questo file.
+
 const config = {
 
   appId: 'io.tabletalk.app',
