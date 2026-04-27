@@ -223,30 +223,41 @@ apiClient.interceptors.response.use(
       // Se la richiesta ha suppressErrorAlert, potrebbe essere gestita dal componente
       // Non fare redirect immediato se la richiesta è stata marcata per gestione manuale
       const suppressRedirect = Boolean(error?.config?.suppressErrorAlert);
-      
-      // Non fare redirect se siamo già sulla pagina di login, durante la verifica iniziale, o durante il logout
-      const isLoginPage = typeof window !== 'undefined' && window.location.pathname === '/login';
+
+      // ⚠️ HashRouter: la route vera vive in window.location.hash (es. "#/login"),
+      // NON in window.location.pathname (che è quasi sempre "/" o "/index.html").
+      // Confrontare con pathname significa "siamo già sulla login" non scatta mai.
+      const hasWindow = typeof window !== 'undefined';
+      const currentHashRoute = hasWindow && window.location.hash
+        ? window.location.hash.replace(/^#/, '') // es. "/meals/123" o "/login?reason=..."
+        : '';
+      const isLoginPage = currentHashRoute.startsWith('/login');
       const isAuthCheck = (url || '').includes('/auth/me') || (url || '').includes('/auth/verify');
       const isLogout = (url || '').includes('/auth/logout');
-      
+
       // Per il logout, ignora completamente gli errori 401/403 (non sono critici)
       if (isLogout) {
         console.log('[API] Errore 401/403 durante logout ignorato (non critico)');
         // Non fare nulla, il logout locale è già stato gestito
         return Promise.reject(error);
       }
-      
+
       if (!suppressRedirect && !isLoginPage && !isAuthCheck && !isLogout) {
         try {
           // Pulisci le credenziali
           await authPreferences.clearAuth();
         } catch (_) {}
         try {
-          // Reindirizza al login con motivo solo se non siamo già lì
-          const current = typeof window !== 'undefined' ? window.location.pathname + window.location.search : '';
-          if (typeof window !== 'undefined' && !isLoginPage) {
-            console.log('[API] Redirect al login per errore 401/403');
-            window.location.replace(`/login?reason=session_expired&next=${encodeURIComponent(current)}`);
+          if (hasWindow) {
+            // `next` è la route attuale dell'hash (no pathname), così dopo il login
+            // possiamo riportare l'utente esattamente dove era.
+            const next = currentHashRoute || '/';
+            // Costruiamo un URL che preserva origin+pathname (entrambi già serviti
+            // dall'hosting statico) e cambia solo l'hash → compatibile con HashRouter.
+            const base = `${window.location.origin}${window.location.pathname}${window.location.search}`;
+            const target = `${base}#/login?reason=session_expired&next=${encodeURIComponent(next)}`;
+            console.log('[API] Redirect al login per errore 401/403:', target);
+            window.location.replace(target);
           }
         } catch (_) {}
       } else {
