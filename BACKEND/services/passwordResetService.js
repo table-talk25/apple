@@ -9,8 +9,8 @@
 
 const User = require('../models/User');
 const sendEmail = require('../utils/sendEmail');
-const path = require('path');
-const fs = require('fs').promises;
+// path/fs non più necessari: il template è compilato dal modulo sendEmail
+// (Handlebars + cache template in EmailService).
 
 class PasswordResetService {
   constructor() {
@@ -120,21 +120,17 @@ class PasswordResetService {
    */
   async sendPasswordResetEmailTemplate(email, data) {
     try {
-      // Leggi il template HTML
-      const templatePath = path.join(__dirname, '../templates/email/password-reset.hbs');
-      const templateContent = await fs.readFile(templatePath, 'utf8');
-      
-      // Prepara i dati per l'email
-      const emailOptions = {
+      // 🩹 FIX: sendEmail.js esporta un'istanza della classe EmailService, non una
+      // funzione. Va chiamato il metodo sendEmail dell'istanza, e usata l'opzione
+      // 'template' + 'context' invece di passare l'HTML grezzo, così il template
+      // viene compilato con Handlebars (esattamente come fa emailVerificationService).
+      const result = await sendEmail.sendEmail({
         to: email,
         subject: '🔑 Reset Password - TableTalk',
-        html: templateContent,
-        templateData: data
-      };
+        template: 'password-reset', // file: BACKEND/templates/email/password-reset.hbs
+        context: data
+      });
 
-      // Invia l'email
-      const result = await sendEmail(emailOptions);
-      
       return {
         success: true,
         message: 'Email inviata con successo',
