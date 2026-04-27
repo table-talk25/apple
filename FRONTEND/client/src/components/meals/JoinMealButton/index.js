@@ -5,8 +5,11 @@ import { Button, Spinner } from 'react-bootstrap';
 import styles from './JoinMealButton.module.css';
 
 const JoinMealButton = ({ mealId, onSuccess }) => {
-  // Prendiamo la funzione e lo stato di caricamento direttamente dal context!
-  const { joinMeal, loading } = useMeals();
+  // Loading per-meal: il bottone si disabilita SOLO mentre stiamo joinando
+  // questo specifico TableTalk®. Un refetch generale o un join su un altro
+  // meal non lo tocca.
+  const { joinMeal, isActionLoading } = useMeals();
+  const isJoining = isActionLoading(mealId);
 
   const handleJoinClick = async () => {
     try {
@@ -24,9 +27,9 @@ const JoinMealButton = ({ mealId, onSuccess }) => {
     <Button
       className={styles.joinButton}
       onClick={handleJoinClick}
-      disabled={loading}
+      disabled={isJoining}
     >
-      {loading ? (
+      {isJoining ? (
         <>
           <Spinner as="span" animation="border" size="sm" role="status" aria-hidden="true" />
           <span> Attendi...</span>

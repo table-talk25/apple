@@ -5,7 +5,10 @@ import { useMeals } from '../../../contexts/MealsContext';
 import { Button, Spinner } from 'react-bootstrap';
 
 const LeaveMealButton = ({ mealId, onSuccess }) => {
-  const { leaveMeal, loading } = useMeals();
+  // Loading per-meal: il bottone si disabilita SOLO mentre stiamo abbandonando
+  // questo specifico TableTalk®. Un refetch o un'azione su un altro meal non lo tocca.
+  const { leaveMeal, isActionLoading } = useMeals();
+  const isLeaving = isActionLoading(mealId);
 
   const handleLeave = async () => {
           if (window.confirm('Sei sicuro di voler abbandonare questo TableTalk®?')) {
@@ -22,8 +25,8 @@ const LeaveMealButton = ({ mealId, onSuccess }) => {
   };
 
   return (
-    <Button variant="outline-danger" className="w-100" onClick={handleLeave} disabled={loading}>
-      {loading ? (
+    <Button variant="outline-danger" className="w-100" onClick={handleLeave} disabled={isLeaving}>
+      {isLeaving ? (
         <>
           <Spinner as="span" animation="border" size="sm" />
           <span> Uscita in corso...</span>

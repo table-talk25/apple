@@ -19,11 +19,19 @@ export const useMeals = () => {
 // 3. Creiamo e ESPORTIAMO il componente Provider
 export const MealsProvider = ({ children }) => {
     const [meals, setMeals] = useState([]);
+    // ⚠️ Stato di caricamento separato per azione, così un refetch generale
+    // non disabilita i bottoni "Unisciti"/"Abbandona", e un join su un meal
+    // non blocca le azioni sugli altri.
+    //   - loading      → solo per fetchMeals (lista)
+    //   - creating     → solo per createMeal
+    //   - actionMealId → ID del meal su cui c'è un join/leave in volo (uno alla volta)
     const [loading, setLoading] = useState(false);
+    const [creating, setCreating] = useState(false);
+    const [actionMealId, setActionMealId] = useState(null);
     const [error, setError] = useState('');
 
     const createMeal = useCallback(async (formData) => {
-        setLoading(true);
+        setCreating(true);
         try {
             const created = await mealService.createMeal(formData);
             // Inserisci subito in cima al feed locale
@@ -33,7 +41,7 @@ export const MealsProvider = ({ children }) => {
             console.error("Errore durante la creazione del TableTalk® nel context:", error);
             throw error;
         } finally {
-            setLoading(false);
+            setCreating(false);
         }
     }, []);
 
@@ -84,7 +92,7 @@ export const MealsProvider = ({ children }) => {
             toast.error('Impossibile unirsi al TableTalk®: ID mancante.');
             throw err;
         }
-        setLoading(true);
+        setActionMealId(mealId);
         try {
             const response = await mealService.joinMeal(mealId);
             // Il backend può restituire { data: meal } oppure direttamente il meal
@@ -121,7 +129,7 @@ export const MealsProvider = ({ children }) => {
             console.error('Errore durante joinMeal nel context:', err);
             throw err;
         } finally {
-            setLoading(false);
+            setActionMealId(null);
         }
     }, [fetchMeals]);
 
@@ -133,7 +141,7 @@ export const MealsProvider = ({ children }) => {
             toast.error('Impossibile abbandonare il TableTalk®: ID mancante.');
             throw err;
         }
-        setLoading(true);
+        setActionMealId(mealId);
         try {
             const response = await mealService.leaveMeal(mealId);
             // Il backend può restituire { data: meal } oppure direttamente il meal aggiornato
@@ -167,15 +175,26 @@ export const MealsProvider = ({ children }) => {
             console.error('Errore durante leaveMeal nel context:', err);
             throw err;
         } finally {
-            setLoading(false);
+            setActionMealId(null);
         }
     }, [fetchMeals]);
 
+    // Helper per i bottoni: vero solo se c'è un'azione (join/leave) in volo
+    // su QUESTO specifico meal. I bottoni degli altri meal restano cliccabili.
+    const isActionLoading = useCallback((mealId) => {
+        return Boolean(mealId) && actionMealId === mealId;
+    }, [actionMealId]);
+
     // 4. Prepariamo l'oggetto 'value' che il provider condividerà.
-    // Ho rimosso 'updateMeal' perché non era definito, causando un altro potenziale errore.
+    // - `loading` resta = "loading lista" (consumatori: MealsPage, SearchMealsPage)
+    // - `creating` = createMeal in corso
+    // - `actionMealId` + `isActionLoading(id)` = join/leave in corso, per-meal
     const value = {
         meals,
         loading,
+        creating,
+        actionMealId,
+        isActionLoading,
         error,
         fetchMeals,
         removeMealFromState,
