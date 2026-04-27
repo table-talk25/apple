@@ -4,7 +4,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import Spinner from './Spinner';
 
 const PrivateRoute = ({ children, requireCompleteProfile = false }) => {
-  const { isAuthenticated, loading } = useAuth();
+  const { isAuthenticated, loading, user } = useAuth();
   const location = useLocation();
 
   if (loading) return <Spinner fullscreen label="Caricamento in corso..." />;
@@ -12,21 +12,40 @@ const PrivateRoute = ({ children, requireCompleteProfile = false }) => {
   // Se l'utente non è autenticato, reindirizza al login
   if (!isAuthenticated) {
     return (
-      <Navigate 
-        to="/login" 
+      <Navigate
+        to="/login"
         state={{ from: location }}
-        replace 
+        replace
       />
     );
   }
 
-  // 🔄 NUOVA LOGICA: Non reindirizziamo più a /complete-profile
-  // Ora la pagina profilo gestisce internamente la schermata di benvenuto
-  // per i profili incompleti
-  
-  // Se requireCompleteProfile è true, permettiamo comunque l'accesso
-  // perché la pagina profilo gestirà la logica internamente
+  // 🔒 ONBOARDING: per le rotte che richiedono un profilo completo (creazione meal,
+  // mappa, video, dettaglio meal, ecc.) blocchiamo davvero l'accesso se il profilo
+  // non è completato. La pagina /profile mostra inline la schermata di onboarding,
+  // quindi /impostazioni/profilo è la destinazione naturale (useProfileCompletion
+  // cita /complete-profile che non esiste in App.js).
+  if (requireCompleteProfile && user && user.profileCompleted !== true) {
+    // Evita loop se siamo già nella zona profilo/onboarding
+    // (in App.js la rotta reale è /impostazioni/profilo, non /profile)
+    const path = location.pathname || '';
+    const isAlreadyOnProfile =
+      path.startsWith('/impostazioni/profilo') ||
+      path.startsWith('/profile') ||
+      path === '/complete-profile';
+    if (!isAlreadyOnProfile) {
+      const next = `${location.pathname || ''}${location.search || ''}`;
+      return (
+        <Navigate
+          to={`/impostazioni/profilo?reason=incomplete_profile&next=${encodeURIComponent(next)}`}
+          state={{ from: location, reason: 'incomplete_profile' }}
+          replace
+        />
+      );
+    }
+  }
+
   return children;
 };
 
-export default PrivateRoute; 
+export default PrivateRoute;
