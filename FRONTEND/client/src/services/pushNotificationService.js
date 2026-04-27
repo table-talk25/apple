@@ -56,7 +56,9 @@ export async function setupPush() {
     // 5. Listen for registration success
     PushNotifications.addListener('registration', (token) => {
       console.log('🔥 Push token received:', token.value);
-      // TODO: invia token al backend
+      // Invia subito al backend se autenticato; altrimenti viene parcheggiato
+      // in localStorage come `pending_fcm_token` e drenato da
+      // flushPendingPushToken() al primo login/register/loginFromVerification.
       sendTokenToBackend(token.value);
     });
 
@@ -125,7 +127,45 @@ async function sendTokenToBackend(token) {
   }
 }
 
+/**
+ * Drena il token push parcheggiato in localStorage al primo login utile.
+ *
+ * Scenario: la `register` push (Capacitor) può avvenire prima che l'utente
+ * sia loggato (es. permesso concesso al primissimo avvio). In quel caso
+ * `sendTokenToBackend` salva il token in `localStorage.pending_fcm_token`
+ * perché POST /profile/me/fcm-token richiede auth. Senza un meccanismo che
+ * lo rilegga dopo il login, il token resta lì appeso e device/utente non
+ * vengono mai associati lato server.
+ *
+ * Va chiamato da AuthContext dopo login / register / loginFromVerification
+ * e al boot quando l'utente è già autenticato.
+ */
+export async function flushPendingPushToken() {
+  try {
+    let pending = null;
+    try { pending = localStorage.getItem('pending_fcm_token'); } catch (_) {}
+    if (!pending) return;
+
+    const { authPreferences } = await import('../utils/preferences');
+    const userToken = await authPreferences.getToken();
+    if (!userToken) {
+      // Niente sessione, niente da fare: lo rilegge il prossimo login.
+      return;
+    }
+
+    const { default: apiClient } = await import('../services/apiService');
+    await apiClient.post('/profile/me/fcm-token', { token: pending }, { suppressErrorAlert: true });
+    console.log('✅ [Push] pending_fcm_token drenato e inviato al backend');
+    try { localStorage.removeItem('pending_fcm_token'); } catch (_) {}
+  } catch (error) {
+    // Se è 401/403 lasciamo il token in localStorage per il prossimo tentativo.
+    // Per altri errori (rete, 5xx) lo lasciamo lì comunque: non perdiamo nulla.
+    console.warn('⚠️ [Push] flushPendingPushToken fallito (riproveremo):', error?.response?.status || error?.message);
+  }
+}
+
 export default {
   setupPush,
-  ensureAndroidChannel
+  ensureAndroidChannel,
+  flushPendingPushToken,
 };

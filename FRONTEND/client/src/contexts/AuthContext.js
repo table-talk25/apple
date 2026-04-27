@@ -4,9 +4,11 @@ import { Capacitor } from '@capacitor/core';
 
 import Spinner from '../components/common/Spinner';
 
-import authService from '../services/authService'; 
+import authService from '../services/authService';
 
 import profileService from '../services/profileService';
+
+import { flushPendingPushToken } from '../services/pushNotificationService';
 
 import { authPreferences } from '../utils/preferences';
 
@@ -116,6 +118,10 @@ export const AuthProvider = ({ children }) => {
                                 }
                             })
                             .catch(e => console.log('Verifica background:', e));
+
+                        // 📲 Se al boot l'utente è già loggato e c'è un token push
+                        // parcheggiato (registrato prima del login), invialo ora.
+                        flushPendingPushToken();
 
                     } else {
 
@@ -236,15 +242,20 @@ export const AuthProvider = ({ children }) => {
 
       setUser(data.user); setToken(data.token); setIsAuthenticated(true);
 
+      // Drena un eventuale token push registrato prima del login (vedi pushNotificationService)
+      flushPendingPushToken();
+
     };
 
-    
+
 
     const register = async (d) => {
 
         const data = await authService.register(d);
 
         setUser(data.user); setToken(data.token); setIsAuthenticated(true);
+
+        flushPendingPushToken();
 
     };
 
@@ -263,6 +274,7 @@ export const AuthProvider = ({ children }) => {
             await authPreferences.saveUser(data.user);
         } catch (e) { console.error(e); }
         setUser(data.user); setToken(data.token); setIsAuthenticated(true);
+        flushPendingPushToken();
     };
 
 

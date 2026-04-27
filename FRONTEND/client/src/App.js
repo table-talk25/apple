@@ -128,12 +128,13 @@ const App = () => {
     };
   }, [navigate]);
   
-  // Hook per le notifiche push (ora sicuro)
-  try {
-    usePushPermission();
-  } catch (error) {
-    console.warn('[App] Errore nell\'inizializzazione push permission:', error);
-  }
+  // Hook per le notifiche push.
+  // L'hook gestisce internamente try/catch e early-return se la piattaforma
+  // non è nativa, quindi è sicuro chiamarlo top-level senza wrapping.
+  // (Avvolgerlo in try/catch è sconsigliato dalle regole di React: gli
+  // errori in render vanno catturati da un ErrorBoundary, non da try/catch
+  // attorno alla call dell'hook.)
+  usePushPermission();
 
   return (
     <ErrorBoundary componentName="App">
