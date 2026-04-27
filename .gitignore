@@ -33,3 +33,4 @@ _ARCHIVE_DELETE_AFTER_REVIEW/
 # IDE config — per-developer, non condividere
 .idea/
 .vscode/
+FRONTEND/client/build/
