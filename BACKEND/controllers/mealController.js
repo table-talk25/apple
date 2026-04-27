@@ -241,7 +241,7 @@ const buildGetMealsQuery = async (queryParams, user) => {
   const { status, mealType, near } = queryParams;
   const statusFilter = status ? status.split(',') : ['upcoming'];
   let query = { status: { $in: statusFilter } };
-  
+
   if (mealType) query.mealType = mealType;
   if (near) {
     try {
@@ -256,12 +256,24 @@ const buildGetMealsQuery = async (queryParams, user) => {
       }
     } catch (error) {}
   }
+
+  // 🔒 PRIVACY: i TableTalk® privati sono visibili solo a host e partecipanti già confermati.
+  // Per gli utenti non autenticati: solo i pubblici.
   if (user) {
     const currentUser = await User.findById(user.id).select('blockedUsers');
     const usersWhoBlockedMe = await User.find({ blockedUsers: user.id }).select('_id');
     const excludedIds = [...currentUser.blockedUsers, ...usersWhoBlockedMe.map(u => u._id)];
     if (excludedIds.length > 0) query.host = { $nin: excludedIds };
+
+    query.$or = [
+      { isPublic: true },
+      { host: user.id },
+      { participants: user.id }
+    ];
+  } else {
+    query.isPublic = true;
   }
+
   return query;
 };
 
@@ -316,7 +328,22 @@ exports.getMeal = asyncHandler(async (req, res, next) => {
     .populate('host participants', 'nickname profileImage')
     .populate('chatId', 'name participants');
   if (!meal) return next(new ErrorResponse(`Pasto non trovato`, 404));
-  
+
+  // 🔒 PRIVACY: se il TableTalk® è privato, solo host e partecipanti possono vederlo.
+  // Restituiamo 404 (non 403) per non rivelare l'esistenza del pasto a estranei.
+  if (meal.isPublic === false) {
+    const userId = req.user ? req.user.id : null;
+    const hostId = (meal.host && meal.host._id) ? meal.host._id.toString() : (meal.host ? meal.host.toString() : null);
+    const isHost = userId && hostId && hostId === userId;
+    const isParticipant = userId && meal.participants.some(p => {
+      const pid = (p && p._id) ? p._id.toString() : p.toString();
+      return pid === userId;
+    });
+    if (!isHost && !isParticipant) {
+      return next(new ErrorResponse(`Pasto non trovato`, 404));
+    }
+  }
+
   const normalizedMeal = normalizeMealLocation(meal);
   if (normalizedMeal.chatId && typeof normalizedMeal.chatId === 'object' && normalizedMeal.chatId !== null) {
     normalizedMeal.chatId = normalizedMeal.chatId._id ? normalizedMeal.chatId._id.toString() : String(normalizedMeal.chatId);
@@ -412,8 +439,13 @@ exports.joinMeal = asyncHandler(async (req, res, next) => {
   if (!meal) return next(new ErrorResponse(`Pasto non trovato`, 404));
   if (meal.status !== 'upcoming') return next(new ErrorResponse('Non possibile iscriversi', 400));
   if (meal.participants.length >= meal.maxParticipants) return next(new ErrorResponse('Pasto al completo', 400));
-  if (meal.host.toString() === req.user.id) return next(new ErrorResponse('Sei l\'host', 400));
+  const hostId = (meal.host && meal.host._id) ? meal.host._id.toString() : meal.host.toString();
+  if (hostId === req.user.id) return next(new ErrorResponse('Sei l\'host', 400));
   if (meal.participants.some(p => p.toString() === req.user.id)) return next(new ErrorResponse('Già iscritto', 400));
+  // 🔒 PRIVACY: non si può entrare in un TableTalk® privato senza essere già stato aggiunto dall'host
+  if (meal.isPublic === false) {
+    return next(new ErrorResponse('Questo TableTalk® è privato. Puoi unirti solo su invito dell\'host.', 403));
+  }
   
   await meal.addParticipant(req.user.id);
   if (meal.chatId) await Chat.findByIdAndUpdate(meal.chatId, { $addToSet: { participants: req.user.id } });
