@@ -76,6 +76,55 @@ export const MealsProvider = ({ children }) => {
         });
     };
 
+    // 🍽️ Iscrizione a un TableTalk®: callback unica con toast di successo/errore
+    // e aggiornamento dello state locale (upsert immediato + refetch dopo successo)
+    const joinMeal = useCallback(async (mealId) => {
+        if (!mealId) {
+            const err = new Error('mealId mancante');
+            toast.error('Impossibile unirsi al TableTalk®: ID mancante.');
+            throw err;
+        }
+        setLoading(true);
+        try {
+            const response = await mealService.joinMeal(mealId);
+            // Il backend può restituire { data: meal } oppure direttamente il meal
+            const updatedMeal = response?.data && response.data._id
+                ? response.data
+                : (response && response._id ? response : null);
+
+            // Aggiornamento ottimistico immediato dello state locale (se il server ha risposto con il meal)
+            if (updatedMeal) {
+                upsertMeal(updatedMeal);
+            }
+
+            toast.success('Ti sei unito al TableTalk® con successo!');
+
+            // Refetch in background per allineare lo state (partecipanti, conteggi, ecc.)
+            // Non blocchiamo il return: il chiamante può già usare updatedMeal.
+            fetchMeals().catch(() => { /* errore già gestito da fetchMeals */ });
+
+            return updatedMeal || response;
+        } catch (err) {
+            const status = err?.response?.status;
+            const serverMessage = err?.response?.data?.message;
+            let userMessage = serverMessage || 'Errore durante l\'iscrizione al TableTalk®. Riprova più tardi.';
+            if (status === 401) {
+                userMessage = 'Devi effettuare l\'accesso per unirti a un TableTalk®.';
+            } else if (status === 403) {
+                userMessage = serverMessage || 'Non sei autorizzato a unirti a questo TableTalk®.';
+            } else if (status === 404) {
+                userMessage = 'TableTalk® non trovato. Potrebbe essere stato rimosso.';
+            } else if (status === 409) {
+                userMessage = serverMessage || 'Sei già iscritto a questo TableTalk®.';
+            }
+            toast.error(userMessage);
+            console.error('Errore durante joinMeal nel context:', err);
+            throw err;
+        } finally {
+            setLoading(false);
+        }
+    }, [fetchMeals]);
+
     // 4. Prepariamo l'oggetto 'value' che il provider condividerà.
     // Ho rimosso 'updateMeal' perché non era definito, causando un altro potenziale errore.
     const value = {
@@ -86,6 +135,7 @@ export const MealsProvider = ({ children }) => {
         removeMealFromState,
         upsertMeal,
         createMeal,
+        joinMeal,
     };
 
     // 5. Il Provider avvolge i figli e fornisce il 'value'
