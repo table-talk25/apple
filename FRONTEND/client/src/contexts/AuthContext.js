@@ -1,4 +1,4 @@
-import React, { createContext, useState, useEffect, useContext, useMemo } from 'react';
+import React, { createContext, useState, useEffect, useContext, useMemo, useRef } from 'react';
 import { App as CapacitorApp } from '@capacitor/app';
 import { Capacitor } from '@capacitor/core';
 
@@ -27,6 +27,10 @@ export const AuthProvider = ({ children }) => {
     const [loading, setLoading] = useState(true);
 
     const [error, setError] = useState(null);
+
+    // Focus / visibility / appState: evita raffiche di GET /auth/me (vedi useEffect sotto)
+    const lastRefreshUserAtRef = useRef(0);
+    const refreshUserInFlightRef = useRef(false);
 
 
 
@@ -160,21 +164,35 @@ export const AuthProvider = ({ children }) => {
     // 👁️ Quando la finestra/app torna attiva, rinfresca i dati utente dal server.
     // Su mobile Capacitor il rientro dall'email/browser non sempre scatena "focus",
     // quindi ascoltiamo anche appStateChange per far sparire subito il banner.
+    // Throttle + in-flight: un solo "ritorno in app" non deve generare 2–3 verifyToken
+    // paralleli (focus+visibility+appState nello stesso istante).
 
     useEffect(() => {
 
         if (!isAuthenticated) return;
 
+        let isCancelled = false;
         let appStateListener;
+        const THROTTLE_MS = 10_000;
 
         const refreshUser = () => {
+            if (isCancelled) return;
+            if (refreshUserInFlightRef.current) return;
+            const now = Date.now();
+            if (now - lastRefreshUserAtRef.current < THROTTLE_MS) return;
+
+            lastRefreshUserAtRef.current = now;
+            refreshUserInFlightRef.current = true;
 
             authService.verifyToken()
                 .then(freshUser => {
+                    if (isCancelled) return;
                     if (freshUser) setUser(freshUser);
                 })
-                .catch(() => { /* silenzioso, non disturbiamo l'utente */ });
-
+                .catch(() => { /* silenzioso, non disturbiamo l'utente */ })
+                .finally(() => {
+                    refreshUserInFlightRef.current = false;
+                });
         };
 
         const handleVisibilityChange = () => {
@@ -193,6 +211,7 @@ export const AuthProvider = ({ children }) => {
         }
 
         return () => {
+            isCancelled = true;
             window.removeEventListener('focus', refreshUser);
             document.removeEventListener('visibilitychange', handleVisibilityChange);
             if (appStateListener) appStateListener.remove();
