@@ -1,5 +1,11 @@
 // File: src/index.js (Versione Finale e Pulita con Sentry)
 
+// ⚠️ Import-side-effect: il logger silenzia console.log/info/debug in
+// produzione (preserva warn/error per Sentry). Va importato per primo,
+// prima di qualunque altro modulo che possa loggare al caricamento.
+// Override: ?debug=1 nell'URL o REACT_APP_VERBOSE_LOGS=true al build.
+import './utils/logger';
+
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { HashRouter } from 'react-router-dom';
