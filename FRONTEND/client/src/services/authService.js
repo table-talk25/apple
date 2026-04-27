@@ -154,28 +154,36 @@ export const verifyToken = async () => {
 /**
  * Richiede il reset della password.
  * @param {object} data - Oggetto con { email }
+ *
+ * 🛌 Cold start Render: stesso pattern di login/register, 75s di timeout.
  */
 export const forgotPassword = async (data) => {
-  const response = await apiClient.post('/auth/forgot-password', data);
+  const response = await apiClient.post('/auth/forgot-password', data, { timeout: 75000 });
   return response.data;
 };
 
 /**
  * Reinvia l'email di verifica per un account non verificato.
  * @param {object} data - Oggetto con { email }
+ *
+ * 🛌 Cold start Render: 75s anche qui per non far fallire chi clicca "Reinvia"
+ * dopo che il backend è andato in sleep.
  */
 export const resendVerification = async (data) => {
-  const response = await apiClient.post('/auth/resend-verification', data);
+  const response = await apiClient.post('/auth/resend-verification', data, { timeout: 75000 });
   return response.data;
 };
 
 /**
  * Verifica l'email di un utente tramite token.
  * @param {string} token - Token di verifica ricevuto via email
+ *
+ * 🛌 75s perché spesso questa è la PRIMA chiamata fatta dall'utente che riapre
+ * l'app dopo aver atteso l'email (= backend potenzialmente in sleep).
  */
 export const verifyEmail = async (token) => {
   // L'endpoint backend è GET /auth/verify-email?token=...
-  const response = await apiClient.get(`/auth/verify-email`, { params: { token } });
+  const response = await apiClient.get(`/auth/verify-email`, { params: { token }, timeout: 75000 });
   return response.data;
 };
 
