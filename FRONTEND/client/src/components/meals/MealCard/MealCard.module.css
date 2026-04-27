@@ -1,4 +1,4 @@
-/* File: src/components/meals/MealCard/MealCard.module.css (Versione Pulita e Responsive) */
+/* File: MealCard.module.css - Versione Share Button */
 
 .card {
   background: white;
@@ -9,269 +9,174 @@
   display: flex;
   flex-direction: column;
   height: 100%;
+  position: relative;
 }
 
 .card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  transform: translateY(-3px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
 }
 
 .cardLink {
   text-decoration: none;
   color: inherit;
+  flex: 1; /* Occupa lo spazio disponibile */
 }
 
-.cardImageWrapper {
+/* Immagini */
+.cardImageWrapper, .cardImageWrapperCompact {
   width: 100%;
-  height: 200px;
   position: relative;
-  background-color: #eee;
+  background-color: #f0f0f0;
+  overflow: hidden;
 }
 
-/* Variante compatta per la preview in lista Meals */
-.cardImageWrapperCompact {
-  width: 100%;
-  height: 140px; /* più bassa per non occupare troppo spazio */
-  position: relative;
-  background-color: #eee;
-}
+.cardImageWrapper { height: 180px; }
+.cardImageWrapperCompact { height: 130px; }
 
 .cardImage {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  transition: transform 0.5s ease;
 }
 
-/* Overlay sfumato per migliorare la leggibilità dei badge/titolo */
-.cardImageWrapper::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(to bottom, rgba(0,0,0,0.15), rgba(0,0,0,0.0) 40%, rgba(0,0,0,0.25));
-  pointer-events: none;
+.card:hover .cardImage {
+  transform: scale(1.05);
 }
 
-.cardImageType {
+/* Badges */
+.cardImageType, .mealModeBadge {
   position: absolute;
-  top: 1rem;
-  left: 1rem;
-  background-color: var(--primary-color);
+  top: 10px;
   color: white;
-  padding: 0.3rem 0.8rem;
-  border-radius: 50px;
-  font-size: 0.8rem;
-  font-weight: 600;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-}
-
-/* Badge per il tipo di TableTalk® (virtuale/fisico) */
-.mealModeBadge {
-  position: absolute;
-  top: 1rem;
-  right: 1rem;
-  color: white;
-  padding: 0.3rem 0.8rem;
-  border-radius: 50px;
-  font-size: 0.8rem;
-  font-weight: 600;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-  display: flex;
-  align-items: center;
-  gap: 0.3rem;
-}
-
-.mealModeIcon {
-  font-size: 0.9rem;
-}
-
-.mealModeText {
+  padding: 4px 10px;
+  border-radius: 20px;
   font-size: 0.75rem;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+  font-weight: 700;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+  z-index: 2;
 }
 
-.cardTitleWrapper {
-    padding: 1.25rem 1.25rem 0.5rem 1.25rem;
+.cardImageType { left: 10px; text-transform: uppercase; }
+.mealModeBadge { right: 10px; display: flex; align-items: center; gap: 4px; }
+
+/* Content */
+.cardContent {
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 
 .cardTitle {
-  font-size: 1.2rem;
-  font-weight: 600;
-  color: #2d3748;
-  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin: 0 0 4px 0;
   line-height: 1.3;
 }
 
-.cardContent {
-  padding: 0.75rem 1.25rem 1.25rem 1.25rem; /* Padding modificato per coerenza */
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  /* flex-grow: 1; è stato rimosso correttamente */
+.cardDetailRow {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 }
 
 .cardDetail {
   display: flex;
   align-items: center;
-  gap: 0.6rem;
+  gap: 6px;
   font-size: 0.9rem;
-  color: #4a5568;
+  color: #555;
 }
 
+.iconFixed { min-width: 14px; text-align: center; }
+.divider { margin: 0 4px; color: #ccc; }
+
+/* Host Info */
+.hostContainer {
+    margin: 4px 0;
+}
+.hostLink {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
+    color: #333;
+    width: fit-content;
+}
 .hostAvatar {
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  object-fit: cover;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    border: 1px solid #eee;
 }
-
-/* Stili per la posizione */
-.locationIcon {
-  font-size: 1rem;
-}
+.hostName { font-size: 0.85rem; }
 
 .locationText {
-  font-size: 0.85rem;
-  color: #4a5568;
-  font-weight: 500;
-  max-width: 200px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 120px;
 }
 
 .cardDescription {
-  font-size: 0.9rem;
-  color: #5a677a;
-  line-height: 1.5;
-  margin: 0.25rem 0 0 0; /* Margine ridotto */
+  font-size: 0.85rem;
+  color: #666;
+  margin: 6px 0 0 0;
+  line-height: 1.4;
 }
 
-/* ▼▼▼ QUESTA È ORA L'UNICA E SOLA DEFINIZIONE CORRETTA PER .cardActions ▼▼▼ */
+/* Actions Footer */
 .cardActions {
-  padding: 1rem 1.25rem;
-  margin-top: auto; /* Spinge i pulsanti in fondo alla card */
-  border-top: 1px solid #f0f0f0;
+  padding: 10px 16px;
+  background: #fafafa;
+  border-top: 1px solid #eee;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  flex-wrap: wrap;
-  gap: 0.5rem;
+}
+
+.participantsBadge {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: #666;
+    font-size: 0.9rem;
+    font-weight: 600;
 }
 
 .actionButtons {
-  display: flex;
-  gap: 0.5rem;
+    display: flex;
+    gap: 8px;
 }
 
-.hostLink {
-  text-decoration: none;
-  color: inherit;
-  transition: opacity 0.2s ease;
-}
-
-.hostLink:hover .cardDetail {
-  opacity: 0.8;
-}
-
-/* Responsive Design */
-@media (max-width: 768px) {
-  .cardImageWrapper { height: 150px; }
-  .cardImageWrapperCompact { height: 120px; }
-  
-  .cardTitleWrapper {
-    padding: 1rem 1rem 0.5rem 1rem;
-  }
-  
-  .cardTitle {
-    font-size: 1.1rem;
-  }
-  
-  .cardContent {
-    padding: 0.5rem 1rem 1rem 1rem;
-    gap: 0.5rem;
-  }
-  
-  .cardDetail {
+/* Pulsanti generici per azioni */
+.actionButton {
+    border: none;
+    border-radius: 6px;
+    padding: 6px 12px;
     font-size: 0.85rem;
-  }
-  
-  .cardActions {
-    padding: 0.75rem 1rem;
-  }
-  
-  /* Responsive per i badge */
-  .mealModeBadge {
-    top: 0.75rem;
-    right: 0.75rem;
-    padding: 0.25rem 0.6rem;
-    font-size: 0.7rem;
-  }
-  
-  .mealModeText {
-    font-size: 0.65rem;
-  }
-  
-  .locationText {
-    max-width: 150px;
-  }
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: background 0.2s;
+}
+
+/* Tasto SHARE */
+.shareButton {
+    background-color: #e3f2fd;
+    color: #0d47a1;
+}
+.shareButton:hover {
+    background-color: #bbdefb;
 }
 
 @media (max-width: 480px) {
-  .cardImageWrapper { height: 130px; }
-  .cardImageWrapperCompact { height: 110px; }
-  
-  .cardTitle {
-    font-size: 1rem;
-  }
-  
-  .cardContent {
-    padding: 0.5rem 0.75rem 0.75rem 0.75rem;
-  }
-  
-  .cardActions {
-    padding: 0.5rem 0.75rem;
-    flex-direction: column;
-    align-items: stretch;
-  }
-  
-  .actionButtons {
-    justify-content: center;
-  }
-  
-  /* Responsive per i badge su schermi molto piccoli */
-  .mealModeBadge {
-    top: 0.5rem;
-    right: 0.5rem;
-    padding: 0.2rem 0.5rem;
-    font-size: 0.65rem;
-  }
-  
-  .mealModeText {
-    display: none; /* Nascondi il testo su schermi molto piccoli */
-  }
-  
-  .locationText {
-    max-width: 120px;
-  }
-}
-
-@media (hover: none) and (pointer: coarse) {
-  .card:hover {
-    transform: none;
-  }
-  
-  .card:active {
-    transform: scale(0.98);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .card {
-    transition: none;
-  }
-  
-  .card:hover {
-    transform: none;
-  }
+    .cardImageWrapper { height: 160px; }
+    .cardTitle { font-size: 1.05rem; }
+    .cardActions { padding: 10px 12px; }
 }

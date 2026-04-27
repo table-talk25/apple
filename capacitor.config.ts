@@ -4,12 +4,12 @@ const config: CapacitorConfig = {
   appId: 'com.tabletalk.socialapp',
   appName: 'TableTalk',
   webDir: 'FRONTEND/client/build',
-  server: {
-    // 🔄 LIVE RELOAD: Configurazione per vedere modifiche in tempo reale
-    // ⚠️ IMPORTANTE: Rimuovi questa sezione prima di generare l'APK per la release!
-    url: 'http://192.168.1.57:3000', // IP del tuo Mac sulla rete locale
-    cleartext: true // Permette HTTP (necessario per sviluppo locale)
-  },
+  // 🔄 Per riattivare il LIVE RELOAD in sviluppo, scommenta il blocco sotto.
+  // ⚠️ NON committare/ricaricare in release con server.url attivo: l'app punterebbe al Mac.
+  // server: {
+  //   url: 'http://192.168.1.57:3000',
+  //   cleartext: true
+  // },
   plugins: {
     GoogleAuth: {  // ← AGGIUNGI QUESTA SEZIONE
       scopes: ['profile', 'email'],

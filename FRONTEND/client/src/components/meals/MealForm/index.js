@@ -67,14 +67,43 @@ const MealForm = ({ initialData, onSubmit, onCancel, isLoading, isSubmitting, su
   // ✅ AGGIUNGI: State per location
   const [selectedLocation, setSelectedLocation] = useState(null);
 
+  // ✅ AGGIUNGI: Gestisci initialData quando viene passato
+  useEffect(() => {
+    if (initialData) {
+      const sanitizedData = { ...getInitialState(), ...initialData };
+      
+      // Assicurati che location sia sempre null o un oggetto con address (stringa)
+      if (sanitizedData.location) {
+        if (typeof sanitizedData.location === 'object' && sanitizedData.location.address) {
+          // Location valida, assicurati che address sia una stringa
+          sanitizedData.location = {
+            ...sanitizedData.location,
+            address: typeof sanitizedData.location.address === 'string' 
+              ? sanitizedData.location.address 
+              : ''
+          };
+        } else {
+          // Location non valida, resetta a null
+          sanitizedData.location = null;
+        }
+      } else {
+        sanitizedData.location = null;
+      }
+      
+      setFormData(sanitizedData);
+    }
+  }, [initialData]);
+
   // ✅ AGGIUNGI: Sincronizza selectedLocation con formData.location
   useEffect(() => {
-    if (formData.location && formData.location.coordinates) {
+    if (formData.location && typeof formData.location === 'object' && formData.location.coordinates) {
       setSelectedLocation({
         lat: formData.location.coordinates[1],
         lng: formData.location.coordinates[0],
-        address: formData.location.address
+        address: formData.location.address || ''
       });
+    } else {
+      setSelectedLocation(null);
     }
   }, [formData.location]);
 
@@ -215,15 +244,26 @@ const MealForm = ({ initialData, onSubmit, onCancel, isLoading, isSubmitting, su
     }
 
     try {
-      // Usa Nominatim API (OpenStreetMap) per geocodificare
+      // Usa Nominatim API (OpenStreetMap) per geocodificare con timeout
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // Timeout di 10 secondi
+      
       const response = await fetch(
         `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=1&addressdetails=1`,
         {
           headers: {
             'User-Agent': 'TableTalk App' // Richiesto da Nominatim
-          }
+          },
+          signal: controller.signal
         }
       );
+      
+      clearTimeout(timeoutId);
+      
+      if (!response.ok) {
+        console.warn('Geocodifica: risposta non OK', response.status);
+        return null;
+      }
       
       const data = await response.json();
       
@@ -238,7 +278,11 @@ const MealForm = ({ initialData, onSubmit, onCancel, isLoading, isSubmitting, su
       
       return null;
     } catch (error) {
-      console.error('Errore geocodifica indirizzo:', error);
+      if (error.name === 'AbortError') {
+        console.warn('Geocodifica: timeout della richiesta');
+      } else {
+        console.warn('Errore geocodifica indirizzo:', error.message);
+      }
       return null;
     }
   };
@@ -250,22 +294,32 @@ const MealForm = ({ initialData, onSubmit, onCancel, isLoading, isSubmitting, su
     
     if (!address && location.lat && location.lng) {
       try {
-        // Reverse geocoding: coordinate -> indirizzo
+        // Reverse geocoding: coordinate -> indirizzo con timeout
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000); // Timeout di 10 secondi
+        
         const response = await fetch(
           `https://nominatim.openstreetmap.org/reverse?format=json&lat=${location.lat}&lon=${location.lng}&addressdetails=1`,
           {
             headers: {
               'User-Agent': 'TableTalk App'
-            }
+            },
+            signal: controller.signal
           }
         );
         
-        const data = await response.json();
-        if (data && data.display_name) {
-          address = data.display_name;
+        clearTimeout(timeoutId);
+        
+        if (response.ok) {
+          const data = await response.json();
+          if (data && data.display_name) {
+            address = data.display_name;
+          }
         }
       } catch (error) {
-        console.error('Errore reverse geocoding:', error);
+        if (error.name !== 'AbortError') {
+          console.warn('Errore reverse geocoding:', error.message);
+        }
       }
     }
 
@@ -362,65 +416,102 @@ const MealForm = ({ initialData, onSubmit, onCancel, isLoading, isSubmitting, su
 
   // ✅ Funzione per processare un file immagine (usata sia per web che mobile)
   const processImageFile = async (file, fileName = 'image.jpg') => {
+    console.log('📁 [MealForm] processImageFile iniziato, file:', file.name, 'size:', file.size, 'type:', file.type);
+    
     // Verifica che sia un'immagine
-    if (!file.type || !file.type.startsWith('image/')) {
-      alert('Seleziona solo file immagine');
-      return;
+    if (!file || !file.type || !file.type.startsWith('image/')) {
+      const errorMsg = 'Seleziona solo file immagine';
+      console.error('📁 [MealForm]', errorMsg);
+      alert(errorMsg);
+      throw new Error(errorMsg);
     }
 
     // Verifica dimensione (max 10MB)
     if (file.size > 10 * 1024 * 1024) {
-      alert('Il file è troppo grande. Massimo 10MB.');
-      return;
+      const errorMsg = 'Il file è troppo grande. Massimo 10MB.';
+      console.error('📁 [MealForm]', errorMsg);
+      alert(errorMsg);
+      throw new Error(errorMsg);
     }
 
     try {
+      console.log('📁 [MealForm] Creazione preview...');
       // Crea preview
       const reader = new FileReader();
       reader.onload = (e) => {
         setImagePreview(e.target.result);
+        console.log('📁 [MealForm] Preview creata');
+      };
+      reader.onerror = (error) => {
+        console.error('📁 [MealForm] Errore FileReader:', error);
+        throw new Error('Errore lettura file immagine');
       };
       reader.readAsDataURL(file);
 
+      console.log('📁 [MealForm] Compressione se necessario...');
       // Comprimi se necessario
       let processedFile = file;
       if (file.size > 4 * 1024 * 1024) {
-        const blob = await compressImageBlob(file, { maxWidth: 1600, quality: 0.7 });
-        processedFile = new File([blob], fileName, { type: 'image/jpeg' });
+        console.log('📁 [MealForm] File grande, comprimendo...');
+        try {
+          const blob = await compressImageBlob(file, { maxWidth: 1600, quality: 0.7 });
+          processedFile = new File([blob], fileName, { type: 'image/jpeg' });
+          console.log('📁 [MealForm] Compressione completata, nuova size:', processedFile.size);
+        } catch (compressError) {
+          console.warn('📁 [MealForm] Errore compressione, uso file originale:', compressError);
+          // Se la compressione fallisce, usa il file originale
+          processedFile = file;
+        }
       }
 
       setImageFile(processedFile);
+      console.log('📁 [MealForm] File impostato nello state');
       
       // Genera base64 come fallback
       try {
         const base64 = await blobToBase64(processedFile);
-        if (typeof base64 === 'string') setImageBase64(base64);
-      } catch (_) {}
+        if (typeof base64 === 'string') {
+          setImageBase64(base64);
+          console.log('📁 [MealForm] Base64 generato');
+        }
+      } catch (base64Error) {
+        console.warn('📁 [MealForm] Errore generazione base64 (non critico):', base64Error);
+      }
 
-      console.log('📁 File selezionato:', processedFile.name, processedFile.size);
+      console.log('📁 [MealForm] File processato con successo:', processedFile.name, processedFile.size);
     } catch (error) {
-      console.error("Errore elaborazione file", error);
+      console.error("📁 [MealForm] Errore elaborazione file:", error);
+      throw error; // Rilancia l'errore per gestirlo nel chiamante
     }
   };
 
   // ✅ Funzione per selezionare foto usando Capacitor Camera (mobile)
   const handleCameraSelect = async (source = CameraSource.Photos) => {
     try {
+      console.log('📷 [MealForm] Inizio selezione foto, source:', source);
+      
       // Richiedi permessi esplicitamente
       const permissionStatus = await Camera.checkPermissions();
+      console.log('📷 [MealForm] Stato permessi:', permissionStatus);
       
-      if (permissionStatus.camera === 'denied' || permissionStatus.photos === 'denied') {
+      // Determina quali permessi servono in base alla sorgente
+      const neededPermission = source === CameraSource.Camera ? 'camera' : 'photos';
+      
+      if (permissionStatus[neededPermission] === 'denied' || permissionStatus[neededPermission] === 'prompt') {
+        console.log('📷 [MealForm] Richiesta permessi per:', neededPermission);
         // Richiedi permessi se non concessi
         const requestResult = await Camera.requestPermissions({
-          permissions: ['camera', 'photos']
+          permissions: [neededPermission]
         });
+        console.log('📷 [MealForm] Risultato richiesta permessi:', requestResult);
         
-        if (requestResult.camera === 'denied' || requestResult.photos === 'denied') {
-          alert('I permessi per fotocamera e libreria foto sono necessari per caricare le immagini.');
+        if (requestResult[neededPermission] === 'denied') {
+          alert(`I permessi per ${source === CameraSource.Camera ? 'la fotocamera' : 'la libreria foto'} sono necessari per caricare le immagini. Abilitali nelle impostazioni del dispositivo.`);
           return;
         }
       }
 
+      console.log('📷 [MealForm] Apertura fotocamera/libreria...');
       // Apri la fotocamera o la libreria foto
       const image = await Camera.getPhoto({
         quality: 90,
@@ -431,17 +522,44 @@ const MealForm = ({ initialData, onSubmit, onCancel, isLoading, isSubmitting, su
         height: 1600
       });
 
-      if (image && image.dataUrl) {
-        // Converti dataUrl in File
+      console.log('📷 [MealForm] Foto selezionata:', image ? 'OK' : 'NULL');
+
+      if (!image || !image.dataUrl) {
+        console.warn('📷 [MealForm] Nessuna immagine ricevuta');
+        alert('Nessuna immagine selezionata.');
+        return;
+      }
+
+      console.log('📷 [MealForm] Conversione dataUrl in File...');
+      // Converti dataUrl in File
+      try {
         const response = await fetch(image.dataUrl);
+        if (!response.ok) {
+          throw new Error(`Errore fetch dataUrl: ${response.status}`);
+        }
+        
         const blob = await response.blob();
+        if (!blob || blob.size === 0) {
+          throw new Error('Blob vuoto o non valido');
+        }
+        
+        console.log('📷 [MealForm] Blob creato, size:', blob.size);
         const file = new File([blob], `photo_${Date.now()}.jpg`, { type: 'image/jpeg' });
         
+        console.log('📷 [MealForm] File creato, processando...');
         await processImageFile(file, file.name);
+        console.log('📷 [MealForm] Foto processata con successo!');
+      } catch (conversionError) {
+        console.error('📷 [MealForm] Errore conversione:', conversionError);
+        throw new Error(`Errore conversione immagine: ${conversionError.message}`);
       }
     } catch (error) {
-      console.error('Errore selezione foto:', error);
-      alert('Errore durante la selezione della foto. Riprova.');
+      console.error('📷 [MealForm] Errore completo selezione foto:', error);
+      console.error('📷 [MealForm] Stack:', error.stack);
+      
+      // Messaggio di errore più dettagliato per debug
+      const errorMessage = error.message || 'Errore sconosciuto';
+      alert(`Errore durante la selezione della foto: ${errorMessage}\n\nControlla la console per dettagli.`);
     }
   };
 
@@ -578,7 +696,7 @@ const MealForm = ({ initialData, onSubmit, onCancel, isLoading, isSubmitting, su
           <button
             type="button"
             className={`${styles.typeButton} ${formData.mealType === 'physical' ? styles.active : ''}`}
-            onClick={() => setFormData({ ...formData, mealType: 'physical' })}
+            onClick={() => setFormData({ ...formData, mealType: 'physical', location: formData.location || null })}
           >
             <span className={styles.typeIcon}>📍</span>
             <span className={styles.typeText}>{t('meals.form.physicalType')}</span>
@@ -784,7 +902,14 @@ const MealForm = ({ initialData, onSubmit, onCancel, isLoading, isSubmitting, su
                   className={`${styles.formControl} ${errors.location && errors.location !== 'Ricerca indirizzo...' ? 'is-invalid' : ''}`}
                   type="text" 
                   name="address" 
-                  value={formData.location?.address || ''} 
+                  value={
+                    formData.location && 
+                    typeof formData.location === 'object' && 
+                    formData.location.address && 
+                    typeof formData.location.address === 'string'
+                      ? formData.location.address 
+                      : ''
+                  } 
                   onChange={handleAddressChange}
                   onBlur={handleAddressBlur}
                   onKeyDown={(e) => {

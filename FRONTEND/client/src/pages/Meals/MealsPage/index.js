@@ -37,22 +37,62 @@ const MealsPage = () => {
     // eslint-disable-next-line
   }, []);
 
-  // 1.5. Geolocalizzazione per AI
+  // 1.5. Geolocalizzazione per AI con richiesta permessi esplicita
   useEffect(() => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
+    const getLocationForAI = async () => {
+      try {
+        // Su mobile, usa Capacitor Geolocation per richiedere permessi esplicitamente
+        const { Capacitor } = await import('@capacitor/core');
+        if (Capacitor.isNativePlatform()) {
+          const { Geolocation } = await import('@capacitor/geolocation');
+          
+          // Richiedi permessi esplicitamente
+          const permissionStatus = await Geolocation.checkPermissions();
+          console.log('📍 [MealsPage] Stato permessi posizione:', permissionStatus);
+          
+          if (permissionStatus.location !== 'granted') {
+            console.log('📍 [MealsPage] Richiesta permessi posizione...');
+            const requestResult = await Geolocation.requestPermissions();
+            console.log('📍 [MealsPage] Risultato richiesta permessi:', requestResult);
+            
+            if (requestResult.location !== 'granted') {
+              console.log('📍 [MealsPage] Permesso posizione negato');
+              return;
+            }
+          }
+          
+          // Ottieni posizione con Capacitor
+          const position = await Geolocation.getCurrentPosition({
+            enableHighAccuracy: true,
+            timeout: 10000
+          });
+          
           setUserLocation({
             latitude: position.coords.latitude,
             longitude: position.coords.longitude
           });
-        },
-        (error) => {
-          console.log('Posizione non disponibile per AI:', error);
-          // Fallback opzionale: coordinate di default (es. Roma/Milano) o null
+        } else {
+          // Su web, usa navigator.geolocation
+          if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+              (position) => {
+                setUserLocation({
+                  latitude: position.coords.latitude,
+                  longitude: position.coords.longitude
+                });
+              },
+              (error) => {
+                console.log('Posizione non disponibile per AI:', error);
+              }
+            );
+          }
         }
-      );
-    }
+      } catch (error) {
+        console.error('📍 [MealsPage] Errore geolocalizzazione:', error);
+      }
+    };
+    
+    getLocationForAI();
   }, []);
 
   // 2. Logica di Ricerca
@@ -136,7 +176,7 @@ const MealsPage = () => {
       );
     }
 
-    const typeOrder = ['breakfast', 'lunch', 'dinner', 'snack', 'drink', 'other'];
+    const typeOrder = ['breakfast', 'brunch', 'lunch', 'dinner', 'snack', 'drink', 'other'];
     const sortedTypes = Object.keys(groupedMeals).sort((a, b) => {
         const indexA = typeOrder.indexOf(a);
         const indexB = typeOrder.indexOf(b);
@@ -145,13 +185,15 @@ const MealsPage = () => {
 
     return (
       <>
-        {/* ✨ SEZIONE AI REALE (Sostituisce quella calcolata localmente) */}
+        {/* ✨ SEZIONE AI REALE - Mostrata in cima alla pagina dei TableTalk */}
         {/* Mostra solo se non stiamo cercando e abbiamo la posizione */}
         {!searchResults && userLocation && (
-          <AIRecommendations 
-            userLocation={userLocation} 
-            onMealSelect={(meal) => navigate(`/meals/${meal._id}`)}
-          />
+          <div style={{ marginBottom: '40px' }}>
+            <AIRecommendations 
+              userLocation={userLocation} 
+              onMealSelect={(meal) => navigate(`/meals/${meal._id}`)}
+            />
+          </div>
         )}
 
         {/* Feed Categorie Standard */}

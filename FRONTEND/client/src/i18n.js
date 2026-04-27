@@ -16,6 +16,7 @@ const dynamicLanguageLoaders = {
   es: () => import('./locales/es/translation.json'),
   ar: () => import('./locales/ar/translation.json'),
   zh: () => import('./locales/zh/translation.json'),
+  ja: () => import('./locales/ja/translation.json'),
 };
 
 i18n
@@ -47,7 +48,8 @@ i18n
       'de': ['en', 'it'],
       'es': ['en', 'it'],
       'ar': ['en', 'it'],
-      'zh': ['en', 'it']
+      'zh': ['en', 'it'],
+      'ja': ['en', 'it']
     },
     // 📊 Configurazione performance
     load: 'languageOnly',
@@ -106,6 +108,13 @@ i18n
       },
       // Cinese: sempre singolare
       zh: {
+        numbers: [1],
+        plurals: function() {
+          return 0;
+        }
+      },
+      // Giapponese: sempre singolare (come il cinese)
+      ja: {
         numbers: [1],
         plurals: function() {
           return 0;

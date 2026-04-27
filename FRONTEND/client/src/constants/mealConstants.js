@@ -9,6 +9,7 @@ import { DEV_SERVER_URL, SERVER_URL, isNative, API_URL } from '../config/capacit
 // 1. Definiamo le CHIAVI INGLESI che il backend si aspetta
 export const MEAL_TYPES = {
   BREAKFAST: 'breakfast',
+  BRUNCH: 'brunch',
   LUNCH: 'lunch',
   DINNER: 'dinner',
   APERITIF: 'aperitif' // Corretto da APERITIVO per coerenza
@@ -18,6 +19,7 @@ export const MEAL_TYPES = {
 // Queste sono le etichette di fallback, ma ora useremo le traduzioni
 export const MEAL_TYPE_LABELS = {
   [MEAL_TYPES.BREAKFAST]: 'Colazione',
+  [MEAL_TYPES.BRUNCH]: 'Brunch',
   [MEAL_TYPES.LUNCH]: 'Pranzo',
   [MEAL_TYPES.DINNER]: 'Cena',
   [MEAL_TYPES.APERITIF]: 'Aperitivo',
@@ -84,6 +86,7 @@ export const getMealStatusText = (statusKey) => MEAL_STATUS_LABELS[statusKey] ||
 export const getMealTypeColor = (typeKey) => {
   const colors = {
     [MEAL_TYPES.BREAKFAST]: '#ffc107',
+    [MEAL_TYPES.BRUNCH]: '#ff9800',
     [MEAL_TYPES.LUNCH]: '#28a745',
     [MEAL_TYPES.DINNER]: '#6f42c1',
     [MEAL_TYPES.APERITIF]: '#fd7e14'

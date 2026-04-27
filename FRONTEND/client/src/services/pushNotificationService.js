@@ -84,12 +84,44 @@ export async function setupPush() {
 
 async function sendTokenToBackend(token) {
   try {
+    // Verifica se l'utente è autenticato prima di inviare il token
+    const { authPreferences } = await import('../utils/preferences');
+    const userToken = await authPreferences.getToken();
+    
+    if (!userToken) {
+      console.log('⚠️ [Push] Utente non autenticato, token FCM non inviato. Verrà inviato dopo il login.');
+      // Salva il token localmente per inviarlo dopo il login
+      try {
+        localStorage.setItem('pending_fcm_token', token);
+        console.log('💾 [Push] Token FCM salvato localmente per invio dopo login');
+      } catch (e) {
+        console.warn('⚠️ [Push] Impossibile salvare token localmente:', e);
+      }
+      return;
+    }
+    
     console.log('🔥 Sending push token to backend:', token);
     const { default: apiClient } = await import('../services/apiService');
-    await apiClient.post('/profile/me/fcm-token', { token });
+    await apiClient.post('/profile/me/fcm-token', { token }, { suppressErrorAlert: true });
     console.log('✅ Push token sent to backend');
+    
+    // Rimuovi il token pendente se presente
+    try {
+      localStorage.removeItem('pending_fcm_token');
+    } catch (e) {
+      // Ignora errori
+    }
   } catch (error) {
     console.error('❌ Error sending token to backend:', error);
+    // Se l'errore è 401 (non autenticato), salva il token per inviarlo dopo il login
+    if (error?.response?.status === 401 || error?.response?.status === 403) {
+      try {
+        localStorage.setItem('pending_fcm_token', token);
+        console.log('💾 [Push] Token FCM salvato localmente (errore 401/403)');
+      } catch (e) {
+        console.warn('⚠️ [Push] Impossibile salvare token localmente:', e);
+      }
+    }
   }
 }
 

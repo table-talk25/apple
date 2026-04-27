@@ -208,3 +208,39 @@
     padding: 0.6rem 0.8rem;
   }
 } 
+
+.headerRow {
+  display: flex;
+  align-items: center;
+  gap: 10px; /* Spazio tra titolo e matita */
+  margin-bottom: 1rem;
+}
+
+/* Rimuovi il margin-bottom dal vecchio .sectionTitle se necessario, 
+   o lascialo sovrascritto dallo stile inline nel JS */
+
+.editIconBtn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #007bff; /* Colore blu come le icone */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 5px;
+  border-radius: 50%;
+  transition: background-color 0.2s;
+}
+
+.editIconBtn:hover {
+  background-color: #e3f2fd; /* Sfondo leggero all'hover */
+}
+
+.editContainer {
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}

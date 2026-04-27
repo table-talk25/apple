@@ -122,12 +122,12 @@ const Navbar = () => {
                         <li className={styles.navItem}><NavLink to="/map" className={({ isActive }) => (isActive ? `${styles.navLink} ${styles.navLinkActive}` : styles.navLink)} onClick={closeMobileMenu}><FaMapMarkerAlt /> Mappa</NavLink></li>
                         <li className={styles.navItem}><NavLink to="/impostazioni/profilo" className={({ isActive }) => (isActive ? `${styles.navLink} ${styles.navLinkActive}` : styles.navLink)} onClick={closeMobileMenu}>Il Mio Profilo</NavLink></li>
                         <li className={styles.navItem}>
-                            <button 
+                                <button 
                                 className={styles.logoutButtonKebab}
                                 onClick={handleLogout}
                             >
-                                Logout
-                            </button>
+                                                Logout
+                                            </button>
                         </li>
                     </>
                 ) : null}

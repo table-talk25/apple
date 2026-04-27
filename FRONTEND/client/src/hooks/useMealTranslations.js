@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { MEAL_TYPES, MEAL_MODES } from '../constants/mealConstants';
+import { MEAL_TYPES, MEAL_MODES, MEAL_ICONS, getMealTypeText } from '../constants/mealConstants';
 
 export const useMealTranslations = () => {
   const { t } = useTranslation();
@@ -21,6 +21,7 @@ export const useMealTranslations = () => {
 
   const getMealTypeOptions = () => [
     { value: MEAL_TYPES.BREAKFAST, label: getMealTypeText(MEAL_TYPES.BREAKFAST) },
+    { value: MEAL_TYPES.BRUNCH, label: getMealTypeText(MEAL_TYPES.BRUNCH) },
     { value: MEAL_TYPES.LUNCH, label: getMealTypeText(MEAL_TYPES.LUNCH) },
     { value: MEAL_TYPES.DINNER, label: getMealTypeText(MEAL_TYPES.DINNER) },
     { value: MEAL_TYPES.APERITIF, label: getMealTypeText(MEAL_TYPES.APERITIF) }

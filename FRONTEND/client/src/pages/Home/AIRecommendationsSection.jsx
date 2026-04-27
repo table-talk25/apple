@@ -13,28 +13,69 @@ const AIRecommendationsSection = () => {
   const [showRecommendations, setShowRecommendations] = useState(false);
 
   useEffect(() => {
-    // Prova a ottenere la posizione dell'utente
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
+    const getLocation = async () => {
+      try {
+        // Su mobile, usa Capacitor Geolocation per richiedere permessi esplicitamente
+        const { Capacitor } = await import('@capacitor/core');
+        if (Capacitor.isNativePlatform()) {
+          const { Geolocation } = await import('@capacitor/geolocation');
+          
+          // Richiedi permessi esplicitamente
+          const permissionStatus = await Geolocation.checkPermissions();
+          console.log('📍 [AIRecommendationsSection] Stato permessi posizione:', permissionStatus);
+          
+          if (permissionStatus.location !== 'granted') {
+            console.log('📍 [AIRecommendationsSection] Richiesta permessi posizione...');
+            const requestResult = await Geolocation.requestPermissions();
+            console.log('📍 [AIRecommendationsSection] Risultato richiesta permessi:', requestResult);
+            
+            if (requestResult.location !== 'granted') {
+              setLocationError('Permesso posizione negato. Le raccomandazioni AI non sono disponibili.');
+              return;
+            }
+          }
+          
+          // Ottieni posizione con Capacitor
+          const position = await Geolocation.getCurrentPosition({
+            enableHighAccuracy: true,
+            timeout: 10000
+          });
+          
           setUserLocation({
             latitude: position.coords.latitude,
             longitude: position.coords.longitude
           });
-        },
-        (error) => {
-          console.warn('Geolocation error:', error);
-          setLocationError('Impossibile ottenere la posizione. Le raccomandazioni AI non sono disponibili.');
-        },
-        {
-          enableHighAccuracy: true,
-          timeout: 10000,
-          maximumAge: 300000 // 5 minuti
+        } else {
+          // Su web, usa navigator.geolocation
+          if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+              (position) => {
+                setUserLocation({
+                  latitude: position.coords.latitude,
+                  longitude: position.coords.longitude
+                });
+              },
+              (error) => {
+                console.warn('Geolocation error:', error);
+                setLocationError('Impossibile ottenere la posizione. Le raccomandazioni AI non sono disponibili.');
+              },
+              {
+                enableHighAccuracy: true,
+                timeout: 10000,
+                maximumAge: 300000 // 5 minuti
+              }
+            );
+          } else {
+            setLocationError('Geolocalizzazione non supportata dal browser.');
+          }
         }
-      );
-    } else {
-      setLocationError('Geolocalizzazione non supportata dal browser.');
-    }
+      } catch (error) {
+        console.error('📍 [AIRecommendationsSection] Errore geolocalizzazione:', error);
+        setLocationError('Errore rilevamento posizione. Le raccomandazioni AI non sono disponibili.');
+      }
+    };
+    
+    getLocation();
   }, []);
 
   const handleMealSelect = (meal) => {

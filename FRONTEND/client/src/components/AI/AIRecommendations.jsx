@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import apiClient from '../../services/apiService';
 import { getMealCoverImageUrl } from '../../constants/mealConstants';
@@ -9,14 +9,10 @@ const AIRecommendations = ({ userLocation, onMealSelect, showTitle = true }) => 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  useEffect(() => {
-    if (userLocation && user) {
-      loadAIRecommendations();
-    }
-  }, [userLocation, user]);
-
-  const loadAIRecommendations = async () => {
+  const loadAIRecommendations = useCallback(async () => {
     try {
+      if (!userLocation?.latitude || !userLocation?.longitude) return;
+
       setLoading(true);
       setError('');
       
@@ -37,7 +33,13 @@ const AIRecommendations = ({ userLocation, onMealSelect, showTitle = true }) => 
     } finally {
       setLoading(false);
     }
-  };
+  }, [userLocation?.latitude, userLocation?.longitude]);
+
+  useEffect(() => {
+    if (userLocation && user) {
+      loadAIRecommendations();
+    }
+  }, [userLocation, user, loadAIRecommendations]);
 
   const handleMealClick = async (meal) => {
     try {
@@ -82,7 +84,7 @@ const AIRecommendations = ({ userLocation, onMealSelect, showTitle = true }) => 
             marginRight: '12px'
           }} />
           <span style={{ color: '#666', fontSize: '16px' }}>
-            L'AI sta cercando i migliori TableTalk® per te...
+            Carico i suggerimenti per te...
           </span>
         </div>
         
@@ -134,7 +136,7 @@ const AIRecommendations = ({ userLocation, onMealSelect, showTitle = true }) => 
               position: 'relative', 
               zIndex: 2,
               filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.1))'
-            }}>🤖</span>
+            }}>✨</span>
             <div style={{
               position: 'absolute',
               top: '-50%',
@@ -154,7 +156,7 @@ const AIRecommendations = ({ userLocation, onMealSelect, showTitle = true }) => 
               letterSpacing: '-0.5px',
               lineHeight: '1.2'
             }}>
-              Raccomandazioni AI
+              Consigliati per te
             </h3>
             <p style={{
               margin: '4px 0 0 0',
@@ -163,7 +165,7 @@ const AIRecommendations = ({ userLocation, onMealSelect, showTitle = true }) => 
               fontWeight: '400',
               lineHeight: '1.4'
             }}>
-              TableTalk® selezionati personalmente per te
+              TableTalk® scelti in base a posizione e preferenze
             </p>
           </div>
         </div>
@@ -353,7 +355,7 @@ const AIRecommendations = ({ userLocation, onMealSelect, showTitle = true }) => 
                 fontWeight: '500',
                 fontStyle: 'italic'
               }}>
-                🤖 {meal.aiReason || 'Perfetto per i tuoi gusti'}
+                {meal.aiReason || 'Scelto per te'}
               </p>
               
               {/* Location & Distance */}
@@ -481,7 +483,7 @@ const AIRecommendations = ({ userLocation, onMealSelect, showTitle = true }) => 
               e.target.style.borderColor = '#e0e0e0';
             }}
           >
-            🔄 Altri suggerimenti AI
+            🔄 Altri suggerimenti
           </button>
         </div>
       )}

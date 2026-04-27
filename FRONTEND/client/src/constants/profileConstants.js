@@ -20,7 +20,8 @@ export const translatedLanguages = [
   { code: 'es', name: 'Spagnolo' },
   { code: 'de', name: 'Tedesco' },
   { code: 'ar', name: 'Arabo' },
-  { code: 'zh', name: 'Cinese' }
+  { code: 'zh', name: 'Cinese' },
+  { code: 'ja', name: 'Giapponese' }
 ];
 
 // Interessi standardizzati disponibili

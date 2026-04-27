@@ -1,55 +1,16 @@
 // File: src/pages/Home/index.js (Versione con testi scelti dall'utente)
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
 import { FaSearch, FaTicketAlt, FaVideo, FaUsers, FaLanguage, FaShieldAlt } from 'react-icons/fa';
 import { useAuth } from '../../contexts/AuthContext'; 
 import Navbar from '../../components/layout/Navbar';
-import AIRecommendations from '../../components/AI/AIRecommendations';
 import styles from './HomePage.module.css';
 import { useTranslation } from 'react-i18next'
 
 function HomePage() {
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated } = useAuth();
   const { t } = useTranslation();
-  const [currentUserPosition, setCurrentUserPosition] = useState(null);
-  
-  // Debug: controlla autenticazione e token
-  console.log('🏠 [HomePage] isAuthenticated:', isAuthenticated);
-  console.log('🏠 [HomePage] user:', user);
-  console.log('🔑 [HomePage] Token:', localStorage.getItem('token'));
-
-  // Ottieni la posizione dell'utente per le raccomandazioni AI
-  useEffect(() => {
-    if (isAuthenticated) {
-      // Usa posizione fissa per test AI (Milano)
-      setCurrentUserPosition({
-        latitude: 45.4642,
-        longitude: 9.1900
-      });
-      
-      // Prova anche la geolocalizzazione reale
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-          (position) => {
-            setCurrentUserPosition({
-              latitude: position.coords.latitude,
-              longitude: position.coords.longitude
-            });
-          },
-          (error) => {
-            console.warn('Geolocation error:', error);
-            console.log('🤖 [AI] Usando posizione fissa per test AI');
-          },
-          {
-            enableHighAccuracy: true,
-            timeout: 10000,
-            maximumAge: 300000 // 5 minuti
-          }
-        );
-      }
-    }
-  }, [isAuthenticated]);
 
   return (
     <div className={styles.homeContainer}>
@@ -72,33 +33,6 @@ function HomePage() {
           )}
         </div>
       </section>
-
-      {/* 🤖 AI RECOMMENDATIONS SECTION - Elegantemente posizionata subito dopo Hero */}
-      {isAuthenticated && currentUserPosition && (
-        <section style={{
-          marginTop: '60px',
-          marginBottom: '60px',
-          padding: '0 20px',
-          maxWidth: '1200px',
-          marginLeft: 'auto',
-          marginRight: 'auto'
-        }}>
-          <div style={{
-            background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
-            borderRadius: '24px',
-            padding: '40px 30px',
-            boxShadow: '0 10px 40px rgba(0, 0, 0, 0.08)',
-            border: '1px solid rgba(255, 107, 53, 0.1)'
-          }}>
-            <AIRecommendations 
-              userLocation={currentUserPosition}
-              onMealSelect={(meal) => {
-                window.location.href = `/meals/${meal._id}`;
-              }}
-            />
-          </div>
-        </section>
-      )}
 
       {/* --- SEZIONE "COME FUNZIONA" --- */}
       <section className={styles.featuresSection}>

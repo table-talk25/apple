@@ -84,12 +84,12 @@ apiClient.interceptors.request.use(
         delete config.headers['Authorization'];
         console.log('[API] Route logout: token rimosso esplicitamente dalla richiesta');
       } else if (!isAuthRoute) {
-        const token = await authPreferences.getToken();
-        if (token) {
-          config.headers['Authorization'] = `Bearer ${token}`;
-          console.log('[API] Token incluso nella richiesta:', config.method?.toUpperCase(), config.url);
-        } else {
-          console.warn('[API] Token non trovato per la richiesta:', config.method?.toUpperCase(), config.url);
+      const token = await authPreferences.getToken();
+      if (token) {
+        config.headers['Authorization'] = `Bearer ${token}`;
+        console.log('[API] Token incluso nella richiesta:', config.method?.toUpperCase(), config.url);
+      } else {
+        console.warn('[API] Token non trovato per la richiesta:', config.method?.toUpperCase(), config.url);
         }
       } else {
         console.log('[API] Route di autenticazione: token non aggiunto alla richiesta:', config.url);

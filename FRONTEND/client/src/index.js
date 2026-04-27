@@ -116,12 +116,10 @@ function showLoader() {
 
 // Renderizza l'app con gestione degli errori robusta
 console.log("🔴 [DEBUG] Inizio render React...");
-alert("🔴 [DEBUG] Inizio render React - Se vedi questo, React sta per montarsi");
 
 // Wrapper per catturare errori durante il rendering
 const AppWrapper = () => {
   console.log("🔴 [DEBUG] AppWrapper renderizzato");
-  alert("🔴 [DEBUG] AppWrapper renderizzato - React sta funzionando!");
   
   // Verifica che il DOM sia pronto
   setTimeout(() => {
@@ -130,7 +128,6 @@ const AppWrapper = () => {
     console.log("🔴 [DEBUG] AppWrapper - Root children:", root ? root.children.length : 0);
     if (root && root.children.length === 0) {
       console.error("❌ [DEBUG] AppWrapper - Root è vuoto dopo render!");
-      alert("❌ [DEBUG] Root è vuoto - React non sta renderizzando!");
     }
   }, 500);
   
@@ -276,7 +273,7 @@ try {
   document.body.appendChild(errorDiv);
   
   // Mostra anche alert per debug
-  if (typeof alert !== 'undefined') {
+  if (process.env.NODE_ENV === 'development' && typeof alert !== 'undefined') {
     alert('ERRORE RENDERING:\n' + (error.message || error) + '\n\nControlla la console per dettagli.');
   }
 }
