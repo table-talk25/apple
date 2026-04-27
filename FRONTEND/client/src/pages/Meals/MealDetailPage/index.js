@@ -236,9 +236,9 @@ const MealDetailPage = () => {
               
               {/* 1. Pulsante Unisciti / Lascia */}
               {!isHost && !isParticipant && !isPast && (
-                <JoinMealButton 
-                  meal={meal} 
-                  onSuccess={handleRefresh} 
+                <JoinMealButton
+                  mealId={meal._id}
+                  onSuccess={handleRefresh}
                   className="w-100 mb-3 btn-lg"
                 />
               )}
