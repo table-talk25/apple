@@ -317,17 +317,63 @@ const MealDetailPage = () => {
                 <h5>{t('meals.detail.participantsList')} ({meal.participants?.length || 0})</h5>
                 <div className={styles.avatarList}>
                   {/* Mostra Host */}
-                  <div className={styles.participantItem} title={`Host: ${meal.host?.nickname}`}>
-                    <img src={getHostAvatarUrl(meal.host?.profileImage)} className={styles.miniAvatar} style={{ border: '2px solid #ff6b6b' }} alt="Host" />
-                  </div>
-                  {/* Mostra Altri */}
-                  {meal.participants?.map(p => (
-                    (p._id || p) !== (meal.host._id || meal.host) && (
-                      <div key={p._id || p} className={styles.participantItem} title={p.nickname}>
-                        <img src={getHostAvatarUrl(p?.profileImage)} className={styles.miniAvatar} alt={p.nickname || 'User'} />
+                  {(() => {
+                    const hostId = meal.host?._id || meal.host;
+                    const isMeHost = user && hostId === user._id;
+                    return (
+                      <div
+                        className={styles.participantItem}
+                        title={`Host: ${meal.host?.nickname}`}
+                        role={!isMeHost && hostId ? 'button' : undefined}
+                        tabIndex={!isMeHost && hostId ? 0 : -1}
+                        onClick={() => {
+                          if (!hostId) return;
+                          if (isMeHost) navigate('/profile');
+                          else navigate(`/public-profile/${hostId}`);
+                        }}
+                        onKeyDown={(e) => {
+                          if ((e.key === 'Enter' || e.key === ' ') && hostId) {
+                            e.preventDefault();
+                            if (isMeHost) navigate('/profile');
+                            else navigate(`/public-profile/${hostId}`);
+                          }
+                        }}
+                        style={{ cursor: hostId ? 'pointer' : 'default' }}
+                      >
+                        <img src={getHostAvatarUrl(meal.host?.profileImage)} className={styles.miniAvatar} style={{ border: '2px solid #ff6b6b' }} alt="Host" />
                       </div>
-                    )
-                  ))}
+                    );
+                  })()}
+                  {/* Mostra Altri */}
+                  {meal.participants?.map(p => {
+                    const participantId = p?._id || p;
+                    const hostId = meal.host?._id || meal.host;
+                    if (!participantId || participantId === hostId) return null;
+                    const isMe = user && participantId === user._id;
+                    const goToProfile = () => {
+                      if (isMe) navigate('/profile');
+                      else navigate(`/public-profile/${participantId}`);
+                    };
+                    return (
+                      <div
+                        key={participantId}
+                        className={styles.participantItem}
+                        title={p?.nickname}
+                        role="button"
+                        tabIndex={0}
+                        onClick={goToProfile}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            goToProfile();
+                          }
+                        }}
+                        style={{ cursor: 'pointer' }}
+                      >
+                        <img src={getHostAvatarUrl(p?.profileImage)} className={styles.miniAvatar} alt={p?.nickname || 'User'} />
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             </div>

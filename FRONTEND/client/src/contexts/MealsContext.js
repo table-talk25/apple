@@ -125,6 +125,52 @@ export const MealsProvider = ({ children }) => {
         }
     }, [fetchMeals]);
 
+    // 🚪 Abbandono di un TableTalk®: callback unica con toast di successo/errore
+    // e aggiornamento dello state locale (rimozione/upsert + refetch dopo successo)
+    const leaveMeal = useCallback(async (mealId) => {
+        if (!mealId) {
+            const err = new Error('mealId mancante');
+            toast.error('Impossibile abbandonare il TableTalk®: ID mancante.');
+            throw err;
+        }
+        setLoading(true);
+        try {
+            const response = await mealService.leaveMeal(mealId);
+            // Il backend può restituire { data: meal } oppure direttamente il meal aggiornato
+            const updatedMeal = response?.data && response.data._id
+                ? response.data
+                : (response && response._id ? response : null);
+
+            if (updatedMeal) {
+                // Aggiornamento ottimistico: rimpiazziamo il meal nello state con la versione senza di noi
+                upsertMeal(updatedMeal);
+            }
+
+            toast.success('Hai abbandonato il TableTalk®.');
+
+            // Refetch in background per riallineare partecipanti/contatori globali
+            fetchMeals().catch(() => { /* errore già gestito da fetchMeals */ });
+
+            return updatedMeal || response;
+        } catch (err) {
+            const status = err?.response?.status;
+            const serverMessage = err?.response?.data?.message;
+            let userMessage = serverMessage || 'Errore durante l\'abbandono del TableTalk®. Riprova più tardi.';
+            if (status === 401) {
+                userMessage = 'Devi effettuare l\'accesso per abbandonare un TableTalk®.';
+            } else if (status === 403) {
+                userMessage = serverMessage || 'Non sei autorizzato a abbandonare questo TableTalk®.';
+            } else if (status === 404) {
+                userMessage = 'TableTalk® non trovato. Potrebbe essere stato rimosso.';
+            }
+            toast.error(userMessage);
+            console.error('Errore durante leaveMeal nel context:', err);
+            throw err;
+        } finally {
+            setLoading(false);
+        }
+    }, [fetchMeals]);
+
     // 4. Prepariamo l'oggetto 'value' che il provider condividerà.
     // Ho rimosso 'updateMeal' perché non era definito, causando un altro potenziale errore.
     const value = {
@@ -136,6 +182,7 @@ export const MealsProvider = ({ children }) => {
         upsertMeal,
         createMeal,
         joinMeal,
+        leaveMeal,
     };
 
     // 5. Il Provider avvolge i figli e fornisce il 'value'

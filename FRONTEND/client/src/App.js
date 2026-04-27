@@ -152,12 +152,12 @@ const App = () => {
     </PrivateRoute>
 } />
 
-          <Route path="/meals/:id/video" element={
+          <Route path="/meals/:mealId/video" element={
     <PrivateRoute requireCompleteProfile={true}>
         <VideoCallPage />
     </PrivateRoute>
 } />
-          <Route path="/video/:id" element={
+          <Route path="/video/:mealId" element={
     <PrivateRoute requireCompleteProfile={true}>
         <VideoCallPage />
     </PrivateRoute>
