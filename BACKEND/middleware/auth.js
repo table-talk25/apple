@@ -33,11 +33,20 @@ exports.protect = asyncHandler(async (req, res, next) => {
       return next(new ErrorResponse('Account disattivato', 401));
     }
 
-    // 🔒 SICUREZZA: Verifica che l'email sia stata verificata
-    // TEMPORANEAMENTE DISABILITATO PER TEST
-    // if (!req.user.isEmailVerified) {
-    //   return next(new ErrorResponse('Account non verificato. Controlla la tua email e clicca sul link di verifica per completare la registrazione.', 403));
-    // }
+    // 🔒 Email verification gate. Bypass in dev tramite SKIP_EMAIL_VERIFICATION=true.
+    // Per riattivare il vecchio comportamento "soft" (utente entra e vede solo banner)
+    // serve invece togliere questo blocco; oggi blocchiamo le rotte protette.
+    const skipEmailVerificationCheck =
+      process.env.SKIP_EMAIL_VERIFICATION === 'true' ||
+      process.env.NODE_ENV === 'development';
+    if (!skipEmailVerificationCheck && !req.user.isEmailVerified) {
+      return next(
+        new ErrorResponse(
+          'Account non verificato. Controlla la tua email e clicca sul link di verifica per completare la registrazione.',
+          403
+        )
+      );
+    }
 
     next();
 
