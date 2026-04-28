@@ -20,7 +20,6 @@ const pushNotificationService = require('./services/pushNotificationService');
 const startMealStatusUpdater = require('./jobs/mealStatusUpdater');
 const mealStatusService = require('./services/mealStatusService');
 const dailyReportSummaryJob = require('./jobs/dailyReportSummary');
-const twilio = require('twilio');
 const startCronJobs = require('./utils/cronJobs');
 
 // --- INIZIALIZZAZIONE FIREBASE ADMIN ---
@@ -430,32 +429,6 @@ app._router.stack.forEach(middleware => {
       }
     });
   }
-});
-
-// Importa Twilio per la generazione del token video
-const AccessToken = twilio.jwt.AccessToken;
-const VideoGrant = AccessToken.VideoGrant;
-
-// Endpoint per ottenere il token Twilio Video
-app.get('/api/video/token', auth.protect, (req, res) => { 
-    const { room } = req.query;
-  // Puoi usare l'utente loggato, oppure un nome generico
-  const identity = req.user ? req.user.nickname : 'ospite';
-
-  // Crea il token
-  const token = new AccessToken(
-    process.env.TWILIO_ACCOUNT_SID,
-    process.env.TWILIO_API_KEY,
-    process.env.TWILIO_API_SECRET
-  );
-  token.identity = identity;
-
-  // Aggiungi il permesso per la stanza video
-  const videoGrant = new VideoGrant({ room });
-  token.addGrant(videoGrant);
-
-  // Restituisci il token al frontend
-  res.json({ token: token.toJwt() });
 });
 
 // --- CRON JOB CON LE TUE REGOLE SEMPLICI ---
