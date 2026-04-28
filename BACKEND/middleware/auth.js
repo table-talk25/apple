@@ -9,30 +9,22 @@ const User = require('../models/User');
  * @desc    Middleware per proteggere le rotte. Verifica il token e attacca l'utente a req.user
  */
 exports.protect = asyncHandler(async (req, res, next) => {
-  console.log(`\n--- [PROTECT] Eseguo il middleware per la rotta: ${req.method} ${req.path} ---`);
-  console.log('🔐 [Auth] Checking token...');
-  console.log('🔐 [Auth] Authorization header:', req.headers.authorization);
   let token;
 
   if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
     token = req.headers.authorization.split(' ')[1];
-    console.log('[PROTECT] ✅ Token trovato nell\'header.');
   }
 
   if (!token) {
-    console.log('[PROTECT] ❌ ERRORE: Token NON trovato.');
     return next(new ErrorResponse('Non autorizzato. Token mancante.', 401));
   }
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    console.log('✅ [Auth] Token valid for user:', decoded.id);
-    console.log('[PROTECT] ✅ Token decodificato. ID Utente:', decoded.id);
 
     req.user = await User.findById(decoded.id).select('-password');
     
     if (!req.user) {
-      console.log(`[PROTECT] ❌ ERRORE: Utente non trovato nel DB con l'ID: ${decoded.id}`);
       return next(new ErrorResponse('Utente associato a questo token non più esistente.', 401));
     }
 
@@ -47,7 +39,6 @@ exports.protect = asyncHandler(async (req, res, next) => {
     //   return next(new ErrorResponse('Account non verificato. Controlla la tua email e clicca sul link di verifica per completare la registrazione.', 403));
     // }
 
-    console.log(`[PROTECT] ✅ Utente trovato: ${req.user.email} (verificato). Passo al controller.`);
     next();
 
   } catch (err) {
