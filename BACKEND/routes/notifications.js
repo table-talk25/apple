@@ -3,7 +3,7 @@
 
 const express = require('express');
 const router = express.Router();
-const { protect } = require('../middleware/auth');
+const { protect, authorize } = require('../middleware/auth');
 const { 
   sendPushNotification,
   sendChatNotification,
@@ -89,16 +89,8 @@ router.post('/register-device', protect, async (req, res) => {
  * POST /api/notifications/send-test
  * Invia una notifica di test (solo per admin)
  */
-router.post('/send-test', protect, async (req, res) => {
+router.post('/send-test', [protect, authorize('admin')], async (req, res) => {
   try {
-    // Verifica che l'utente sia admin
-    if (!req.user.isAdmin) {
-      return res.status(403).json({ 
-        success: false, 
-        message: 'Accesso negato' 
-      });
-    }
-
     const { tokens, title, body, type } = req.body;
 
     if (!tokens || !Array.isArray(tokens) || tokens.length === 0) {
