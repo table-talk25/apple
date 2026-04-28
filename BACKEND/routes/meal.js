@@ -2,7 +2,7 @@
 
 const express = require('express');
 const router = express.Router();
-const { protect } = require('../middleware/auth');
+const { protect, authorize } = require('../middleware/auth');
 const upload = require('../middleware/upload'); 
 
 // Importiamo tutte le funzioni necessarie dal nostro controller
@@ -45,7 +45,7 @@ router.route('/:id')
   .delete(protect, deleteMeal); // CANCELLAZIONE (adesso è attivo!)
 
 // --- Rotta per la sincronizzazione dello stato di un pasto ---
-router.post('/:id/sync-status', syncMealStatus);
+router.post('/:id/sync-status', protect, authorize('admin'), syncMealStatus);
 
 // --- Rotte per la gestione dei partecipanti ---
 router.route('/:id/participants')
