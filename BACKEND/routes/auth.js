@@ -5,7 +5,7 @@ const router = express.Router();
 const { check } = require('express-validator'); 
 const rateLimit = require('express-rate-limit'); // <-- IMPORT NECESSARIO
 const authController = require('../controllers/authController');
-const { protect } = require('../middleware/auth');
+const { protect, authorize } = require('../middleware/auth');
 
 const { 
   registerValidation, 
@@ -49,10 +49,10 @@ router.get('/verify-email', authController.verifyEmail);
 router.post('/resend-verification', [check('email', 'Email non valida').isEmail()], authController.resendVerification);
 
 // 📊 Route per statistiche e manutenzione (solo admin)
-router.get('/verification-stats', protect, authController.getVerificationStats);
-router.post('/cleanup-expired-tokens', protect, authController.cleanupExpiredTokens);
-router.get('/password-reset-stats', protect, authController.getPasswordResetStats);
-router.post('/cleanup-expired-reset-tokens', protect, authController.cleanupExpiredResetTokens);
+router.get('/verification-stats', protect, authorize('admin'), authController.getVerificationStats);
+router.post('/cleanup-expired-tokens', protect, authorize('admin'), authController.cleanupExpiredTokens);
+router.get('/password-reset-stats', protect, authorize('admin'), authController.getPasswordResetStats);
+router.post('/cleanup-expired-reset-tokens', protect, authorize('admin'), authController.cleanupExpiredResetTokens);
 
 // Social Authentication Routes
 
