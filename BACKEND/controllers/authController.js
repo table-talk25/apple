@@ -9,6 +9,22 @@ const sendEmail = require('../utils/sendEmail');
 const emailVerificationService = require('../services/emailVerificationService');
 const passwordResetService = require('../services/passwordResetService');
 
+/** Risposte JSON pubbliche utente — mai Mongoose grezzo (verificationToken, resetPassword*, loginAttempts…). */
+function toSafeUserPayload(user) {
+  if (!user) return undefined;
+  return {
+    _id: user._id,
+    name: user.name,
+    surname: user.surname,
+    email: user.email,
+    role: user.role,
+    nickname: user.nickname,
+    profileImage: user.profileImage,
+    profileCompleted: user.profileCompleted,
+    isEmailVerified: user.isEmailVerified,
+  };
+}
+
 /**
  * @desc    Registra un nuovo utente
  * @route   POST /api/auth/register
@@ -115,7 +131,8 @@ exports.login = asyncHandler(async (req, res, next) => {
 
     await user.resetLoginAttempts();
     const token = user.generateAuthToken();
-    res.status(200).json({ success: true, token, user });
+    const userInfo = toSafeUserPayload(user);
+    res.status(200).json({ success: true, token, user: userInfo });
 });
 
 /**
@@ -262,7 +279,7 @@ exports.verifyEmail = asyncHandler(async (req, res, next) => {
                 success: true,
                 message: 'Email verificata con successo! Ora puoi accedere a tutte le funzionalità di TableTalk.',
                 token: authToken,
-                user: verificationResult.user
+                user: userDoc ? toSafeUserPayload(userDoc) : undefined,
             });
         } else {
             console.log(`❌ [AuthController] Verifica email fallita: ${verificationResult.message}`);
