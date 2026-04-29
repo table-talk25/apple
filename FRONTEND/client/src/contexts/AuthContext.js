@@ -14,6 +14,19 @@ import { authPreferences } from '../utils/preferences';
 
 
 
+/** Unisce il profilo precedente con l'aggiornamento server senza perdere il flag email
+ *  se la risposta fosse incompleta (non dovrebbe più succedere dopo il fix su /auth/me). */
+function mergeUserFromServer(prev, server) {
+    if (!server) return prev;
+    const merged = { ...(prev || {}), ...server };
+    if (Object.prototype.hasOwnProperty.call(server, 'isEmailVerified')) {
+        merged.isEmailVerified = Boolean(server.isEmailVerified);
+    }
+    return merged;
+}
+
+
+
 const AuthContext = createContext();
 
 
@@ -114,7 +127,7 @@ export const AuthProvider = ({ children }) => {
                         authService.verifyToken()
                             .then(freshUser => {
                                 if (isMounted && freshUser) {
-                                    setUser(freshUser);
+                                    setUser(prev => mergeUserFromServer(prev, freshUser));
                                 }
                             })
                             .catch(e => console.log('Verifica background:', e));
@@ -193,7 +206,7 @@ export const AuthProvider = ({ children }) => {
             authService.verifyToken()
                 .then(freshUser => {
                     if (isCancelled) return;
-                    if (freshUser) setUser(freshUser);
+                    if (freshUser) setUser(prev => mergeUserFromServer(prev, freshUser));
                 })
                 .catch(() => { /* silenzioso, non disturbiamo l'utente */ })
                 .finally(() => {
@@ -240,7 +253,7 @@ export const AuthProvider = ({ children }) => {
 
       } catch(e) { console.error(e); }
 
-      setUser(data.user); setToken(data.token); setIsAuthenticated(true);
+      setUser(prev => mergeUserFromServer(prev, data.user)); setToken(data.token); setIsAuthenticated(true);
 
       // Drena un eventuale token push registrato prima del login (vedi pushNotificationService)
       flushPendingPushToken();
@@ -253,7 +266,7 @@ export const AuthProvider = ({ children }) => {
 
         const data = await authService.register(d);
 
-        setUser(data.user); setToken(data.token); setIsAuthenticated(true);
+        setUser(prev => mergeUserFromServer(prev, data.user)); setToken(data.token); setIsAuthenticated(true);
 
         flushPendingPushToken();
 
@@ -273,7 +286,7 @@ export const AuthProvider = ({ children }) => {
             await authPreferences.saveToken(data.token);
             await authPreferences.saveUser(data.user);
         } catch (e) { console.error(e); }
-        setUser(data.user); setToken(data.token); setIsAuthenticated(true);
+        setUser(prev => mergeUserFromServer(prev, data.user)); setToken(data.token); setIsAuthenticated(true);
         flushPendingPushToken();
     };
 

@@ -19,9 +19,9 @@ const EmailVerificationBanner = () => {
   const [sending, setSending] = useState(false);
   const [dismissed, setDismissed] = useState(false);
 
-  // Mostra il banner solo per utenti loggati con email NON verificata
+  // Mostra il banner solo quando lo stato è esplicitamente "non verificato" (mai su undefined mentre carica)
   if (!isAuthenticated || !user) return null;
-  if (user.isEmailVerified) return null;
+  if (user.isEmailVerified !== false) return null;
   if (dismissed) return null;
 
   const handleResend = async () => {

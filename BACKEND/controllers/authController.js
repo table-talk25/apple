@@ -21,7 +21,8 @@ function toSafeUserPayload(user) {
     nickname: user.nickname,
     profileImage: user.profileImage,
     profileCompleted: user.profileCompleted,
-    isEmailVerified: user.isEmailVerified,
+    /** Sempre boolean esplicito per il frontend (evita undefined → banner errato). */
+    isEmailVerified: Boolean(user.isEmailVerified),
   };
 }
 
@@ -91,7 +92,7 @@ exports.register = asyncHandler(async (req, res, next) => {
       email: user.email,
       role: user.role,
       profileCompleted: user.profileCompleted,
-      isEmailVerified: user.isEmailVerified
+      isEmailVerified: Boolean(user.isEmailVerified),
     };
     
     res.status(201).json({ 
@@ -141,7 +142,7 @@ exports.login = asyncHandler(async (req, res, next) => {
  */
 exports.getMe = asyncHandler(async (req, res, next) => {
     // req.user viene popolato dal middleware 'protect'
-    const user = await User.findById(req.user.id);
+    const user = await User.findById(req.user._id || req.user.id);
     if (!user) {
         return next(new ErrorResponse('Utente non trovato', 404));
     }
@@ -150,8 +151,12 @@ exports.getMe = asyncHandler(async (req, res, next) => {
     // if (!user.isEmailVerified) {
     //     return next(new ErrorResponse('Account non verificato. Controlla la tua email e clicca sul link di verifica per completare la registrazione.', 403));
     // }
+
+    const data = user.toObject({ virtuals: true });
+    // Garantisce sempre un boolean per il client (evita undefined nel JSON salvato in Preferences).
+    data.isEmailVerified = Boolean(user.isEmailVerified);
     
-    res.status(200).json({ success: true, data: user });
+    res.status(200).json({ success: true, data });
 });
 
 /**
