@@ -2,6 +2,7 @@ import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import Spinner from './Spinner';
+import { shouldForceProfileCompletionRedirect } from '../../utils/profileCompletionGate';
 
 const PrivateRoute = ({ children, requireCompleteProfile = false }) => {
   const { isAuthenticated, loading, user } = useAuth();
@@ -20,12 +21,10 @@ const PrivateRoute = ({ children, requireCompleteProfile = false }) => {
     );
   }
 
-  // 🔒 ONBOARDING: per le rotte che richiedono un profilo completo (creazione meal,
-  // mappa, video, dettaglio meal, ecc.) blocchiamo davvero l'accesso se il profilo
-  // non è completato. La pagina /profile mostra inline la schermata di onboarding,
-  // quindi /impostazioni/profilo è la destinazione naturale (useProfileCompletion
-  // cita /complete-profile che non esiste in App.js).
-  if (requireCompleteProfile && user && user.profileCompleted !== true) {
+  // 🔒 ONBOARDING: redirect solo se il profilo è esplicitamente incompleto
+  // (`profileCompleted === false` e senza i campi minimi), non su `undefined`
+  // (cache vecchia / merge parziale) per evitare redirect continui verso il profilo.
+  if (requireCompleteProfile && user && shouldForceProfileCompletionRedirect(user)) {
     // Evita loop se siamo già nella zona profilo/onboarding
     // (in App.js la rotta reale è /impostazioni/profilo, non /profile)
     const path = location.pathname || '';

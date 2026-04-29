@@ -22,6 +22,9 @@ function mergeUserFromServer(prev, server) {
     if (Object.prototype.hasOwnProperty.call(server, 'isEmailVerified')) {
         merged.isEmailVerified = Boolean(server.isEmailVerified);
     }
+    if (Object.prototype.hasOwnProperty.call(server, 'profileCompleted')) {
+        merged.profileCompleted = Boolean(server.profileCompleted);
+    }
     return merged;
 }
 

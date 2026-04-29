@@ -6,6 +6,8 @@
 
 import * as Sentry from '@sentry/react';
 import { BrowserTracing } from '@sentry/tracing';
+import { Capacitor } from '@capacitor/core';
+import { FirebaseCrashlytics } from '@capacitor-firebase/crashlytics';
 
 class ErrorMonitoringService {
   constructor() {
@@ -107,6 +109,10 @@ class ErrorMonitoringService {
 
       this.isInitialized = true;
       console.log('✅ Sentry inizializzato correttamente per il monitoraggio degli errori');
+
+      if (Capacitor.isNativePlatform()) {
+        FirebaseCrashlytics.setEnabled({ enabled: true }).catch(() => {});
+      }
       
       // Imposta il contesto dell'utente se disponibile
       this.setUserContext(this.userContext);
@@ -128,7 +134,7 @@ class ErrorMonitoringService {
       if (user) {
         this.userContext = user;
         Sentry.setUser({
-          id: user.id,
+          id: user.id || user._id,
           email: user.email,
           username: user.nickname || user.name,
           // Non includere dati sensibili
@@ -138,6 +144,11 @@ class ErrorMonitoringService {
         // Aggiungi tag per l'utente
         Sentry.setTag('user.role', user.role || 'user');
         Sentry.setTag('user.language', user.language || 'it');
+
+        const nativeId = user._id || user.id;
+        if (Capacitor.isNativePlatform() && nativeId) {
+          FirebaseCrashlytics.setUserId({ userId: String(nativeId) }).catch(() => {});
+        }
         
         console.log('👤 Contesto utente impostato per Sentry');
       } else {
@@ -152,9 +163,39 @@ class ErrorMonitoringService {
   }
 
   /**
+   * Segnala errore non fatale a Firebase Crashlytics (solo Android/iOS).
+   */
+  async recordCrashlyticsNonFatal(error, context = {}) {
+    if (!Capacitor.isNativePlatform()) return;
+
+    try {
+      const message = error && error.message ? String(error.message) : String(error);
+      const tags = context.tags || {};
+      const keysAndValues = Object.entries(tags)
+        .slice(0, 16)
+        .map(([key, value]) => ({
+          key: String(key).slice(0, 50),
+          value: String(value ?? '').slice(0, 200),
+          type: 'string',
+        }));
+
+      await FirebaseCrashlytics.recordException({
+        message: message.slice(0, 1000),
+        ...(keysAndValues.length ? { keysAndValues } : {}),
+      });
+    } catch (_) {
+      /* plugin assente o non configurato */
+    }
+  }
+
+  /**
    * Cattura un errore e lo invia a Sentry
    */
   captureError(error, context = {}) {
+    if (Capacitor.isNativePlatform()) {
+      void this.recordCrashlyticsNonFatal(error, context);
+    }
+
     if (!this.isInitialized) {
       console.error('🚨 Errore non tracciato (Sentry non inizializzato):', error);
       return;

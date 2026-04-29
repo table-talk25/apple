@@ -1,51 +1,66 @@
 // File: /src/hooks/useProfileCompletion.js
-// Hook per gestire il completamento obbligatorio del profilo
+// Hook opzionale: il gating lato route è in PrivateRoute (/impostazioni/profilo).
+// `redirectIfIncomplete` è false di default così un import dimenticato non rompe la navigazione.
 
 import { useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import {
+  shouldForceProfileCompletionRedirect,
+  meetsMinimumProfileFields,
+} from '../utils/profileCompletionGate';
+
+const PROFILE_PATH = '/impostazioni/profilo';
 
 /**
- * Hook per gestire il completamento obbligatorio del profilo
- * @param {boolean} redirectIfIncomplete - Se true, reindirizza alla pagina completamento profilo
- * @param {string} redirectPath - Percorso di fallback se il profilo è completo
+ * @param {boolean} redirectIfIncomplete - se true, allinea il redirect a PrivateRoute (stessa logica)
+ * @param {string} redirectPath - destinazione dopo onboarding se il profilo risulta completo
  */
-export const useProfileCompletion = (redirectIfIncomplete = true, redirectPath = '/meals') => {
+export const useProfileCompletion = (redirectIfIncomplete = false, redirectPath = '/meals') => {
   const { user, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
   useEffect(() => {
-    // Solo se l'utente è autenticato
-    if (!isAuthenticated || !user) {
+    if (!isAuthenticated || !user) return;
+
+    const path = location.pathname || '';
+    const onProfileArea =
+      path.startsWith(PROFILE_PATH) ||
+      path.startsWith('/profile') ||
+      path === '/complete-profile';
+
+    if (redirectIfIncomplete && shouldForceProfileCompletionRedirect(user) && !onProfileArea) {
+      const next = `${path}${location.search || ''}`;
+      navigate(`${PROFILE_PATH}?reason=incomplete_profile&next=${encodeURIComponent(next)}`, {
+        replace: true,
+        state: { from: location, reason: 'incomplete_profile' },
+      });
       return;
     }
 
-    // Se il profilo non è completo e siamo in modalità redirect
-    if (redirectIfIncomplete && !user.profileCompleted) {
-      // Non reindirizzare se siamo già nella pagina di completamento profilo
-      if (location.pathname !== '/complete-profile') {
-        console.log('🔄 [useProfileCompletion] Profilo incompleto, reindirizzamento a /complete-profile');
-        navigate('/complete-profile', { 
-          replace: true,
-          state: { from: location.pathname }
-        });
+    // La vecchia rotta /complete-profile non esiste in App.js: smista verso il profilo o home
+    if (path === '/complete-profile') {
+      if (user.profileCompleted === true || meetsMinimumProfileFields(user)) {
+        navigate(redirectPath, { replace: true });
+      } else {
+        navigate(`${PROFILE_PATH}?reason=incomplete_profile`, { replace: true });
       }
-    }
-    // Se il profilo è completo e siamo nella pagina di completamento
-    else if (user.profileCompleted && location.pathname === '/complete-profile') {
-      console.log('✅ [useProfileCompletion] Profilo completo, reindirizzamento a', redirectPath);
-      navigate(redirectPath, { replace: true });
     }
   }, [user, isAuthenticated, redirectIfIncomplete, redirectPath, navigate, location]);
 
   return {
-    isProfileComplete: user?.profileCompleted || false,
-    shouldCompleteProfile: !user?.profileCompleted,
-    redirectToCompleteProfile: () => navigate('/complete-profile', { 
-      replace: true,
-      state: { from: location.pathname }
-    })
+    isProfileComplete: Boolean(
+      user && (user.profileCompleted === true || meetsMinimumProfileFields(user))
+    ),
+    shouldCompleteProfile: Boolean(user && shouldForceProfileCompletionRedirect(user)),
+    redirectToCompleteProfile: () => {
+      const next = `${location.pathname || ''}${location.search || ''}`;
+      navigate(`${PROFILE_PATH}?reason=incomplete_profile&next=${encodeURIComponent(next)}`, {
+        replace: true,
+        state: { from: location, reason: 'incomplete_profile' },
+      });
+    },
   };
 };
 

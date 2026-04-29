@@ -1,5 +1,86 @@
 import apiClient from './apiService';
 import errorMonitoringService from './errorMonitoringService';
+import { Capacitor } from '@capacitor/core';
+import { FirebaseAnalytics } from '@capacitor-firebase/analytics';
+
+// ========================================
+// 🔥 Firebase Analytics (Capacitor native + web con Firebase JS)
+// ========================================
+
+let firebaseAnalyticsEnabledOnce = false;
+
+async function ensureFirebaseAnalyticsEnabled() {
+  if (firebaseAnalyticsEnabledOnce) return;
+  firebaseAnalyticsEnabledOnce = true;
+  try {
+    if (Capacitor.isNativePlatform()) {
+      await FirebaseAnalytics.setEnabled({ enabled: true });
+    }
+  } catch (_) {
+    /* ok */
+  }
+}
+
+function sanitizeFirebaseParams(obj = {}, maxKeys = 25) {
+  const out = {};
+  let n = 0;
+  for (const [k, v] of Object.entries(obj)) {
+    if (n >= maxKeys) break;
+    if (v === undefined || v === null) continue;
+    const key = String(k).replace(/[^a-zA-Z0-9_]/g, '_').slice(0, 40);
+    let val = v;
+    if (typeof val === 'object') {
+      try {
+        val = JSON.stringify(val);
+      } catch {
+        val = String(val);
+      }
+    }
+    out[key] = String(val).slice(0, 100);
+    n += 1;
+  }
+  return out;
+}
+
+async function logFirebaseEvent(name, params = {}) {
+  if (!name) return;
+  await ensureFirebaseAnalyticsEnabled();
+  const safeName = String(name)
+    .slice(0, 40)
+    .replace(/[^a-zA-Z0-9_]/g, '_');
+  try {
+    await FirebaseAnalytics.logEvent({
+      name: safeName,
+      params: sanitizeFirebaseParams(params),
+    });
+  } catch (err) {
+    if (process.env.NODE_ENV === 'development') {
+      console.warn('[Analytics] Firebase logEvent:', err?.message || err);
+    }
+  }
+}
+
+/**
+ * Traccia una schermata in Analytics (screen_view su web via setCurrentScreen).
+ */
+export const trackScreenView = async (screenName, screenClassOverride = null) => {
+  await ensureFirebaseAnalyticsEnabled();
+  const name = screenName || 'unknown';
+  const cls = screenClassOverride || name;
+  try {
+    await FirebaseAnalytics.setCurrentScreen({
+      screenName: name,
+      screenClassOverride: cls,
+    });
+  } catch (err) {
+    if (process.env.NODE_ENV === 'development') {
+      console.warn('[Analytics] Firebase setCurrentScreen:', err?.message || err);
+    }
+  }
+};
+
+/** Chiamare all'avvio app se vuoi forzare setEnabled prima del primo evento (soprattutto nativo). */
+export const initFirebaseAnalytics = ensureFirebaseAnalyticsEnabled;
 
 // ========================================
 // 📊 ANALYTICS SERVICE INTEGRATO CON SENTRY
@@ -114,6 +195,11 @@ export const sendPerformanceMetrics = async (metrics) => {
         timestamp: new Date().toISOString()
       }
     );
+
+    void logFirebaseEvent('performance_metrics_sent', {
+      operation: metrics.operation,
+      metrics_count: String(Object.keys(metrics).length),
+    });
     
     return response.data;
   } catch (error) {
@@ -145,6 +231,12 @@ export const sendUsageMetrics = async (usageData) => {
         timestamp: new Date().toISOString()
       }
     );
+
+    void logFirebaseEvent('usage_metrics_sent', {
+      feature: usageData.feature,
+      action: usageData.action,
+      data_points: String(Object.keys(usageData).length),
+    });
     
     return response.data;
   } catch (error) {
@@ -176,6 +268,10 @@ export const sendErrorReport = async (errorReport) => {
         timestamp: new Date().toISOString()
       }
     );
+
+    void logFirebaseEvent('error_report_sent', {
+      error_count: String(errorReport.errors?.length || 0),
+    });
     
     return response.data;
   } catch (error) {
@@ -225,6 +321,12 @@ export const trackOperationPerformance = async (operationName, operation, contex
         ...context
       }
     );
+
+    void logFirebaseEvent('operation_performance', {
+      operation: operationName,
+      duration_ms: String(Math.round(duration)),
+      success: 'true',
+    });
     
     return result;
   } catch (error) {
@@ -248,6 +350,12 @@ export const trackOperationPerformance = async (operationName, operation, contex
       duration: duration,
       context: context
     });
+
+    void logFirebaseEvent('operation_performance', {
+      operation: operationName,
+      duration_ms: String(Math.round(duration)),
+      success: 'false',
+    });
     
     throw error;
   }
@@ -258,6 +366,12 @@ export const trackOperationPerformance = async (operationName, operation, contex
  */
 export const trackFeatureUsage = async (featureName, action, data = {}) => {
   try {
+    void logFirebaseEvent('feature_usage', {
+      feature: featureName,
+      action,
+      ...data,
+    });
+
     // Invia metriche di utilizzo
     await sendUsageMetrics({
       feature: featureName,
@@ -324,6 +438,11 @@ export const trackAppError = async (error, context = {}) => {
         ...context
       }
     );
+
+    void logFirebaseEvent('app_error_tracked', {
+      error_name: error.name,
+      error_message: error.message,
+    });
     
     return true;
   } catch (trackingError) {
@@ -432,6 +551,9 @@ const analyticsService = {
   getLanguageStats,
   getLanguageDetails,
   getTranslationPriority,
+
+  initFirebaseAnalytics,
+  trackScreenView,
   
   // Nuove funzioni di monitoraggio
   sendPerformanceMetrics,

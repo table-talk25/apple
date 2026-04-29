@@ -20,7 +20,8 @@ function toSafeUserPayload(user) {
     role: user.role,
     nickname: user.nickname,
     profileImage: user.profileImage,
-    profileCompleted: user.profileCompleted,
+    /** Sempre boolean esplicito (coerente con GET /auth/me e Preferences). */
+    profileCompleted: Boolean(user.profileCompleted),
     /** Sempre boolean esplicito per il frontend (evita undefined → banner errato). */
     isEmailVerified: Boolean(user.isEmailVerified),
   };
@@ -91,7 +92,7 @@ exports.register = asyncHandler(async (req, res, next) => {
       name: user.name,
       email: user.email,
       role: user.role,
-      profileCompleted: user.profileCompleted,
+      profileCompleted: Boolean(user.profileCompleted),
       isEmailVerified: Boolean(user.isEmailVerified),
     };
     
@@ -153,8 +154,9 @@ exports.getMe = asyncHandler(async (req, res, next) => {
     // }
 
     const data = user.toObject({ virtuals: true });
-    // Garantisce sempre un boolean per il client (evita undefined nel JSON salvato in Preferences).
+    // Garantisce sempre booleani espliciti per il client (evita undefined nel JSON salvato in Preferences).
     data.isEmailVerified = Boolean(user.isEmailVerified);
+    data.profileCompleted = Boolean(user.profileCompleted);
     
     res.status(200).json({ success: true, data });
 });

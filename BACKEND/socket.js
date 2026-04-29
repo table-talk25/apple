@@ -51,7 +51,7 @@ const allowedOrigins = [
 
 let ioInstance;
 
-function initializeSocket(server) {
+async function initializeSocket(server) {
   ioInstance = socketIO(server, {
     cors: {
       origin: allowedOrigins,
@@ -65,6 +65,20 @@ function initializeSocket(server) {
     allowUpgrades: true,
     upgradeTimeout: 10000
   });
+
+  if (process.env.REDIS_URL) {
+    try {
+      const { createClient } = require('redis');
+      const { createAdapter } = require('@socket.io/redis-adapter');
+      const pubClient = createClient({ url: process.env.REDIS_URL });
+      const subClient = pubClient.duplicate();
+      await Promise.all([pubClient.connect(), subClient.connect()]);
+      ioInstance.adapter(createAdapter(pubClient, subClient));
+      console.log('✅ [Socket] Redis adapter attivo (Socket.IO multi-istanza)');
+    } catch (err) {
+      console.warn('⚠️ [Socket] REDIS_URL presente ma adapter Redis non inizializzato:', err.message);
+    }
+  }
 
   // Middleware di autenticazione
   ioInstance.use(async (socket, next) => {

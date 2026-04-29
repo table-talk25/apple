@@ -67,6 +67,10 @@ services:
       - key: TWILIO_API_SECRET
         sync: false
       
+      # Socket.IO multi-istanza (opzionale): stessa REDIS_URL su tutte le istanze Web
+      - key: REDIS_URL
+        sync: false
+
       # 🔐 JWT Expiration (opzionale - default 7 giorni)
       - key: JWT_EXPIRES_IN
         value: 7d
