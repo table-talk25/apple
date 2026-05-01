@@ -194,6 +194,57 @@ async function initializeSocket(server) {
       }
     });
 
+    // 🎵 MUSIC SHARE — host condivide un link musicale con la stanza video del meal.
+    // L'evento "joinRoom" valida gia' che il chiamante e' partecipante; qui validiamo
+    // che sia l'HOST del meal prima di rebroadcastare a tutta la stanza.
+    socket.on('music:share', async ({ mealId, url }) => {
+      try {
+        if (!mealId || typeof mealId !== 'string') return;
+        if (!mongoose.Types.ObjectId.isValid(mealId)) return;
+        const safeUrl = (typeof url === 'string') ? url.trim().slice(0, 500) : '';
+        // Solo HTTPS (i provider supportati lo richiedono comunque per gli iframe)
+        if (safeUrl && !/^https:\/\//i.test(safeUrl)) return;
+
+        // Rate limit: max 5 cambi musica ogni 30s per host
+        if (!checkRateLimit(`music:${socket.user._id}`, 5, 30000)) return;
+
+        const meal = await Meal.findById(mealId).select('host participants');
+        if (!meal) return;
+
+        const isHost = meal.host.toString() === socket.user._id.toString();
+        if (!isHost) {
+          socket.emit('error', 'Solo l\'host può condividere musica');
+          return;
+        }
+
+        // Broadcast a tutti i client nella stanza meal (compreso il mittente, così
+        // ha conferma che il cambio è andato a buon fine)
+        ioInstance.to(mealId).emit('music:shared', {
+          url: safeUrl,
+          from: { _id: socket.user._id, nickname: socket.user.nickname },
+          at: Date.now(),
+        });
+      } catch (err) {
+        console.error('[Socket] Errore music:share:', err.message);
+      }
+    });
+
+    // 🎵 MUSIC STOP — l'host rimuove il player condiviso dalla stanza.
+    socket.on('music:stop', async ({ mealId }) => {
+      try {
+        if (!mealId || typeof mealId !== 'string') return;
+        if (!mongoose.Types.ObjectId.isValid(mealId)) return;
+
+        const meal = await Meal.findById(mealId).select('host');
+        if (!meal) return;
+        if (meal.host.toString() !== socket.user._id.toString()) return;
+
+        ioInstance.to(mealId).emit('music:stopped', { at: Date.now() });
+      } catch (err) {
+        console.error('[Socket] Errore music:stop:', err.message);
+      }
+    });
+
     socket.on('disconnect', () => {
       console.log(`❌ [Socket] Disconnesso: ${socket.user.nickname}`);
       connectedUsers.delete(socket.user._id.toString());
