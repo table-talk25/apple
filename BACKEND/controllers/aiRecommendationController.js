@@ -14,10 +14,48 @@ exports.getPersonalizedRecommendations = asyncHandler(async (req, res) => {
     
     console.log(`🤖 [AI Controller] Getting recommendations for user: ${userId}`);
     
-    // Get user location (from request or user profile)
-    const userLocation = req.body.userLocation || req.user.location;
-    
-    if (!userLocation || !userLocation.coordinates) {
+    let userLocation = null;
+
+    // 1) Query params (formato frontend)
+    const qLat = parseFloat(req.query.latitude);
+    const qLng = parseFloat(req.query.longitude);
+    if (!Number.isNaN(qLat) && !Number.isNaN(qLng)) {
+      userLocation = {
+        latitude: qLat,
+        longitude: qLng,
+        coordinates: [qLng, qLat], // GeoJSON ordering per uniformita'
+      };
+    }
+
+    // 2) Body (back-compat)
+    if (!userLocation && req.body && req.body.userLocation) {
+      const b = req.body.userLocation;
+      if (b.coordinates && Array.isArray(b.coordinates) && b.coordinates.length === 2) {
+        userLocation = {
+          latitude: b.coordinates[1],
+          longitude: b.coordinates[0],
+          coordinates: b.coordinates,
+        };
+      } else if (b.latitude != null && b.longitude != null) {
+        userLocation = {
+          latitude: Number(b.latitude),
+          longitude: Number(b.longitude),
+          coordinates: [Number(b.longitude), Number(b.latitude)],
+        };
+      }
+    }
+
+    // 3) Fallback profilo
+    if (!userLocation && req.user.location && Array.isArray(req.user.location.coordinates) && req.user.location.coordinates.length === 2) {
+      const c = req.user.location.coordinates;
+      userLocation = {
+        latitude: c[1],
+        longitude: c[0],
+        coordinates: c,
+      };
+    }
+
+    if (!userLocation) {
       return res.status(400).json({
         success: false,
         message: 'Posizione utente richiesta per le raccomandazioni'
