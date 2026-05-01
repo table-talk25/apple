@@ -46,19 +46,20 @@ class SmartAIRecommendationService {
     let totalScore = 0;
     const factors = {};
     
-    // 🍽️ MEAL TYPE / CUISINE SLOT (25% weight) — vedi calculateMealTypeScore
-    const cuisineScore = this.calculateMealTypeScore(meal, userPrefs);
-    totalScore += cuisineScore * 0.25;
-    factors.cuisine = cuisineScore;
+    // 🎯 TOPIC MATCH (30% weight) — il segnale piu' forte: matching
+    // tra interessi utente e topic della conversazione del meal.
+    const topicScore = await this.calculateTopicScore(meal, userId);
+    totalScore += topicScore * 0.30;
+    factors.topicMatch = topicScore;
     
     // ⏰ TIME COMPATIBILITY (20% weight)
     const timeScore = this.calculateTimeScore(meal, userPrefs);
     totalScore += timeScore * 0.20;
     factors.time = timeScore;
     
-    // 💰 PRICE COMPATIBILITY (15% weight)
+    // 💰 PRICE COMPATIBILITY (10% weight)
     const priceScore = this.calculatePriceScore(meal, userPrefs);
-    totalScore += priceScore * 0.15;
+    totalScore += priceScore * 0.10;
     factors.price = priceScore;
     
     // 👥 SOCIAL COMPATIBILITY (20% weight)
@@ -89,12 +90,40 @@ class SmartAIRecommendationService {
     };
   }
   
-  // 🍽️ MEAL TYPE SCORE (ex cuisine): Meal non ha cuisineType; neutro finché non c'è mapping da topics ecc.
-  calculateMealTypeScore(meal, userPrefs) {
-    // TODO: Cuisine score richiede un modello dei meal con cuisineType o un mapping
-    // da meal.topics (es. ['italian', 'pizza'] → cuisinePreferences.italian).
-    // Per ora restituiamo neutro per non gonfiare/penalizzare a caso.
-    return 0.5;
+  // 🎯 TOPIC SCORE: cosine-similarity-style match tra user.interests e meal.topics
+  async calculateTopicScore(meal, userId) {
+    try {
+      const mealTopics = Array.isArray(meal.topics) ? meal.topics : [];
+      if (mealTopics.length === 0) return 0.4; // neutro-basso: meal senza topic
+
+      // Recupera interests dell'utente. Lazy-require per evitare cicli.
+      const User = require('../models/User');
+      const user = await User.findById(userId).select('interests');
+      const interests = (user && Array.isArray(user.interests)) ? user.interests : [];
+
+      if (interests.length === 0) return 0.5; // utente senza interests: neutro
+
+      // Normalizza per match case-insensitive e trim
+      const norm = (s) => String(s || '').trim().toLowerCase();
+      const userSet = new Set(interests.map(norm).filter(Boolean));
+      const mealSet = new Set(mealTopics.map(norm).filter(Boolean));
+
+      // Jaccard similarity: |A ∩ B| / |A ∪ B|
+      const intersection = [...mealSet].filter(t => userSet.has(t));
+      const union = new Set([...userSet, ...mealSet]);
+      if (union.size === 0) return 0.5;
+
+      const jaccard = intersection.length / union.size;
+      // Boost: anche un solo match dovrebbe valere qualcosa, non scendere mai sotto 0.3
+      // se c'e' almeno un'intersezione
+      if (intersection.length >= 1) {
+        return Math.min(1, 0.3 + jaccard * 0.7);
+      }
+      return Math.max(0.1, jaccard);
+    } catch (err) {
+      console.error('❌ [SmartAI] Errore calculateTopicScore:', err);
+      return 0.5;
+    }
   }
   
   // ⏰ TIME SCORING
@@ -232,7 +261,7 @@ class SmartAIRecommendationService {
       .slice(0, 2);
     
     const reasonMap = {
-      cuisine: ['Cucina che ami', 'Sapori che preferisci', 'Stile culinario perfetto'],
+      topicMatch: ['Argomenti che ti interessano', 'Topic perfetti per te', 'Conversazione nelle tue corde'],
       time: ['Orario ideale per te', 'Timing perfetto', 'Momento giusto'],
       price: ['Prezzo conveniente', 'Ottimo rapporto qualità-prezzo', 'Nel tuo budget'],
       social: ['Gruppo della tua dimensione', 'Atmosfera sociale giusta', 'Compagnia perfetta'],
