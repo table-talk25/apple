@@ -33,7 +33,7 @@ const SearchMealsPage = () => {
     const timer = setTimeout(async () => {
       try {
         const res = await mealService.searchMeals(searchTerm);
-        setSearchResults(res.data);
+        setSearchResults(res);
       } catch (e) {
         setSearchError(t('meals.searchError'));
       } finally {

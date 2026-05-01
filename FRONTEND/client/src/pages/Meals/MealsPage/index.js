@@ -108,7 +108,7 @@ const MealsPage = () => {
     const timeoutId = setTimeout(async () => {
       try {
         const response = await mealService.searchMeals(searchTerm);
-        setSearchResults(response.data);
+        setSearchResults(response);
       } catch (error) {
         setSearchError(t('meals.searchError'));
       } finally {
