@@ -243,11 +243,20 @@ const leaveMeal = async (mealId) => {
   return response.data;
 };
 
-const searchMeals = async (searchTerm) => {
+const searchMeals = async (searchTerm, options = {}) => {
+  const params = { q: searchTerm };
+  if (options.lat != null && options.lng != null) {
+    params.lat = options.lat;
+    params.lng = options.lng;
+    if (options.radius) params.radius = options.radius;
+  }
   const response = await apiClient.get('/meals/search', {
-    params: { q: searchTerm }
+    params,
+    suppressErrorAlert: true,
   });
-  return response.data;
+  // Backend ritorna { success, count, total, page, pages, data: [...] }
+  // Estraiamo l'array; back-compat se mai cambiasse a ritornare l'array diretto
+  return Array.isArray(response.data) ? response.data : (response.data?.data || []);
 };
 
 const getUserMeals = async (params = {}) => {
