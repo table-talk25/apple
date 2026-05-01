@@ -6,7 +6,10 @@ const mealService = require('../services/mealService');
 // 🎯 GET PERSONALIZED RECOMMENDATIONS
 exports.getPersonalizedRecommendations = asyncHandler(async (req, res) => {
   try {
-    const { userId } = req.user;
+    const userId = (req.user && (req.user._id || req.user.id)) ? String(req.user._id || req.user.id) : null;
+    if (!userId) {
+      return res.status(401).json({ success: false, message: 'Utente non autenticato' });
+    }
     const { limit = 6, radius = 15 } = req.query;
     
     console.log(`🤖 [AI Controller] Getting recommendations for user: ${userId}`);
@@ -74,7 +77,10 @@ exports.getPersonalizedRecommendations = asyncHandler(async (req, res) => {
 // 📊 GET USER PREFERENCES
 exports.getUserPreferences = asyncHandler(async (req, res) => {
   try {
-    const { userId } = req.user;
+    const userId = (req.user && (req.user._id || req.user.id)) ? String(req.user._id || req.user.id) : null;
+    if (!userId) {
+      return res.status(401).json({ success: false, message: 'Utente non autenticato' });
+    }
     
     const preferences = await UserPreference.findOne({ userId });
     
@@ -106,7 +112,10 @@ exports.getUserPreferences = asyncHandler(async (req, res) => {
 // 🔄 UPDATE USER PREFERENCES
 exports.updateUserPreferences = asyncHandler(async (req, res) => {
   try {
-    const { userId } = req.user;
+    const userId = (req.user && (req.user._id || req.user.id)) ? String(req.user._id || req.user.id) : null;
+    if (!userId) {
+      return res.status(401).json({ success: false, message: 'Utente non autenticato' });
+    }
     const updates = req.body;
     
     console.log(`🔄 [AI Controller] Updating preferences for user: ${userId}`);
@@ -149,7 +158,10 @@ exports.updateUserPreferences = asyncHandler(async (req, res) => {
 // 🎯 GET RECOMMENDATION INSIGHTS
 exports.getRecommendationInsights = asyncHandler(async (req, res) => {
   try {
-    const { userId } = req.user;
+    const userId = (req.user && (req.user._id || req.user.id)) ? String(req.user._id || req.user.id) : null;
+    if (!userId) {
+      return res.status(401).json({ success: false, message: 'Utente non autenticato' });
+    }
     
     const preferences = await UserPreference.findOne({ userId });
     
@@ -206,7 +218,10 @@ exports.getRecommendationInsights = asyncHandler(async (req, res) => {
 // 🔄 RESET PREFERENCES
 exports.resetPreferences = asyncHandler(async (req, res) => {
   try {
-    const { userId } = req.user;
+    const userId = (req.user && (req.user._id || req.user.id)) ? String(req.user._id || req.user.id) : null;
+    if (!userId) {
+      return res.status(401).json({ success: false, message: 'Utente non autenticato' });
+    }
     
     await UserPreference.findOneAndDelete({ userId });
     
@@ -232,7 +247,10 @@ exports.resetPreferences = asyncHandler(async (req, res) => {
 // 📈 TRACK MEAL INTERACTION (for learning)
 exports.trackMealInteraction = asyncHandler(async (req, res) => {
   try {
-    const { userId } = req.user;
+    const userId = (req.user && (req.user._id || req.user.id)) ? String(req.user._id || req.user.id) : null;
+    if (!userId) {
+      return res.status(401).json({ success: false, message: 'Utente non autenticato' });
+    }
     const { mealId, interactionType, mealData } = req.body;
     
     // Valid interaction types
