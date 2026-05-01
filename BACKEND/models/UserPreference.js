@@ -102,58 +102,59 @@ userPreferenceSchema.pre('save', function(next) {
 
 // Metodo per aggiornare le preferenze basate sull'attività
 userPreferenceSchema.methods.updateFromActivity = function(activityType, mealData) {
-  if (activityType === 'meal_created') {
+  if (!this.learningEnabled) return Promise.resolve(this);
+
+  if (activityType === 'created') {
     this.activityScores.totalHosts += 1;
-  } else if (activityType === 'meal_joined') {
+  } else if (activityType === 'joined') {
     this.activityScores.totalJoins += 1;
   }
-  
+
   this.activityScores.totalMeals += 1;
   this.activityScores.lastActivity = new Date();
-  
+
   // Learning algorithm: aggiorna preferenze basate su scelte
   if (mealData) {
     this.learnFromMeal(mealData);
   }
-  
+
   return this.save();
 };
 
 // Algoritmo di apprendimento semplice
 userPreferenceSchema.methods.learnFromMeal = function(mealData) {
-  if (!this.learningEnabled) return;
-  
-  const learningRate = 0.1; // Quanto velocemente apprende
-  
-  // Aggiorna preferenze cucina
-  if (mealData.cuisineType && this.cuisinePreferences[mealData.cuisineType] !== undefined) {
-    const current = this.cuisinePreferences[mealData.cuisineType];
-    this.cuisinePreferences[mealData.cuisineType] = Math.min(1, current + learningRate);
+  if (!this.learningEnabled || !mealData) return;
+  const learningRate = 0.1;
+
+  // Time slot da meal.date
+  const dateValue = mealData.date || mealData.scheduledAt; // back-compat
+  if (dateValue) {
+    const mealHour = new Date(dateValue).getHours();
+    let timeSlot;
+    if (mealHour >= 7 && mealHour < 10) timeSlot = 'breakfast';
+    else if (mealHour >= 10 && mealHour < 12) timeSlot = 'brunch';
+    else if (mealHour >= 12 && mealHour < 15) timeSlot = 'lunch';
+    else if (mealHour >= 17 && mealHour < 19) timeSlot = 'aperitivo';
+    else if (mealHour >= 19 && mealHour <= 23) timeSlot = 'dinner';
+    if (timeSlot && this.timePreferences[timeSlot] !== undefined) {
+      const current = this.timePreferences[timeSlot];
+      this.timePreferences[timeSlot] = Math.min(1, current + learningRate);
+      this.markModified('timePreferences');
+    }
   }
-  
-  // Aggiorna preferenze orario
-  const mealHour = new Date(mealData.scheduledAt).getHours();
-  let timeSlot;
-  if (mealHour >= 7 && mealHour < 10) timeSlot = 'breakfast';
-  else if (mealHour >= 12 && mealHour < 15) timeSlot = 'lunch';
-  else if (mealHour >= 17 && mealHour < 19) timeSlot = 'aperitivo';
-  else if (mealHour >= 19 && mealHour <= 23) timeSlot = 'dinner';
-  
-  if (timeSlot && this.timePreferences[timeSlot] !== undefined) {
-    const current = this.timePreferences[timeSlot];
-    this.timePreferences[timeSlot] = Math.min(1, current + learningRate);
-  }
-  
-  // Aggiorna preferenze prezzo
-  const price = mealData.estimatedCost || 25;
-  let priceRange;
-  if (price <= 20) priceRange = 'budget';
-  else if (price <= 40) priceRange = 'moderate';
-  else priceRange = 'upscale';
-  
-  if (priceRange && this.priceRange[priceRange] !== undefined) {
-    const current = this.priceRange[priceRange];
-    this.priceRange[priceRange] = Math.min(1, current + learningRate);
+
+  // Price range da meal.estimatedCost
+  const price = (mealData.estimatedCost == null) ? null : Number(mealData.estimatedCost);
+  if (price != null) {
+    let priceRange;
+    if (price <= 20) priceRange = 'budget';
+    else if (price <= 40) priceRange = 'moderate';
+    else priceRange = 'upscale';
+    if (priceRange && this.priceRange[priceRange] !== undefined) {
+      const current = this.priceRange[priceRange];
+      this.priceRange[priceRange] = Math.min(1, current + learningRate);
+      this.markModified('priceRange');
+    }
   }
 };
 

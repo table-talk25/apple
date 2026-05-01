@@ -46,8 +46,8 @@ class SmartAIRecommendationService {
     let totalScore = 0;
     const factors = {};
     
-    // 🍽️ CUISINE COMPATIBILITY (25% weight)
-    const cuisineScore = this.calculateCuisineScore(meal, userPrefs);
+    // 🍽️ MEAL TYPE / CUISINE SLOT (25% weight) — vedi calculateMealTypeScore
+    const cuisineScore = this.calculateMealTypeScore(meal, userPrefs);
     totalScore += cuisineScore * 0.25;
     factors.cuisine = cuisineScore;
     
@@ -89,23 +89,17 @@ class SmartAIRecommendationService {
     };
   }
   
-  // 🍽️ CUISINE SCORING
-  calculateCuisineScore(meal, userPrefs) {
-    const mealCuisine = (meal.cuisineType || 'italian').toLowerCase();
-    const userCuisineScore = userPrefs.cuisinePreferences?.[mealCuisine] || 0;
-    
-    // Convert -1/+1 scale to 0/1 scale
-    const normalizedScore = (userCuisineScore + 1) / 2;
-    
-    // Boost Italian cuisine slightly (it's an Italian app)
-    const italianBoost = mealCuisine === 'italian' ? 0.1 : 0;
-    
-    return Math.min(normalizedScore + italianBoost, 1);
+  // 🍽️ MEAL TYPE SCORE (ex cuisine): Meal non ha cuisineType; neutro finché non c'è mapping da topics ecc.
+  calculateMealTypeScore(meal, userPrefs) {
+    // TODO: Cuisine score richiede un modello dei meal con cuisineType o un mapping
+    // da meal.topics (es. ['italian', 'pizza'] → cuisinePreferences.italian).
+    // Per ora restituiamo neutro per non gonfiare/penalizzare a caso.
+    return 0.5;
   }
   
   // ⏰ TIME SCORING
   calculateTimeScore(meal, userPrefs) {
-    const mealDate = new Date(meal.scheduledAt);
+    const mealDate = new Date(meal.date);
     const mealHour = mealDate.getHours();
     const currentHour = new Date().getHours();
     
@@ -133,7 +127,7 @@ class SmartAIRecommendationService {
   
   // 💰 PRICE SCORING
   calculatePriceScore(meal, userPrefs) {
-    const price = meal.estimatedCost || 25;
+    const price = (meal.estimatedCost == null) ? 25 : Number(meal.estimatedCost);
     let priceRange;
     
     if (price <= 20) priceRange = 'budget';
@@ -160,9 +154,9 @@ class SmartAIRecommendationService {
     let groupSizeScore = 0.5; // Default
     
     if (groupPrefs) {
-      if (maxParticipants <= 4) groupSizeScore = (groupPrefs.intimate || 0 + 1) / 2;
-      else if (maxParticipants <= 8) groupSizeScore = (groupPrefs.medium || 0 + 1) / 2;
-      else groupSizeScore = (groupPrefs.large || 0 + 1) / 2;
+      if (maxParticipants <= 4) groupSizeScore = ((groupPrefs.intimate ?? 0) + 1) / 2;
+      else if (maxParticipants <= 8) groupSizeScore = ((groupPrefs.medium ?? 0) + 1) / 2;
+      else groupSizeScore = ((groupPrefs.large ?? 0) + 1) / 2;
     }
     
     return Math.min(groupSizeScore + urgencyBoost, 1);
@@ -205,10 +199,10 @@ class SmartAIRecommendationService {
       // Check if user has been to this restaurant before
       const visitHistory = await Meal.countDocuments({
         $or: [
-          { hostId: userId },
+          { host: userId },
           { participants: userId }
         ],
-        'location.name': meal.location?.name,
+        'location.address': meal.location?.address,
         _id: { $ne: meal._id }
       });
       
@@ -217,7 +211,7 @@ class SmartAIRecommendationService {
       
       // Boost for popular restaurants (many past events)
       const popularityCount = await Meal.countDocuments({
-        'location.name': meal.location?.name,
+        'location.address': meal.location?.address,
         status: { $in: ['completed', 'ongoing'] }
       });
       
