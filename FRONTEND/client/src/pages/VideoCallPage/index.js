@@ -4,6 +4,11 @@ import Video from 'twilio-video';
 import { Button, Container, Spinner, Alert } from 'react-bootstrap';
 import { FaMicrophone, FaMicrophoneSlash, FaVideo, FaVideoSlash, FaPhoneSlash } from 'react-icons/fa';
 import videoService from '../../services/videoService';
+import { io } from 'socket.io-client';
+import { useAuth } from '../../contexts/AuthContext';
+import { API_URL } from '../../config/capacitorConfig';
+import mealService from '../../services/mealService';
+import MusicPlayer from '../../components/video/MusicPlayer';
 import styles from './VideoCallPage.module.css'; // Assicurati di avere un CSS base o usa stili inline per test
 import { toast } from 'react-toastify';
 
@@ -18,6 +23,11 @@ const VideoCallPage = () => {
   
   const [isAudioEnabled, setIsAudioEnabled] = useState(true);
   const [isVideoEnabled, setIsVideoEnabled] = useState(true);
+
+  const { user, token } = useAuth();
+  const [sharedMusicUrl, setSharedMusicUrl] = useState(null);
+  const [isHost, setIsHost] = useState(false);
+  const musicSocketRef = useRef(null);
 
   // Refs per i container video (Evita re-render inutili)
   const localVideoRef = useRef();
@@ -97,6 +107,62 @@ const VideoCallPage = () => {
     };
   }, [mealId]);
 
+  // 🎵 Socket per "music:share" / "music:stop" del meal
+  useEffect(() => {
+    if (!mealId || !token) return;
+
+    const apiUrl = (process.env.REACT_APP_API_URL || API_URL || '').replace(/\/$/, '');
+    const socketUrl = apiUrl.replace(/\/api\/?$/, '');
+
+    const socket = io(socketUrl, {
+      auth: { token },
+      transports: ['websocket', 'polling'],
+      reconnection: true,
+      reconnectionAttempts: 10,
+      reconnectionDelay: 2000,
+      timeout: 15000,
+    });
+    musicSocketRef.current = socket;
+
+    socket.on('connect', () => {
+      // Entra nella stanza meal (handler joinRoom in BACKEND/socket.js valida partecipazione)
+      socket.emit('joinRoom', { mealId });
+    });
+
+    socket.on('music:shared', ({ url }) => {
+      setSharedMusicUrl(url || null);
+    });
+
+    socket.on('music:stopped', () => {
+      setSharedMusicUrl(null);
+    });
+
+    socket.on('error', (msg) => {
+      console.warn('[VideoCall][socket] Errore:', msg);
+    });
+
+    return () => {
+      try { socket.disconnect(); } catch (_) {}
+      musicSocketRef.current = null;
+    };
+  }, [mealId, token]);
+
+  useEffect(() => {
+    let cancelled = false;
+    if (!mealId || !user) return;
+    (async () => {
+      try {
+        const resp = await mealService.getMealById(mealId);
+        const meal = resp?.data || resp;
+        if (cancelled || !meal) return;
+        const hostId = meal.host?._id || meal.host;
+        const myId = user?._id || user?.id;
+        setIsHost(String(hostId) === String(myId));
+      } catch (_) { /* non bloccante */ }
+    })();
+    return () => { cancelled = true; };
+  }, [mealId, user]);
+
   // Funzione per renderizzare il video remoto di un partecipante
   const Participant = ({ participant }) => {
     const videoRef = useRef();
@@ -165,6 +231,18 @@ const VideoCallPage = () => {
     }
   };
 
+  const handleShareMusic = (url) => {
+    if (musicSocketRef.current && musicSocketRef.current.connected) {
+      musicSocketRef.current.emit('music:share', { mealId, url });
+    }
+  };
+
+  const handleStopMusic = () => {
+    if (musicSocketRef.current && musicSocketRef.current.connected) {
+      musicSocketRef.current.emit('music:stop', { mealId });
+    }
+  };
+
   if (loading) return <div className="d-flex justify-content-center align-items-center vh-100"><Spinner animation="border" /></div>;
   if (error) return <Container className="mt-5"><Alert variant="danger">{error}</Alert><Button onClick={() => navigate(-1)}>Torna Indietro</Button></Container>;
 
@@ -183,6 +261,13 @@ const VideoCallPage = () => {
           <Participant key={participant.sid} participant={participant} />
         ))}
       </div>
+
+      <MusicPlayer
+        isHost={isHost}
+        sharedUrl={sharedMusicUrl}
+        onShare={handleShareMusic}
+        onStop={handleStopMusic}
+      />
 
       {/* Barra Controlli */}
       <div className={styles.controlsBar}>
