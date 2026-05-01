@@ -469,10 +469,136 @@ exports.leaveMeal = asyncHandler(async (req, res, next) => {
 });
 
 exports.searchMeals = asyncHandler(async (req, res, next) => {
-  const searchTerm = req.query.q;
-  if (!searchTerm) return res.status(200).json({ success: true, count: 0, data: [] });
-  const meals = await Meal.find({ title: { $regex: searchTerm, $options: 'i' } }).populate('host', 'nickname profileImage');
-  res.status(200).json({ success: true, count: meals.length, data: meals });
+  const rawQ = req.query.q;
+  const searchTerm = typeof rawQ === 'string' ? rawQ.trim() : '';
+  if (!searchTerm || searchTerm.length < 2) {
+    return res.status(200).json({ success: true, count: 0, total: 0, data: [] });
+  }
+
+  // Escape regex per evitare ReDoS / crash su input come ".*", "(", "[abc"
+  const escapeRegex = (s) => String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const safeTerm = escapeRegex(searchTerm);
+  const regex = { $regex: safeTerm, $options: 'i' };
+
+  // Pagination
+  const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
+  const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 50, 1), 100);
+  const skip = (page - 1) * limit;
+
+  // Status filter
+  const statusFilter = req.query.status
+    ? req.query.status.split(',').map(s => s.trim()).filter(Boolean)
+    : ['upcoming', 'ongoing'];
+
+  // Filtro temporale: solo meal non troppo nel passato (1h di tolleranza)
+  const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+
+  // Geo opzionale
+  const lat = parseFloat(req.query.lat);
+  const lng = parseFloat(req.query.lng);
+  const radiusKm = Math.min(Math.max(parseFloat(req.query.radius) || 50, 1), 500);
+  const hasGeo = !Number.isNaN(lat) && !Number.isNaN(lng);
+
+  // STEP 1: trova utenti che matchano nei campi profilo
+  let matchedHostIds = [];
+  try {
+    const matchedUsers = await User.find({
+      $or: [
+        { nickname: regex },
+        { bio: regex },
+        { preferredCuisine: regex },
+        { interests: regex },
+        { languages: regex },
+      ],
+    })
+      .select('_id')
+      .limit(500)
+      .lean();
+    matchedHostIds = matchedUsers.map(u => u._id);
+  } catch (_) { /* fallback senza match profilo */ }
+
+  // STEP 2: build query meal
+  const baseAnd = [
+    { status: { $in: statusFilter } },
+    { date: { $gte: oneHourAgo } },
+  ];
+
+  const textOr = [
+    { title: regex },
+    { description: regex },
+    { topics: regex },
+    { language: regex },
+  ];
+  if (matchedHostIds.length > 0) {
+    textOr.push({ host: { $in: matchedHostIds } });
+  }
+  baseAnd.push({ $or: textOr });
+
+  // Privacy: utenti loggati vedono pubblici + propri (host/partecipante)
+  if (req.user && req.user.id) {
+    baseAnd.push({
+      $or: [
+        { isPublic: true },
+        { host: req.user.id },
+        { participants: req.user.id },
+      ],
+    });
+
+    try {
+      const currentUser = await User.findById(req.user.id).select('blockedUsers');
+      const usersWhoBlockedMe = await User.find({ blockedUsers: req.user.id }).select('_id');
+      const excludedIds = [
+        ...((currentUser && currentUser.blockedUsers) || []),
+        ...usersWhoBlockedMe.map(u => u._id),
+      ];
+      if (excludedIds.length > 0) {
+        baseAnd.push({ host: { $nin: excludedIds } });
+      }
+    } catch (_) { /* fallback senza esclusione */ }
+  } else {
+    baseAnd.push({ isPublic: true });
+  }
+
+  // Geo opzionale (solo per fisici con coordinate; virtuali sempre inclusi)
+  if (hasGeo) {
+    const radiusInRad = radiusKm / 6371;
+    baseAnd.push({
+      $or: [
+        {
+          mealType: 'physical',
+          'location.coordinates': {
+            $geoWithin: { $centerSphere: [[lng, lat], radiusInRad] },
+          },
+        },
+        { mealType: 'virtual' },
+      ],
+    });
+  }
+
+  const query = { $and: baseAnd };
+
+  const [meals, total] = await Promise.all([
+    Meal.find(query)
+      .sort({ date: 1 })
+      .skip(skip)
+      .limit(limit)
+      .populate('host', 'nickname profileImage interests bio preferredCuisine'),
+    Meal.countDocuments(query),
+  ]);
+
+  return res.status(200).json({
+    success: true,
+    count: meals.length,
+    total,
+    page,
+    pages: Math.ceil(total / limit),
+    meta: {
+      searchTerm,
+      matchedHosts: matchedHostIds.length,
+      geo: hasGeo ? { lat, lng, radiusKm } : null,
+    },
+    data: meals,
+  });
 });
 
 exports.getUserMeals = asyncHandler(async (req, res) => {
