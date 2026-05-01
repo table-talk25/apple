@@ -469,10 +469,88 @@ exports.leaveMeal = asyncHandler(async (req, res, next) => {
 });
 
 exports.searchMeals = asyncHandler(async (req, res, next) => {
-  const searchTerm = req.query.q;
-  if (!searchTerm) return res.status(200).json({ success: true, count: 0, data: [] });
-  const meals = await Meal.find({ title: { $regex: searchTerm, $options: 'i' } }).populate('host', 'nickname profileImage');
-  res.status(200).json({ success: true, count: meals.length, data: meals });
+  const rawQ = req.query.q;
+  const searchTerm = typeof rawQ === 'string' ? rawQ.trim() : '';
+  if (!searchTerm || searchTerm.length < 2) {
+    return res.status(200).json({ success: true, count: 0, total: 0, data: [] });
+  }
+
+  // Escape regex characters per evitare ReDoS / crash
+  const escapeRegex = (s) => String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const safeTerm = escapeRegex(searchTerm);
+  const regex = { $regex: safeTerm, $options: 'i' };
+
+  // Pagination
+  const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
+  const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 50, 1), 100);
+  const skip = (page - 1) * limit;
+
+  // Status filter
+  const statusFilter = req.query.status
+    ? req.query.status.split(',').map(s => s.trim()).filter(Boolean)
+    : ['upcoming', 'ongoing'];
+
+  // Filtro temporale: solo meal non troppo nel passato (1h di tolleranza)
+  const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+
+  // Build query
+  const query = {
+    status: { $in: statusFilter },
+    date: { $gte: oneHourAgo },
+    $or: [
+      { title: regex },
+      { description: regex },
+      { topics: regex },
+      { language: regex },
+    ],
+  };
+
+  // Privacy: utenti loggati vedono pubblici + propri (host/partecipante)
+  if (req.user && req.user.id) {
+    query.$and = [
+      {
+        $or: [
+          { isPublic: true },
+          { host: req.user.id },
+          { participants: req.user.id },
+        ],
+      },
+    ];
+
+    // Esclusione utenti bloccati
+    try {
+      const currentUser = await User.findById(req.user.id).select('blockedUsers');
+      const usersWhoBlockedMe = await User.find({ blockedUsers: req.user.id }).select('_id');
+      const excludedIds = [
+        ...((currentUser && currentUser.blockedUsers) || []),
+        ...usersWhoBlockedMe.map(u => u._id),
+      ];
+      if (excludedIds.length > 0) {
+        query.host = { $nin: excludedIds };
+      }
+    } catch (_) { /* fallback senza esclusione */ }
+  } else {
+    // Anonimo: solo pubblici
+    query.isPublic = true;
+  }
+
+  const [meals, total] = await Promise.all([
+    Meal.find(query)
+      .sort({ date: 1 })
+      .skip(skip)
+      .limit(limit)
+      .populate('host', 'nickname profileImage'),
+    Meal.countDocuments(query),
+  ]);
+
+  return res.status(200).json({
+    success: true,
+    count: meals.length,
+    total,
+    page,
+    pages: Math.ceil(total / limit),
+    data: meals,
+  });
 });
 
 exports.getUserMeals = asyncHandler(async (req, res) => {
