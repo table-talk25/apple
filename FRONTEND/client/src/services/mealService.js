@@ -243,13 +243,17 @@ const leaveMeal = async (mealId) => {
   return response.data;
 };
 
-const searchMeals = async (searchTerm) => {
+const searchMeals = async (searchTerm, options = {}) => {
+  const params = { q: searchTerm };
+  if (options.lat != null && options.lng != null) {
+    params.lat = options.lat;
+    params.lng = options.lng;
+    if (options.radius) params.radius = options.radius;
+  }
   const response = await apiClient.get('/meals/search', {
-    params: { q: searchTerm },
+    params,
     suppressErrorAlert: true,
   });
-  // Il backend ritorna { success, data: [...] }: estraiamo l'array
-  // (back-compat: se mai venisse cambiato a ritornare l'array direttamente)
   return Array.isArray(response.data) ? response.data : (response.data?.data || []);
 };
 

@@ -107,7 +107,10 @@ const MealsPage = () => {
     
     const timeoutId = setTimeout(async () => {
       try {
-        const response = await mealService.searchMeals(searchTerm);
+        const opts = userLocation
+          ? { lat: userLocation.latitude, lng: userLocation.longitude, radius: 50 }
+          : {};
+        const response = await mealService.searchMeals(searchTerm, opts);
         setSearchResults(response);
       } catch (error) {
         setSearchError(t('meals.searchError'));
@@ -117,7 +120,7 @@ const MealsPage = () => {
     }, 500);
 
     return () => clearTimeout(timeoutId);
-  }, [searchTerm, t]);
+  }, [searchTerm, t, userLocation?.latitude, userLocation?.longitude]);
 
   // 3. LOGICA RAGGRUPPAMENTO (rimossa logica matching locale, ora usa AI)
   const groupedMeals = useMemo(() => {
