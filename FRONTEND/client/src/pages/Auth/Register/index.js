@@ -139,12 +139,20 @@ const RegisterPage = () => {
             else if (serverMessage) {
                 toast.error(serverMessage, { autoClose: 7000 });
             }
-            // 5) Fallback con dettagli per non lasciare l'utente al buio
+            // 5) Fallback: il server ha risposto ma senza dettagli interpretabili.
+            //    NON inventiamo cause specifiche (che ingannerebbero l'utente quando
+            //    il problema reale e' altro), preferiamo sempre il message del server
+            //    se c'e', altrimenti messaggio neutro per status code.
             else {
                 const status = err?.response?.status;
                 let detail;
-                if (status === 400) {
-                    detail = 'Controlla i dati: la password deve avere almeno 8 caratteri con maiuscole, minuscole e numeri. Il nome e cognome solo lettere e spazi.';
+
+                if (serverMessage) {
+                    // Caso 99% nel ramo 5 dopo la fix backend (errorResponse): il server
+                    // ha mandato un message ma niente errors[] strutturato. Mostralo cosi' com'e'.
+                    detail = serverMessage;
+                } else if (status === 400) {
+                    detail = 'Alcuni dati non sono validi. Controlla i campi compilati e riprova.';
                 } else if (status === 429) {
                     detail = 'Troppi tentativi di registrazione. Riprova tra qualche minuto.';
                 } else if (status >= 500) {
@@ -152,6 +160,7 @@ const RegisterPage = () => {
                 } else {
                     detail = `Errore durante la registrazione${status ? ` (codice ${status})` : ''}. Riprova tra poco o contatta il supporto.`;
                 }
+
                 toast.error(detail, { autoClose: 8000 });
                 setErrors((prev) => ({ ...prev, _form: detail }));
             }
