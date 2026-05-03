@@ -139,9 +139,21 @@ const RegisterPage = () => {
             else if (serverMessage) {
                 toast.error(serverMessage, { autoClose: 7000 });
             }
-            // 5) Fallback (non dovremmo mai arrivarci, ma meglio essere sicuri)
+            // 5) Fallback con dettagli per non lasciare l'utente al buio
             else {
-                toast.error(t('auth.registerError') || 'Errore durante la registrazione. Riprova tra poco.', { autoClose: 6000 });
+                const status = err?.response?.status;
+                let detail;
+                if (status === 400) {
+                    detail = 'Controlla i dati: la password deve avere almeno 8 caratteri con maiuscole, minuscole e numeri. Il nome e cognome solo lettere e spazi.';
+                } else if (status === 429) {
+                    detail = 'Troppi tentativi di registrazione. Riprova tra qualche minuto.';
+                } else if (status >= 500) {
+                    detail = 'Il server non risponde correttamente. Riprova tra un minuto.';
+                } else {
+                    detail = `Errore durante la registrazione${status ? ` (codice ${status})` : ''}. Riprova tra poco o contatta il supporto.`;
+                }
+                toast.error(detail, { autoClose: 8000 });
+                setErrors((prev) => ({ ...prev, _form: detail }));
             }
         } finally {
             clearTimeout(hintTimer);
