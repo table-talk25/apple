@@ -227,7 +227,7 @@ const RegisterPage = () => {
                     </Form.Group>
                     
                     <div className={styles.passwordRequirements}>
-                        <ul><li>{t('auth.passwordRequirements')}</li></ul>
+                        <ul><li>{t('auth.passwordRequirements', { defaultValue: 'Almeno 8 caratteri, con maiuscole, minuscole e numeri.' })}</li></ul>
                     </div>
                     
                     <Form.Group>

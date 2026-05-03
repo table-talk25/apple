@@ -23,13 +23,19 @@ exports.registerValidation = [
         .isEmail()
         .normalizeEmail(),
     
-    check('password', 'La password non rispetta i requisiti')
-        .isLength({ min: 8 })
-        .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/)
-        .withMessage('La password deve contenere almeno 8 caratteri, una lettera maiuscola, una minuscola, un numero e un carattere speciale'),
+    check('password')
+        .isLength({ min: 8 }).withMessage('La password deve avere almeno 8 caratteri')
+        .matches(/[a-z]/).withMessage('La password deve contenere almeno una lettera minuscola')
+        .matches(/[A-Z]/).withMessage('La password deve contenere almeno una lettera maiuscola')
+        .matches(/\d/).withMessage('La password deve contenere almeno un numero'),
 
-    check('confirmPassword', 'Le password non coincidono')
-        .custom((value, { req }) => value === req.body.password),
+    check('confirmPassword')
+        .custom((value, { req }) => {
+            if (value !== req.body.password) {
+                throw new Error('Le password non coincidono');
+            }
+            return true;
+        }),
 
     check('dateOfBirth', 'Data di nascita obbligatoria')
         .notEmpty()
@@ -74,13 +80,19 @@ exports.loginValidation = [
  * Validazioni per il reset della password
  */
 exports.resetPasswordValidation = [
-    check('password', 'La password non rispetta i requisiti')
-        .isLength({ min: 8 })
-        .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/)
-        .withMessage('La password deve contenere almeno 8 caratteri, una lettera maiuscola, una minuscola, un numero e un carattere speciale'),
-    
-    check('confirmPassword', 'Le password non coincidono')
-        .custom((value, { req }) => value === req.body.password)
+    check('password')
+        .isLength({ min: 8 }).withMessage('La password deve avere almeno 8 caratteri')
+        .matches(/[a-z]/).withMessage('La password deve contenere almeno una lettera minuscola')
+        .matches(/[A-Z]/).withMessage('La password deve contenere almeno una lettera maiuscola')
+        .matches(/\d/).withMessage('La password deve contenere almeno un numero'),
+
+    check('confirmPassword')
+        .custom((value, { req }) => {
+            if (value !== req.body.password) {
+                throw new Error('Le password non coincidono');
+            }
+            return true;
+        }),
 ];
 
 /**
@@ -109,11 +121,17 @@ exports.changePasswordValidation = [
         .not()
         .isEmpty(),
     
-    check('newPassword', 'La nuova password non rispetta i requisiti')
-        .isLength({ min: 8 })
-        .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/)
-        .withMessage('La password deve contenere almeno 8 caratteri, una lettera maiuscola, una minuscola, un numero e un carattere speciale'),
-    
-    check('confirmNewPassword', 'Le password non coincidono')
-        .custom((value, { req }) => value === req.body.newPassword)
-]; 
+    check('newPassword')
+        .isLength({ min: 8 }).withMessage('La password deve avere almeno 8 caratteri')
+        .matches(/[a-z]/).withMessage('La password deve contenere almeno una lettera minuscola')
+        .matches(/[A-Z]/).withMessage('La password deve contenere almeno una lettera maiuscola')
+        .matches(/\d/).withMessage('La password deve contenere almeno un numero'),
+
+    check('confirmNewPassword')
+        .custom((value, { req }) => {
+            if (value !== req.body.newPassword) {
+                throw new Error('Le password non coincidono');
+            }
+            return true;
+        }),
+];
