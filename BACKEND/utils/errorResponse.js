@@ -10,11 +10,18 @@ class ErrorResponse extends Error {
    * @param {Object} [details] - Dettagli aggiuntivi dell'errore
    * @param {string} [stack] - Stack trace dell'errore
    */
-  constructor(message, statusCode, code = 'GENERIC_ERROR', details = null, stack = null) {
+  constructor(message, statusCode, codeOrDetails = 'GENERIC_ERROR', details = null, stack = null) {
     super(message);
     this.statusCode = statusCode;
-    this.code = code;
-    this.details = details;
+    // Back-compat: se il 3° arg e' un array, e' la lista di validation errors
+    // (vecchio uso: new ErrorResponse(msg, 400, errors.array())). Altrimenti e' il code.
+    if (Array.isArray(codeOrDetails)) {
+      this.code = 'VALIDATION_ERROR';
+      this.details = codeOrDetails;
+    } else {
+      this.code = codeOrDetails;
+      this.details = details;
+    }
     this.timestamp = new Date().toISOString();
     this.success = false;
 
