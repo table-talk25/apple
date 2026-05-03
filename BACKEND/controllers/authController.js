@@ -73,18 +73,22 @@ exports.register = asyncHandler(async (req, res, next) => {
     // Genera il token JWT per l'autenticazione
     const token = user.generateAuthToken();
     
-    // Invia l'email di verifica utilizzando il servizio dedicato
-    try {
-      const verificationResult = await emailVerificationService.sendVerificationEmail(user);
-      
-      if (!verificationResult.success) {
-        console.warn('⚠️ [AuthController] Email verifica non inviata:', verificationResult.message);
-        // Non blocchiamo la registrazione se l'email fallisce
-      }
-    } catch (err) {
-      console.error('❌ [AuthController] Errore invio email verifica:', err.message);
-      // Non blocchiamo la registrazione se l'email fallisce
-    }
+    // 📧 Invio email di verifica in BACKGROUND (fire-and-forget).
+    // Niente await: se SMTP è lento/bloccato, la registrazione torna comunque
+    // subito al client (~200ms invece di 60s+). Se l'invio fallisce, l'utente
+    // può richiedere il reinvio dalla schermata "Reinvia email di verifica".
+    emailVerificationService.sendVerificationEmail(user)
+      .then(verificationResult => {
+        if (!verificationResult || !verificationResult.success) {
+          console.warn('⚠️ [AuthController] Email verifica non inviata:',
+            verificationResult && verificationResult.message);
+        } else {
+          console.log('✅ [AuthController] Email verifica inviata a', user.email);
+        }
+      })
+      .catch(err => {
+        console.error('❌ [AuthController] Errore invio email verifica:', err.message);
+      });
     console.timeEnd('Tempo Registrazione');
     // Creo un oggetto con solo i dati essenziali per il frontend
     const userInfo = {
