@@ -135,21 +135,13 @@ const RegisterPage = () => {
                 toast.error(msg, { autoClose: 7000 });
                 setErrors((prev) => ({ ...prev, _form: msg }));
             }
-            // 4) Altro errore con messaggio dal server
-            else if (serverMessage) {
-                toast.error(serverMessage, { autoClose: 7000 });
-            }
-            // 5) Fallback: il server ha risposto ma senza dettagli interpretabili.
-            //    NON inventiamo cause specifiche (che ingannerebbero l'utente quando
-            //    il problema reale e' altro), preferiamo sempre il message del server
-            //    se c'e', altrimenti messaggio neutro per status code.
+            // 4) Altro errore: preferisci il messaggio del server, fallback per status code.
+            //    Niente ipotesi inventate (es. "controlla la password") che ingannerebbero
+            //    l'utente quando il problema reale e' altro.
             else {
                 const status = err?.response?.status;
                 let detail;
-
                 if (serverMessage) {
-                    // Caso 99% nel ramo 5 dopo la fix backend (errorResponse): il server
-                    // ha mandato un message ma niente errors[] strutturato. Mostralo cosi' com'e'.
                     detail = serverMessage;
                 } else if (status === 400) {
                     detail = 'Alcuni dati non sono validi. Controlla i campi compilati e riprova.';
@@ -160,7 +152,6 @@ const RegisterPage = () => {
                 } else {
                     detail = `Errore durante la registrazione${status ? ` (codice ${status})` : ''}. Riprova tra poco o contatta il supporto.`;
                 }
-
                 toast.error(detail, { autoClose: 8000 });
                 setErrors((prev) => ({ ...prev, _form: detail }));
             }
