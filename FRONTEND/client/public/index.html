@@ -1,45 +1,6 @@
 <!DOCTYPE html>
 <html lang="it">
   <head>
-    <script>
-      // ALERT IMMEDIATO - PRIMA DI TUTTO
-      alert("🔴 TEST HTML: Se vedi questo, l'HTML si sta caricando!");
-      console.log("🚀 APP INIZIO CARICAMENTO");
-      
-      // Intercetta tutti gli errori
-      window.onerror = function(msg, url, line, col, error) {
-        var errorMsg = "ERRORE JS:\n" + msg + "\nFile: " + url + "\nLinea: " + line;
-        console.error("❌", errorMsg, error);
-        alert(errorMsg);
-        return false;
-      };
-      
-      // Intercetta errori non gestiti
-      window.addEventListener('error', function(e) {
-        console.error("❌ ERRORE NON GESTITO:", e.error);
-        alert("ERRORE: " + e.message);
-      });
-      
-      // Intercetta promise rejection
-      window.addEventListener('unhandledrejection', function(e) {
-        console.error("❌ PROMISE REJECTION:", e.reason);
-        alert("PROMISE ERROR: " + e.reason);
-      });
-      
-      // Log quando il DOM è pronto
-      document.addEventListener('DOMContentLoaded', function() {
-        console.log("✅ DOM CARICATO");
-      });
-      
-      // Log quando la pagina è completamente caricata
-      window.addEventListener('load', function() {
-        console.log("✅ PAGINA COMPLETAMENTE CARICATA");
-        console.log("📁 Root element:", document.getElementById('root'));
-        console.log("📁 Config disponibile:", typeof window.APP_CONFIG !== 'undefined' ? 'SI' : 'NO');
-      });
-      
-      // Logging semplificato - NO PANNELLO DEBUG per evitare loop infiniti
-    </script>
     <meta charset="utf-8" />
     <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
@@ -66,7 +27,6 @@
         justify-content: center; 
         background: #fff; 
         z-index: 99999; 
-        /* Forza visibilità */
         visibility: visible !important;
         opacity: 1 !important;
       }
@@ -94,20 +54,16 @@
         0% { transform: rotate(0deg);} 
         100% { transform: rotate(360deg);} 
       }
-      /* Assicurati che il root sia visibile quando React si monta */
       #root {
         min-height: 100vh;
         background: #fff;
         position: relative;
         z-index: 1;
       }
-      
-      /* Fallback: se React non si monta, mostra almeno lo sfondo bianco */
       body {
         background: #fff;
         margin: 0;
         padding: 0;
-        /* Supporto per safe area iOS */
         padding-top: env(safe-area-inset-top);
         padding-bottom: env(safe-area-inset-bottom);
         padding-left: env(safe-area-inset-left);
