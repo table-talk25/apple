@@ -1,9 +1,19 @@
 // File: /BACKEND/routes/profile.js (Ordine Corretto)
 
 const express = require('express');
+const multer = require('multer');
 const router = express.Router();
 const { protect } = require('../middleware/auth');
 const upload  = require('../middleware/upload');
+
+const avatarUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 10 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype.startsWith('image/')) cb(null, true);
+    else cb(new Error('Formato file non supportato. Solo immagini permesse.'), false);
+  },
+});
 
 // PASSO 1: Importiamo TUTTE le funzioni necessarie dal controller.
 // La nuova 'getPublicProfile' è inclusa qui.
@@ -31,7 +41,7 @@ router.put('/me', protect, updateProfile);
 router.put('/me/password', protect, updatePassword);
 
 // Carica o aggiorna l'avatar
-router.put('/me/avatar', protect, upload.single('avatar'), updateAvatar);
+router.put('/me/avatar', protect, avatarUpload.single('avatar'), updateAvatar);
 
 // Elimina l'avatar
 router.delete('/me/avatar', protect, deleteProfileImage);

@@ -265,6 +265,31 @@ const getUserMeals = async (params = {}) => {
   return response.data;
 };
 
+// ✅ NUOVO: Converti URL immagine pasto a URL completo
+// Riconosce URL Firebase e li usa direttamente (senza prefisso)
+const getFullMealImageUrl = (imageUrl) => {
+  console.log('🍽️ [mealService] getFullMealImageUrl called with:', imageUrl);
+
+  // ✅ Se l'URL è già un URL Firebase completo, restituiscilo così com'è
+  if (imageUrl && imageUrl.includes('storage.googleapis.com')) {
+    console.log('🍽️ [mealService] Using Firebase URL:', imageUrl);
+    return imageUrl;
+  }
+
+  if (!imageUrl || imageUrl === 'null' || imageUrl === 'undefined') {
+    // Nessuna immagine
+    console.log('🍽️ [mealService] No image provided');
+    return null;
+  }
+
+  // Per le immagini caricate localmente, usa l'URL completo del backend
+  const baseUrl = (apiClient.defaults.baseURL || '').replace('/api', '');
+  const timestamp = new Date().getTime();
+  const fullUrl = `${baseUrl}/${imageUrl}?t=${timestamp}`;
+  console.log('🍽️ [mealService] Using local image URL:', fullUrl);
+  return fullUrl;
+};
+
 const mealService = {
   getMeals,
   getMealById,
@@ -275,6 +300,7 @@ const mealService = {
   leaveMeal,
   searchMeals,
   getUserMeals,
+  getFullMealImageUrl, // ✅ NUOVO: funzione helper per URL immagini
   // 🗺️ Nuove funzioni geospaziali
   getMealsForMap,
   getMealsGeoStats,

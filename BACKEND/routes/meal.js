@@ -3,7 +3,8 @@
 const express = require('express');
 const router = express.Router();
 const { protect, authorize } = require('../middleware/auth');
-const upload = require('../middleware/upload'); 
+const upload = require('../middleware/upload');
+const { mealUpload } = require('../middleware/upload'); // ✅ NUOVO: memoryStorage per Firebase 
 
 // Importiamo tutte le funzioni necessarie dal nostro controller
 const {
@@ -29,7 +30,7 @@ const {
 // --- Rotte per la collezione di pasti (/api/meals) ---
 router.route('/')
   .get(getMeals) // Ottiene la lista dei pasti (già funzionava)
-  .post(protect, upload.single('image'), createMeal); // Crea un nuovo pasto con upload immagine
+  .post(protect, mealUpload.single('image'), createMeal); // ✅ USA mealUpload con memoryStorage
 
 // --- Rotte per la ricerca e le statistiche ---
 router.get('/map', getMealsForMap);
@@ -41,7 +42,7 @@ router.get('/status/stats', getMealStatusStats);
 // --- Rotte per un pasto specifico (/api/meals/:id) ---
 router.route('/:id')
   .get(getMeal) // Ottiene i dettagli di un singolo pasto
-  .patch(protect, upload.single('image'), updateMeal) // AGGIORNAMENTO/VARIAZIONE con upload immagine
+  .patch(protect, mealUpload.single('image'), updateMeal) // ✅ USA mealUpload con memoryStorage
   .delete(protect, deleteMeal); // CANCELLAZIONE (adesso è attivo!)
 
 // --- Rotta per la sincronizzazione dello stato di un pasto ---

@@ -24,14 +24,25 @@ async function createFullMeal(mealData, user, file) {
     // 1. PREPARA I DATI DEL PASTO
     console.log('🏗️ [MealCreationService] Inizio creazione pasto per:', user.nickname);
     
-    // 🔧 GESTIONE IMMAGINE (FIX DEFINITIVO)
+    // ✅ GESTIONE IMMAGINE CON FIREBASE
     const finalMealData = { ...mealData, host: user.id };
-    
-    if (file) {
-      // ⚠️ FIX: Usiamo file.path e sostituiamo i backslash (\) con slash (/)
-      // Questo risolve il problema delle immagini "fantasma" su Windows
-      finalMealData.imageUrl = file.path.replace(/\\/g, '/');
-      console.log('📷 [Service] Immagine normalizzata:', finalMealData.imageUrl);
+
+    if (file && file.buffer) {
+      // ✅ NUOVO: Upload a Firebase Storage
+      const { uploadImage } = require('../services/firebaseStorageService');
+      try {
+        const imageUrl = await uploadImage(
+          file.buffer,
+          file.originalname,
+          'meal-images'
+        );
+        finalMealData.imageUrl = imageUrl;
+        console.log('📷 [Service] Immagine caricata su Firebase:', finalMealData.imageUrl);
+      } catch (error) {
+        console.error('❌ [Service] Errore upload Firebase:', error);
+        // Continua senza immagine se Firebase fallisce
+        console.log('⚠️ [Service] Pasto creato senza immagine');
+      }
     }
     
     // 2. CREA IL PASTO

@@ -392,8 +392,36 @@ exports.updateMeal = asyncHandler(async (req, res, next) => {
   if (meal.host.toString() !== req.user.id) return next(new ErrorResponse(`Non autorizzato`, 401));
 
   const updates = { ...sanitizeMealData(req.body) };
-  if (req.file) updates.imageUrl = req.file.path.replace(/\\/g, '/');
-  
+
+  // ✅ NUOVO: Gestisci immagini con Firebase
+  if (req.file && req.file.buffer) {
+    const { uploadImage, deleteImage } = require('../services/firebaseStorageService');
+
+    try {
+      // Elimina vecchia immagine se esiste su Firebase
+      if (meal.imageUrl && meal.imageUrl.includes('storage.googleapis.com')) {
+        try {
+          await deleteImage(meal.imageUrl);
+          console.log('✅ [UpdateMeal] Immagine vecchia eliminata da Firebase');
+        } catch (err) {
+          console.error('⚠️ [UpdateMeal] Errore eliminazione immagine vecchia:', err);
+        }
+      }
+
+      // Carica nuova immagine
+      const imageUrl = await uploadImage(
+        req.file.buffer,
+        req.file.originalname,
+        'meal-images'
+      );
+      updates.imageUrl = imageUrl;
+      console.log('✅ [UpdateMeal] Nuova immagine caricata su Firebase:', imageUrl);
+    } catch (error) {
+      console.error('❌ [UpdateMeal] Errore upload Firebase:', error);
+      // Continua anche se l'upload fallisce
+    }
+  }
+
   if (updates.location) {
     try {
       const parsedLocation = JSON.parse(updates.location);
@@ -415,7 +443,19 @@ exports.deleteMeal = asyncHandler(async (req, res, next) => {
   const meal = await Meal.findById(req.params.id);
   if (!meal) return next(new ErrorResponse(`Pasto non trovato`, 404));
   if (meal.host.toString() !== req.user.id) return next(new ErrorResponse(`Non autorizzato`, 403));
-  
+
+  // ✅ NUOVO: Elimina immagine da Firebase quando il pasto viene cancellato
+  if (meal.imageUrl && meal.imageUrl.includes('storage.googleapis.com')) {
+    try {
+      const { deleteImage } = require('../services/firebaseStorageService');
+      await deleteImage(meal.imageUrl);
+      console.log('✅ [DeleteMeal] Immagine eliminata da Firebase');
+    } catch (error) {
+      console.error('⚠️ [DeleteMeal] Errore eliminazione immagine:', error);
+      // Continua comunque con la cancellazione del pasto
+    }
+  }
+
   await Meal.findByIdAndDelete(req.params.id);
   res.status(200).json({ success: true, data: {} });
 });

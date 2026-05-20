@@ -70,7 +70,13 @@ const deleteAccount = async (password) => {
 
 const getFullImageUrl = (imageName) => {
   console.log('🖼️ [ProfileService] getFullImageUrl called with:', imageName);
-  
+
+  // ✅ NUOVO: Se l'URL è già un URL Firebase completo, restituiscilo così com'è
+  if (imageName && imageName.includes('storage.googleapis.com')) {
+    console.log('🖼️ [ProfileService] Using Firebase URL:', imageName);
+    return imageName;
+  }
+
   if (!imageName || imageName === 'null' || imageName === 'undefined' || imageName.includes('default-avatar.jpg')) {
     // Per l'immagine di default, usa l'URL completo del backend
     const baseUrl = (apiClient.defaults.baseURL || '').replace('/api', '');
@@ -78,7 +84,7 @@ const getFullImageUrl = (imageName) => {
     console.log('🖼️ [ProfileService] Using default avatar:', defaultUrl);
     return defaultUrl;
   }
-  // Per le immagini caricate, usa l'URL completo del backend
+  // Per le immagini caricate localmente, usa l'URL completo del backend
   const baseUrl = (apiClient.defaults.baseURL || '').replace('/api', '');
   // Aggiungi timestamp per forzare il refresh dell'immagine
   const timestamp = new Date().getTime();

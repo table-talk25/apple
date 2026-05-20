@@ -119,53 +119,56 @@ exports.updatePassword = asyncHandler(async (req, res, next) => {
  * @access  Private
  */
 exports.updateAvatar = asyncHandler(async (req, res, next) => {
+  const { uploadImage, deleteImage } = require('../services/firebaseStorageService');
+
   console.log('🖼️ [UpdateAvatar] Richiesta ricevuta per utente:', req.user.id);
   console.log('🖼️ [UpdateAvatar] File presente:', Boolean(req.file));
-  console.log('🖼️ [UpdateAvatar] File details:', req.file ? {
-    fieldname: req.file.fieldname,
-    originalname: req.file.originalname,
-    mimetype: req.file.mimetype,
-    size: req.file.size,
-    path: req.file.path
-  } : 'nessun file');
 
   if (!req.file) {
     console.error('❌ [UpdateAvatar] Nessun file ricevuto');
     return next(new ErrorResponse('Per favore, carica un file immagine.', 400));
   }
 
- const user = await User.findById(req.user.id);
- if (!user) {
-   console.error('❌ [UpdateAvatar] Utente non trovato:', req.user.id);
-   return next(new ErrorResponse('Utente non trovato.', 404));
- }
+  const user = await User.findById(req.user.id);
+  if (!user) {
+    console.error('❌ [UpdateAvatar] Utente non trovato:', req.user.id);
+    return next(new ErrorResponse('Utente non trovato.', 404));
+  }
 
- const defaultImagePath = 'uploads/profile-images/default-avatar.jpg';
- 
- const currentProfileImage = user.profileImage ? user.profileImage.replace(/\\/g, '/') : '';
-  
- if (currentProfileImage && currentProfileImage !== defaultImagePath) {
-   try {
-     await fs.unlink(path.resolve(user.profileImage));
-   } catch (err) {
-     console.error(`Errore nell'eliminazione del vecchio file:`, err.message);
-   }
- }
+  try {
+    const fileBuffer = req.file.buffer || (req.file.path ? await fs.readFile(req.file.path) : null);
+    if (!fileBuffer) {
+      return next(new ErrorResponse('Impossibile leggere il file immagine.', 400));
+    }
 
- // ⚠️ FIX IMPORTANTE: Sostituisci i backslash (\) con slash (/) per compatibilità URL
- // Questo assicura che il DB salvi "uploads/profile-images/foto.jpg" e non "uploads\profile-images\foto.jpg"
- user.profileImage = req.file.path.replace(/\\/g, '/');
- 
- await user.save();
+    const imageUrl = await uploadImage(
+      fileBuffer,
+      req.file.originalname,
+      'profile-images'
+    );
 
- console.log('✅ [UpdateAvatar] Avatar aggiornato con successo per utente:', req.user.id);
- console.log('✅ [UpdateAvatar] Nuovo path immagine:', req.file.path);
+    const oldImageUrl = user.profileImage;
+    const defaultImageUrl = 'https://storage.googleapis.com/tabletalk-social.firebasestorage.app/profile-images/default-avatar.jpg';
 
- res.status(200).json({
-   success: true,
-   message: 'Immagine del profilo aggiornata con successo.',
-   data: user, 
- });
+    if (oldImageUrl && oldImageUrl !== defaultImageUrl && oldImageUrl.includes('storage.googleapis.com')) {
+      await deleteImage(oldImageUrl);
+    }
+
+    user.profileImage = imageUrl;
+    await user.save();
+
+    console.log('✅ [UpdateAvatar] Avatar aggiornato con successo per utente:', req.user.id);
+    console.log('✅ [UpdateAvatar] Nuovo URL immagine:', imageUrl);
+
+    res.status(200).json({
+      success: true,
+      message: 'Immagine del profilo aggiornata con successo.',
+      data: user,
+    });
+  } catch (error) {
+    console.error('❌ [UpdateAvatar] Errore durante il caricamento:', error);
+    return next(new ErrorResponse('Errore durante il caricamento dell\'immagine.', 500));
+  }
 });
 
 /**
@@ -174,26 +177,30 @@ exports.updateAvatar = asyncHandler(async (req, res, next) => {
  * @access  Private
  */
 exports.deleteProfileImage = asyncHandler(async (req, res, next) => {
+  const { deleteImage } = require('../services/firebaseStorageService');
+
   const user = await User.findById(req.user.id);
-  if (!user) { 
-    return next(new ErrorResponse('Utente non trovato', 404)); 
+  if (!user) {
+    return next(new ErrorResponse('Utente non trovato', 404));
   }
-  
-  if (user.profileImage && user.profileImage !== 'uploads/profile-images/default-avatar.jpg') {
+
+  const defaultImageUrl = 'https://storage.googleapis.com/tabletalk-social.firebasestorage.app/profile-images/default-avatar.jpg';
+
+  if (user.profileImage && user.profileImage !== defaultImageUrl && user.profileImage.includes('storage.googleapis.com')) {
     try {
-      await fs.unlink(path.resolve(user.profileImage));
-    } catch (err) {
-      console.error("Errore durante l'eliminazione del file fisico, potrebbe non esistere:", err);
+      await deleteImage(user.profileImage);
+    } catch (error) {
+      console.error('❌ Errore durante l\'eliminazione dell\'immagine:', error);
     }
   }
 
-  user.profileImage = 'uploads/profile-images/default-avatar.jpg';
+  user.profileImage = defaultImageUrl;
   await user.save();
-  
-  res.status(200).json({ 
-    success: true, 
-    message: 'Immagine del profilo eliminata', 
-    data: user 
+
+  res.status(200).json({
+    success: true,
+    message: 'Immagine del profilo eliminata',
+    data: user,
   });
 });
 
@@ -216,10 +223,13 @@ exports.deleteAccount = asyncHandler(async (req, res, next) => {
   }
 
   try {
+    const { deleteImage } = require('../services/firebaseStorageService');
+    const defaultImageUrl = 'https://storage.googleapis.com/tabletalk-social.firebasestorage.app/profile-images/default-avatar.jpg';
+
     // 1. Elimina l'immagine del profilo se non è quella di default
-    if (user.profileImage && user.profileImage !== 'uploads/profile-images/default-avatar.jpg') {
+    if (user.profileImage && user.profileImage !== defaultImageUrl && user.profileImage.includes('storage.googleapis.com')) {
       try {
-        await fs.unlink(path.resolve(user.profileImage));
+        await deleteImage(user.profileImage);
       } catch (err) {
         console.error('Errore nell\'eliminazione dell\'immagine profilo:', err.message);
       }

@@ -1,4 +1,4 @@
-// File: /BACKEND/middleware/upload.js (Versione Finale e Corretta)
+// File: /BACKEND/middleware/upload.js (Versione con Firebase Storage)
 
 const multer = require('multer');
 const path = require('path');
@@ -11,7 +11,7 @@ const ensureExists = (dirPath) => {
   }
 };
 
-// Configurazione dello storage con destinazione dinamica
+// Configurazione dello storage con destinazione dinamica (per upload locali se necessari)
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
     console.log('📁 [Upload] === INIZIO PROCESSO UPLOAD ===');
@@ -20,7 +20,7 @@ const storage = multer.diskStorage({
     console.log('📁 [Upload] file.originalname:', file.originalname);
     console.log('📁 [Upload] file.mimetype:', file.mimetype);
     console.log('📁 [Upload] file.size:', file.size);
-    
+
     // Controlliamo il percorso della rotta per decidere dove salvare!
     let uploadPath = 'uploads/';
     if (req.originalUrl.includes('/profile')) {
@@ -44,12 +44,12 @@ const storage = multer.diskStorage({
     console.log('📝 [Upload] req.user.id:', req.user?.id);
     console.log('📝 [Upload] file.fieldname:', file.fieldname);
     console.log('📝 [Upload] file.originalname:', file.originalname);
-    
+
     // Fallback se req.user non è disponibile
     const userId = req.user?.id || 'anonymous';
     const uniqueSuffix = `${userId}-${Date.now()}`;
     const finalFilename = `${file.fieldname}-${uniqueSuffix}${path.extname(file.originalname)}`;
-    
+
     console.log('📝 [Upload] Nome file finale:', finalFilename);
     console.log('📝 [Upload] === FINE GENERAZIONE NOME FILE ===');
     cb(null, finalFilename);
@@ -65,14 +65,26 @@ const fileFilter = (req, file, cb) => {
   }
 };
 
-// Esportiamo direttamente l'istanza di multer configurata
+// ✅ NUOVO: Configurazione memoryStorage per meal images (Firebase)
+const memoryStorage = multer.memoryStorage();
+
+// Esportiamo middleware per diversi tipi di upload
 module.exports = multer({
   storage: storage,
-  limits: { 
+  limits: {
     fileSize: 10 * 1024 * 1024, // 10MB per i file
     fieldSize: 2 * 1024 * 1024, // 2MB per i campi (per gestire location JSON e altri dati)
     fields: 50, // Numero massimo di campi non-file
     fieldNameSize: 100 // Lunghezza massima del nome del campo
+  },
+  fileFilter: fileFilter
+});
+
+// ✅ NUOVO: Middleware per meal uploads (usa memoryStorage per Firebase)
+module.exports.mealUpload = multer({
+  storage: memoryStorage,
+  limits: {
+    fileSize: 10 * 1024 * 1024 // 10MB per le immagini
   },
   fileFilter: fileFilter
 });

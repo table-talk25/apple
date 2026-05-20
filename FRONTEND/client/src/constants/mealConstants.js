@@ -106,12 +106,18 @@ export const formatDate = (dateString, formatString = "DD MMM, HH:mm") => {
 
 /**
  * Ottiene l'URL completo per l'immagine di copertina del pasto.
- * Gestisce URL completi, data URLs, percorsi relativi e fallback.
+ * Gestisce URL Firebase, URL completi, data URLs, percorsi relativi e fallback.
  * @param {string} imagePath - Il percorso o nome del file dell'immagine.
  * @returns {string} L'URL completo o un'immagine di fallback.
  */
 export const getMealCoverImageUrl = (imagePath) => {
   if (!imagePath) return '/assets/images/default-meal-placeholder.jpeg';
+
+  // ✅ NUOVO: Se è un URL Firebase, usalo direttamente
+  if (imagePath.includes('storage.googleapis.com')) {
+    console.log('🍽️ [getMealCoverImageUrl] Using Firebase URL:', imagePath);
+    return imagePath;
+  }
 
   // Se è già un URL completo (es. http o https o data:image), usalo così com'è
   if (imagePath.startsWith('http') || imagePath.startsWith('data:')) {
@@ -130,13 +136,19 @@ export const getMealCoverImageUrl = (imagePath) => {
 
 /**
  * Ottiene l'URL completo per l'avatar dell'host.
- * Restituisce un avatar di default se non specificato.
+ * Gestisce URL Firebase, URL assoluti, e percorsi relativi.
  * @param {string} profileImage - Il nome del file dell'immagine del profilo.
  * @returns {string} - L'URL completo dell'immagine.
  */
 export const getHostAvatarUrl = (profileImage) => {
   console.log('🖼️ [getHostAvatarUrl] Input:', profileImage);
-  
+
+  // ✅ NUOVO: Se è un URL Firebase, usalo direttamente
+  if (typeof profileImage === 'string' && profileImage.includes('storage.googleapis.com')) {
+    console.log('🖼️ [getHostAvatarUrl] Using Firebase URL:', profileImage);
+    return profileImage;
+  }
+
   // Se non c'è un'immagine o è quella di default, usa l'URL completo del backend per l'avatar di default
   if (!profileImage || typeof profileImage !== 'string' || profileImage === 'null' || profileImage === 'undefined' || profileImage.includes('default-avatar.jpg')) {
     const baseUrl = (API_URL || '').replace(/\/api\/?$/, '');
@@ -144,19 +156,19 @@ export const getHostAvatarUrl = (profileImage) => {
     console.log('🖼️ [getHostAvatarUrl] Usando avatar di default dal backend:', defaultUrl);
     return defaultUrl;
   }
-  
+
   // Caso Capacitor (foto locale su device)
   if (typeof profileImage === 'string' && profileImage.startsWith('capacitor://')) {
     console.log('🖼️ [getHostAvatarUrl] URL Capacitor:', profileImage);
     return profileImage;
   }
-  
+
   // Caso URL assoluto (già pronto)
   if (typeof profileImage === 'string' && profileImage.startsWith('http')) {
     console.log('🖼️ [getHostAvatarUrl] URL assoluto:', profileImage);
     return profileImage;
   }
-  
+
   // Caso path relativo dal backend - usa la configurazione corretta
   // Rimuoviamo '/api' dalla fine di API_URL perché la cartella uploads è alla radice
   const baseUrl = (API_URL || '').replace(/\/api\/?$/, '');
@@ -164,7 +176,7 @@ export const getHostAvatarUrl = (profileImage) => {
   // Aggiungi timestamp per forzare il refresh dell'immagine
   const timestamp = new Date().getTime();
   const fullUrl = `${baseUrl}${cleanPath}?t=${timestamp}`;
-  
+
   console.log('🖼️ [getHostAvatarUrl] URL costruito:', fullUrl);
   return fullUrl;
 };
