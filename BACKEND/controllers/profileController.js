@@ -129,6 +129,20 @@ exports.updateAvatar = asyncHandler(async (req, res, next) => {
     return next(new ErrorResponse('Per favore, carica un file immagine.', 400));
   }
 
+  // Validazione del tipo MIME
+  const allowedMimeTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+  if (!allowedMimeTypes.includes(req.file.mimetype)) {
+    console.error('❌ [UpdateAvatar] Tipo MIME non supportato:', req.file.mimetype);
+    return next(new ErrorResponse('Formato immagine non supportato. Sono accettati solo JPEG, PNG, GIF e WebP.', 400));
+  }
+
+  // Validazione della dimensione massima (5MB)
+  const maxSize = 5 * 1024 * 1024; // 5MB in bytes
+  if (req.file.size > maxSize) {
+    console.error('❌ [UpdateAvatar] File troppo grande:', req.file.size);
+    return next(new ErrorResponse('L\'immagine non può superare i 5MB.', 400));
+  }
+
   const user = await User.findById(req.user.id);
   if (!user) {
     console.error('❌ [UpdateAvatar] Utente non trovato:', req.user.id);
@@ -141,9 +155,15 @@ exports.updateAvatar = asyncHandler(async (req, res, next) => {
       return next(new ErrorResponse('Impossibile leggere il file immagine.', 400));
     }
 
+    // Genera un nome univoco per l'immagine
+    const timestamp = Date.now();
+    const randomString = Math.random().toString(36).substring(2, 15);
+    const fileExtension = path.extname(req.file.originalname) || '.jpg';
+    const uniqueFileName = `avatar_${req.user.id}_${timestamp}_${randomString}${fileExtension}`;
+
     const imageUrl = await uploadImage(
       fileBuffer,
-      req.file.originalname,
+      uniqueFileName,
       'profile-images'
     );
 
