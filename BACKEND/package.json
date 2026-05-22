@@ -13,6 +13,8 @@
     "heroku-postbuild": "NPM_CONFIG_PRODUCTION=false npm install --prefix ../FRONTEND/client && npm run build --prefix ../FRONTEND/client"
   },
   "dependencies": {
+    "@sentry/browser": "^7.120.3",
+    "@sentry/tracing": "^7.120.3",
     "bcrypt": "^6.0.0",
     "bcryptjs": "^3.0.2",
     "compression": "^1.8.0",
