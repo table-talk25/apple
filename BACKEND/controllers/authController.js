@@ -1,3 +1,4 @@
+```javascript
 // File: /BACKEND/controllers/authController.js (Versione Finale, Completa e Corretta)
 
 const crypto = require('crypto');
@@ -441,50 +442,4 @@ exports.verifyResetToken = asyncHandler(async (req, res, next) => {
 
 /**
  * @desc    Ottiene statistiche sui reset password (solo admin)
- * @route   GET /api/auth/password-reset-stats
- * @access  Private (Admin)
- */
-exports.getPasswordResetStats = asyncHandler(async (req, res, next) => {
-    try {
-        const stats = await passwordResetService.getResetStats();
-        
-        if (stats.success) {
-            res.status(200).json({
-                success: true,
-                message: 'Statistiche reset password recuperate con successo',
-                stats: stats.stats
-            });
-        } else {
-            return next(new ErrorResponse(stats.message, 500));
-        }
-        
-    } catch (error) {
-        console.error(`❌ [AuthController] Errore nel recupero statistiche reset:`, error);
-        return next(new ErrorResponse('Errore nel recupero statistiche reset password', 500));
-    }
-});
-
-/**
- * @desc    Pulisce token di reset password scaduti (solo admin)
- * @route   POST /api/auth/cleanup-expired-reset-tokens
- * @access  Private (Admin)
- */
-exports.cleanupExpiredResetTokens = asyncHandler(async (req, res, next) => {
-    try {
-        const result = await passwordResetService.cleanupExpiredTokens();
-        
-        if (result.success) {
-            res.status(200).json({
-                success: true,
-                message: result.message,
-                cleanedCount: result.cleanedCount
-            });
-        } else {
-            return next(new ErrorResponse(result.message, 500));
-        }
-        
-    } catch (error) {
-        console.error(`❌ [AuthController] Errore nella pulizia token reset:`, error);
-        return next(new ErrorResponse('Errore nella pulizia token reset scaduti', 500));
-    }
-});
+ * @route   GET /api/auth/password-reset
