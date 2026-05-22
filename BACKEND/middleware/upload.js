@@ -73,11 +73,11 @@ ensureExists('uploads/');
 ensureExists('uploads/profile-images/');
 ensureExists('uploads/meal-images/');
 
-// Esportiamo middleware per diversi tipi di upload
-module.exports = multer({
+// ✅ FIX: Middleware generico per upload (limite 5MB)
+const upload = multer({
   storage: storage,
   limits: {
-    fileSize: 10 * 1024 * 1024, // 10MB per i file
+    fileSize: 5 * 1024 * 1024, // 5MB per i file
     fieldSize: 2 * 1024 * 1024, // 2MB per i campi (per gestire location JSON e altri dati)
     fields: 50, // Numero massimo di campi non-file
     fieldNameSize: 100 // Lunghezza massima del nome del campo
@@ -86,16 +86,16 @@ module.exports = multer({
 });
 
 // ✅ NUOVO: Middleware per meal uploads (usa memoryStorage per Firebase)
-module.exports.mealUpload = multer({
+const mealUpload = multer({
   storage: memoryStorage,
   limits: {
-    fileSize: 10 * 1024 * 1024 // 10MB per le immagini
+    fileSize: 5 * 1024 * 1024 // 5MB per le immagini
   },
   fileFilter: fileFilter
 });
 
-// ✅ FIX: Middleware specifico per upload avatar (campo 'avatar')
-module.exports.avatarUpload = multer({
+// ✅ FIX: Middleware specifico per upload avatar/profilePicture (campo 'profilePicture')
+const avatarUpload = multer({
   storage: storage,
   limits: {
     fileSize: 5 * 1024 * 1024, // 5MB per avatar
@@ -104,4 +104,9 @@ module.exports.avatarUpload = multer({
     fieldNameSize: 100
   },
   fileFilter: fileFilter
-}).single('avatar');
+}).single('profilePicture');
+
+// Esportiamo i middleware
+module.exports = upload;
+module.exports.mealUpload = mealUpload;
+module.exports.avatarUpload = avatarUpload;
