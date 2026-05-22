@@ -3,7 +3,11 @@ import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { FaCamera, FaUtensils } from 'react-icons/fa';
 import profileService from '../../../services/profileService';
+import { API_URL } from '../../../config/capacitorConfig';
 import styles from './ProfileHeader.module.css';
+
+// URL statico del default avatar — calcolato una volta sola, mai in loop
+const DEFAULT_AVATAR_URL = `${(API_URL || '').replace(/\/api\/?$/, '')}/uploads/profile-images/default-avatar.jpg`;
 
 const ProfileHeader = ({ profile, onUpdateImage, isPublicView = false }) => {
   const { t } = useTranslation();
@@ -23,9 +27,7 @@ const ProfileHeader = ({ profile, onUpdateImage, isPublicView = false }) => {
       formData.append('avatar', file);
       if (onUpdateImage) {
         await onUpdateImage(formData);
-        // Forza il refresh dell'immagine dopo l'upload
         console.log('✅ [ProfileHeader] Immagine caricata, forzando refresh...');
-        // Il componente si ri-renderizzerà automaticamente quando il profilo viene aggiornato
       }
     } catch (error) {
       console.error('Errore durante l\'upload:', error);
@@ -35,8 +37,6 @@ const ProfileHeader = ({ profile, onUpdateImage, isPublicView = false }) => {
   };
 
   const imageUrl = profileService.getFullImageUrl(profile.profileImage);
-  console.log('🖼️ [ProfileHeader] Profile image URL:', imageUrl);
-  console.log('🖼️ [ProfileHeader] Profile image field:', profile.profileImage);
 
   return (
     <div className={styles.profileHeader}>
@@ -45,14 +45,13 @@ const ProfileHeader = ({ profile, onUpdateImage, isPublicView = false }) => {
           src={imageUrl} 
           alt={t('profile.header.avatarAlt')} 
           className={styles.profileImage} 
-          key={profile.profileImage} // Forza il re-render quando cambia l'immagine
-          onError={(e) => { 
-            console.log('❌ Errore caricamento immagine profilo in ProfileHeader:', e);
-            try {
-              const fallback = profileService.getFullImageUrl('uploads/profile-images/default-avatar.jpg');
-              e.target.src = fallback;
-            } catch (_) {}
-          }} 
+          key={profile.profileImage}
+          onError={(e) => {
+            // Evita loop infinito: se src è già il default, non fare nulla
+            if (e.target.src === DEFAULT_AVATAR_URL) return;
+            e.target.onerror = null; // disabilita ulteriori onError
+            e.target.src = DEFAULT_AVATAR_URL;
+          }}
         />
         {!isPublicView && (
           <label htmlFor="image-upload" className={`${styles.cameraButton} ${isUploading ? styles.disabled : ''}`}>
