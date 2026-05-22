@@ -5,16 +5,16 @@ import { initializeApp, getApps } from 'firebase/app';
 import { getMessaging, getToken, onMessage } from 'firebase/messaging';
 
 const firebaseConfig = {
-  apiKey: process.env.REACT_APP_FIREBASE_API_KEY || "AIzaSyD_PLACEHOLDER_REPLACE_WITH_REAL_KEY",
+  apiKey: "AIzaSyDUg6z8K-Sj-ZIQACwVW_nP1zNWXT-XgBk",
   authDomain: "tabletalk-social.firebaseapp.com",
   projectId: "tabletalk-social",
-  storageBucket: "tabletalk-social.appspot.com",
+  storageBucket: "tabletalk-social.firebasestorage.app",
   messagingSenderId: "925236799140",
-  appId: process.env.REACT_APP_FIREBASE_APP_ID || "1:925236799140:web:PLACEHOLDER_REPLACE_WITH_REAL_WEB_APP_ID"
+  appId: "1:925236799140:web:5391fc492e434d2bdf6831",
+  measurementId: "G-T8C8F5LH5D"
 };
 
-// VAPID key dalla Firebase Console → Project Settings → Cloud Messaging → Web Push certificates
-const VAPID_KEY = process.env.REACT_APP_FIREBASE_VAPID_KEY || null;
+const VAPID_KEY = "BDnhtGk3w-mCNlgAjE1BXLFG4RCPpT-tfKvnUS-4m0vvaHl5qyBM67f82P6bdL3CNW2PBA4Sf_vaAbtB-bYyBYE";
 
 let messagingInstance = null;
 
@@ -49,13 +49,11 @@ export function getFirebaseMessaging() {
  */
 export async function requestWebPushPermission() {
   try {
-    // 1. Verifica supporto browser
     if (!('Notification' in window)) {
       console.warn('[webPushService] Notifiche non supportate in questo browser.');
       return null;
     }
 
-    // 2. Chiedi permesso se non già concesso
     if (Notification.permission === 'denied') {
       console.warn('[webPushService] Permesso notifiche negato dall\'utente.');
       return null;
@@ -69,18 +67,11 @@ export async function requestWebPushPermission() {
       }
     }
 
-    // 3. Registra il Service Worker
     const swReg = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
     console.log('[webPushService] Service Worker registrato:', swReg);
 
-    // 4. Ottieni il token FCM
     const messaging = getFirebaseMessaging();
     if (!messaging) return null;
-
-    if (!VAPID_KEY) {
-      console.error('[webPushService] REACT_APP_FIREBASE_VAPID_KEY non configurata. Imposta la variabile d\'ambiente.');
-      return null;
-    }
 
     const token = await getToken(messaging, {
       vapidKey: VAPID_KEY,
@@ -91,7 +82,7 @@ export async function requestWebPushPermission() {
       console.log('[webPushService] Token FCM web ottenuto:', token);
       return token;
     } else {
-      console.warn('[webPushService] Nessun token FCM ottenuto (permessi o VAPID errati?).');
+      console.warn('[webPushService] Nessun token FCM ottenuto.');
       return null;
     }
   } catch (err) {

@@ -5,12 +5,13 @@ importScripts('https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js
 importScripts('https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging-compat.js');
 
 firebase.initializeApp({
-  apiKey: "AIzaSyD_PLACEHOLDER_REPLACE_WITH_REAL_KEY",
+  apiKey: "AIzaSyDUg6z8K-Sj-ZIQACwVW_nP1zNWXT-XgBk",
   authDomain: "tabletalk-social.firebaseapp.com",
   projectId: "tabletalk-social",
-  storageBucket: "tabletalk-social.appspot.com",
+  storageBucket: "tabletalk-social.firebasestorage.app",
   messagingSenderId: "925236799140",
-  appId: "1:925236799140:web:PLACEHOLDER_REPLACE_WITH_REAL_WEB_APP_ID"
+  appId: "1:925236799140:web:5391fc492e434d2bdf6831",
+  measurementId: "G-T8C8F5LH5D"
 });
 
 const messaging = firebase.messaging();
@@ -50,7 +51,6 @@ self.addEventListener('notificationclick', (event) => {
 
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
-      // Se l'app è già aperta, portala in focus
       for (const client of clientList) {
         if (client.url.includes(self.location.origin) && 'focus' in client) {
           client.focus();
@@ -58,7 +58,6 @@ self.addEventListener('notificationclick', (event) => {
           return;
         }
       }
-      // Altrimenti apri una nuova finestra
       if (clients.openWindow) {
         return clients.openWindow(targetUrl);
       }
