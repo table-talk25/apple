@@ -8,21 +8,40 @@
 // Quando l'utente verifica l'email in altro browser/tab e torna qui,
 // AuthContext rinfresca lo state → user.isEmailVerified diventa true
 // → questo banner si nasconde automaticamente al prossimo render.
+//
+// ✅ FIX: dismissed è ora persistito in localStorage per-user.
+// Non riappare più al reload o cambio pagina.
 
 import React, { useState } from 'react';
 import { useAuth } from '../../../contexts/AuthContext';
 import { resendVerification } from '../../../services/authService';
 import { toast } from 'react-toastify';
 
+const STORAGE_KEY_PREFIX = 'emailBannerDismissed_';
+
 const EmailVerificationBanner = () => {
   const { user, isAuthenticated } = useAuth();
+
+  // Leggiamo dismissed da localStorage in modo lazy (per-user, resettato se email cambia)
+  const storageKey = user?.email ? `${STORAGE_KEY_PREFIX}${user.email}` : null;
+  const [dismissed, setDismissed] = useState(() => {
+    if (!storageKey) return false;
+    try { return localStorage.getItem(storageKey) === 'true'; } catch (_) { return false; }
+  });
+
   const [sending, setSending] = useState(false);
-  const [dismissed, setDismissed] = useState(false);
 
   // Mostra il banner solo quando lo stato è esplicitamente "non verificato" (mai su undefined mentre carica)
   if (!isAuthenticated || !user) return null;
   if (user.isEmailVerified !== false) return null;
   if (dismissed) return null;
+
+  const handleDismiss = () => {
+    setDismissed(true);
+    if (storageKey) {
+      try { localStorage.setItem(storageKey, 'true'); } catch (_) {}
+    }
+  };
 
   const handleResend = async () => {
     if (!user.email) return;
@@ -57,7 +76,7 @@ const EmailVerificationBanner = () => {
         <button
           type="button"
           aria-label="Chiudi"
-          onClick={() => setDismissed(true)}
+          onClick={handleDismiss}
           style={styles.closeBtn}
         >
           ×
@@ -69,15 +88,12 @@ const EmailVerificationBanner = () => {
 
 const styles = {
   bar: {
-    // Il banner sta DENTRO mainContent (vedi Layout/index.js): è già protetto
-    // dalla Navbar fixed, ma mainContent ha `align-items: center` quindi forziamo
-    // la larghezza piena con `alignSelf: stretch` + width 100%.
     alignSelf: 'stretch',
     width: '100%',
     background: '#fff7e0',
     color: '#5b4a00',
     border: '1px solid #ffe28a',
-    borderRadius: '0', // tagliato dai bordi della pagina, sembra una "barra di sistema"
+    borderRadius: '0',
     borderLeft: 'none',
     borderRight: 'none',
     padding: '10px 16px',
