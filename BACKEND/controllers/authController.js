@@ -186,7 +186,7 @@ exports.forgotPassword = asyncHandler(async (req, res, next) => {
         return next(new ErrorResponse('Email richiesta', 400));
     }
     
-    console.log(`🔑 [AuthController] Richiesta reset password per: ${email}`);
+    console.log('🔑 [AuthController] Richiesta reset password per:', email);
     
     try {
         const result = await passwordResetService.sendPasswordResetEmail(email);
