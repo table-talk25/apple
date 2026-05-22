@@ -20,9 +20,7 @@ function toSafeUserPayload(user) {
     role: user.role,
     nickname: user.nickname,
     profileImage: user.profileImage,
-    /** Sempre boolean esplicito (coerente con GET /auth/me e Preferences). */
     profileCompleted: Boolean(user.profileCompleted),
-    /** Sempre boolean esplicito per il frontend (evita undefined -> banner errato). */
     isEmailVerified: Boolean(user.isEmailVerified),
   };
 }
@@ -44,21 +42,14 @@ exports.register = asyncHandler(async (req, res, next) => {
     console.log('\n--- TENTATIVO DI REGISTRAZIONE RICEVUTO ---');
     console.log('Dati ricevuti per la registrazione:', { name, surname, email, dateOfBirth, terms });
 
-    // GDPR: il consenso a Termini e Privacy deve essere esplicito (checkbox spuntato).
     if (!terms) {
       return next(new ErrorResponse('Devi accettare termini e privacy per registrarti', 400));
     }
 
-    // Lasciamo che sia il nostro errorHandler (con la regola per il codice 11000)
-    // a gestire il caso dell'email duplicata per dare un messaggio specifico.
-
-    // Passiamo la password in chiaro. Il modello User.js si occuperà di criptarla
-    // UNA SOLA VOLTA prima di salvare, grazie al middleware pre-save.
     const now = new Date();
     const clientIp = req.ip || req.headers['x-forwarded-for'] || req.connection?.remoteAddress;
     const user = await User.create({
       name, surname, email, password, dateOfBirth,
-      // GDPR: registriamo timestamp del consenso a Termini e Privacy
       termsAcceptedAt: now,
       privacyAcceptedAt: now,
       registrationIp: clientIp,
@@ -70,10 +61,8 @@ exports.register = asyncHandler(async (req, res, next) => {
     
     await user.checkProfileCompletion();
 
-    // Genera il token JWT per l'autenticazione
     const token = user.generateAuthToken();
     
-    // Email di verifica in BACKGROUND (fire-and-forget).
     emailVerificationService.sendVerificationEmail(user)
       .then(verificationResult => {
         if (!verificationResult || !verificationResult.success) {
@@ -87,7 +76,7 @@ exports.register = asyncHandler(async (req, res, next) => {
         console.error('[AuthController] Errore invio email verifica:', err.message);
       });
     console.timeEnd('Tempo Registrazione');
-    // Creo un oggetto con solo i dati essenziali per il frontend
+
     const userInfo = {
       _id: user._id,
       name: user.name,
@@ -166,7 +155,6 @@ exports.logout = asyncHandler(async (req, res, next) => {
 /**
  * @desc    Invia email per il reset della password
  * @route   POST /api/auth/forgot-password
- * @access  Public
  */
 exports.forgotPassword = asyncHandler(async (req, res, next) => {
     const { email } = req.body;
@@ -182,33 +170,24 @@ exports.forgotPassword = asyncHandler(async (req, res, next) => {
         
         if (result.success) {
             console.log('[AuthController] Email reset inviata a:', email);
-            
-            res.status(200).json({
-                success: true,
-                message: result.message,
-                email: email
-            });
+            res.status(200).json({ success: true, message: result.message, email });
         } else {
             console.log('[AuthController] Reset password fallito:', result.message);
-            
             if (result.code === 'COOLDOWN_ACTIVE') {
                 return next(new ErrorResponse(result.message, 429, null, 'COOLDOWN_ACTIVE'));
             } else {
                 return next(new ErrorResponse(result.message, 500));
             }
         }
-        
     } catch (error) {
         console.error('[AuthController] Errore nel reset password:', error);
         return next(new ErrorResponse('Errore nell\'invio email di reset', 500));
     }
 });
 
-
 /**
  * @desc    Resetta la password usando un token
  * @route   POST /api/auth/reset-password
- * @access  Public
  */
 exports.resetPassword = asyncHandler(async (req, res, next) => {
     const { token, newPassword } = req.body;
@@ -228,19 +207,11 @@ exports.resetPassword = asyncHandler(async (req, res, next) => {
         
         if (result.success) {
             console.log('[AuthController] Password resettata con successo per utente:', result.userId);
-            
-            res.status(200).json({
-                success: true,
-                message: result.message,
-                userId: result.userId,
-                email: result.email
-            });
+            res.status(200).json({ success: true, message: result.message, userId: result.userId, email: result.email });
         } else {
             console.log('[AuthController] Reset password fallito:', result.message);
-            
             return next(new ErrorResponse(result.message, 400, null, result.code));
         }
-        
     } catch (error) {
         console.error('[AuthController] Errore nel reset password:', error);
         return next(new ErrorResponse('Errore nel reset della password', 500));
@@ -250,7 +221,6 @@ exports.resetPassword = asyncHandler(async (req, res, next) => {
 /**
  * @desc    Verifica l'email di un utente
  * @route   GET /api/auth/verify-email
- * @access  Public
  */
 exports.verifyEmail = asyncHandler(async (req, res, next) => {
     const { token } = req.query;
@@ -266,10 +236,8 @@ exports.verifyEmail = asyncHandler(async (req, res, next) => {
 
         if (verificationResult.success) {
             console.log('[AuthController] Email verificata con successo per utente:', verificationResult.userId);
-
             const userDoc = await User.findById(verificationResult.userId);
             const authToken = userDoc ? userDoc.generateAuthToken() : undefined;
-
             res.status(200).json({
                 success: true,
                 message: 'Email verificata con successo! Ora puoi accedere a tutte le funzionalita di TableTalk.',
@@ -278,10 +246,8 @@ exports.verifyEmail = asyncHandler(async (req, res, next) => {
             });
         } else {
             console.log('[AuthController] Verifica email fallita:', verificationResult.message);
-            
             return next(new ErrorResponse(verificationResult.message, 400, null, verificationResult.code));
         }
-        
     } catch (error) {
         console.error('[AuthController] Errore nella verifica email:', error);
         return next(new ErrorResponse('Errore nella verifica dell\'email', 500));
@@ -291,7 +257,6 @@ exports.verifyEmail = asyncHandler(async (req, res, next) => {
 /**
  * @desc    Reinvia l'email di verifica
  * @route   POST /api/auth/resend-verification
- * @access  Public
  */
 exports.resendVerification = asyncHandler(async (req, res, next) => {
     const { email } = req.body;
@@ -307,28 +272,22 @@ exports.resendVerification = asyncHandler(async (req, res, next) => {
         
         if (result.success) {
             console.log('[AuthController] Email verifica reinviata a:', email);
-            
             res.status(200).json({
                 success: true,
                 message: 'Nuova email di verifica inviata. Controlla la tua casella di posta.',
-                email: email,
+                email,
                 tokenExpires: result.tokenExpires
             });
         } else {
             console.log('[AuthController] Rinvio verifica fallito:', result.message);
-            
             if (result.code === 'USER_NOT_FOUND' || result.code === 'ALREADY_VERIFIED') {
-                return res.status(200).json({
-                    success: true,
-                    message: 'Se l\'email e registrata, riceverai un link di verifica.'
-                });
+                return res.status(200).json({ success: true, message: 'Se l\'email e registrata, riceverai un link di verifica.' });
             } else if (result.code === 'COOLDOWN_ACTIVE') {
                 return next(new ErrorResponse(result.message, 429, null, 'COOLDOWN_ACTIVE'));
             } else {
                 return next(new ErrorResponse(result.message, 500));
             }
         }
-        
     } catch (error) {
         console.error('[AuthController] Errore nel riinvio verifica:', error);
         return next(new ErrorResponse('Errore nel riinvio dell\'email di verifica', 500));
@@ -338,22 +297,15 @@ exports.resendVerification = asyncHandler(async (req, res, next) => {
 /**
  * @desc    Ottiene statistiche sulla verifica email (solo admin)
  * @route   GET /api/auth/verification-stats
- * @access  Private (Admin)
  */
 exports.getVerificationStats = asyncHandler(async (req, res, next) => {
     try {
         const stats = await emailVerificationService.getVerificationStats();
-        
         if (stats.success) {
-            res.status(200).json({
-                success: true,
-                message: 'Statistiche verifica email recuperate con successo',
-                stats: stats.stats
-            });
+            res.status(200).json({ success: true, message: 'Statistiche verifica email recuperate con successo', stats: stats.stats });
         } else {
             return next(new ErrorResponse(stats.message, 500));
         }
-        
     } catch (error) {
         console.error('[AuthController] Errore nel recupero statistiche verifica:', error);
         return next(new ErrorResponse('Errore nel recupero statistiche verifica', 500));
@@ -363,22 +315,15 @@ exports.getVerificationStats = asyncHandler(async (req, res, next) => {
 /**
  * @desc    Pulisce token di verifica scaduti (solo admin)
  * @route   POST /api/auth/cleanup-expired-tokens
- * @access  Private (Admin)
  */
 exports.cleanupExpiredTokens = asyncHandler(async (req, res, next) => {
     try {
         const result = await emailVerificationService.cleanupExpiredTokens();
-        
         if (result.success) {
-            res.status(200).json({
-                success: true,
-                message: result.message,
-                cleanedCount: result.cleanedCount
-            });
+            res.status(200).json({ success: true, message: result.message, cleanedCount: result.cleanedCount });
         } else {
             return next(new ErrorResponse(result.message, 500));
         }
-        
     } catch (error) {
         console.error('[AuthController] Errore nella pulizia token:', error);
         return next(new ErrorResponse('Errore nella pulizia token scaduti', 500));
@@ -388,7 +333,6 @@ exports.cleanupExpiredTokens = asyncHandler(async (req, res, next) => {
 /**
  * @desc    Verifica un token di reset password
  * @route   GET /api/auth/verify-reset-token
- * @access  Public
  */
 exports.verifyResetToken = asyncHandler(async (req, res, next) => {
     const { token } = req.query;
@@ -401,23 +345,51 @@ exports.verifyResetToken = asyncHandler(async (req, res, next) => {
     
     try {
         const result = await passwordResetService.verifyResetToken(token);
-        
         if (result.success) {
             console.log('[AuthController] Token reset valido per utente:', result.userId);
-            
-            res.status(200).json({
-                success: true,
-                message: result.message,
-                user: result.user
-            });
+            res.status(200).json({ success: true, message: result.message, user: result.user });
         } else {
             console.log('[AuthController] Token reset non valido:', result.message);
-            
             return next(new ErrorResponse(result.message, 400, null, result.code));
         }
-        
     } catch (error) {
         console.error('[AuthController] Errore nella verifica token reset:', error);
         return next(new ErrorResponse('Errore nella verifica del token', 500));
+    }
+});
+
+/**
+ * @desc    Ottiene statistiche sui reset password (solo admin)
+ * @route   GET /api/auth/password-reset-stats
+ */
+exports.getPasswordResetStats = asyncHandler(async (req, res, next) => {
+    try {
+        const stats = await passwordResetService.getPasswordResetStats();
+        if (stats.success) {
+            res.status(200).json({ success: true, message: 'Statistiche reset password recuperate con successo', stats: stats.stats });
+        } else {
+            return next(new ErrorResponse(stats.message, 500));
+        }
+    } catch (error) {
+        console.error('[AuthController] Errore nel recupero statistiche reset:', error);
+        return next(new ErrorResponse('Errore nel recupero statistiche reset password', 500));
+    }
+});
+
+/**
+ * @desc    Pulisce token di reset scaduti (solo admin)
+ * @route   POST /api/auth/cleanup-expired-reset-tokens
+ */
+exports.cleanupExpiredResetTokens = asyncHandler(async (req, res, next) => {
+    try {
+        const result = await passwordResetService.cleanupExpiredResetTokens();
+        if (result.success) {
+            res.status(200).json({ success: true, message: result.message, cleanedCount: result.cleanedCount });
+        } else {
+            return next(new ErrorResponse(result.message, 500));
+        }
+    } catch (error) {
+        console.error('[AuthController] Errore nella pulizia token reset:', error);
+        return next(new ErrorResponse('Errore nella pulizia token reset scaduti', 500));
     }
 });
