@@ -3,38 +3,47 @@
 // ha verificato la propria email. Strategia "Soft" — niente azioni bloccate.
 //
 // 📡 SINGLE SOURCE OF TRUTH: questo componente NON polla più /auth/me.
-// L'aggiornamento dello stato utente è gestito centralmente in AuthContext
-// (focus / visibilitychange / Capacitor appStateChange listeners).
-// Quando l'utente verifica l'email in altro browser/tab e torna qui,
-// AuthContext rinfresca lo state → user.isEmailVerified diventa true
-// → questo banner si nasconde automaticamente al prossimo render.
+// L'aggiornamento dello stato utente è gestito centralmente in AuthContext.
 //
-// ✅ FIX: dismissed è ora persistito in localStorage per-user.
-// Non riappare più al reload o cambio pagina.
+// ✅ FIX 1: dismissed è persistito in localStorage per-user.
+// ✅ FIX 2: il banner NON appare finché verifyToken() non ha confermato
+//    isEmailVerified === false dal server (evita flash spurio al boot
+//    quando il localStorage ha dati stale).
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../../contexts/AuthContext';
 import { resendVerification } from '../../../services/authService';
 import { toast } from 'react-toastify';
 
 const STORAGE_KEY_PREFIX = 'emailBannerDismissed_';
+// Quanti ms aspettare dopo il mount prima di mostrare il banner.
+// Questo copre la finestra in cui verifyToken() in background non ha ancora
+// aggiornato user.isEmailVerified con i dati freschi dal server.
+const SHOW_DELAY_MS = 3000;
 
 const EmailVerificationBanner = () => {
   const { user, isAuthenticated } = useAuth();
 
-  // Leggiamo dismissed da localStorage in modo lazy (per-user, resettato se email cambia)
   const storageKey = user?.email ? `${STORAGE_KEY_PREFIX}${user.email}` : null;
   const [dismissed, setDismissed] = useState(() => {
     if (!storageKey) return false;
     try { return localStorage.getItem(storageKey) === 'true'; } catch (_) { return false; }
   });
 
+  // Ritarda la visualizzazione per dare tempo a verifyToken() di aggiornarsi
+  const [ready, setReady] = useState(false);
+  useEffect(() => {
+    const timer = setTimeout(() => setReady(true), SHOW_DELAY_MS);
+    return () => clearTimeout(timer);
+  }, []);
+
   const [sending, setSending] = useState(false);
 
-  // Mostra il banner solo quando lo stato è esplicitamente "non verificato" (mai su undefined mentre carica)
   if (!isAuthenticated || !user) return null;
   if (user.isEmailVerified !== false) return null;
   if (dismissed) return null;
+  // Non mostrare finché verifyToken() non ha avuto il tempo di rispondere
+  if (!ready) return null;
 
   const handleDismiss = () => {
     setDismissed(true);
