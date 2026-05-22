@@ -2,6 +2,8 @@
 
 const asyncHandler = require('express-async-handler');
 const Meal = require('../models/Meal');
+const User = require('../models/User');
+const admin = require('firebase-admin');
 
 /**
  * @desc    Ottenere le notifiche per l'utente loggato
@@ -53,3 +55,74 @@ exports.markNotificationsAsRead = asyncHandler(async (req, res, next) => {
 
     res.status(200).json({ success: true, message: 'Notifiche segnate come lette' });
 });
+
+/**
+ * @desc    Salvare il token FCM per l'utente
+ * @route   POST /api/notifications/fcm-token
+ */
+exports.saveFcmToken = asyncHandler(async (req, res, next) => {
+  const { token } = req.body;
+
+  if (!token) {
+    return res.status(400).json({
+      success: false,
+      message: 'Token FCM richiesto'
+    });
+  }
+
+  // Salva il token FCM per l'utente
+  await User.findByIdAndUpdate(req.user.id, { fcmToken: token });
+
+  res.status(200).json({
+    success: true,
+    message: 'Token FCM salvato con successo'
+  });
+});
+
+/**
+ * @desc    Inviare una notifica push a un utente specifico
+ * @param   {string} userId - ID dell'utente destinatario
+ * @param   {string} title - Titolo della notifica
+ * @param   {string} body - Corpo della notifica
+ * @param   {object} data - Dati aggiuntivi (opzionale)
+ */
+exports.sendPushNotification = async (userId, title, body, data = {}) => {
+  try {
+    // Recupera l'utente e il suo token FCM
+    const user = await User.findById(userId).select('fcmToken');
+    
+    if (!user || !user.fcmToken) {
+      console.log(`Nessun token FCM trovato per l'utente ${userId}`);
+      return false;
+    }
+
+    const message = {
+      notification: {
+        title,
+        body
+      },
+      data: {
+        ...data,
+        click_action: 'FLUTTER_NOTIFICATION_CLICK'
+      },
+      token: user.fcmToken
+    };
+
+    // Invia la notifica tramite Firebase Admin SDK
+    const response = await admin.messaging().send(message);
+    console.log(`Notifica inviata con successo a ${userId}:`, response);
+    return true;
+
+  } catch (error) {
+    console.error(`Errore nell'invio della notifica a ${userId}:`, error);
+    
+    // Se il token non è più valido, rimuovilo dal database
+    if (error.code === 'messaging/invalid-registration-token' || 
+        error.code === 'messaging/registration-token-not-registered') {
+      await User.findByIdAndUpdate(userId, { fcmToken: null });
+      console.log(`Token FCM rimosso per l'utente ${userId} (non più valido)`);
+    }
+    
+    return false;
+  }
+};
