@@ -68,6 +68,11 @@ const fileFilter = (req, file, cb) => {
 // ✅ NUOVO: Configurazione memoryStorage per meal images (Firebase)
 const memoryStorage = multer.memoryStorage();
 
+// ✅ FIX: Assicuriamoci che la directory principale 'uploads/' esista
+ensureExists('uploads/');
+ensureExists('uploads/profile-images/');
+ensureExists('uploads/meal-images/');
+
 // Esportiamo middleware per diversi tipi di upload
 module.exports = multer({
   storage: storage,
@@ -88,3 +93,15 @@ module.exports.mealUpload = multer({
   },
   fileFilter: fileFilter
 });
+
+// ✅ FIX: Middleware specifico per upload avatar (campo 'avatar')
+module.exports.avatarUpload = multer({
+  storage: storage,
+  limits: {
+    fileSize: 5 * 1024 * 1024, // 5MB per avatar
+    fieldSize: 2 * 1024 * 1024,
+    fields: 50,
+    fieldNameSize: 100
+  },
+  fileFilter: fileFilter
+}).single('avatar');
