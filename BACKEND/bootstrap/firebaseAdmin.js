@@ -5,6 +5,8 @@ const path = require('path');
 const fs = require('fs');
 const admin = require('firebase-admin');
 
+const FIREBASE_PROJECT_ID = 'tabletalk-social';
+
 function initFirebaseAdmin() {
   let serviceAccount = null;
   let firebaseInitialized = false;
@@ -22,14 +24,14 @@ function initFirebaseAdmin() {
       }
 
       serviceAccount = JSON.parse(jsonString);
-      console.log("📦 Firebase: Credenziali caricate da variabile d'ambiente FIREBASE_SERVICE_ACCOUNT_JSON");
-      console.log('📦 Firebase: Project ID:', serviceAccount.project_id);
-      console.log('📦 Firebase: Client Email:', serviceAccount.client_email);
+      console.log('[Firebase] Credenziali caricate da FIREBASE_SERVICE_ACCOUNT_JSON');
+      console.log('[Firebase] Project ID:', serviceAccount.project_id);
+      console.log('[Firebase] Client Email:', serviceAccount.client_email);
       firebaseInitialized = true;
     } catch (parseError) {
-      console.error('❌ Errore nel parsing di FIREBASE_SERVICE_ACCOUNT_JSON:', parseError.message);
+      console.error('[Firebase] Errore nel parsing di FIREBASE_SERVICE_ACCOUNT_JSON:', parseError.message);
       console.error(
-        '❌ JSON ricevuto (primi 200 caratteri):',
+        '[Firebase] JSON ricevuto (primi 200 caratteri):',
         process.env.FIREBASE_SERVICE_ACCOUNT_JSON.substring(0, 200)
       );
     }
@@ -56,7 +58,7 @@ function initFirebaseAdmin() {
       )}`,
       universe_domain: 'googleapis.com',
     };
-    console.log("📦 Firebase: Credenziali caricate da variabili d'ambiente separate");
+    console.log('[Firebase] Credenziali caricate da variabili ambiente separate');
     firebaseInitialized = true;
   }
 
@@ -69,14 +71,14 @@ function initFirebaseAdmin() {
         serviceAccount = JSON.parse(fileContent);
 
         if (serviceAccount.private_key_id === 'TEMP_KEY_ID_FOR_DEPLOY') {
-          console.log('⚠️  File Firebase temporaneo rilevato');
+          console.log('[Firebase] File Firebase temporaneo rilevato, ignorato');
           serviceAccount = null;
         } else {
-          console.log('📦 Firebase: Credenziali caricate da file firebase-service-account.json');
+          console.log('[Firebase] Credenziali caricate da firebase-service-account.json');
           firebaseInitialized = true;
         }
       } catch (fileError) {
-        console.error('❌ Errore nel caricamento del file Firebase:', fileError.message);
+        console.error('[Firebase] Errore nel caricamento del file:', fileError.message);
         serviceAccount = null;
       }
     }
@@ -86,42 +88,42 @@ function initFirebaseAdmin() {
     try {
       admin.initializeApp({
         credential: admin.credential.cert(serviceAccount),
-        projectId: serviceAccount.project_id || process.env.FIREBASE_PROJECT_ID || 'tabletalk-social',
+        projectId: serviceAccount.project_id || process.env.FIREBASE_PROJECT_ID || FIREBASE_PROJECT_ID,
       });
-      console.log('✅ Firebase Admin SDK inizializzato correttamente - Notifiche push ABILITATE');
+      console.log('[Firebase] Admin SDK inizializzato correttamente - Notifiche push ABILITATE');
     } catch (initError) {
-      console.error("❌ Errore nell'inizializzazione Firebase con credenziali:", initError.message);
+      console.error('[Firebase] Errore inizializzazione con credenziali:', initError.message);
       throw initError;
     }
   } else {
-    console.log('⚠️  Firebase: Nessuna credenziale trovata (né da env né da file)');
-    console.log('⚠️  Firebase Admin SDK non configurato. Le notifiche push NON funzioneranno.');
-    console.log('💡 Per abilitare le notifiche push:');
-    console.log('   1. Su Render: Aggiungi variabile FIREBASE_SERVICE_ACCOUNT_JSON con il JSON completo');
-    console.log('   2. Oppure: Aggiungi FIREBASE_PRIVATE_KEY, FIREBASE_CLIENT_EMAIL, FIREBASE_PROJECT_ID');
-    console.log('   3. In locale: Aggiungi il file firebase-service-account.json nella cartella BACKEND');
+    console.log('[Firebase] Nessuna credenziale trovata (ne da env ne da file)');
+    console.log('[Firebase] Admin SDK non configurato. Le notifiche push NON funzioneranno.');
+    console.log('[Firebase] Per abilitare le notifiche push:');
+    console.log('   1. Su Qlify: aggiungi FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, FIREBASE_PRIVATE_KEY');
+    console.log('   2. Oppure: aggiungi FIREBASE_SERVICE_ACCOUNT_JSON con il JSON completo');
+    console.log('   3. In locale: aggiungi firebase-service-account.json nella cartella BACKEND');
 
     admin.initializeApp({
-      projectId: process.env.FIREBASE_PROJECT_ID || 'tabletalk-social',
+      projectId: process.env.FIREBASE_PROJECT_ID || FIREBASE_PROJECT_ID,
     });
-    console.log('✅ Firebase Admin SDK inizializzato in modalità limitata (senza notifiche push)');
+    console.log('[Firebase] Admin SDK inizializzato in modalita limitata (senza notifiche push)');
   }
 }
 
 try {
   initFirebaseAdmin();
 } catch (error) {
-  console.error("❌ Errore nell'inizializzazione di Firebase Admin SDK:", error.message);
-  console.log('⚠️  Firebase Admin SDK non configurato. Le notifiche push non funzioneranno.');
+  console.error('[Firebase] Errore inizializzazione Admin SDK:', error.message);
+  console.log('[Firebase] Admin SDK non configurato. Le notifiche push non funzioneranno.');
 
   try {
     admin.initializeApp({
-      projectId: process.env.FIREBASE_PROJECT_ID || 'tabletalk-social',
+      projectId: process.env.FIREBASE_PROJECT_ID || FIREBASE_PROJECT_ID,
     });
-    console.log('✅ Firebase Admin SDK inizializzato in modalità limitata (fallback)');
+    console.log('[Firebase] Admin SDK inizializzato in modalita limitata (fallback)');
   } catch (fallbackError) {
-    console.error('❌ Anche il fallback Firebase è fallito:', fallbackError.message);
-    console.log("⚠️  L'app continuerà a funzionare senza notifiche push");
+    console.error('[Firebase] Anche il fallback e fallito:', fallbackError.message);
+    console.log('[Firebase] L app continuera a funzionare senza notifiche push');
   }
 }
 
