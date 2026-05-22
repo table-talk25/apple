@@ -25,7 +25,7 @@ const UserSchema = new mongoose.Schema(
 
     // --- CAMPI DEL PROFILO (Modificabili dall'utente) ---
     nickname: { type: String, unique: true, sparse: true, trim: true, minlength: 3 },
-    profileImage: { type: String, default: 'uploads/profile-images/default-avatar.jpg'  },
+    profileImage: { type: String, default: 'https://storage.googleapis.com/tabletalk-social.firebasestorage.app/profile-images/default-avatar.jpg' },
     bio: { type: String, maxlength: 500, default: '' },
     gender: { type: String, enum: ['', 'male', 'female', 'non-binary', 'other'], default: '' },
     dateOfBirth: { 
