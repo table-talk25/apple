@@ -1,6 +1,7 @@
 import React from 'react';
 import { Accordion, Badge } from 'react-bootstrap';
 import BlockUserMenu from '../common/BlockUserMenu';
+import profileService from '../../services/profileService';
 
 const PublicProfileDetail = ({ user, onInvite, onBack }) => {
   if (!user) return null;
@@ -18,9 +19,14 @@ const PublicProfileDetail = ({ user, onInvite, onBack }) => {
           <BlockUserMenu userId={user._id} reportedUser={user} />
         </div>
         <img
-          src={user.profileImage ? `/uploads/profile-images/${user.profileImage}` : '/default-avatar.jpg'}
+          src={profileService.getFullImageUrl(user.profileImage)}
           alt={user.nickname}
           style={{ width: 100, height: 100, borderRadius: '50%', objectFit: 'cover' }}
+          onError={(e) => {
+            try {
+              e.target.src = profileService.getFullImageUrl(null);
+            } catch (_) {}
+          }}
         />
         <h3>{user.nickname || user.name}</h3>
         <p>{user.bio || 'Nessuna biografia.'}</p>

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Modal, Button, Form, Alert } from 'react-bootstrap';
 import { useTranslation } from 'react-i18next';
 import { createReport } from '../../../services/apiService';
+import profileService from '../../../services/profileService';
 import styles from './ReportModal.module.css';
 
 const ReportModal = ({ show, onHide, reportedUser, context = 'general', mealId = null }) => {
@@ -84,9 +85,14 @@ const ReportModal = ({ show, onHide, reportedUser, context = 'general', mealId =
           <>
             <div className={styles.userInfo}>
               <img
-                src={reportedUser?.profileImage ? `/uploads/profile-images/${reportedUser.profileImage}` : '/default-avatar.jpg'}
+                src={profileService.getFullImageUrl(reportedUser?.profileImage)}
                 alt={reportedUser?.nickname}
                 className={styles.userAvatar}
+                onError={(e) => {
+                  try {
+                    e.target.src = profileService.getFullImageUrl(null);
+                  } catch (_) {}
+                }}
               />
               <div>
                 <h6>{reportedUser?.nickname}</h6>
@@ -146,4 +152,4 @@ const ReportModal = ({ show, onHide, reportedUser, context = 'general', mealId =
   );
 };
 
-export default ReportModal; 
+export default ReportModal;

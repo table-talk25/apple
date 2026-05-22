@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Modal, Button, Form, Alert, ListGroup } from 'react-bootstrap';
 import { FaExclamationTriangle, FaTrash, FaCheck, FaTimes } from 'react-icons/fa';
 import { useTranslation } from 'react-i18next';
+import profileService from '../../../services/profileService';
 import styles from './DeleteAccountModal.module.css';
 
 const DeleteAccountModal = ({ show, onHide, onDeleteAccount, user }) => {
@@ -85,9 +86,14 @@ const DeleteAccountModal = ({ show, onHide, onDeleteAccount, user }) => {
 
             <div className={styles.userInfo}>
               <img
-                src={user?.profileImage ? `/uploads/profile-images/${user.profileImage}` : '/default-avatar.jpg'}
+                src={profileService.getFullImageUrl(user?.profileImage)}
                 alt={user?.nickname}
                 className={styles.userAvatar}
+                onError={(e) => {
+                  try {
+                    e.target.src = profileService.getFullImageUrl(null);
+                  } catch (_) {}
+                }}
               />
               <div>
                 <h6>{user?.nickname}</h6>
@@ -190,4 +196,4 @@ const DeleteAccountModal = ({ show, onHide, onDeleteAccount, user }) => {
   );
 };
 
-export default DeleteAccountModal; 
+export default DeleteAccountModal;
