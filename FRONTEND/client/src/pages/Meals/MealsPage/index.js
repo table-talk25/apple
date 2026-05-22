@@ -215,28 +215,6 @@ const MealsPage = () => {
 
   return (
     <Container fluid className={styles.mealsPage}>
-      {/* 📧 BANNER: Ricorda di verificare email (SOFT gate) */}
-      {user && !user.isEmailVerified && (
-        <div style={{
-          background: '#fff3cd',
-          border: '1px solid #ffc107',
-          borderRadius: '8px',
-          padding: '12px 16px',
-          marginBottom: '16px',
-          marginTop: '12px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between'
-        }}>
-          <div style={{ fontSize: '0.95rem' }}>
-            <strong>📧 Verifica la tua email</strong>
-            <p style={{ margin: '4px 0 0 0', fontSize: '0.85rem', color: '#666' }}>
-              Controlla la tua casella di posta e clicca il link per completare la registrazione.
-            </p>
-          </div>
-        </div>
-      )}
-  
       <div className={styles.topBar}>
         <BackButton className={styles.backButton} />
         <h1 className={styles.pageTitle}>Esplora</h1>
