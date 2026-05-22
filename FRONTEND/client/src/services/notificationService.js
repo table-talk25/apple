@@ -1,5 +1,5 @@
 // File: src/services/notificationService.js
-// Servizio di notifiche completo con Firebase e fallback locale
+// Servizio notifiche unificato: supporta nativo (Capacitor) E web (Firebase Web SDK)
 
 import { Capacitor } from '@capacitor/core';
 
@@ -10,6 +10,7 @@ class NotificationService {
     this.initialized = false;
     this.pushToken = null;
     this.deviceId = null;
+    this._webForegroundUnsubscribe = null;
   }
 
   /**
@@ -20,39 +21,117 @@ class NotificationService {
 
     try {
       const isNative = Capacitor.isNativePlatform();
-      if (!isNative) {
-        console.log('[NotificationService] Piattaforma non nativa, notifiche disabilitate');
+
+      if (isNative) {
+        // ── PATH NATIVO (Android/iOS con Capacitor) ──
+        await this.initializeLocalNotifications();
+        await this.initializePushNotifications();
+      } else {
+        // ── PATH WEB (browser / PWA) ──
+        await this.initializeWebPushNotifications();
+      }
+
+      this.initialized = true;
+      console.log('[NotificationService] Inizializzazione completata. Stato:', this.getStatus());
+    } catch (error) {
+      console.error('[NotificationService] Errore durante l\'inizializzazione:', error);
+    }
+  }
+
+  // ─────────────────────────────────────────────
+  //  WEB PUSH (browser / PWA)
+  // ─────────────────────────────────────────────
+
+  /**
+   * Inizializza le notifiche push per browser/PWA tramite Firebase Web SDK
+   */
+  async initializeWebPushNotifications() {
+    try {
+      // Verifica supporto browser minimo
+      if (!('Notification' in window) || !('serviceWorker' in navigator)) {
+        console.log('[NotificationService] Web Push non supportato in questo browser.');
         return;
       }
 
-      // Inizializza notifiche locali PRIMA delle push
-      await this.initializeLocalNotifications();
-      
-      // Inizializza notifiche push con Firebase
-      await this.initializePushNotifications();
+      const { requestWebPushPermission, listenWebPushForeground } = await import('./webPushService');
 
-      this.initialized = true;
-      console.log('[NotificationService] Inizializzazione completata');
-      
-      // Log dello stato finale
-      const status = this.getStatus();
-      console.log('[NotificationService] Stato finale:', status);
+      const token = await requestWebPushPermission();
+
+      if (token) {
+        this.pushToken = token;
+        this.isPushNotificationsAvailable = true;
+        await this.sendTokenToBackend(token);
+
+        // Ascolta notifiche foreground (app aperta)
+        this._webForegroundUnsubscribe = listenWebPushForeground((payload) => {
+          this._showWebForegroundNotification(payload);
+        });
+
+        console.log('[NotificationService] Web Push attivo.');
+      } else {
+        console.log('[NotificationService] Web Push non attivato (permesso negato o VAPID mancante).');
+      }
     } catch (error) {
-      console.error('[NotificationService] Errore durante l\'inizializzazione:', error);
-      // Continua con notifiche locali se disponibili
+      console.error('[NotificationService] Errore init web push:', error);
     }
   }
 
   /**
-   * Inizializza notifiche locali
+   * Mostra una notifica visibile quando la pagina è aperta (foreground web)
    */
+  _showWebForegroundNotification(payload) {
+    try {
+      const title = payload.notification?.title || payload.data?.title || 'TableTalk';
+      const body = payload.notification?.body || payload.data?.body || 'Hai una nuova notifica';
+      const data = payload.data || {};
+
+      if (Notification.permission === 'granted') {
+        const n = new Notification(title, {
+          body,
+          icon: '/android-chrome-192x192.png',
+          badge: '/favicon-32x32.png',
+          data
+        });
+
+        n.onclick = () => {
+          window.focus();
+          n.close();
+          this._handleWebNotificationClick(data);
+        };
+      }
+    } catch (err) {
+      console.warn('[NotificationService] Errore notifica foreground web:', err);
+    }
+  }
+
+  /**
+   * Gestisce il click su notifica web (stesso comportamento del nativo)
+   */
+  _handleWebNotificationClick(data) {
+    if (!data || !data.type) return;
+    switch (data.type) {
+      case 'new_message':
+        if (data.chatId) window.location.href = `/chat/${String(data.chatId).trim()}`;
+        break;
+      case 'new_invitation':
+        window.location.href = '/invitations';
+        break;
+      case 'meal_reminder':
+        if (data.mealId) window.location.href = `/meals/${data.mealId}`;
+        break;
+      default:
+        console.log('[NotificationService] Tipo notifica web non gestito:', data.type);
+    }
+  }
+
+  // ─────────────────────────────────────────────
+  //  NATIVO (Capacitor - Android / iOS)
+  // ─────────────────────────────────────────────
+
   async initializeLocalNotifications() {
     try {
       const { LocalNotifications } = await import('@capacitor/local-notifications');
-      
-      // Richiedi permessi
       const permissionStatus = await LocalNotifications.requestPermissions();
-      
       if (permissionStatus.display === 'granted') {
         this.isLocalNotificationsAvailable = true;
         console.log('[NotificationService] Notifiche locali abilitate');
@@ -64,9 +143,6 @@ class NotificationService {
     }
   }
 
-  /**
-   * Inizializza notifiche push con Firebase
-   */
   async initializePushNotifications() {
     try {
       const { PushNotifications } = await import('@capacitor/push-notifications');
@@ -76,27 +152,20 @@ class NotificationService {
         const result = await PushNotifications.requestPermissions();
         if (result.receive !== 'granted') {
           console.log('[NotificationService] Permesso notifiche push negato dall\'utente');
-      this.isPushNotificationsAvailable = false;
-      return;
+          this.isPushNotificationsAvailable = false;
+          return;
         }
       }
 
       await PushNotifications.register();
       console.log('[NotificationService] Device registrato per notifiche push');
-
       this.setupPushListeners(PushNotifications);
-
       this.isPushNotificationsAvailable = true;
-      console.log('[NotificationService] Notifiche push abilitate con successo');
-      
     } catch (error) {
       console.error('[NotificationService] Errore nell\'inizializzazione notifiche push:', error);
     }
   }
 
-  /**
-   * Configura i listener per le notifiche push
-   */
   setupPushListeners(PushNotifications) {
     PushNotifications.addListener('pushNotificationReceived', (notification) => {
       console.log('[NotificationService] Notifica push ricevuta (foreground):', notification);
@@ -110,11 +179,9 @@ class NotificationService {
 
     PushNotifications.addListener('registration', (token) => {
       try {
-        console.log('[NotificationService] Token FCM ricevuto:', token);
+        console.log('[NotificationService] Token FCM nativo ricevuto:', token);
         this.pushToken = token?.value || token;
-        if (this.pushToken) {
-          this.sendTokenToBackend(this.pushToken);
-        }
+        if (this.pushToken) this.sendTokenToBackend(this.pushToken);
       } catch (e) {
         console.error('[NotificationService] Errore gestione token FCM:', e);
       }
@@ -125,225 +192,160 @@ class NotificationService {
     });
   }
 
-  /**
-   * Mostra notifica locale quando l'app è in foreground
-   */
   showForegroundNotification(pushNotification) {
     if (!this.isLocalNotificationsAvailable) return;
-
     try {
-      const notification = {
+      this.sendLocalNotification({
         title: pushNotification.title || 'TableTalk',
         body: pushNotification.body || 'Nuova notifica',
         id: Date.now(),
-        schedule: { at: new Date(Date.now() + 100) }, // Immediata
+        schedule: { at: new Date(Date.now() + 100) },
         extra: pushNotification.data || {}
-      };
-
-      this.sendLocalNotification(notification);
+      });
     } catch (error) {
       console.error('[NotificationService] Errore nel mostrare notifica foreground:', error);
     }
   }
 
-  /**
-   * Gestisce l'azione quando l'utente clicca una notifica
-   */
   handleNotificationAction(notification) {
     try {
       const data = notification.notification.data;
-      
       if (data && data.type) {
-        switch (data.type) {
-          case 'new_message':
-            // Apri la chat specifica
-            if (data.chatId) {
-              // Normalizza chatId: assicurati che sia una stringa, non un oggetto
-              let chatIdString = data.chatId;
-              if (typeof chatIdString === 'object' && chatIdString !== null) {
-                chatIdString = chatIdString._id || chatIdString.id || chatIdString.chatId || String(chatIdString);
-                console.warn('⚠️ [NotificationService] data.chatId era un oggetto, normalizzato a:', chatIdString);
-              }
-              chatIdString = String(chatIdString || '').trim();
-              
-              if (chatIdString && chatIdString !== 'undefined' && chatIdString !== 'null' && !chatIdString.includes('[object Object]')) {
-                window.location.href = `/chat/${chatIdString}`;
-              } else {
-                console.error('❌ [NotificationService] chatId non valido:', data.chatId);
-              }
-            }
-            break;
-          case 'new_invitation':
-            // Apri la pagina inviti
-            window.location.href = '/invitations';
-            break;
-          case 'meal_reminder':
-            // Apri il dettaglio del pasto
-            if (data.mealId) {
-              window.location.href = `/meals/${data.mealId}`;
-            }
-            break;
-          default:
-            console.log('[NotificationService] Tipo notifica non gestito:', data.type);
-        }
+        this._handleWebNotificationClick(data); // riusa la stessa logica
       }
     } catch (error) {
       console.error('[NotificationService] Errore nella gestione azione notifica:', error);
     }
   }
 
-  /**
-   * Invia il token FCM al backend
-   */
+  // ─────────────────────────────────────────────
+  //  TOKEN → BACKEND
+  // ─────────────────────────────────────────────
+
   async sendTokenToBackend(token) {
     try {
-      // Verifica se l'utente è autenticato prima di inviare il token
       const { authPreferences } = await import('../utils/preferences');
       const userToken = await authPreferences.getToken();
-      
+
       if (!userToken) {
-        console.log('⚠️ [NotificationService] Utente non autenticato, token FCM non inviato. Verrà inviato dopo il login.');
-        // Salva il token localmente per inviarlo dopo il login
-        try {
-          localStorage.setItem('pending_fcm_token', token);
-          console.log('💾 [NotificationService] Token FCM salvato localmente per invio dopo login');
-        } catch (e) {
-          console.warn('⚠️ [NotificationService] Impossibile salvare token localmente:', e);
-        }
+        console.log('⚠️ [NotificationService] Utente non autenticato, token FCM salvato localmente.');
+        try { localStorage.setItem('pending_fcm_token', token); } catch (e) { /* noop */ }
         return;
       }
-      
+
       const { default: apiClient } = await import('./apiService');
       await apiClient.post('/profile/me/fcm-token', { token }, { suppressErrorAlert: true });
-      console.log('[NotificationService] Token inviato al backend con successo');
-      
-      // Rimuovi il token pendente se presente
-      try {
-        localStorage.removeItem('pending_fcm_token');
-      } catch (e) {
-        // Ignora errori
-      }
+      console.log('[NotificationService] Token FCM inviato al backend con successo.');
+      try { localStorage.removeItem('pending_fcm_token'); } catch (e) { /* noop */ }
     } catch (error) {
-      console.error('[NotificationService] Errore nell\'invio token al backend:', error);
-      // Se l'errore è 401 (non autenticato), salva il token per inviarlo dopo il login
+      console.error('[NotificationService] Errore invio token al backend:', error);
       if (error?.response?.status === 401 || error?.response?.status === 403) {
-        try {
-          localStorage.setItem('pending_fcm_token', token);
-          console.log('💾 [NotificationService] Token FCM salvato localmente (errore 401/403)');
-        } catch (e) {
-          console.warn('⚠️ [NotificationService] Impossibile salvare token localmente:', e);
-        }
+        try { localStorage.setItem('pending_fcm_token', token); } catch (e) { /* noop */ }
       }
     }
   }
 
-  /**
-   * Invia una notifica
-   */
+  // ─────────────────────────────────────────────
+  //  NOTIFICHE LOCALI (nativo)
+  // ─────────────────────────────────────────────
+
+  async sendLocalNotification(notification) {
+    try {
+      const { LocalNotifications } = await import('@capacitor/local-notifications');
+      await LocalNotifications.schedule({
+        notifications: [{
+          title: notification.title || 'TableTalk',
+          body: notification.body || notification.message || 'Nuova notifica',
+          id: notification.id || Date.now(),
+          schedule: notification.schedule || { at: new Date(Date.now() + 1000) },
+          sound: notification.sound || null,
+          attachments: notification.attachments || null,
+          actionTypeId: notification.actionTypeId || 'OPEN_APP',
+          extra: notification.extra || {}
+        }]
+      });
+    } catch (error) {
+      console.error('[NotificationService] Errore invio notifica locale:', error);
+    }
+  }
+
   async sendNotification(notification) {
     try {
-      // Priorità 1: Notifiche push se disponibili
       if (this.isPushNotificationsAvailable) {
-        await this.sendPushNotification(notification);
+        await this.sendLocalNotification(notification);
         return;
       }
-
-      // Priorità 2: Notifiche locali come fallback
       if (this.isLocalNotificationsAvailable) {
         await this.sendLocalNotification(notification);
         return;
       }
-
-      // Fallback: console log
-      console.log('[NotificationService] Notifica (console):', notification);
+      console.log('[NotificationService] Notifica (console fallback):', notification);
     } catch (error) {
       console.error('[NotificationService] Errore nell\'invio notifica:', error);
     }
   }
 
-  /**
-   * Invia notifica push
-   */
-  async sendPushNotification(notification) {
-    // Le notifiche push vengono gestite dal server Firebase
-    // Questo metodo è per notifiche programmate localmente
-    console.log('[NotificationService] Notifica push programmata:', notification);
-  }
-
-  /**
-   * Invia notifica locale
-   */
-  async sendLocalNotification(notification) {
-    try {
-      const { LocalNotifications } = await import('@capacitor/local-notifications');
-      
-      const localNotification = {
-        title: notification.title || 'TableTalk',
-        body: notification.body || notification.message || 'Nuova notifica',
-        id: notification.id || Date.now(),
-        schedule: notification.schedule || { at: new Date(Date.now() + 1000) },
-        sound: notification.sound || null,
-        attachments: notification.attachments || null,
-        actionTypeId: notification.actionTypeId || 'OPEN_APP',
-        extra: notification.extra || {}
-      };
-
-      await LocalNotifications.schedule({
-        notifications: [localNotification]
-      });
-
-      console.log('[NotificationService] Notifica locale inviata:', localNotification);
-    } catch (error) {
-      console.error('[NotificationService] Errore nell\'invio notifica locale:', error);
-    }
-  }
-
-  /**
-   * Invia notifica immediata
-   */
   async sendImmediateNotification(title, body, data = {}) {
-    const notification = {
-      title,
-      body,
-      schedule: { at: new Date(Date.now() + 500) }, // 0.5 secondi dopo
-      extra: data
-    };
-
-    await this.sendNotification(notification);
+    await this.sendNotification({ title, body, schedule: { at: new Date(Date.now() + 500) }, extra: data });
   }
 
-  /**
-   * Invia notifica programmata
-   */
   async sendScheduledNotification(title, body, scheduledTime, data = {}) {
-    const notification = {
-      title,
-      body,
-      schedule: { at: scheduledTime },
-      extra: data
-    };
-
-    await this.sendNotification(notification);
+    await this.sendNotification({ title, body, schedule: { at: scheduledTime }, extra: data });
   }
 
-  /**
-   * Cancella tutte le notifiche
-   */
   async cancelAllNotifications() {
     try {
       if (this.isLocalNotificationsAvailable) {
         const { LocalNotifications } = await import('@capacitor/local-notifications');
         await LocalNotifications.cancel({ notifications: [] });
-        console.log('[NotificationService] Tutte le notifiche locali cancellate');
       }
     } catch (error) {
-      console.error('[NotificationService] Errore nella cancellazione notifiche:', error);
+      console.error('[NotificationService] Errore cancellazione notifiche:', error);
     }
   }
 
-  /**
-   * Controlla lo stato del servizio
-   */
+  // ─────────────────────────────────────────────
+  //  BACKEND READ
+  // ─────────────────────────────────────────────
+
+  async getNotifications(params = {}) {
+    try {
+      const { default: apiClient } = await import('./apiService');
+      const queryParams = new URLSearchParams({ page: params.page || 1, limit: params.limit || 15, ...params }).toString();
+      const response = await apiClient.get(`/notifications?${queryParams}`, { timeout: 60000, suppressErrorAlert: true });
+      return response.data?.data || [];
+    } catch (error) {
+      console.error('[NotificationService] Errore caricamento notifiche:', error);
+      throw new Error('Impossibile caricare le notifiche');
+    }
+  }
+
+  async markAsRead(notificationId) {
+    try {
+      const { default: apiClient } = await import('./apiService');
+      const response = await apiClient.post('/notifications/read', { notificationId });
+      return response.data;
+    } catch (error) {
+      console.error('[NotificationService] Errore mark as read:', error);
+      throw new Error('Impossibile segnare la notifica come letta');
+    }
+  }
+
+  async markAllAsRead() {
+    try {
+      const { default: apiClient } = await import('./apiService');
+      const response = await apiClient.post('/notifications/read');
+      return response.data;
+    } catch (error) {
+      console.error('[NotificationService] Errore mark all as read:', error);
+      throw new Error('Impossibile segnare tutte le notifiche come lette');
+    }
+  }
+
+  // ─────────────────────────────────────────────
+  //  UTILS
+  // ─────────────────────────────────────────────
+
   getStatus() {
     return {
       initialized: this.initialized,
@@ -354,67 +356,10 @@ class NotificationService {
     };
   }
 
-  /**
-   * Ottieni il token FCM corrente
-   */
   getPushToken() {
     return this.pushToken;
   }
-
-  /**
-   * Ottieni le notifiche dell'utente dal backend
-   */
-  async getNotifications(params = {}) {
-    try {
-      const { default: apiClient } = await import('./apiService');
-      const queryParams = new URLSearchParams({
-        page: params.page || 1,
-        limit: params.limit || 15,
-        ...params
-      }).toString();
-      
-      const response = await apiClient.get(`/notifications?${queryParams}`, {
-        timeout: 60000, // Timeout più lungo per permettere wake-up server Render
-        suppressErrorAlert: true // Sopprimi alert per questa richiesta non critica
-      });
-      return response.data?.data || [];
-    } catch (error) {
-      console.error('[NotificationService] Errore nel caricamento notifiche:', error);
-      throw new Error('Impossibile caricare le notifiche');
-    }
-  }
-
-  /**
-   * Segna una notifica come letta
-   */
-  async markAsRead(notificationId) {
-    try {
-      const { default: apiClient } = await import('./apiService');
-      const response = await apiClient.post('/notifications/read', { 
-        notificationId 
-      });
-      return response.data;
-    } catch (error) {
-      console.error('[NotificationService] Errore nel segnare notifica come letta:', error);
-      throw new Error('Impossibile segnare la notifica come letta');
-    }
-  }
-
-  /**
-   * Segna tutte le notifiche come lette
-   */
-  async markAllAsRead() {
-    try {
-      const { default: apiClient } = await import('./apiService');
-      const response = await apiClient.post('/notifications/read');
-      return response.data;
-    } catch (error) {
-      console.error('[NotificationService] Errore nel segnare tutte le notifiche come lette:', error);
-      throw new Error('Impossibile segnare tutte le notifiche come lette');
-    }
-  }
 }
 
-// Esporta un'istanza singleton
 const notificationService = new NotificationService();
 export default notificationService;
