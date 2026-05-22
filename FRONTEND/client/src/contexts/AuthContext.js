@@ -46,6 +46,11 @@ export const AuthProvider = ({ children }) => {
 
     const [error, setError] = useState(null);
 
+    // Diventa true solo dopo che verifyToken() ha completato almeno una volta.
+    // Il banner email aspetta questo flag prima di mostrarsi, così non appare
+    // mai con dati stale del localStorage (es. email già verificata altrove).
+    const [serverVerified, setServerVerified] = useState(false);
+
     // Focus / visibility / appState: evita raffiche di GET /auth/me (vedi useEffect sotto)
     const lastRefreshUserAtRef = useRef(0);
     const refreshUserInFlightRef = useRef(false);
@@ -103,6 +108,7 @@ export const AuthProvider = ({ children }) => {
                     // Ha vinto il timeout -> Sblocca l'app come ospite
 
                     setUser(null); setToken(null); setIsAuthenticated(false);
+                    setServerVerified(true); // nessun utente loggato: il banner non serve
 
                 } else if (result) {
 
@@ -111,7 +117,6 @@ export const AuthProvider = ({ children }) => {
                     const storedUser = result;
 
                     const storedToken = await authPreferences.getToken().catch(e => null);
-
                     
 
                     if (storedUser && storedToken) {
@@ -122,10 +127,9 @@ export const AuthProvider = ({ children }) => {
 
                         setIsAuthenticated(true);
 
-                        // 🔄 Verifica token in background AND aggiorna lo state in memoria
-                        // se il backend ha dati più freschi (es. email verificata da
-                        // un altro browser/tab nel frattempo). Senza questo, banner
-                        // "Conferma email" rimaneva anche dopo la verifica avvenuta.
+                        // 🔄 Verifica token in background AND aggiorna lo state in memoria.
+                        // setServerVerified(true) viene chiamato SOLO quando la risposta
+                        // arriva, così il banner email non usa mai dati stale del localStorage.
 
                         authService.verifyToken()
                             .then(freshUser => {
@@ -133,7 +137,10 @@ export const AuthProvider = ({ children }) => {
                                     setUser(prev => mergeUserFromServer(prev, freshUser));
                                 }
                             })
-                            .catch(e => console.log('Verifica background:', e));
+                            .catch(e => console.log('Verifica background:', e))
+                            .finally(() => {
+                                if (isMounted) setServerVerified(true);
+                            });
 
                         // 📲 Se al boot l'utente è già loggato e c'è un token push
                         // parcheggiato (registrato prima del login), invialo ora.
@@ -142,12 +149,14 @@ export const AuthProvider = ({ children }) => {
                     } else {
 
                         setUser(null); setToken(null); setIsAuthenticated(false);
+                        setServerVerified(true);
 
                     }
 
                 } else {
 
                     setUser(null); setToken(null); setIsAuthenticated(false);
+                    setServerVerified(true);
 
                 }
 
@@ -156,6 +165,7 @@ export const AuthProvider = ({ children }) => {
                 console.error('[AuthContext] Errore:', error);
 
                 if (isMounted) { setUser(null); setToken(null); setIsAuthenticated(false); }
+                setServerVerified(true);
 
             } finally {
 
@@ -184,11 +194,6 @@ export const AuthProvider = ({ children }) => {
 
 
     // 👁️ Quando la finestra/app torna attiva, rinfresca i dati utente dal server.
-    // Su mobile Capacitor il rientro dall'email/browser non sempre scatena "focus",
-    // quindi ascoltiamo anche appStateChange per far sparire subito il banner.
-    // Throttle + in-flight: un solo "ritorno in app" non deve generare 2–3 verifyToken
-    // paralleli (focus+visibility+appState nello stesso istante).
-
     useEffect(() => {
 
         if (!isAuthenticated) return;
@@ -257,6 +262,8 @@ export const AuthProvider = ({ children }) => {
       } catch(e) { console.error(e); }
 
       setUser(prev => mergeUserFromServer(prev, data.user)); setToken(data.token); setIsAuthenticated(true);
+      // Al login fresco il server ha già risposto: possiamo considerarlo verificato
+      setServerVerified(true);
 
       // Drena un eventuale token push registrato prima del login (vedi pushNotificationService)
       flushPendingPushToken();
@@ -270,7 +277,7 @@ export const AuthProvider = ({ children }) => {
         const data = await authService.register(d);
 
         setUser(prev => mergeUserFromServer(prev, data.user)); setToken(data.token); setIsAuthenticated(true);
-
+        setServerVerified(true); // La registrazione è già una risposta fresca dal server
         flushPendingPushToken();
 
     };
@@ -279,9 +286,6 @@ export const AuthProvider = ({ children }) => {
 
     /**
      * 🔑 Auto-login da verifica email: salva token + user e aggiorna lo stato.
-     * Chiamato dalla pagina /verify-email quando il backend ritorna un JWT
-     * insieme alla conferma. Così l'utente non deve fare login manualmente
-     * dopo aver cliccato il link nell'email.
      */
     const loginFromVerification = async (data) => {
         if (!data || !data.token || !data.user) return;
@@ -290,6 +294,7 @@ export const AuthProvider = ({ children }) => {
             await authPreferences.saveUser(data.user);
         } catch (e) { console.error(e); }
         setUser(prev => mergeUserFromServer(prev, data.user)); setToken(data.token); setIsAuthenticated(true);
+        setServerVerified(true);
         flushPendingPushToken();
     };
 
@@ -298,6 +303,7 @@ export const AuthProvider = ({ children }) => {
     const logout = async () => {
 
         setUser(null); setToken(null); setIsAuthenticated(false);
+        setServerVerified(false);
 
         await authPreferences.clearAuth();
 
@@ -333,11 +339,11 @@ export const AuthProvider = ({ children }) => {
 
     const value = useMemo(() => ({
 
-        user, token, isAuthenticated, loading, error,
+        user, token, isAuthenticated, loading, error, serverVerified,
 
         login, logout, register, deleteAccount, updateUser, loginFromVerification
 
-      }), [user, token, isAuthenticated, loading, error]);
+      }), [user, token, isAuthenticated, loading, error, serverVerified]);
 
   
 
