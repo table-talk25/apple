@@ -14,7 +14,7 @@ const getUserChats = asyncHandler(async (req, res, next) => {
         status: { $ne: 'closed' }
     })
     .populate('participants', 'nickname profileImage')
-    .populate('mealId', 'title date host')
+    .populate('mealId', 'title date host imageUrl coverImage')
     .lean();
 
     const enriched = chats.map(chat => {
