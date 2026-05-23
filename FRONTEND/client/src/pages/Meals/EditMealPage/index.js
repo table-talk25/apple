@@ -8,7 +8,7 @@ import { toast } from 'react-toastify';
 import { Card, Spinner, Alert, Button } from 'react-bootstrap';
 import MealForm from '../../../components/meals/MealForm';
 import styles from './EditMealPage.module.css';
-import { useMeals } from '../../../contexts/MealsContext'; // <-- 1. IMPORTA L'HOOK
+import { useMeals } from '../../../contexts/MealsContext';
 import BackButton from '../../../components/common/BackButton';
 
 const EditMealPage = () => {
@@ -21,15 +21,17 @@ const EditMealPage = () => {
   const [isUpdating, setIsUpdating] = useState(false);
   const [error, setError] = useState('');
 
-          // Carichiamo i dati del TableTalk® da modificare
   const fetchMealData = useCallback(async () => {
     setLoading(true);
     try {
       const response = await mealService.getMealById(id);
-      setInitialData(response.data); // Salviamo i dati per pre-compilare il form
+      // getMealById restituisce response.data già estratto da apiClient
+      // la struttura è { success, data: { ...meal } } oppure direttamente il meal
+      const meal = response?.data ?? response;
+      setInitialData(meal);
     } catch (err) {
       setError(err.message || t('meals.loadError'));
-              toast.error(t('meals.loadError'));
+      toast.error(t('meals.loadError'));
     } finally {
       setLoading(false);
     }
@@ -39,13 +41,15 @@ const EditMealPage = () => {
     fetchMealData();
   }, [fetchMealData]);
 
-  // Gestiamo il salvataggio delle modifiche
   const handleEditSubmit = async (formData) => {
     setIsUpdating(true);
     try {
       const response = await mealService.updateMeal(id, formData);
-              toast.success(t('meals.updateSuccess'));
-      navigate(`/meals/${response.data._id}`);
+      toast.success(t('meals.updateSuccess'));
+      // ✅ FIX: updateMeal ritorna response.data = { success, data: { ...meal } }
+      // quindi l'_id si trova in response.data._id oppure response._id
+      const updatedId = response?.data?._id ?? response?._id ?? id;
+      navigate(`/meals/${updatedId}`);
     } catch (err) {
       toast.error(err.message || t('meals.updateError'));
     } finally {
