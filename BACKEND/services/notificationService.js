@@ -4,21 +4,17 @@ const path = require('path');
 const fs = require('fs');
 const admin = require('firebase-admin');
 
-let io;
 let connectedUsers;
 
 // Inizializza Firebase Admin (SE NON FATTO)
 if (!admin.apps.length) {
   try {
     const serviceAccountPath = path.join(__dirname, '..', 'firebase-service-account.json');
-    
     if (fs.existsSync(serviceAccountPath)) {
       try {
         const fileContent = fs.readFileSync(serviceAccountPath, 'utf8');
         const serviceAccount = JSON.parse(fileContent);
-        admin.initializeApp({
-          credential: admin.credential.cert(serviceAccount)
-        });
+        admin.initializeApp({ credential: admin.credential.cert(serviceAccount) });
         console.log('✅ Firebase Admin SDK inizializzato per push notifications');
       } catch (parseError) {
         console.error('❌ Errore nel parsing del file Firebase:', parseError.message);
@@ -28,7 +24,6 @@ if (!admin.apps.length) {
     }
   } catch (error) {
     console.error('❌ Errore inizializzazione Firebase Admin:', error.message);
-    console.log('⚠️ Push notifications non disponibili');
   }
 }
 
@@ -38,25 +33,17 @@ const initialize = (usersMap) => {
 
 const sendPushNotification = async (userToken, title, body, data = {}) => {
   try {
-    if (!admin.apps.length) {
-      throw new Error('Firebase Admin non inizializzato');
-    }
+    if (!admin.apps.length) throw new Error('Firebase Admin non inizializzato');
 
     const message = {
       token: userToken,
       notification: { title, body },
       data: { ...data, timestamp: new Date().toISOString() },
       android: {
-        notification: {
-          icon: 'ic_notification',
-          color: '#FF6B35',
-          sound: 'default'
-        }
+        notification: { icon: 'ic_notification', color: '#FF6B35', sound: 'default' }
       },
       apns: {
-        payload: {
-          aps: { sound: 'default', badge: 1 }
-        }
+        payload: { aps: { sound: 'default', badge: 1 } }
       }
     };
 
@@ -101,27 +88,24 @@ const sendCombinedNotification = async (userId, fcmToken, type, title, message, 
 };
 
 /**
- * Gestisce le notifiche push per un nuovo messaggio in chat.
- * Viene chiamata da socket.js ogni volta che un utente invia un messaggio.
- * Manda push solo agli utenti OFFLINE (quelli online ricevono già il messaggio via Socket).
+ * Gestisce le notifiche per un nuovo messaggio in chat.
+ *
+ * Logica:
+ * - L'utente sta guardando QUELLA chat (è nella socket room della chat) → niente notifica
+ * - L'utente è nell'app ma in un'altra schermata (online ma non nella room) → in-app alert via Socket
+ * - L'utente è offline → push notification Firebase
  */
 const handleChatNotification = async (chat, sender, content, newMessage) => {
   try {
-    if (!admin.apps.length) {
-      console.warn('⚠️ [ChatNotification] Firebase non inizializzato, push non inviata.');
-      return;
-    }
-
     const User = require('../models/User');
+    const { getIO } = require('../socket');
 
-    // Prendi tutti i partecipanti tranne il mittente
     const recipientIds = chat.participants
       .map(p => (p._id || p).toString())
       .filter(id => id !== sender._id.toString());
 
     if (recipientIds.length === 0) return;
 
-    // Carica i destinatari con il loro FCM token
     const recipients = await User.find(
       { _id: { $in: recipientIds } },
       'nickname fcmToken'
@@ -130,28 +114,62 @@ const handleChatNotification = async (chat, sender, content, newMessage) => {
     const senderName = sender.nickname || 'Qualcuno';
     const preview = content.length > 60 ? content.substring(0, 60) + '...' : content;
     const chatId = chat._id.toString();
+    const io = getIO();
 
     for (const recipient of recipients) {
-      // Se l'utente è online via Socket, non serve la push (ha già il messaggio in tempo reale)
-      const isOnline = connectedUsers && connectedUsers.has(recipient._id.toString());
-      
-      if (!isOnline && recipient.fcmToken) {
-        await sendPushNotification(
-          recipient.fcmToken,
-          `💬 ${senderName}`,
-          preview,
-          {
-            type: 'new_message',
+      const recipientIdStr = recipient._id.toString();
+      const socketId = connectedUsers && connectedUsers.get(recipientIdStr);
+      const isOnline = !!socketId;
+
+      // Controlla se l'utente è attivamente nella room di questa chat
+      let isInChatRoom = false;
+      if (isOnline && io && socketId) {
+        const socket = io.sockets.sockets.get(socketId);
+        if (socket && socket.rooms.has(chatId)) {
+          isInChatRoom = true;
+        }
+      }
+
+      if (isInChatRoom) {
+        // Sta guardando la chat → niente da fare, riceve già i messaggi in tempo reale
+        console.log(`👁️ [ChatNotification] ${recipient.nickname} è nella chat, nessuna notifica necessaria`);
+
+      } else if (isOnline && socketId) {
+        // È nell'app ma in un'altra schermata → in-app alert via Socket
+        if (io) {
+          io.to(socketId).emit('new_chat_message_alert', {
             chatId,
             senderId: sender._id.toString(),
-            senderName
-          }
-        );
-        console.log(`📱 [ChatNotification] Push inviata a ${recipient.nickname} (offline)`);
-      } else if (isOnline) {
-        console.log(`🟢 [ChatNotification] ${recipient.nickname} è online, push non necessaria`);
+            senderName,
+            senderAvatar: sender.profileImage || null,
+            preview,
+            timestamp: new Date().toISOString()
+          });
+          console.log(`🔔 [ChatNotification] In-app alert inviato a ${recipient.nickname} (online, altra schermata)`);
+        }
+        // Manda anche la push per chi ha l'app in background (es. schermata bloccata)
+        if (recipient.fcmToken && admin.apps.length) {
+          await sendPushNotification(
+            recipient.fcmToken,
+            `💬 ${senderName}`,
+            preview,
+            { type: 'new_message', chatId, senderId: sender._id.toString(), senderName }
+          );
+        }
+
       } else {
-        console.log(`⚠️ [ChatNotification] ${recipient.nickname} non ha FCM token registrato`);
+        // Offline → solo push notification
+        if (recipient.fcmToken && admin.apps.length) {
+          await sendPushNotification(
+            recipient.fcmToken,
+            `💬 ${senderName}`,
+            preview,
+            { type: 'new_message', chatId, senderId: sender._id.toString(), senderName }
+          );
+          console.log(`📱 [ChatNotification] Push inviata a ${recipient.nickname} (offline)`);
+        } else {
+          console.log(`⚠️ [ChatNotification] ${recipient.nickname} offline e senza FCM token`);
+        }
       }
     }
   } catch (error) {
