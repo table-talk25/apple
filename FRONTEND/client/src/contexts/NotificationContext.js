@@ -1,5 +1,3 @@
-// File: FRONTEND/client/src/contexts/NotificationContext.js
-
 import React, { createContext, useState, useEffect, useContext, useCallback, useRef } from 'react';
 import { useAuth } from './AuthContext';
 import notificationService from '../services/notificationService';
@@ -78,6 +76,7 @@ export const NotificationProvider = ({ children }) => {
     // ── 1. Messaggio in chat (utente NON nella chat room) ─────────────
     socket.on('new_chat_message_alert', ({ senderName, preview, chatId }) => {
       const msg = `💬 ${senderName}: ${preview}`;
+      playNotificationSound();
       toast.info(msg, {
         autoClose: 5000,
         onClick: () => {
