@@ -14,7 +14,7 @@
  */
 
 import apiClient from './apiService'; // <-- USA L'API CLIENT UNIFICATO
-import { CapacitorHttp } from '@capacitor/core';
+import { CapacitorHttp, Capacitor } from '@capacitor/core';
 import { getPreference, PREFERENCE_KEYS } from '../utils/preferences';
 import { API_URL } from '../config/capacitorConfig';
 
@@ -168,11 +168,98 @@ const getMealById = async (id) => {
 };
 
   // 🔄 Aggiorna un pasto esistente (aggiornamenti parziali supportati)
-  // mealData è già un FormData costruito da MealForm — lo passiamo direttamente
+  // mealData è già un FormData costruito dal chiamante — lo passiamo direttamente
   const updateMeal = async (id, mealData) => {
+    // ✅ FIX: Su piattaforma nativa Capacitor, axios intercetta FormData e
+    // CapacitorHttp non gestisce multipart nativo → usa CapacitorHttp direttamente
+    // convertendo il FormData in base64 per il campo image.
+    if (Capacitor.isNativePlatform() && mealData instanceof FormData) {
+      try {
+        const token = await getPreference(PREFERENCE_KEYS.TOKEN, '');
+        const url = `${API_URL.replace(/\/$/, '')}/meals/${id}`;
+
+        // Separa il file dagli altri campi
+        let imageFile = null;
+        const plainFields = {};
+        const topicsArr = [];
+
+        for (const [key, value] of mealData.entries()) {
+          if (key === 'image' && value instanceof File) {
+            imageFile = value;
+          } else if (key === 'topics') {
+            topicsArr.push(value);
+          } else {
+            plainFields[key] = value;
+          }
+        }
+        if (topicsArr.length) plainFields.topics = topicsArr;
+
+        // Se c'è un'immagine, costruisci il multipart manualmente come base64
+        if (imageFile) {
+          const base64 = await new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => {
+              // strip "data:image/jpeg;base64," prefix
+              const result = reader.result;
+              const b64 = result.split(',')[1];
+              resolve(b64);
+            };
+            reader.onerror = reject;
+            reader.readAsDataURL(imageFile);
+          });
+
+          // CapacitorHttp supporta multipart tramite l'oggetto files
+          const headers = { 'Content-Type': 'multipart/form-data' };
+          if (token) headers['Authorization'] = `Bearer ${token}`;
+
+          const nativeResp = await CapacitorHttp.patch({
+            url,
+            headers,
+            data: {
+              ...plainFields,
+              image: {
+                data: base64,
+                type: imageFile.type || 'image/jpeg',
+                filename: imageFile.name || `cover_${Date.now()}.jpg`,
+              },
+            },
+            connectTimeout: 30000,
+            readTimeout: 30000,
+          });
+
+          console.log('✅ [mealService] updateMeal nativo con immagine:', nativeResp.data);
+          if (!nativeResp.data?.success) {
+            throw new Error(nativeResp.data?.message || 'Errore aggiornamento pasto');
+          }
+          return nativeResp.data;
+        } else {
+          // Nessuna immagine: invia JSON semplice
+          const headers = { 'Content-Type': 'application/json' };
+          if (token) headers['Authorization'] = `Bearer ${token}`;
+
+          const nativeResp = await CapacitorHttp.patch({
+            url,
+            headers,
+            data: plainFields,
+            connectTimeout: 20000,
+            readTimeout: 20000,
+          });
+
+          console.log('✅ [mealService] updateMeal nativo senza immagine:', nativeResp.data);
+          if (!nativeResp.data?.success) {
+            throw new Error(nativeResp.data?.message || 'Errore aggiornamento pasto');
+          }
+          return nativeResp.data;
+        }
+      } catch (nativeErr) {
+        console.error('❌ [mealService] updateMeal nativo fallito:', nativeErr);
+        throw nativeErr;
+      }
+    }
+
+    // Web: axios gestisce FormData correttamente, il Content-Type viene rimosso
+    // dall'interceptor di apiService per permettere al browser di aggiungere il boundary
     try {
-      // ✅ FIX: mealData è già un FormData proveniente da MealForm.
-      // Non ricostruire: Object.keys() su FormData restituisce [] e perderebbe tutti i campi.
       const response = await apiClient.patch(`/meals/${id}`, mealData, {
         suppressErrorAlert: true,
       });
