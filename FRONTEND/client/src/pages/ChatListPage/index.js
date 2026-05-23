@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../contexts/AuthContext';
 import chatService from '../../services/chatService';
-import { getHostAvatarUrl } from '../../constants/mealConstants';
+import { getMealCoverImageUrl } from '../../constants/mealConstants';
 import styles from './ChatListPage.module.css';
 
 const ChatListPage = () => {
@@ -51,14 +51,11 @@ const ChatListPage = () => {
     return 'Chat';
   };
 
+  // Usa la foto del TableTalk come avatar della chat.
+  // Fallback: immagine di default del pasto.
   const getAvatarSrc = (chat) => {
-    const others = (chat.participants || []).filter(
-      p => (p._id || p).toString() !== (user?._id || user?.id || '').toString()
-    );
-    if (others.length === 1 && others[0].profileImage) {
-      return getHostAvatarUrl(others[0].profileImage);
-    }
-    return getHostAvatarUrl(null);
+    const mealImage = chat.mealId?.imageUrl || chat.mealId?.coverImage || null;
+    return getMealCoverImageUrl(mealImage);
   };
 
   return (
@@ -105,9 +102,10 @@ const ChatListPage = () => {
               <div className={styles.avatarWrap}>
                 <img
                   src={getAvatarSrc(chat)}
-                  alt="avatar"
+                  alt={getChatName(chat)}
                   className={styles.avatar}
                   loading="lazy"
+                  onError={(e) => { e.target.src = '/assets/images/default-meal-placeholder.jpeg'; }}
                 />
                 {chat.unreadCount > 0 && (
                   <span className={styles.unreadBadge}>
