@@ -47,14 +47,12 @@ const sendMealNotifications = async (meal, eventType) => {
 
     // 1. GESTIONE EMAIL CANCELLAZIONE
     if (eventType === 'meal_cancelled') {
-      // Popoliamo i partecipanti se non ci sono
       const mealWithParticipants = await Meal.findById(meal._id).populate('participants', 'email nickname name');
       
       if (mealWithParticipants && mealWithParticipants.participants) {
           console.log(`📧 Invio email cancellazione a ${mealWithParticipants.participants.length} partecipanti`);
           
           for (const participant of mealWithParticipants.participants) {
-              // Non mandare email all'host che ha cancellato
               if (participant._id.toString() !== meal.host.toString()) {
                   try {
                       await sendEmail.sendMealCancellationEmail(
@@ -70,7 +68,6 @@ const sendMealNotifications = async (meal, eventType) => {
       }
     }
 
-    // Trova utenti nelle vicinanze per notificare
     if (meal.location && meal.location.coordinates) {
       const nearbyUsers = await User.find({
         'location.coordinates': {
@@ -79,11 +76,11 @@ const sendMealNotifications = async (meal, eventType) => {
               type: 'Point',
               coordinates: meal.location.coordinates
             },
-            $maxDistance: 5000 // 5km per notifiche immediate
+            $maxDistance: 5000
           }
         },
         fcmToken: { $exists: true, $ne: null },
-        _id: { $ne: meal.host } // Escludi l'host
+        _id: { $ne: meal.host }
       }).limit(20); 
 
       console.log(`📱 Invio notifiche ${eventType} a ${nearbyUsers.length} utenti nelle vicinanze`);
@@ -379,19 +376,34 @@ exports.createMeal = asyncHandler(async (req, res, next) => {
   }
 });
 
+// Campi che non devono mai essere modificati tramite updateMeal
+const IMMUTABLE_FIELDS = ['_id', '__v', 'host', 'participants', 'chatId', 'videoCallLink', 'createdAt', 'updatedAt'];
+
 exports.updateMeal = asyncHandler(async (req, res, next) => {
   let meal = await Meal.findById(req.params.id);
   if (!meal) return next(new ErrorResponse(`Pasto non trovato`, 404));
   if (meal.host.toString() !== req.user.id) return next(new ErrorResponse(`Non autorizzato`, 401));
 
-  const updates = { ...sanitizeMealData(req.body) };
+  // ✅ FIX: rimuovi _id e tutti i campi immutabili prima di passare a Mongoose
+  const rawUpdates = sanitizeMealData(req.body);
+  const updates = {};
+  for (const key of Object.keys(rawUpdates)) {
+    if (!IMMUTABLE_FIELDS.includes(key)) {
+      updates[key] = rawUpdates[key];
+    }
+  }
 
-  // ✅ NUOVO: Gestisci immagini con Firebase
+  // Converti tipi stringa → corretti
+  if (typeof updates.duration === 'string') updates.duration = parseInt(updates.duration, 10);
+  if (typeof updates.maxParticipants === 'string') updates.maxParticipants = parseInt(updates.maxParticipants, 10);
+  if (typeof updates.isPublic === 'string') updates.isPublic = updates.isPublic === 'true';
+  if (typeof updates.date === 'string') { try { updates.date = new Date(updates.date); } catch (_) {} }
+
+  // Gestione immagine con Firebase
   if (req.file && req.file.buffer) {
     const { uploadImage, deleteImage } = require('../services/firebaseStorageService');
 
     try {
-      // Elimina vecchia immagine se esiste su Firebase
       if (meal.imageUrl && meal.imageUrl.includes('storage.googleapis.com')) {
         try {
           await deleteImage(meal.imageUrl);
@@ -401,7 +413,6 @@ exports.updateMeal = asyncHandler(async (req, res, next) => {
         }
       }
 
-      // Carica nuova immagine
       const imageUrl = await uploadImage(
         req.file.buffer,
         req.file.originalname,
@@ -411,24 +422,33 @@ exports.updateMeal = asyncHandler(async (req, res, next) => {
       console.log('✅ [UpdateMeal] Nuova immagine caricata su Firebase:', imageUrl);
     } catch (error) {
       console.error('❌ [UpdateMeal] Errore upload Firebase:', error);
-      // Continua anche se l'upload fallisce
     }
   }
 
+  // Gestione location
   if (updates.location) {
     try {
-      const parsedLocation = JSON.parse(updates.location);
+      const parsedLocation = typeof updates.location === 'string'
+        ? JSON.parse(updates.location)
+        : updates.location;
       if (parsedLocation && typeof parsedLocation === 'object') {
         updates.location = {
           address: parsedLocation.address || parsedLocation.formattedAddress || '',
           coordinates: parsedLocation.coordinates || undefined
         };
-      } else { updates.location = String(updates.location); }
-    } catch (error) { updates.location = String(updates.location); }
+      } else {
+        updates.location = String(updates.location);
+      }
+    } catch (error) {
+      updates.location = String(updates.location);
+    }
   }
 
-  meal = await Meal.findByIdAndUpdate(req.params.id, updates, { new: true, runValidators: true }).populate('host', 'nickname profileImage');
+  meal = await Meal.findByIdAndUpdate(req.params.id, updates, { new: true, runValidators: true })
+    .populate('host', 'nickname profileImage');
+
   if (updates.status === 'cancelled') await sendMealNotifications(meal, 'meal_cancelled');
+
   res.status(200).json({ success: true, data: normalizeMealLocation(meal) });
 });
 
@@ -437,7 +457,6 @@ exports.deleteMeal = asyncHandler(async (req, res, next) => {
   if (!meal) return next(new ErrorResponse(`Pasto non trovato`, 404));
   if (meal.host.toString() !== req.user.id) return next(new ErrorResponse(`Non autorizzato`, 403));
 
-  // ✅ NUOVO: Elimina immagine da Firebase quando il pasto viene cancellato
   if (meal.imageUrl && meal.imageUrl.includes('storage.googleapis.com')) {
     try {
       const { deleteImage } = require('../services/firebaseStorageService');
