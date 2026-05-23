@@ -13,6 +13,7 @@ import usePushPermission from './hooks/usePushPermission';
 import { setupPush } from './services/pushNotificationService';
 import Spinner from './components/common/Spinner';
 import ErrorBoundary from './components/common/ErrorBoundary';
+import { initNotificationSound } from './utils/notificationSound';
 
 const HomePage = lazy(() => import('./pages/Home'));
 const LoginPage = lazy(() => import('./pages/Auth/Login'));
@@ -48,6 +49,11 @@ const App = () => {
       loader.style.opacity = '0';
       setTimeout(() => { try { loader.remove(); } catch (e) {} }, 300);
     }
+  }, []);
+
+  // Inizializza l'AudioContext e registra il listener per sblocco su mobile
+  useEffect(() => {
+    initNotificationSound();
   }, []);
 
   useEffect(() => {
