@@ -81,8 +81,10 @@ const MealForm = ({ initialData, onSubmit, onCancel, isLoading, isSubmitting, su
       setFormData(sanitizedData);
 
       // ✅ FIX: Pre-carica l'anteprima dell'immagine esistente in modalità edit
-      if (initialData.coverImage) {
-        const existingUrl = mealService.getFullMealImageUrl(initialData.coverImage);
+      // Il campo nel DB si chiama imageUrl (non coverImage)
+      const existingImage = initialData.imageUrl || initialData.coverImage;
+      if (existingImage) {
+        const existingUrl = mealService.getFullMealImageUrl(existingImage);
         if (existingUrl) {
           setImagePreview(existingUrl);
         }
@@ -409,9 +411,16 @@ const MealForm = ({ initialData, onSubmit, onCancel, isLoading, isSubmitting, su
     }
     
     if (imageFile) {
+      // Nuova immagine selezionata dall'utente
       formDataToSend.append('image', imageFile);
       if (imageBase64) formDataToSend.append('imageBase64', imageBase64);
       if (imagePreview) formDataToSend.append('imageLocalUri', imagePreview);
+    } else {
+      // ✅ FIX: Nessuna nuova immagine → preserva l'immagine esistente passando imageUrl al backend
+      const existingImageUrl = initialData?.imageUrl || initialData?.coverImage;
+      if (existingImageUrl) {
+        formDataToSend.append('existingImageUrl', existingImageUrl);
+      }
     }
     
     onSubmit(formDataToSend);
@@ -640,7 +649,8 @@ const MealForm = ({ initialData, onSubmit, onCancel, isLoading, isSubmitting, su
               className={styles.imagePreview}
               style={{ maxHeight: '180px', borderRadius: '8px', objectFit: 'cover' }}
             />
-            {!imageFile && initialData?.coverImage && (
+            {/* ✅ FIX: usa imageUrl (non coverImage) per rilevare immagine esistente */}
+            {!imageFile && (initialData?.imageUrl || initialData?.coverImage) && (
               <Form.Text className="text-muted d-block">Immagine attuale — seleziona una nuova per cambiarla</Form.Text>
             )}
           </div>

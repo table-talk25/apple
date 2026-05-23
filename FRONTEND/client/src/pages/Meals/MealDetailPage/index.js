@@ -1,14 +1,16 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Container, Row, Col, Button, Badge, Spinner, Alert, Modal } from 'react-bootstrap';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'react-toastify';
-import { FaMapMarkerAlt, FaCalendarAlt, FaClock, FaUser, FaUsers, FaComment, FaVideo, FaShareAlt, FaArrowLeft, FaTrash } from 'react-icons/fa';
+import { FaMapMarkerAlt, FaCalendarAlt, FaClock, FaUser, FaUsers, FaComment, FaVideo, FaShareAlt, FaArrowLeft, FaTrash, FaCamera } from 'react-icons/fa';
+import { Capacitor } from '@capacitor/core';
+import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
 
 import mealService from '../../../services/mealService';
 import { useAuth } from '../../../contexts/AuthContext';
 import { getHostAvatarUrl, getMealCoverImageUrl } from '../../../constants/mealConstants';
-import OpenStreetMapComponent from '../../../components/maps/OpenStreetMapComponent'; // La tua mappa
+import OpenStreetMapComponent from '../../../components/maps/OpenStreetMapComponent';
 import BackButton from '../../../components/common/BackButton';
 import JoinMealButton from '../../../components/meals/JoinMealButton';
 import LeaveMealButton from '../../../components/meals/LeaveMealButton';
@@ -19,6 +21,7 @@ const MealDetailPage = () => {
   const { mealId } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const coverImageInputRef = useRef(null);
 
   const [meal, setMeal] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -26,14 +29,14 @@ const MealDetailPage = () => {
   const [showShareModal, setShowShareModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isUploadingCover, setIsUploadingCover] = useState(false);
 
   // Caricamento Dati Pasto
   const fetchMeal = useCallback(async () => {
     try {
       setLoading(true);
       const data = await mealService.getMealById(mealId);
-      // Gestione robusta: a volte arriva { success: true, data: meal } altre volte direttamente meal
-      setMeal(data.data || data); 
+      setMeal(data.data || data);
     } catch (err) {
       console.error('Errore caricamento pasto:', err);
       setError(t('meals.detail.loadError') || 'Impossibile caricare il pasto.');
@@ -46,9 +49,85 @@ const MealDetailPage = () => {
     fetchMeal();
   }, [fetchMeal]);
 
-  // Aggiornamento rapido dopo un'azione (Join/Leave)
   const handleRefresh = () => {
     fetchMeal();
+  };
+
+  // ✅ Upload immagine di copertina direttamente dalla hero
+  const handleCoverImageChange = async (file) => {
+    if (!file || !file.type.startsWith('image/')) {
+      toast.error('Seleziona solo file immagine');
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error('Il file è troppo grande. Massimo 10MB.');
+      return;
+    }
+
+    setIsUploadingCover(true);
+    try {
+      const formData = new FormData();
+      formData.append('image', file);
+      // Preserva tutti i campi esistenti del pasto
+      formData.append('title', meal.title);
+      formData.append('description', meal.description);
+      formData.append('mealType', meal.mealType);
+      formData.append('type', meal.type);
+      formData.append('date', new Date(meal.date).toISOString());
+      formData.append('duration', meal.duration);
+      formData.append('maxParticipants', meal.maxParticipants);
+      formData.append('language', meal.language || 'English');
+      if (meal.topics && meal.topics.length > 0) {
+        meal.topics.forEach(topic => formData.append('topics', topic));
+      }
+      if (meal.location) {
+        formData.append('location', JSON.stringify(meal.location));
+      }
+      if (meal.isPublic !== undefined) {
+        formData.append('isPublic', meal.isPublic);
+      }
+
+      await mealService.updateMeal(meal._id, formData);
+      toast.success('Immagine di copertina aggiornata! 🎉');
+      await fetchMeal();
+    } catch (err) {
+      console.error('Errore aggiornamento immagine:', err);
+      toast.error(err.response?.data?.message || 'Errore durante l\'aggiornamento dell\'immagine');
+    } finally {
+      setIsUploadingCover(false);
+    }
+  };
+
+  const handleCoverFileInput = async (e) => {
+    const file = e.target.files[0];
+    if (file) await handleCoverImageChange(file);
+    // Reset input per permettere di selezionare di nuovo la stessa immagine
+    e.target.value = '';
+  };
+
+  const handleCoverClick = async () => {
+    if (Capacitor.isNativePlatform()) {
+      try {
+        const image = await Camera.getPhoto({
+          quality: 90,
+          allowEditing: false,
+          resultType: CameraResultType.DataUrl,
+          source: CameraSource.Photos,
+          width: 1600,
+          height: 1600
+        });
+        if (!image || !image.dataUrl) return;
+        const response = await fetch(image.dataUrl);
+        const blob = await response.blob();
+        const file = new File([blob], `cover_${Date.now()}.jpg`, { type: 'image/jpeg' });
+        await handleCoverImageChange(file);
+      } catch (err) {
+        console.error('Errore selezione foto:', err);
+        toast.error('Errore durante la selezione della foto');
+      }
+    } else {
+      coverImageInputRef.current?.click();
+    }
   };
 
   if (loading) return <div className="d-flex justify-content-center py-5"><Spinner animation="border" /></div>;
@@ -57,51 +136,39 @@ const MealDetailPage = () => {
 
   // Logica Permessi
   const isHost = user && (meal.host?._id === user._id || meal.host === user._id);
-  // Controlla se l'utente è nella lista partecipanti (gestendo sia oggetti popolati che ID stringa)
-  const isParticipant = user && meal.participants?.some(p => 
-    (p._id || p) === user._id
-  );
+  const isParticipant = user && meal.participants?.some(p => (p._id || p) === user._id);
   const isVirtual = meal.mealType === 'virtual';
   const isFull = meal.participants?.length >= meal.maxParticipants;
   const isPast = new Date(meal.date) < new Date();
 
-  // --- LOGICA TEMPORALE VIDEOCHIAMATA ---
   const mealDate = new Date(meal.date);
   const now = new Date();
-  const durationMs = (meal.duration || 60) * 60 * 1000; // Default 60 min se mancante
+  const durationMs = (meal.duration || 60) * 60 * 1000;
   const mealEndTime = new Date(mealDate.getTime() + durationMs);
   const tenMinutesBeforeStart = new Date(mealDate.getTime() - 10 * 60 * 1000);
 
-  // È accessibile se: (Adesso >= 10 min prima) E (Adesso <= Fine pasto)
   const isVideoAccessible = isVirtual && 
                             (isParticipant || isHost) && 
                             now >= tenMinutesBeforeStart && 
                             now <= mealEndTime;
 
-  // Opzionale: Se l'utente è partecipante ma è troppo presto, mostriamo un avviso?
-  const isTooEarly = isVirtual && (isParticipant || isHost) && now < tenMinutesBeforeStart && now > new Date(mealDate.getTime() - 24 * 60 * 60 * 1000); // Mostra solo se manca meno di 24h
+  const isTooEarly = isVirtual && (isParticipant || isHost) && now < tenMinutesBeforeStart && now > new Date(mealDate.getTime() - 24 * 60 * 60 * 1000);
 
-  // Navigazione Chat
   const handleChatClick = () => {
     if (meal.chatId) {
-      // meal.chatId può essere un oggetto o una stringa
       const targetId = typeof meal.chatId === 'object' ? meal.chatId._id : meal.chatId;
-      // Usa /chat/ (singolare) non /chats/ (plurale) - corrisponde alla route in App.js
       navigate(`/chat/${targetId}`);
     } else {
       toast.error(t('chat.notAvailable') || 'Chat non ancora disponibile');
     }
   };
 
-  // Navigazione Video
   const handleVideoClick = () => {
     navigate(`/meals/${meal._id}/video`);
   };
 
-  // Eliminazione TableTalk
   const handleDeleteMeal = async () => {
     if (!meal || !isHost) return;
-    
     setIsDeleting(true);
     try {
       await mealService.deleteMeal(meal._id);
@@ -119,13 +186,39 @@ const MealDetailPage = () => {
 
   return (
     <div className={styles.pageContainer}>
-      {/* Header Immagine */}
-      <div 
-        className={styles.heroImage} 
-        style={{ 
-          backgroundImage: `url(${getMealCoverImageUrl(meal.imageUrl)})` 
-        }}
+      {/* Header Immagine — cliccabile per host */}
+      <div
+        className={`${styles.heroImage} ${isHost && !isPast ? styles.heroImageEditable : ''}`}
+        style={{ backgroundImage: `url(${getMealCoverImageUrl(meal.imageUrl)})` }}
+        onClick={isHost && !isPast ? handleCoverClick : undefined}
+        role={isHost && !isPast ? 'button' : undefined}
+        aria-label={isHost && !isPast ? 'Cambia immagine di copertina' : undefined}
       >
+        {/* Input file nascosto (web) */}
+        {isHost && !isPast && (
+          <input
+            ref={coverImageInputRef}
+            type="file"
+            accept="image/*"
+            style={{ display: 'none' }}
+            onChange={handleCoverFileInput}
+          />
+        )}
+
+        {/* Overlay fotocamera — visibile solo all'host su hover/tap */}
+        {isHost && !isPast && (
+          <div className={styles.coverEditOverlay}>
+            {isUploadingCover ? (
+              <Spinner animation="border" variant="light" size="sm" />
+            ) : (
+              <>
+                <FaCamera className={styles.coverEditIcon} />
+                <span className={styles.coverEditLabel}>Cambia foto</span>
+              </>
+            )}
+          </div>
+        )}
+
         <div className={styles.overlay}>
           <Container>
             <BackButton className="mb-3 text-white" />
@@ -143,10 +236,10 @@ const MealDetailPage = () => {
             {/* Info Principali */}
             <div className={styles.card}>
               <div className={styles.hostInfo}>
-                <img 
-                  src={getHostAvatarUrl(meal.host?.profileImage)} 
-                  alt={meal.host?.nickname} 
-                  className={styles.hostAvatar} 
+                <img
+                  src={getHostAvatarUrl(meal.host?.profileImage)}
+                  alt={meal.host?.nickname}
+                  className={styles.hostAvatar}
                 />
                 <div>
                   <p className="mb-0 text-muted">{t('meals.detail.hostedBy')}</p>
@@ -173,53 +266,49 @@ const MealDetailPage = () => {
                   <FaUsers className={styles.icon} />
                   <div>
                     <label>{t('meals.detail.participantsList')}</label>
-                    <p>{t('meals.detail.participantsText', { 
-                      current: meal.participants?.length || 0, 
-                      max: meal.maxParticipants 
+                    <p>{t('meals.detail.participantsText', {
+                      current: meal.participants?.length || 0,
+                      max: meal.maxParticipants
                     })}</p>
                   </div>
                 </div>
               </div>
 
               <hr />
-              
+
               <h3>{t('meals.detail.description')}</h3>
               <p className={styles.description}>{meal.description}</p>
 
-              {/* Sezione Argomenti (Topics) */}
               {meal.topics && meal.topics.length > 0 && (
                 <div className="mb-4">
                   <h5>{t('meals.form.topicsLabel')}</h5>
                   <div className={styles.topicsContainer}>
                     {meal.topics.map((topic, idx) => (
-                      <Badge key={idx} bg="light" text="dark" className="me-2 p-2 border">
-                        #{topic}
-                      </Badge>
+                      <Badge key={idx} bg="light" text="dark" className="me-2 p-2 border">#{topic}</Badge>
                     ))}
                   </div>
                 </div>
               )}
             </div>
 
-            {/* Mappa (Solo se Fisico e Location presente) */}
             {!isVirtual && meal.location && meal.location.coordinates && (
               <div className={styles.card}>
                 <h4 className="mb-3"><FaMapMarkerAlt className="me-2" />{t('meals.detail.location')}</h4>
                 <p className="text-muted">{meal.location.address}</p>
                 <div style={{ height: '300px', borderRadius: '10px', overflow: 'hidden' }}>
-                  <OpenStreetMapComponent 
+                  <OpenStreetMapComponent
                     readOnly={true}
-                    center={[meal.location.coordinates[1], meal.location.coordinates[0]]} // [Lat, Lng]
+                    center={[meal.location.coordinates[1], meal.location.coordinates[0]]}
                     zoom={15}
-                    markers={[{ 
-                      lat: meal.location.coordinates[1], 
+                    markers={[{
+                      lat: meal.location.coordinates[1],
                       lng: meal.location.coordinates[0],
-                      title: meal.title 
+                      title: meal.title
                     }]}
                   />
                 </div>
-                <Button 
-                  variant="outline-primary" 
+                <Button
+                  variant="outline-primary"
                   className="mt-3 w-100"
                   onClick={() => window.open(`https://www.google.com/maps/search/?api=1&query=${meal.location.coordinates[1]},${meal.location.coordinates[0]}`, '_blank')}
                 >
@@ -233,28 +322,18 @@ const MealDetailPage = () => {
           <Col lg={4}>
             <div className={`${styles.card} ${styles.actionCard}`}>
               <h4 className="mb-4">{t('meals.detail.actions')}</h4>
-              
-              {/* 1. Pulsante Unisciti / Lascia */}
+
               {!isHost && !isParticipant && !isPast && (
-                <JoinMealButton
-                  mealId={meal._id}
-                  onSuccess={handleRefresh}
-                  className="w-100 mb-3 btn-lg"
-                />
+                <JoinMealButton mealId={meal._id} onSuccess={handleRefresh} className="w-100 mb-3 btn-lg" />
               )}
 
               {!isHost && isParticipant && !isPast && (
-                <LeaveMealButton 
-                  mealId={meal._id} 
-                  onSuccess={handleRefresh} 
-                  className="w-100 mb-3 btn-outline-danger"
-                />
+                <LeaveMealButton mealId={meal._id} onSuccess={handleRefresh} className="w-100 mb-3 btn-outline-danger" />
               )}
 
-              {/* 2. Pulsante Chat (Solo partecipanti/host) */}
               {(isParticipant || isHost) && meal.chatId && (
-                <Button 
-                  variant="primary" 
+                <Button
+                  variant="primary"
                   className="w-100 mb-3 d-flex align-items-center justify-content-center gap-2"
                   onClick={handleChatClick}
                 >
@@ -262,36 +341,29 @@ const MealDetailPage = () => {
                 </Button>
               )}
 
-              {/* 3. Pulsante Video (Logica a tempo) */}
               {isVideoAccessible ? (
-                <Button 
-                  variant="success" 
+                <Button
+                  variant="success"
                   className="w-100 mb-3 d-flex align-items-center justify-content-center gap-2"
                   onClick={handleVideoClick}
                 >
                   <FaVideo /> {t('meals.detail.joinVideo')}
                 </Button>
               ) : (
-                /* Feedback se è troppo presto (Opzionale, migliora UX) */
                 isTooEarly && (
                   <div className="w-100 mb-3 text-center text-muted small border p-2 rounded bg-light">
-                    <FaVideo className="me-1" /> 
-                    Video disponibile dalle {tenMinutesBeforeStart.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                    <FaVideo className="me-1" />
+                    Video disponibile dalle {tenMinutesBeforeStart.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   </div>
                 )
               )}
 
-              {/* 4. Pulsante Condividi */}
-              <Button 
-                variant="outline-secondary" 
+              <Button
+                variant="outline-secondary"
                 className="w-100 mb-3"
                 onClick={() => {
                   if (navigator.share) {
-                    navigator.share({
-                      title: meal.title,
-                      text: `Unisciti a me per ${meal.title} su TableTalk!`,
-                      url: window.location.href
-                    });
+                    navigator.share({ title: meal.title, text: `Unisciti a me per ${meal.title} su TableTalk!`, url: window.location.href });
                   } else {
                     navigator.clipboard.writeText(window.location.href);
                     toast.success('Link copiato negli appunti!');
@@ -301,10 +373,9 @@ const MealDetailPage = () => {
                 <FaShareAlt className="me-2" /> {t('common.share')}
               </Button>
 
-              {/* 5. Pulsante Elimina (Solo per Host) */}
               {isHost && !isPast && (
-                <Button 
-                  variant="danger" 
+                <Button
+                  variant="danger"
                   className="w-100"
                   onClick={() => setShowDeleteModal(true)}
                 >
@@ -316,7 +387,6 @@ const MealDetailPage = () => {
               <div className="mt-4">
                 <h5>{t('meals.detail.participantsList')} ({meal.participants?.length || 0})</h5>
                 <div className={styles.avatarList}>
-                  {/* Mostra Host */}
                   {(() => {
                     const hostId = meal.host?._id || meal.host;
                     const isMeHost = user && hostId === user._id;
@@ -344,7 +414,6 @@ const MealDetailPage = () => {
                       </div>
                     );
                   })()}
-                  {/* Mostra Altri */}
                   {meal.participants?.map(p => {
                     const participantId = p?._id || p;
                     const hostId = meal.host?._id || meal.host;
@@ -390,8 +459,7 @@ const MealDetailPage = () => {
           <p>{t('meals.detail.deleteMealConfirmation') || 'Sei sicuro di voler eliminare questo TableTalk®? Questa azione non può essere annullata.'}</p>
           {meal && (
             <div className="mt-3 p-3 bg-light rounded">
-              <strong>{meal.title}</strong>
-              <br />
+              <strong>{meal.title}</strong><br />
               <small className="text-muted">
                 {new Date(meal.date).toLocaleDateString()} alle {new Date(meal.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
               </small>
@@ -404,14 +472,9 @@ const MealDetailPage = () => {
           </Button>
           <Button variant="danger" onClick={handleDeleteMeal} disabled={isDeleting}>
             {isDeleting ? (
-              <>
-                <Spinner animation="border" size="sm" className="me-2" />
-                {t('meals.detail.deleting') || 'Eliminazione...'}
-              </>
+              <><Spinner animation="border" size="sm" className="me-2" />{t('meals.detail.deleting') || 'Eliminazione...'}</>
             ) : (
-              <>
-                <FaTrash className="me-2" /> {t('meals.detail.deleteMeal') || 'Elimina'}
-              </>
+              <><FaTrash className="me-2" /> {t('meals.detail.deleteMeal') || 'Elimina'}</>
             )}
           </Button>
         </Modal.Footer>
