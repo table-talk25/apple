@@ -1,6 +1,3 @@
-/**
- * Inizializzazione Firebase Admin (push). Side-effect all'import: stesso comportamento di prima.
- */
 const path = require('path');
 const fs = require('fs');
 const admin = require('firebase-admin');
@@ -8,6 +5,17 @@ const admin = require('firebase-admin');
 const FIREBASE_PROJECT_ID = 'tabletalk-social';
 
 function initFirebaseAdmin() {
+  // Debug: stato variabili Firebase all'avvio
+  console.log('[Firebase] FIREBASE_PROJECT_ID:', process.env.FIREBASE_PROJECT_ID || '(non impostata)');
+  console.log('[Firebase] FIREBASE_CLIENT_EMAIL:', process.env.FIREBASE_CLIENT_EMAIL || '(non impostata)');
+  console.log('[Firebase] FIREBASE_PRIVATE_KEY:', process.env.FIREBASE_PRIVATE_KEY ? `(presente, ${process.env.FIREBASE_PRIVATE_KEY.length} caratteri)` : '(non impostata)');
+  console.log('[Firebase] FIREBASE_SERVICE_ACCOUNT_JSON:', process.env.FIREBASE_SERVICE_ACCOUNT_JSON ? '(presente)' : '(non impostata)');
+
+  if (admin.apps.length > 0) {
+    console.log('[Firebase] App gia inizializzata, skip.');
+    return;
+  }
+
   let serviceAccount = null;
   let firebaseInitialized = false;
 
@@ -98,10 +106,6 @@ function initFirebaseAdmin() {
   } else {
     console.log('[Firebase] Nessuna credenziale trovata (ne da env ne da file)');
     console.log('[Firebase] Admin SDK non configurato. Le notifiche push NON funzioneranno.');
-    console.log('[Firebase] Per abilitare le notifiche push:');
-    console.log('   1. Su Qlify: aggiungi FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, FIREBASE_PRIVATE_KEY');
-    console.log('   2. Oppure: aggiungi FIREBASE_SERVICE_ACCOUNT_JSON con il JSON completo');
-    console.log('   3. In locale: aggiungi firebase-service-account.json nella cartella BACKEND');
 
     admin.initializeApp({
       projectId: process.env.FIREBASE_PROJECT_ID || FIREBASE_PROJECT_ID,
@@ -114,13 +118,16 @@ try {
   initFirebaseAdmin();
 } catch (error) {
   console.error('[Firebase] Errore inizializzazione Admin SDK:', error.message);
+  console.error('[Firebase] Stack:', error.stack);
   console.log('[Firebase] Admin SDK non configurato. Le notifiche push non funzioneranno.');
 
   try {
-    admin.initializeApp({
-      projectId: process.env.FIREBASE_PROJECT_ID || FIREBASE_PROJECT_ID,
-    });
-    console.log('[Firebase] Admin SDK inizializzato in modalita limitata (fallback)');
+    if (admin.apps.length === 0) {
+      admin.initializeApp({
+        projectId: process.env.FIREBASE_PROJECT_ID || FIREBASE_PROJECT_ID,
+      });
+      console.log('[Firebase] Admin SDK inizializzato in modalita limitata (fallback)');
+    }
   } catch (fallbackError) {
     console.error('[Firebase] Anche il fallback e fallito:', fallbackError.message);
     console.log('[Firebase] L app continuera a funzionare senza notifiche push');
