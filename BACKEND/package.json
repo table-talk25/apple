@@ -1,6 +1,6 @@
 {
   "name": "tabletalk-backend",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Backend per l'applicazione TableTalk",
   "main": "server.js",
   "scripts": {
