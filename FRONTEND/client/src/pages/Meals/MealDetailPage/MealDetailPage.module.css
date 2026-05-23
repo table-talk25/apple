@@ -11,60 +11,65 @@
   position: relative;
 }
 
-/* ✅ Stato hover per host: cursore pointer + leggero scurimento */
 .heroImageEditable {
-  cursor: pointer;
+  cursor: default; /* la hero non è più cliccabile tutta */
 }
 
-.heroImageEditable:hover .coverEditOverlay,
-.heroImageEditable:focus .coverEditOverlay {
-  opacity: 1;
-}
-
-/* Overlay fotocamera — visibile solo all'host su hover */
+/* Overlay fotocamera — piccolo bottone fisso in basso a destra */
 .coverEditOverlay {
   position: absolute;
-  inset: 0;
+  bottom: 14px;
+  right: 14px;
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
-  justify-content: center;
-  gap: 8px;
-  background: rgba(0, 0, 0, 0.45);
-  opacity: 0;
-  transition: opacity 0.22s ease;
-  z-index: 3;
-  pointer-events: none;
+  gap: 7px;
+  background: rgba(0, 0, 0, 0.62);
+  border-radius: 24px;
+  padding: 8px 14px 8px 10px;
+  cursor: pointer;
+  z-index: 10;
+  pointer-events: all;
+  transition: background 0.18s ease, transform 0.15s ease;
+  user-select: none;
 }
 
-/* Su mobile (touch) mostra sempre l'overlay in basso a destra */
+.coverEditOverlay:hover,
+.coverEditOverlay:focus {
+  background: rgba(0, 0, 0, 0.80);
+  transform: scale(1.04);
+}
+
+.coverEditOverlay:active {
+  transform: scale(0.97);
+}
+
+/* Su mobile mostra solo l'icona senza testo */
 @media (hover: none) {
-  .heroImageEditable .coverEditOverlay {
-    opacity: 1;
-    inset: auto 12px 12px auto;
-    width: 44px;
-    height: 44px;
-    border-radius: 50%;
-    background: rgba(0, 0, 0, 0.6);
-    flex-direction: column;
-    gap: 0;
-  }
   .coverEditLabel {
     display: none;
+  }
+  .coverEditOverlay {
+    padding: 10px;
+    border-radius: 50%;
+    width: 44px;
+    height: 44px;
+    justify-content: center;
   }
 }
 
 .coverEditIcon {
   color: #fff;
-  font-size: 2rem;
+  font-size: 1.1rem;
+  flex-shrink: 0;
 }
 
 .coverEditLabel {
   color: #fff;
-  font-size: 0.95rem;
+  font-size: 0.88rem;
   font-weight: 600;
-  letter-spacing: 0.03em;
-  text-shadow: 0 1px 3px rgba(0,0,0,0.6);
+  letter-spacing: 0.02em;
+  white-space: nowrap;
 }
 
 .overlay {
@@ -76,6 +81,12 @@
   padding-bottom: 3rem;
   position: relative;
   z-index: 2;
+  pointer-events: none; /* lascia passare i click solo agli elementi figli interattivi */
+}
+
+/* Il BackButton dentro .overlay deve restare cliccabile */
+.overlay > * {
+  pointer-events: all;
 }
 
 .title {

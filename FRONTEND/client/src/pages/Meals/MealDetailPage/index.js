@@ -53,7 +53,7 @@ const MealDetailPage = () => {
     fetchMeal();
   };
 
-  // ✅ Upload immagine di copertina direttamente dalla hero
+  // Upload immagine di copertina direttamente dalla hero
   const handleCoverImageChange = async (file) => {
     if (!file || !file.type.startsWith('image/')) {
       toast.error('Seleziona solo file immagine');
@@ -68,7 +68,6 @@ const MealDetailPage = () => {
     try {
       const formData = new FormData();
       formData.append('image', file);
-      // Preserva tutti i campi esistenti del pasto
       formData.append('title', meal.title);
       formData.append('description', meal.description);
       formData.append('mealType', meal.mealType);
@@ -101,7 +100,6 @@ const MealDetailPage = () => {
   const handleCoverFileInput = async (e) => {
     const file = e.target.files[0];
     if (file) await handleCoverImageChange(file);
-    // Reset input per permettere di selezionare di nuovo la stessa immagine
     e.target.value = '';
   };
 
@@ -154,6 +152,11 @@ const MealDetailPage = () => {
 
   const isTooEarly = isVirtual && (isParticipant || isHost) && now < tenMinutesBeforeStart && now > new Date(mealDate.getTime() - 24 * 60 * 60 * 1000);
 
+  // Label tipo pasto con fallback esplicito (evita chiavi i18n non tradotte)
+  const mealTypeLabel = isVirtual
+    ? (t('meals.type.virtual') !== 'meals.type.virtual' ? t('meals.type.virtual') : 'Virtuale')
+    : (t('meals.type.physical') !== 'meals.type.physical' ? t('meals.type.physical') : 'In presenza');
+
   const handleChatClick = () => {
     if (meal.chatId) {
       const targetId = typeof meal.chatId === 'object' ? meal.chatId._id : meal.chatId;
@@ -186,13 +189,10 @@ const MealDetailPage = () => {
 
   return (
     <div className={styles.pageContainer}>
-      {/* Header Immagine — cliccabile per host */}
+      {/* Header Immagine */}
       <div
-        className={`${styles.heroImage} ${isHost && !isPast ? styles.heroImageEditable : ''}`}
+        className={styles.heroImage}
         style={{ backgroundImage: `url(${getMealCoverImageUrl(meal.imageUrl)})` }}
-        onClick={isHost && !isPast ? handleCoverClick : undefined}
-        role={isHost && !isPast ? 'button' : undefined}
-        aria-label={isHost && !isPast ? 'Cambia immagine di copertina' : undefined}
       >
         {/* Input file nascosto (web) */}
         {isHost && !isPast && (
@@ -205,9 +205,16 @@ const MealDetailPage = () => {
           />
         )}
 
-        {/* Overlay fotocamera — visibile solo all'host su hover/tap */}
+        {/* Bottone cambio foto — piccolo, in basso a destra, NON copre tutta la hero */}
         {isHost && !isPast && (
-          <div className={styles.coverEditOverlay}>
+          <div
+            className={styles.coverEditOverlay}
+            onClick={handleCoverClick}
+            role="button"
+            tabIndex={0}
+            aria-label="Cambia immagine di copertina"
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleCoverClick(); } }}
+          >
             {isUploadingCover ? (
               <Spinner animation="border" variant="light" size="sm" />
             ) : (
@@ -222,8 +229,8 @@ const MealDetailPage = () => {
         <div className={styles.overlay}>
           <Container>
             <BackButton className="mb-3 text-white" />
-            <Badge bg={isVirtual ? "info" : "success"} className="mb-2">
-              {isVirtual ? t('meals.type.virtual') : t('meals.type.physical')}
+            <Badge bg={isVirtual ? 'info' : 'success'} className="mb-2">
+              {mealTypeLabel}
             </Badge>
             <h1 className={styles.title}>{meal.title}</h1>
           </Container>
