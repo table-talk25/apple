@@ -7,7 +7,8 @@ import { io } from 'socket.io-client';
 import { useAuth } from '../../contexts/AuthContext';
 import { useChatDrawer } from '../../contexts/ChatDrawerContext';
 import chatService from '../../services/chatService';
-import { getHostAvatarUrl } from '../../constants/mealConstants';
+import mealService from '../../services/mealService';
+import { getMealCoverImageUrl, getHostAvatarUrl } from '../../constants/mealConstants';
 import { API_URL } from '../../config/capacitorConfig';
 import { IoSend } from 'react-icons/io5';
 import { toast } from 'react-toastify';
@@ -29,7 +30,33 @@ const ChatList = ({ onSelectChat }) => {
     setError(null);
     try {
       const data = await chatService.getUserChats();
-      setChats(data);
+
+      // Arricchisci le chat con imageUrl del meal se non già presente nel populate
+      const enriched = await Promise.all(
+        data.map(async (chat) => {
+          const mealId = chat.mealId;
+          if (!mealId) return chat;
+          // Se l'imageUrl è già presente, non fare nessuna chiamata extra
+          if (mealId?.imageUrl || mealId?.coverImage) return chat;
+          const mealIdStr = typeof mealId === 'object' ? mealId._id : mealId;
+          if (!mealIdStr) return chat;
+          try {
+            const res = await mealService.getMealById(mealIdStr);
+            const mealData = res?.data || res;
+            return {
+              ...chat,
+              mealId: {
+                ...(typeof mealId === 'object' ? mealId : { _id: mealIdStr }),
+                imageUrl: mealData?.imageUrl || null,
+              },
+            };
+          } catch {
+            return chat;
+          }
+        })
+      );
+
+      setChats(enriched);
     } catch {
       setError('Impossibile caricare le chat.');
     } finally {
@@ -59,14 +86,10 @@ const ChatList = ({ onSelectChat }) => {
     return 'Chat';
   };
 
+  // Usa l'immagine del meal come avatar della chat
   const getAvatarSrc = (chat) => {
-    const others = (chat.participants || []).filter(
-      p => (p._id || p).toString() !== (user?._id || user?.id || '').toString()
-    );
-    if (others.length === 1 && others[0].profileImage) {
-      return getHostAvatarUrl(others[0].profileImage);
-    }
-    return getHostAvatarUrl(null);
+    const mealImage = chat.mealId?.imageUrl || chat.mealId?.coverImage || null;
+    return getMealCoverImageUrl(mealImage);
   };
 
   if (loading) {
@@ -139,9 +162,10 @@ const ChatList = ({ onSelectChat }) => {
           <div style={{ position: 'relative', flexShrink: 0 }}>
             <img
               src={getAvatarSrc(chat)}
-              alt="avatar"
+              alt={getChatName(chat)}
               style={{ width: 48, height: 48, borderRadius: '50%', objectFit: 'cover', border: '2px solid #e2e8f0', display: 'block' }}
               loading="lazy"
+              onError={(e) => { e.target.src = '/assets/images/default-meal-placeholder.jpeg'; }}
             />
             {chat.unreadCount > 0 && (
               <span style={{
@@ -219,7 +243,7 @@ const DrawerChat = ({ chatId }) => {
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(true);
   const [connectionStatus, setConnectionStatus] = useState('connecting');
-  const [replyTo, setReplyTo] = useState(null); // { _id, senderName, message }
+  const [replyTo, setReplyTo] = useState(null);
   const socketRef = useRef(null);
   const messagesEndRef = useRef(null);
   const messageIdsRef = useRef(new Set());
@@ -303,7 +327,6 @@ const DrawerChat = ({ chatId }) => {
     };
   }, [chatId, token, currentUserId, normalizeMessage]);
 
-  // ESC annulla reply
   useEffect(() => {
     const handler = (e) => { if (e.key === 'Escape') setReplyTo(null); };
     document.addEventListener('keydown', handler);
@@ -345,7 +368,6 @@ const DrawerChat = ({ chatId }) => {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>
-      {/* Sub-header con nome chat e stato connessione */}
       <div style={{ padding: '6px 16px 8px', background: '#fff8f5', borderBottom: '1px solid #fde5d7', flexShrink: 0 }}>
         <span style={{ fontWeight: 600, fontSize: '0.9rem', color: '#FF6B35' }}>{chatName}</span>
         {connectionStatus === 'disconnected' && (
@@ -356,7 +378,6 @@ const DrawerChat = ({ chatId }) => {
         )}
       </div>
 
-      {/* Messaggi */}
       <div style={{
         flex: 1, overflowY: 'auto', padding: '12px 10px',
         background: '#f7f8fa', display: 'flex', flexDirection: 'column', gap: '4px'
@@ -387,18 +408,11 @@ const DrawerChat = ({ chatId }) => {
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Reply banner */}
       {replyTo && (
         <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 8,
-          padding: '7px 12px',
-          background: '#fff0eb',
-          borderTop: '1px solid #ffd5c2',
-          fontSize: 13,
-          color: '#444',
-          flexShrink: 0,
+          display: 'flex', alignItems: 'center', gap: 8,
+          padding: '7px 12px', background: '#fff0eb',
+          borderTop: '1px solid #ffd5c2', fontSize: 13, color: '#444', flexShrink: 0,
         }}>
           <span style={{ color: '#FF6B35', fontWeight: 700, flexShrink: 0, fontSize: 15 }}>↩</span>
           <div style={{ flex: 1, overflow: 'hidden', minWidth: 0 }}>
@@ -407,25 +421,16 @@ const DrawerChat = ({ chatId }) => {
               marginLeft: 6, fontSize: 12, color: '#666',
               overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
               display: 'inline-block', maxWidth: 200, verticalAlign: 'bottom',
-            }}>
-              {replyTo.message}
-            </span>
+            }}>{replyTo.message}</span>
           </div>
           <button
             onClick={() => setReplyTo(null)}
             aria-label="Annulla risposta"
-            style={{
-              background: 'none', border: 'none', cursor: 'pointer',
-              fontSize: 16, color: '#aaa', padding: '0 4px', lineHeight: 1,
-              flexShrink: 0,
-            }}
-          >
-            ✕
-          </button>
+            style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 16, color: '#aaa', padding: '0 4px', lineHeight: 1, flexShrink: 0 }}
+          >✕</button>
         </div>
       )}
 
-      {/* Input */}
       <form
         onSubmit={handleSend}
         style={{
@@ -467,9 +472,7 @@ const DrawerChat = ({ chatId }) => {
             transition: 'background 0.2s',
             boxShadow: newMessage.trim() ? '0 2px 8px rgba(255,107,53,0.3)' : 'none',
           }}
-        >
-          <IoSend />
-        </button>
+        ><IoSend /></button>
       </form>
     </div>
   );
@@ -491,15 +494,12 @@ const MessageRow = ({ msg, own, onReply }) => {
   const handleTouchMove = (e) => {
     if (touchStartX.current === null) return;
     const dx = e.touches[0].clientX - touchStartX.current;
-    // Swipe verso destra per i propri messaggi, sinistra per gli altri
     const direction = own ? -1 : 1;
     const clamped = Math.max(0, Math.min(dx * direction, SWIPE_THRESHOLD + 10));
     setSwipeX(clamped);
   };
   const handleTouchEnd = () => {
-    if (swipeX >= SWIPE_THRESHOLD) {
-      onReply(msg);
-    }
+    if (swipeX >= SWIPE_THRESHOLD) onReply(msg);
     setSwipeX(0);
     setSwiping(false);
     touchStartX.current = null;
@@ -510,41 +510,25 @@ const MessageRow = ({ msg, own, onReply }) => {
   return (
     <div
       style={{
-        display: 'flex',
-        flexDirection: own ? 'row-reverse' : 'row',
-        alignItems: 'flex-end',
-        gap: '7px',
-        marginBottom: '4px',
-        position: 'relative',
+        display: 'flex', flexDirection: own ? 'row-reverse' : 'row',
+        alignItems: 'flex-end', gap: '7px', marginBottom: '4px', position: 'relative',
       }}
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
     >
-      {/* Icona reply che appare durante lo swipe */}
       {swiping && swipeX > 8 && (
         <div style={{
-          position: 'absolute',
-          [own ? 'left' : 'right']: 4,
-          top: '50%',
-          transform: 'translateY(-50%)',
-          opacity: swipeProgress,
-          fontSize: 18,
-          color: '#FF6B35',
-          transition: 'opacity 0.1s',
-          pointerEvents: 'none',
-        }}>
-          ↩
-        </div>
+          position: 'absolute', [own ? 'left' : 'right']: 4,
+          top: '50%', transform: 'translateY(-50%)',
+          opacity: swipeProgress, fontSize: 18, color: '#FF6B35',
+          transition: 'opacity 0.1s', pointerEvents: 'none',
+        }}>↩</div>
       )}
 
-      {/* Contenuto del messaggio traslato durante swipe */}
       <div style={{
-        display: 'flex',
-        flexDirection: own ? 'row-reverse' : 'row',
-        alignItems: 'flex-end',
-        gap: '7px',
-        flex: 1,
+        display: 'flex', flexDirection: own ? 'row-reverse' : 'row',
+        alignItems: 'flex-end', gap: '7px', flex: 1,
         transform: swiping ? `translateX(${own ? -swipeX : swipeX}px)` : 'translateX(0)',
         transition: swiping ? 'none' : 'transform 0.25s cubic-bezier(0.25, 1, 0.5, 1)',
       }}>
@@ -556,9 +540,7 @@ const MessageRow = ({ msg, own, onReply }) => {
           />
         )}
         <div style={{
-          maxWidth: '75%',
-          display: 'flex',
-          flexDirection: 'column',
+          maxWidth: '75%', display: 'flex', flexDirection: 'column',
           alignItems: own ? 'flex-end' : 'flex-start',
         }}>
           {!own && (
@@ -566,52 +548,37 @@ const MessageRow = ({ msg, own, onReply }) => {
               {msg.username}
             </span>
           )}
-
-          {/* Bubble */}
-          <div
-            style={{
-              padding: '9px 13px',
-              borderRadius: own ? '16px 4px 16px 16px' : '4px 16px 16px 16px',
-              background: own ? 'linear-gradient(135deg, #FF6B35, #ff8c5a)' : '#fff',
-              color: own ? '#fff' : '#1a1a2e',
-              boxShadow: '0 2px 6px rgba(0,0,0,0.07)',
-              wordBreak: 'break-word',
-              fontSize: '14px',
-              lineHeight: 1.45,
-            }}
-          >
-            {/* Quote preview */}
+          <div style={{
+            padding: '9px 13px',
+            borderRadius: own ? '16px 4px 16px 16px' : '4px 16px 16px 16px',
+            background: own ? 'linear-gradient(135deg, #FF6B35, #ff8c5a)' : '#fff',
+            color: own ? '#fff' : '#1a1a2e',
+            boxShadow: '0 2px 6px rgba(0,0,0,0.07)',
+            wordBreak: 'break-word', fontSize: '14px', lineHeight: 1.45,
+          }}>
             <ReplyPreview replyTo={msg.replyTo} own={own} />
-
             <div>{msg.content}</div>
             <div style={{ fontSize: '10px', opacity: 0.65, textAlign: 'right', marginTop: '3px' }}>
               {new Date(msg.timestamp).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' })}
             </div>
           </div>
-
-          {/* Pulsante Rispondi (desktop hover) */}
           <button
             onClick={() => onReply(msg)}
             title="Rispondi"
             style={{
               background: 'none', border: 'none', cursor: 'pointer',
-              fontSize: '12px', color: '#bbb',
-              padding: '2px 6px', marginTop: '2px',
-              borderRadius: '8px',
-              transition: 'color 0.15s, background 0.15s',
+              fontSize: '12px', color: '#bbb', padding: '2px 6px', marginTop: '2px',
+              borderRadius: '8px', transition: 'color 0.15s, background 0.15s',
             }}
             onMouseEnter={e => { e.currentTarget.style.color = '#FF6B35'; e.currentTarget.style.background = '#fff0eb'; }}
             onMouseLeave={e => { e.currentTarget.style.color = '#bbb'; e.currentTarget.style.background = 'none'; }}
-          >
-            ↩ Rispondi
-          </button>
+          >↩ Rispondi</button>
         </div>
       </div>
     </div>
   );
 };
 
-// Wrapper che accede al context per passare openChat alla lista
 const ChatListWrapper = () => {
   const { openChat } = useChatDrawer();
   return <ChatList onSelectChat={openChat} />;
@@ -626,10 +593,7 @@ const ChatDrawer = () => {
 
   const handleClose = useCallback(() => {
     setClosing(true);
-    setTimeout(() => {
-      setClosing(false);
-      closeDrawer();
-    }, 290);
+    setTimeout(() => { setClosing(false); closeDrawer(); }, 290);
   }, [closeDrawer]);
 
   useEffect(() => {
@@ -640,11 +604,8 @@ const ChatDrawer = () => {
   }, [isOpen, handleClose]);
 
   useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
-    }
+    if (isOpen) { document.body.style.overflow = 'hidden'; }
+    else { document.body.style.overflow = ''; }
     return () => { document.body.style.overflow = ''; };
   }, [isOpen]);
 
@@ -659,33 +620,20 @@ const ChatDrawer = () => {
       />
       <div
         className={`${styles.drawer} ${closing ? styles.drawerClosing : ''}`}
-        role="dialog"
-        aria-modal="true"
-        aria-label="Chat"
+        role="dialog" aria-modal="true" aria-label="Chat"
       >
         <div className={styles.handle} onClick={handleClose} />
-
         <div className={styles.header}>
           <div className={styles.headerLeft}>
             {activeChatId && (
-              <button className={styles.backBtn} onClick={goToList} aria-label="Torna alla lista">
-                ←
-              </button>
+              <button className={styles.backBtn} onClick={goToList} aria-label="Torna alla lista">←</button>
             )}
-            <span className={styles.headerTitle}>
-              {activeChatId ? 'Chat' : '💬 Chat'}
-            </span>
+            <span className={styles.headerTitle}>{activeChatId ? 'Chat' : '💬 Chat'}</span>
           </div>
-          <button className={styles.closeBtn} onClick={handleClose} aria-label="Chiudi chat">
-            ✕
-          </button>
+          <button className={styles.closeBtn} onClick={handleClose} aria-label="Chiudi chat">✕</button>
         </div>
-
         <div className={styles.body}>
-          {activeChatId
-            ? <DrawerChat chatId={activeChatId} />
-            : <ChatListWrapper />
-          }
+          {activeChatId ? <DrawerChat chatId={activeChatId} /> : <ChatListWrapper />}
         </div>
       </div>
     </>
