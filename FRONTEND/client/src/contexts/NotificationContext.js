@@ -10,43 +10,51 @@ import { useNavigate } from 'react-router-dom';
 
 export const NotificationContext = createContext();
 
-// ── Suono notifica via Web Audio API (nessun file esterno) ───────────────────
-// Genera un ding a due toni: nota alta breve + nota media leggermente più lunga.
-// Il browser richiede che AudioContext venga creato/ripreso dopo un gesto utente;
-// se ancora "sospeso" lo riprendiamo silenziosamente prima di suonare.
-const playNotificationSound = () => {
-  try {
-    const AudioContext = window.AudioContext || window.webkitAudioContext;
-    if (!AudioContext) return;
+// ── AudioContext singolo e riutilizzato ────────────────────────────────────────
+// Creare un nuovo AudioContext ad ogni notifica causa la sospensione automatica
+// da parte del browser (autoplay policy). Usiamo un'istanza globale che viene
+// ripresa (resume) prima di ogni suono.
+let _audioCtx = null;
 
-    const ctx = new AudioContext();
+const getAudioContext = () => {
+  const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+  if (!AudioContextClass) return null;
+  if (!_audioCtx) {
+    _audioCtx = new AudioContextClass();
+  }
+  return _audioCtx;
+};
+
+const playNotificationSound = async () => {
+  try {
+    const ctx = getAudioContext();
+    if (!ctx) return;
+
+    // Riprendi il contesto se sospeso (policy autoplay browser)
+    if (ctx.state === 'suspended') {
+      await ctx.resume();
+    }
+
+    const now = ctx.currentTime;
 
     const playTone = (frequency, startTime, duration, gainValue) => {
       const oscillator = ctx.createOscillator();
       const gainNode = ctx.createGain();
-
       oscillator.connect(gainNode);
       gainNode.connect(ctx.destination);
-
       oscillator.type = 'sine';
       oscillator.frequency.setValueAtTime(frequency, startTime);
-
       gainNode.gain.setValueAtTime(0, startTime);
       gainNode.gain.linearRampToValueAtTime(gainValue, startTime + 0.01);
       gainNode.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
-
       oscillator.start(startTime);
       oscillator.stop(startTime + duration);
     };
 
-    const now = ctx.currentTime;
-    playTone(1046, now, 0.18, 0.4);        // Do6 — nota alta
-    playTone(784, now + 0.15, 0.28, 0.25); // Sol5 — nota media
-
-    // Chiudi il contesto dopo che i suoni finiscono
-    setTimeout(() => ctx.close(), 800);
+    playTone(1046, now, 0.18, 0.4);         // Do6 — nota alta
+    playTone(784,  now + 0.15, 0.28, 0.25); // Sol5 — nota media
   } catch (e) {
-    // Silenzioso in caso di policy browser (es. iframe sandboxed)
+    // Silenzioso se il browser blocca comunque
   }
 };
 
@@ -116,7 +124,7 @@ export const NotificationProvider = ({ children }) => {
     });
     socketRef.current = socket;
 
-    // ── 1. Messaggio in chat ────────────────────────────────────────────────
+    // ── 1. Messaggio in chat ──────────────────────────────────────────
     socket.on('new_chat_message_alert', ({ senderName, preview, chatId }) => {
       const msg = `💬 ${senderName}: ${preview}`;
       toast.info(msg, {
@@ -135,7 +143,7 @@ export const NotificationProvider = ({ children }) => {
       });
     });
 
-    // ── 2. Reminder 30 min prima del pasto ─────────────────────────────────
+    // ── 2. Reminder 30 min prima del pasto ───────────────────────────
     socket.on('meal_reminder', ({ mealId, mealTitle }) => {
       const msg = `⏰ "${mealTitle}" inizia tra 30 minuti!`;
       toast.warning(msg, {
@@ -154,7 +162,7 @@ export const NotificationProvider = ({ children }) => {
       });
     });
 
-    // ── 3. Video chat disponibile ─────────────────────────────────────────
+    // ── 3. Video chat disponibile ─────────────────────────────────────
     socket.on('video_call_available', ({ mealId, mealTitle }) => {
       const msg = `🎥 La video chat di "${mealTitle}" è disponibile!`;
       toast.success(msg, {
@@ -173,7 +181,7 @@ export const NotificationProvider = ({ children }) => {
       });
     });
 
-    // ── 4. Notifica generica dal backend ──────────────────────────────────
+    // ── 4. Notifica generica dal backend ─────────────────────────────
     socket.on('new_notification', ({ message, type, data }) => {
       toast.info(message, { autoClose: 5000 });
       pushNotification({
