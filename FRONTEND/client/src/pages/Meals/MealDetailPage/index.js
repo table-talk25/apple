@@ -30,9 +30,8 @@ const MealDetailPage = () => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isUploadingCover, setIsUploadingCover] = useState(false);
-  // Chiave che cambia dopo ogni upload per forzare il browser a ricaricare l'immagine
-  const [imageKey, setImageKey] = useState(Date.now());
 
+  // Caricamento Dati Pasto
   const fetchMeal = useCallback(async () => {
     try {
       setLoading(true);
@@ -54,6 +53,7 @@ const MealDetailPage = () => {
     fetchMeal();
   };
 
+  // ✅ Upload immagine di copertina direttamente dalla hero
   const handleCoverImageChange = async (file) => {
     if (!file || !file.type.startsWith('image/')) {
       toast.error('Seleziona solo file immagine');
@@ -68,10 +68,11 @@ const MealDetailPage = () => {
     try {
       const formData = new FormData();
       formData.append('image', file);
+      // Preserva tutti i campi esistenti del pasto
       formData.append('title', meal.title);
-      formData.append('description', meal.description || '');
+      formData.append('description', meal.description);
       formData.append('mealType', meal.mealType);
-      formData.append('type', meal.type || '');
+      formData.append('type', meal.type);
       formData.append('date', new Date(meal.date).toISOString());
       formData.append('duration', meal.duration);
       formData.append('maxParticipants', meal.maxParticipants);
@@ -88,8 +89,6 @@ const MealDetailPage = () => {
 
       await mealService.updateMeal(meal._id, formData);
       toast.success('Immagine di copertina aggiornata! 🎉');
-      // Aggiorna imageKey per invalidare la cache CSS background-image nel browser
-      setImageKey(Date.now());
       await fetchMeal();
     } catch (err) {
       console.error('Errore aggiornamento immagine:', err);
@@ -102,6 +101,7 @@ const MealDetailPage = () => {
   const handleCoverFileInput = async (e) => {
     const file = e.target.files[0];
     if (file) await handleCoverImageChange(file);
+    // Reset input per permettere di selezionare di nuovo la stessa immagine
     e.target.value = '';
   };
 
@@ -134,6 +134,7 @@ const MealDetailPage = () => {
   if (error) return <Container className="py-5"><Alert variant="danger">{error}</Alert><BackButton /></Container>;
   if (!meal) return <Container className="py-5"><Alert variant="warning">Pasto non trovato</Alert><BackButton /></Container>;
 
+  // Logica Permessi
   const isHost = user && (meal.host?._id === user._id || meal.host === user._id);
   const isParticipant = user && meal.participants?.some(p => (p._id || p) === user._id);
   const isVirtual = meal.mealType === 'virtual';
@@ -183,20 +184,12 @@ const MealDetailPage = () => {
     }
   };
 
-  // Costruisce l'URL dell'immagine aggiungendo imageKey come cache-buster
-  const coverImageUrl = (() => {
-    const base = getMealCoverImageUrl(meal.imageUrl);
-    if (!meal.imageUrl) return base;
-    const sep = base.includes('?') ? '&' : '?';
-    return `${base}${sep}v=${imageKey}`;
-  })();
-
   return (
     <div className={styles.pageContainer}>
       {/* Header Immagine — cliccabile per host */}
       <div
         className={`${styles.heroImage} ${isHost && !isPast ? styles.heroImageEditable : ''}`}
-        style={{ backgroundImage: `url(${coverImageUrl})` }}
+        style={{ backgroundImage: `url(${getMealCoverImageUrl(meal.imageUrl)})` }}
         onClick={isHost && !isPast ? handleCoverClick : undefined}
         role={isHost && !isPast ? 'button' : undefined}
         aria-label={isHost && !isPast ? 'Cambia immagine di copertina' : undefined}
@@ -212,7 +205,7 @@ const MealDetailPage = () => {
           />
         )}
 
-        {/* Overlay fotocamera */}
+        {/* Overlay fotocamera — visibile solo all'host su hover/tap */}
         {isHost && !isPast && (
           <div className={styles.coverEditOverlay}>
             {isUploadingCover ? (
@@ -240,6 +233,7 @@ const MealDetailPage = () => {
       <Container className={styles.contentContainer}>
         <Row>
           <Col lg={8}>
+            {/* Info Principali */}
             <div className={styles.card}>
               <div className={styles.hostInfo}>
                 <img
@@ -324,6 +318,7 @@ const MealDetailPage = () => {
             )}
           </Col>
 
+          {/* Sidebar Azioni */}
           <Col lg={4}>
             <div className={`${styles.card} ${styles.actionCard}`}>
               <h4 className="mb-4">{t('meals.detail.actions')}</h4>
@@ -388,6 +383,7 @@ const MealDetailPage = () => {
                 </Button>
               )}
 
+              {/* Partecipanti Lista */}
               <div className="mt-4">
                 <h5>{t('meals.detail.participantsList')} ({meal.participants?.length || 0})</h5>
                 <div className={styles.avatarList}>
@@ -454,6 +450,7 @@ const MealDetailPage = () => {
         </Row>
       </Container>
 
+      {/* Modal Conferma Eliminazione */}
       <Modal show={showDeleteModal} onHide={() => setShowDeleteModal(false)} centered>
         <Modal.Header closeButton>
           <Modal.Title>{t('meals.detail.deleteMeal') || 'Elimina TableTalk®'}</Modal.Title>
