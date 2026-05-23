@@ -77,11 +77,25 @@ const MealForm = ({ initialData, onSubmit, onCancel, isLoading, isSubmitting, su
       } else {
         sanitizedData.location = null;
       }
+
+      // Converti la data ISO dal DB al formato datetime-local per l'input HTML
+      if (sanitizedData.date) {
+        try {
+          const d = new Date(sanitizedData.date);
+          if (!isNaN(d.getTime())) {
+            const year = d.getFullYear();
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            const hours = String(d.getHours()).padStart(2, '0');
+            const minutes = String(d.getMinutes()).padStart(2, '0');
+            sanitizedData.date = `${year}-${month}-${day}T${hours}:${minutes}`;
+          }
+        } catch (_) {}
+      }
       
       setFormData(sanitizedData);
 
-      // ✅ FIX: Pre-carica l'anteprima dell'immagine esistente in modalità edit
-      // Il campo nel DB si chiama imageUrl (non coverImage)
+      // Pre-carica l'anteprima dell'immagine esistente in modalità edit
       const existingImage = initialData.imageUrl || initialData.coverImage;
       if (existingImage) {
         const existingUrl = mealService.getFullMealImageUrl(existingImage);
@@ -394,29 +408,43 @@ const MealForm = ({ initialData, onSubmit, onCancel, isLoading, isSubmitting, su
 
     const sanitizedData = sanitizeMealData(formData);
     const formDataToSend = new FormData();
-    const dataToProcess = { ...sanitizedData };
 
-    if (dataToProcess.date) {
-      dataToProcess.date = new Date(dataToProcess.date).toISOString();
+    // ✅ FIX: lista esplicita dei campi scalari da inviare (evita null/undefined/oggetti grezzi)
+    const SCALAR_FIELDS = ['title', 'description', 'mealType', 'type', 'language', 'isPublic', 'estimatedCost', 'maxParticipants', 'duration'];
+
+    for (const key of SCALAR_FIELDS) {
+      const value = sanitizedData[key];
+      // Salta valori null/undefined, ma manda stringhe vuote e numeri/booleani
+      if (value === null || value === undefined) continue;
+      formDataToSend.append(key, value);
     }
 
-    for (const key in dataToProcess) {
-      if (key === 'topics' && Array.isArray(dataToProcess[key])) {
-        dataToProcess[key].forEach(topic => formDataToSend.append('topics', topic));
-      } else if (key === 'location' && dataToProcess[key]) {
-        formDataToSend.append('location', JSON.stringify(dataToProcess[key]));
-      } else if (key !== 'location' || formData.mealType === 'physical') {
-        formDataToSend.append(key, dataToProcess[key]);
-      }
+    // ✅ FIX: data convertita a ISO con timezone corretto
+    if (sanitizedData.date) {
+      formDataToSend.append('date', new Date(sanitizedData.date).toISOString());
     }
-    
+
+    // ✅ FIX: topics come array (append multiplo, stesso key)
+    if (Array.isArray(sanitizedData.topics)) {
+      sanitizedData.topics.forEach(topic => formDataToSend.append('topics', topic));
+    }
+
+    // ✅ FIX: location solo se è un oggetto valido con address, altrimenti non appendere nulla
+    if (
+      sanitizedData.mealType === 'physical' &&
+      sanitizedData.location &&
+      typeof sanitizedData.location === 'object' &&
+      sanitizedData.location.address
+    ) {
+      formDataToSend.append('location', JSON.stringify(sanitizedData.location));
+    }
+
+    // Immagine: nuova o preserva URL esistente
     if (imageFile) {
-      // Nuova immagine selezionata dall'utente
       formDataToSend.append('image', imageFile);
       if (imageBase64) formDataToSend.append('imageBase64', imageBase64);
       if (imagePreview) formDataToSend.append('imageLocalUri', imagePreview);
     } else {
-      // ✅ FIX: Nessuna nuova immagine → preserva l'immagine esistente passando imageUrl al backend
       const existingImageUrl = initialData?.imageUrl || initialData?.coverImage;
       if (existingImageUrl) {
         formDataToSend.append('existingImageUrl', existingImageUrl);
@@ -640,7 +668,6 @@ const MealForm = ({ initialData, onSubmit, onCancel, isLoading, isSubmitting, su
       <Form.Group className="mb-3">
         <Form.Label>{t('meals.form.coverImageLabel')}</Form.Label>
 
-        {/* Anteprima immagine: esistente (edit) o appena selezionata */}
         {imagePreview && (
           <div style={{ marginBottom: '8px' }}>
             <img
@@ -649,7 +676,6 @@ const MealForm = ({ initialData, onSubmit, onCancel, isLoading, isSubmitting, su
               className={styles.imagePreview}
               style={{ maxHeight: '180px', borderRadius: '8px', objectFit: 'cover' }}
             />
-            {/* ✅ FIX: usa imageUrl (non coverImage) per rilevare immagine esistente */}
             {!imageFile && (initialData?.imageUrl || initialData?.coverImage) && (
               <Form.Text className="text-muted d-block">Immagine attuale — seleziona una nuova per cambiarla</Form.Text>
             )}
