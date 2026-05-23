@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Video from 'twilio-video';
 import { Button, Container, Spinner, Alert } from 'react-bootstrap';
@@ -7,64 +7,116 @@ import videoService from '../../services/videoService';
 import styles from './VideoCallPage.module.css';
 import { toast } from 'react-toastify';
 
+// Componente partecipante remoto (fuori da VideoCallPage per evitare re-creazione)
+const Participant = ({ participant }) => {
+  const videoRef = useRef();
+  const audioRef = useRef();
+
+  useEffect(() => {
+    const attachTrack = (track) => {
+      if (track.kind === 'video' && videoRef.current) track.attach(videoRef.current);
+      if (track.kind === 'audio' && audioRef.current) track.attach(audioRef.current);
+    };
+    const detachTrack = (track) => track.detach();
+
+    participant.on('trackSubscribed', attachTrack);
+    participant.on('trackUnsubscribed', detachTrack);
+
+    // Tracce già sottoscritte al mount
+    participant.tracks.forEach((pub) => {
+      if (pub.isSubscribed && pub.track) attachTrack(pub.track);
+    });
+
+    return () => {
+      participant.off('trackSubscribed', attachTrack);
+      participant.off('trackUnsubscribed', detachTrack);
+    };
+  }, [participant]);
+
+  return (
+    <div className={styles.participantCard}>
+      <video ref={videoRef} autoPlay playsInline className={styles.participantVideo} />
+      <audio ref={audioRef} autoPlay />
+      <div className={styles.participantName}>{participant.identity}</div>
+    </div>
+  );
+};
+
 const VideoCallPage = () => {
   const { mealId } = useParams();
   const navigate = useNavigate();
 
   const [room, setRoom] = useState(null);
+  const [localTrack, setLocalTrack] = useState(null);
   const [participants, setParticipants] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-
   const [isAudioEnabled, setIsAudioEnabled] = useState(true);
   const [isVideoEnabled, setIsVideoEnabled] = useState(true);
 
-  const localVideoRef = useRef();
+  // Ref callback: viene chiamato da React nel momento esatto in cui
+  // l'elemento <video> entra nel DOM. A quel punto attacchiamo la traccia.
+  const localVideoRefCallback = useCallback(
+    (videoEl) => {
+      if (videoEl && localTrack) {
+        localTrack.attach(videoEl);
+        console.log('✅ [VideoCall] Video locale attaccato via ref callback');
+      }
+    },
+    [localTrack]
+  );
 
-  // ─── Connessione a Twilio ───────────────────────────────────────────────────
   useEffect(() => {
     let currentRoom = null;
+    let localVideoTrack = null;
 
     const startVideoCall = async () => {
       try {
         setLoading(true);
-        console.log('🎥 [VideoCall] Richiesta token per pasto:', mealId);
+
+        // 1. Crea la traccia video locale ESPLICITAMENTE prima di connettersi
+        //    Così abbiamo la certezza che esista al momento della connessione.
+        localVideoTrack = await Video.createLocalVideoTrack({ width: 640 });
+        setLocalTrack(localVideoTrack);
+        console.log('🎥 [VideoCall] Traccia locale creata:', localVideoTrack);
+
+        // 2. Richiedi token e connettiti
         const { token, roomName } = await videoService.getToken(mealId);
-        console.log('🎥 [VideoCall] Connessione alla stanza Twilio:', roomName);
+        console.log('🎥 [VideoCall] Connessione alla stanza:', roomName);
 
         currentRoom = await Video.connect(token, {
           name: roomName,
+          tracks: [localVideoTrack], // Passa la traccia già creata
           audio: true,
-          video: { width: 640 },
         });
 
         setRoom(currentRoom);
         setLoading(false);
-        console.log('✅ [VideoCall] Connesso alla stanza:', currentRoom.name);
+        console.log('✅ [VideoCall] Connesso:', currentRoom.name);
 
         // Partecipanti già presenti
         setParticipants(Array.from(currentRoom.participants.values()));
 
-        // Qualcuno si unisce
-        currentRoom.on('participantConnected', (participant) => {
-          console.log('👤 [VideoCall] Partecipante entrato:', participant.identity);
-          setParticipants((prev) => [...prev, participant]);
+        currentRoom.on('participantConnected', (p) => {
+          console.log('👤 Entrato:', p.identity);
+          setParticipants((prev) => [...prev, p]);
         });
-
-        // Qualcuno esce
-        currentRoom.on('participantDisconnected', (participant) => {
-          console.log('👋 [VideoCall] Partecipante uscito:', participant.identity);
-          setParticipants((prev) => prev.filter((p) => p !== participant));
+        currentRoom.on('participantDisconnected', (p) => {
+          console.log('👋 Uscito:', p.identity);
+          setParticipants((prev) => prev.filter((x) => x !== p));
         });
-
-        // Disconnessione locale
-        currentRoom.on('disconnected', () => {
-          handleDisconnect();
-        });
+        currentRoom.on('disconnected', handleDisconnectCleanup);
       } catch (err) {
-        console.error('❌ [VideoCall] Errore connessione:', err);
+        console.error('❌ [VideoCall] Errore:', err);
         setError('Impossibile accedere alla videochiamata. Verifica i permessi o riprova.');
         setLoading(false);
+      }
+    };
+
+    const handleDisconnectCleanup = () => {
+      if (localVideoTrack) {
+        localVideoTrack.stop();
+        localVideoTrack.detach().forEach((el) => el.remove());
       }
     };
 
@@ -73,82 +125,24 @@ const VideoCallPage = () => {
     return () => {
       if (currentRoom) {
         currentRoom.disconnect();
-        currentRoom.localParticipant.tracks.forEach((publication) => {
-          publication.track.stop();
-          publication.track.detach().forEach((el) => el.remove());
+        currentRoom.localParticipant.tracks.forEach((pub) => {
+          pub.track.stop();
+          pub.track.detach().forEach((el) => el.remove());
         });
+      }
+      if (localVideoTrack) {
+        localVideoTrack.stop();
+        localVideoTrack.detach().forEach((el) => el.remove());
       }
     };
   }, [mealId]);
 
-  // ─── Aggancia la traccia video locale DOPO che il DOM è montato ────────────
-  // Questo useEffect gira ogni volta che `room` viene settato (ovvero dopo la
-  // connessione) e a quel punto localVideoRef.current è già nel DOM.
-  useEffect(() => {
-    if (!room) return;
-
-    const attachLocalVideo = () => {
-      const localPub = Array.from(room.localParticipant.videoTracks.values())[0];
-      if (localPub?.track && localVideoRef.current) {
-        localPub.track.attach(localVideoRef.current);
-        console.log('✅ [VideoCall] Video locale agganciato al DOM');
-      } else {
-        console.warn('⚠️ [VideoCall] Traccia locale non ancora disponibile, ritento...');
-        // Può capitare che la traccia non sia ancora pubblicata: aspetta l'evento
-        room.localParticipant.once('trackPublished', (pub) => {
-          if (pub.kind === 'video' && localVideoRef.current) {
-            pub.track.attach(localVideoRef.current);
-            console.log('✅ [VideoCall] Video locale agganciato via trackPublished');
-          }
-        });
-      }
-    };
-
-    attachLocalVideo();
-  }, [room]);
-
-  // ─── Componente partecipante remoto ────────────────────────────────────────
-  const Participant = ({ participant }) => {
-    const videoRef = useRef();
-    const audioRef = useRef();
-
-    useEffect(() => {
-      const trackSubscribed = (track) => {
-        if (track.kind === 'video' && videoRef.current) track.attach(videoRef.current);
-        if (track.kind === 'audio' && audioRef.current) track.attach(audioRef.current);
-      };
-
-      const trackUnsubscribed = (track) => {
-        track.detach();
-      };
-
-      participant.on('trackSubscribed', trackSubscribed);
-      participant.on('trackUnsubscribed', trackUnsubscribed);
-
-      // Tracce già sottoscritte al momento del mount
-      participant.tracks.forEach((publication) => {
-        if (publication.isSubscribed) {
-          trackSubscribed(publication.track);
-        }
-      });
-
-      return () => {
-        participant.off('trackSubscribed', trackSubscribed);
-        participant.off('trackUnsubscribed', trackUnsubscribed);
-      };
-    }, [participant]);
-
-    return (
-      <div className={styles.participantCard}>
-        <video ref={videoRef} autoPlay playsInline className={styles.participantVideo} />
-        <audio ref={audioRef} autoPlay muted={false} />
-        <div className={styles.participantName}>{participant.identity}</div>
-      </div>
-    );
-  };
-
   const handleDisconnect = () => {
     if (room) room.disconnect();
+    if (localTrack) {
+      localTrack.stop();
+      localTrack.detach().forEach((el) => el.remove());
+    }
     navigate(`/meals/${mealId}`);
   };
 
@@ -164,11 +158,7 @@ const VideoCallPage = () => {
   const toggleVideo = () => {
     if (room) {
       room.localParticipant.videoTracks.forEach((pub) => {
-        if (isVideoEnabled) {
-          pub.track.disable();
-        } else {
-          pub.track.enable();
-        }
+        isVideoEnabled ? pub.track.disable() : pub.track.enable();
       });
       setIsVideoEnabled(!isVideoEnabled);
     }
@@ -190,21 +180,25 @@ const VideoCallPage = () => {
 
   return (
     <div className={styles.videoPage}>
-      {/* Griglia Video */}
       <div className={styles.videoGrid}>
-        {/* Utente Locale */}
+        {/* Video locale — il ref callback attacca la traccia appena l'elemento è nel DOM */}
         <div className={styles.localVideoContainer}>
-          <video ref={localVideoRef} autoPlay muted playsInline className={styles.localVideo} />
-          <div className={styles.localLabel}>Tu {isAudioEnabled ? '' : '(Muted)'}</div>
+          <video
+            ref={localVideoRefCallback}
+            autoPlay
+            muted
+            playsInline
+            className={styles.localVideo}
+          />
+          <div className={styles.localLabel}>Tu {!isAudioEnabled && '(Muted)'}</div>
         </div>
 
-        {/* Partecipanti Remoti */}
+        {/* Partecipanti remoti */}
         {participants.map((participant) => (
           <Participant key={participant.sid} participant={participant} />
         ))}
       </div>
 
-      {/* Barra Controlli */}
       <div className={styles.controlsBar}>
         <button
           className={`${styles.controlBtn} ${!isAudioEnabled ? styles.btnOff : ''}`}
