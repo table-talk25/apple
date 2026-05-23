@@ -4,8 +4,6 @@ const path = require('path');
 const fs = require('fs');
 const admin = require('firebase-admin');
 
-let connectedUsers;
-
 // Inizializza Firebase Admin
 if (!admin.apps.length) {
   try {
@@ -27,9 +25,18 @@ if (!admin.apps.length) {
   }
 }
 
-const initialize = (usersMap) => {
-  connectedUsers = usersMap;
+// Ottieni connectedUsers direttamente da socket.js (lazy require per evitare
+// circular dependency al boot). La mappa è la stessa istanza usata dal server.
+const getConnectedUsers = () => {
+  try {
+    return require('../socket').connectedUsers;
+  } catch {
+    return null;
+  }
 };
+
+// Mantenuto per compatibilità con eventuali chiamate esistenti — ora è no-op.
+const initialize = () => {};
 
 const sendPushNotification = async (userToken, title, body, data = {}) => {
   try {
@@ -51,7 +58,8 @@ const sendPushNotification = async (userToken, title, body, data = {}) => {
 };
 
 const sendNotification = (recipientIds, type, message, data = {}) => {
-  if (!connectedUsers) return console.error('NotificationService non inizializzato.');
+  const connectedUsers = getConnectedUsers();
+  if (!connectedUsers) return console.error('NotificationService: connectedUsers non disponibile.');
   const notificationPayload = { type, message, data, date: new Date() };
   const recipients = Array.isArray(recipientIds) ? recipientIds : [recipientIds];
   recipients.forEach(userId => {
@@ -88,6 +96,7 @@ const handleChatNotification = async (chat, sender, content, newMessage) => {
   try {
     const User = require('../models/User');
     const { getIO } = require('../socket');
+    const connectedUsers = getConnectedUsers();
 
     const recipientIds = chat.participants
       .map(p => (p._id || p).toString())
@@ -102,7 +111,7 @@ const handleChatNotification = async (chat, sender, content, newMessage) => {
 
     for (const recipient of recipients) {
       const recipientIdStr = recipient._id.toString();
-      const socketId = connectedUsers && connectedUsers.get(recipientIdStr);
+      const socketId = connectedUsers ? connectedUsers.get(recipientIdStr) : null;
       const isOnline = !!socketId;
 
       let isInChatRoom = false;
@@ -110,6 +119,8 @@ const handleChatNotification = async (chat, sender, content, newMessage) => {
         const socket = io.sockets.sockets.get(socketId);
         if (socket && socket.rooms.has(chatId)) isInChatRoom = true;
       }
+
+      console.log(`[ChatNotification] ${recipient.nickname} — online: ${isOnline}, inRoom: ${isInChatRoom}`);
 
       if (isInChatRoom) {
         console.log(`👁️ [ChatNotification] ${recipient.nickname} è nella chat, nessuna notifica`);
@@ -152,12 +163,12 @@ const handleChatNotification = async (chat, sender, content, newMessage) => {
 
 /**
  * Notifica reminder 30 minuti prima del pasto.
- * Chiamata dal cron job in socket.js.
  */
 const handleMealReminder = async (meal) => {
   try {
     const User = require('../models/User');
     const { getIO } = require('../socket');
+    const connectedUsers = getConnectedUsers();
     const io = getIO();
 
     const participantIds = meal.participants.map(p => (p._id || p).toString());
@@ -166,15 +177,13 @@ const handleMealReminder = async (meal) => {
     const mealId = meal._id.toString();
 
     for (const participant of participants) {
-      const socketId = connectedUsers && connectedUsers.get(participant._id.toString());
+      const socketId = connectedUsers ? connectedUsers.get(participant._id.toString()) : null;
 
-      // In-app socket
       if (socketId && io) {
         io.to(socketId).emit('meal_reminder', { mealId, mealTitle });
         console.log(`⏰ [MealReminder] Socket → ${participant.nickname}`);
       }
 
-      // Push Firebase
       if (participant.fcmToken && admin.apps.length) {
         await sendPushNotification(
           participant.fcmToken,
@@ -190,17 +199,16 @@ const handleMealReminder = async (meal) => {
 };
 
 /**
- * Notifica quando la video chat diventa disponibile (videoCallStatus → active).
- * Chiamata dal controller quando l'host avvia la video call.
+ * Notifica quando la video chat diventa disponibile.
  */
 const handleVideoCallAvailable = async (meal) => {
   try {
     const User = require('../models/User');
     const { getIO } = require('../socket');
+    const connectedUsers = getConnectedUsers();
     const io = getIO();
 
     const participantIds = meal.participants.map(p => (p._id || p).toString());
-    // Escludi l'host (è lui ad avviare la call, non ha bisogno della notifica)
     const hostId = (meal.host?._id || meal.host || '').toString();
     const recipientIds = participantIds.filter(id => id !== hostId);
 
@@ -209,7 +217,7 @@ const handleVideoCallAvailable = async (meal) => {
     const mealId = meal._id.toString();
 
     for (const recipient of recipients) {
-      const socketId = connectedUsers && connectedUsers.get(recipient._id.toString());
+      const socketId = connectedUsers ? connectedUsers.get(recipient._id.toString()) : null;
 
       if (socketId && io) {
         io.to(socketId).emit('video_call_available', { mealId, mealTitle });
