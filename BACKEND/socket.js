@@ -1,6 +1,7 @@
 const socketIO = require('socket.io');
 const jwt = require('jsonwebtoken');
 const mongoose = require('mongoose');
+const cron = require('node-cron');
 const User = require('./models/User');
 const Meal = require('./models/Meal');
 const Chat = require('./models/Chat');
@@ -8,30 +9,23 @@ const Chat = require('./models/Chat');
 // Mappa per tenere traccia degli utenti connessi: { userId: socketId }
 const connectedUsers = new Map();
 
-// Rate limiter personalizzato per socket
+// Rate limiter per socket (chiave per socketId)
 const rateLimitMap = new Map();
 
 const checkRateLimit = (key, maxRequests, windowMs) => {
   const now = Date.now();
-
   if (!rateLimitMap.has(key)) {
     rateLimitMap.set(key, { count: 1, resetTime: now + windowMs });
     return true;
   }
-
-  const userLimit = rateLimitMap.get(key);
-
-  if (now > userLimit.resetTime) {
-    userLimit.count = 1;
-    userLimit.resetTime = now + windowMs;
+  const entry = rateLimitMap.get(key);
+  if (now > entry.resetTime) {
+    entry.count = 1;
+    entry.resetTime = now + windowMs;
     return true;
   }
-
-  if (userLimit.count >= maxRequests) {
-    return false;
-  }
-
-  userLimit.count++;
+  if (entry.count >= maxRequests) return false;
+  entry.count++;
   return true;
 };
 
@@ -50,19 +44,49 @@ const allowedOrigins = [
 
 let ioInstance;
 
+// ─── Cron: reminder 30 minuti prima del pasto ────────────────────────────────
+// Gira ogni minuto, trova i pasti che iniziano tra 29 e 31 minuti e non hanno
+// ancora ricevuto il reminder, li notifica e segna reminderSent = true.
+const startReminderCron = () => {
+  cron.schedule('* * * * *', async () => {
+    try {
+      const now = new Date();
+      const in29 = new Date(now.getTime() + 29 * 60 * 1000);
+      const in31 = new Date(now.getTime() + 31 * 60 * 1000);
+
+      const meals = await Meal.find({
+        date: { $gte: in29, $lte: in31 },
+        status: 'upcoming',
+        reminderSent: { $ne: true },
+      });
+
+      for (const meal of meals) {
+        const notificationService = require('./services/notificationService');
+        await notificationService.handleMealReminder(meal);
+        meal.reminderSent = true;
+        await meal.save();
+        console.log(`⏰ [Cron] Reminder inviato per pasto: ${meal.title}`);
+      }
+    } catch (err) {
+      console.error('[Cron] Errore reminder:', err.message);
+    }
+  });
+  console.log('✅ [Cron] Reminder 30min avviato');
+};
+
 async function initializeSocket(server) {
   ioInstance = socketIO(server, {
     cors: {
       origin: allowedOrigins,
       methods: ['GET', 'POST', 'OPTIONS'],
       credentials: true,
-      allowedHeaders: ['Content-Type', 'Authorization']
+      allowedHeaders: ['Content-Type', 'Authorization'],
     },
     pingTimeout: 60000,
     pingInterval: 25000,
-    transports: ['websocket', 'polling'], 
+    transports: ['websocket', 'polling'],
     allowUpgrades: true,
-    upgradeTimeout: 10000
+    upgradeTimeout: 10000,
   });
 
   if (process.env.REDIS_URL) {
@@ -73,89 +97,74 @@ async function initializeSocket(server) {
       const subClient = pubClient.duplicate();
       await Promise.all([pubClient.connect(), subClient.connect()]);
       ioInstance.adapter(createAdapter(pubClient, subClient));
-      console.log('✅ [Socket] Redis adapter attivo (Socket.IO multi-istanza)');
+      console.log('✅ [Socket] Redis adapter attivo');
     } catch (err) {
-      console.warn('⚠️ [Socket] REDIS_URL presente ma adapter Redis non inizializzato:', err.message);
+      console.warn('⚠️ [Socket] Redis adapter non inizializzato:', err.message);
     }
   }
 
-  // Middleware di autenticazione
+  // Middleware autenticazione
   ioInstance.use(async (socket, next) => {
     try {
       const token = socket.handshake.auth.token;
       if (!token) return next(new Error('Autenticazione richiesta'));
-
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
       const user = await User.findById(decoded.id).select('nickname profileImage');
-
       if (!user) return next(new Error('Utente non trovato'));
-
       socket.user = user;
       next();
     } catch (error) {
-      console.error('[Socket Auth] ❌ Errore di autenticazione:', error.message);
       next(new Error('Token non valido'));
-    } 
+    }
   });
-  
-  // Gestione della connessione
+
   ioInstance.on('connection', (socket) => {
     console.log(`✅ [Socket] Connesso: ${socket.user.nickname}`);
-    
     connectedUsers.set(socket.user._id.toString(), socket.id);
 
-    // Unisciti a una chat room
-    socket.on('joinChatRoom', async (chatId) => { 
+    socket.on('joinChatRoom', async (chatId) => {
       try {
         const rawId = (typeof chatId === 'string') ? chatId : (chatId?._id || chatId?.chatId || String(chatId));
         const normalizedId = typeof rawId === 'string' ? rawId.trim() : '';
-
         if (!normalizedId || !mongoose.Types.ObjectId.isValid(normalizedId)) return;
-
         const chat = await Chat.findOne({ _id: normalizedId, participants: socket.user._id });
         if (!chat) return;
-
         socket.join(normalizedId);
       } catch (err) {
         console.error('[Socket] Errore joinChatRoom:', err.message);
       }
     });
 
-    // Lascia una chat room
-    socket.on('leaveChatRoom', (chatId) => {
-      socket.leave(chatId);
-    });
+    socket.on('leaveChatRoom', (chatId) => socket.leave(chatId));
 
-    // Typing indicator — chiave per socketId
     socket.on('typing', ({ chatId, isTyping }) => {
       if (!checkRateLimit(`typing:${socket.id}`, 20, 5000)) return;
-      
-      socket.to(chatId).emit('userTyping', { 
-        user: { _id: socket.user._id, nickname: socket.user.nickname }, 
-        isTyping 
+      socket.to(chatId).emit('userTyping', {
+        user: { _id: socket.user._id, nickname: socket.user.nickname },
+        isTyping,
       });
     });
-  
-    // Invia messaggio — chiave per socketId, limite 20 messaggi ogni 10 secondi
+
+    // Invia messaggio — 20 msg / 10s per socketId
     socket.on('sendMessage', async ({ chatId, content }, callback) => {
       try {
         if (!checkRateLimit(`msg:${socket.id}`, 20, 10000)) {
-          if (callback) callback({ success: false, error: "Stai inviando troppi messaggi, aspetta un momento." });
+          if (callback) callback({ success: false, error: 'Stai inviando troppi messaggi, aspetta un momento.' });
           return;
         }
-        
         const chat = await Chat.findById(chatId);
         if (!chat) {
-          if (callback) callback({ success: false, error: "Chat non trovata." });
+          if (callback) callback({ success: false, error: 'Chat non trovata.' });
           return;
         }
-
-        const isParticipant = chat.participants.some(p => p.toString() === socket.user._id.toString() || (p._id && p._id.toString() === socket.user._id.toString()));
+        const isParticipant = chat.participants.some(
+          p => p.toString() === socket.user._id.toString() ||
+               (p._id && p._id.toString() === socket.user._id.toString())
+        );
         if (!isParticipant) {
-          if (callback) callback({ success: false, error: "Non autorizzato." });
+          if (callback) callback({ success: false, error: 'Non autorizzato.' });
           return;
         }
-        
         await chat.addMessage(socket.user._id, content.trim());
         await chat.populate('messages.sender', 'nickname profileImage');
         const newMessage = chat.messages[chat.messages.length - 1];
@@ -163,19 +172,17 @@ async function initializeSocket(server) {
         ioInstance.to(chatId).emit('receiveMessage', newMessage);
 
         const notificationService = require('./services/notificationService');
-        if (notificationService && typeof notificationService.handleChatNotification === 'function') {
-            await notificationService.handleChatNotification(chat, socket.user, content.trim(), newMessage);
+        if (typeof notificationService.handleChatNotification === 'function') {
+          await notificationService.handleChatNotification(chat, socket.user, content.trim(), newMessage);
         }
-  
-        if (callback) callback({ success: true, message: newMessage });
 
+        if (callback) callback({ success: true, message: newMessage });
       } catch (error) {
         console.error('[Socket] Errore sendMessage:', error.message);
-        if (callback) callback({ success: false, error: "Errore server." });
+        if (callback) callback({ success: false, error: 'Errore server.' });
       }
     });
 
-    // Unisciti alla stanza del pasto
     socket.on('joinRoom', async ({ mealId }) => {
       try {
         const meal = await Meal.findById(mealId);
@@ -192,17 +199,15 @@ async function initializeSocket(server) {
     socket.on('disconnect', () => {
       console.log(`❌ [Socket] Disconnesso: ${socket.user.nickname}`);
       connectedUsers.delete(socket.user._id.toString());
-      // Pulizia rate limit entries per questo socket
       rateLimitMap.delete(`msg:${socket.id}`);
       rateLimitMap.delete(`typing:${socket.id}`);
     });
   });
+
+  // Avvia il cron reminder dopo che il socket è pronto
+  startReminderCron();
 }
 
 const getIO = () => ioInstance;
 
-module.exports = { 
-    initializeSocket, 
-    getIO,
-    connectedUsers 
-};
+module.exports = { initializeSocket, getIO, connectedUsers };

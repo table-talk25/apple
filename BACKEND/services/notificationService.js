@@ -6,7 +6,7 @@ const admin = require('firebase-admin');
 
 let connectedUsers;
 
-// Inizializza Firebase Admin (SE NON FATTO)
+// Inizializza Firebase Admin
 if (!admin.apps.length) {
   try {
     const serviceAccountPath = path.join(__dirname, '..', 'firebase-service-account.json');
@@ -34,19 +34,13 @@ const initialize = (usersMap) => {
 const sendPushNotification = async (userToken, title, body, data = {}) => {
   try {
     if (!admin.apps.length) throw new Error('Firebase Admin non inizializzato');
-
     const message = {
       token: userToken,
       notification: { title, body },
       data: { ...data, timestamp: new Date().toISOString() },
-      android: {
-        notification: { icon: 'ic_notification', color: '#FF6B35', sound: 'default' }
-      },
-      apns: {
-        payload: { aps: { sound: 'default', badge: 1 } }
-      }
+      android: { notification: { icon: 'ic_notification', color: '#FF6B35', sound: 'default' } },
+      apns: { payload: { aps: { sound: 'default', badge: 1 } } },
     };
-
     const response = await admin.messaging().send(message);
     console.log('📱 Push notification sent:', response);
     return response;
@@ -58,10 +52,8 @@ const sendPushNotification = async (userToken, title, body, data = {}) => {
 
 const sendNotification = (recipientIds, type, message, data = {}) => {
   if (!connectedUsers) return console.error('NotificationService non inizializzato.');
-
   const notificationPayload = { type, message, data, date: new Date() };
   const recipients = Array.isArray(recipientIds) ? recipientIds : [recipientIds];
-
   recipients.forEach(userId => {
     const socketId = connectedUsers.get(userId.toString());
     if (socketId) {
@@ -81,19 +73,16 @@ const sendCombinedNotification = async (userId, fcmToken, type, title, message, 
     if (fcmToken) {
       await sendPushNotification(fcmToken, title, message, { type, userId, ...data });
     }
-    console.log(`✅ Notifica combinata inviata a utente ${userId}`);
   } catch (error) {
     console.error(`❌ Errore notifica combinata per utente ${userId}:`, error);
   }
 };
 
 /**
- * Gestisce le notifiche per un nuovo messaggio in chat.
- *
- * Logica:
- * - L'utente sta guardando QUELLA chat (è nella socket room della chat) → niente notifica
- * - L'utente è nell'app ma in un'altra schermata (online ma non nella room) → in-app alert via Socket
- * - L'utente è offline → push notification Firebase
+ * Notifica nuovo messaggio in chat.
+ * - Nella room → niente
+ * - Online ma altrove → socket in-app + push
+ * - Offline → solo push
  */
 const handleChatNotification = async (chat, sender, content, newMessage) => {
   try {
@@ -103,14 +92,9 @@ const handleChatNotification = async (chat, sender, content, newMessage) => {
     const recipientIds = chat.participants
       .map(p => (p._id || p).toString())
       .filter(id => id !== sender._id.toString());
-
     if (recipientIds.length === 0) return;
 
-    const recipients = await User.find(
-      { _id: { $in: recipientIds } },
-      'nickname fcmToken'
-    );
-
+    const recipients = await User.find({ _id: { $in: recipientIds } }, 'nickname fcmToken');
     const senderName = sender.nickname || 'Qualcuno';
     const preview = content.length > 60 ? content.substring(0, 60) + '...' : content;
     const chatId = chat._id.toString();
@@ -121,21 +105,15 @@ const handleChatNotification = async (chat, sender, content, newMessage) => {
       const socketId = connectedUsers && connectedUsers.get(recipientIdStr);
       const isOnline = !!socketId;
 
-      // Controlla se l'utente è attivamente nella room di questa chat
       let isInChatRoom = false;
       if (isOnline && io && socketId) {
         const socket = io.sockets.sockets.get(socketId);
-        if (socket && socket.rooms.has(chatId)) {
-          isInChatRoom = true;
-        }
+        if (socket && socket.rooms.has(chatId)) isInChatRoom = true;
       }
 
       if (isInChatRoom) {
-        // Sta guardando la chat → niente da fare, riceve già i messaggi in tempo reale
-        console.log(`👁️ [ChatNotification] ${recipient.nickname} è nella chat, nessuna notifica necessaria`);
-
+        console.log(`👁️ [ChatNotification] ${recipient.nickname} è nella chat, nessuna notifica`);
       } else if (isOnline && socketId) {
-        // È nell'app ma in un'altra schermata → in-app alert via Socket
         if (io) {
           io.to(socketId).emit('new_chat_message_alert', {
             chatId,
@@ -143,32 +121,27 @@ const handleChatNotification = async (chat, sender, content, newMessage) => {
             senderName,
             senderAvatar: sender.profileImage || null,
             preview,
-            timestamp: new Date().toISOString()
+            timestamp: new Date().toISOString(),
           });
-          console.log(`🔔 [ChatNotification] In-app alert inviato a ${recipient.nickname} (online, altra schermata)`);
+          console.log(`🔔 [ChatNotification] In-app alert → ${recipient.nickname}`);
         }
-        // Manda anche la push per chi ha l'app in background (es. schermata bloccata)
         if (recipient.fcmToken && admin.apps.length) {
           await sendPushNotification(
             recipient.fcmToken,
             `💬 ${senderName}`,
             preview,
             { type: 'new_message', chatId, senderId: sender._id.toString(), senderName }
-          );
+          ).catch(e => console.warn('[ChatNotification] Push fallita:', e.message));
         }
-
       } else {
-        // Offline → solo push notification
         if (recipient.fcmToken && admin.apps.length) {
           await sendPushNotification(
             recipient.fcmToken,
             `💬 ${senderName}`,
             preview,
             { type: 'new_message', chatId, senderId: sender._id.toString(), senderName }
-          );
-          console.log(`📱 [ChatNotification] Push inviata a ${recipient.nickname} (offline)`);
-        } else {
-          console.log(`⚠️ [ChatNotification] ${recipient.nickname} offline e senza FCM token`);
+          ).catch(e => console.warn('[ChatNotification] Push fallita (offline):', e.message));
+          console.log(`📱 [ChatNotification] Push → ${recipient.nickname} (offline)`);
         }
       }
     }
@@ -177,4 +150,92 @@ const handleChatNotification = async (chat, sender, content, newMessage) => {
   }
 };
 
-module.exports = { initialize, sendNotification, sendPushNotification, sendCombinedNotification, handleChatNotification };
+/**
+ * Notifica reminder 30 minuti prima del pasto.
+ * Chiamata dal cron job in socket.js.
+ */
+const handleMealReminder = async (meal) => {
+  try {
+    const User = require('../models/User');
+    const { getIO } = require('../socket');
+    const io = getIO();
+
+    const participantIds = meal.participants.map(p => (p._id || p).toString());
+    const participants = await User.find({ _id: { $in: participantIds } }, 'nickname fcmToken');
+    const mealTitle = meal.title || 'Il tuo pasto';
+    const mealId = meal._id.toString();
+
+    for (const participant of participants) {
+      const socketId = connectedUsers && connectedUsers.get(participant._id.toString());
+
+      // In-app socket
+      if (socketId && io) {
+        io.to(socketId).emit('meal_reminder', { mealId, mealTitle });
+        console.log(`⏰ [MealReminder] Socket → ${participant.nickname}`);
+      }
+
+      // Push Firebase
+      if (participant.fcmToken && admin.apps.length) {
+        await sendPushNotification(
+          participant.fcmToken,
+          `⏰ ${mealTitle}`,
+          'Il tuo pasto inizia tra 30 minuti!',
+          { type: 'meal_reminder', mealId }
+        ).catch(e => console.warn('[MealReminder] Push fallita:', e.message));
+      }
+    }
+  } catch (error) {
+    console.error('❌ [MealReminder] Errore:', error.message);
+  }
+};
+
+/**
+ * Notifica quando la video chat diventa disponibile (videoCallStatus → active).
+ * Chiamata dal controller quando l'host avvia la video call.
+ */
+const handleVideoCallAvailable = async (meal) => {
+  try {
+    const User = require('../models/User');
+    const { getIO } = require('../socket');
+    const io = getIO();
+
+    const participantIds = meal.participants.map(p => (p._id || p).toString());
+    // Escludi l'host (è lui ad avviare la call, non ha bisogno della notifica)
+    const hostId = (meal.host?._id || meal.host || '').toString();
+    const recipientIds = participantIds.filter(id => id !== hostId);
+
+    const recipients = await User.find({ _id: { $in: recipientIds } }, 'nickname fcmToken');
+    const mealTitle = meal.title || 'Il tuo pasto';
+    const mealId = meal._id.toString();
+
+    for (const recipient of recipients) {
+      const socketId = connectedUsers && connectedUsers.get(recipient._id.toString());
+
+      if (socketId && io) {
+        io.to(socketId).emit('video_call_available', { mealId, mealTitle });
+        console.log(`🎥 [VideoCall] Socket → ${recipient.nickname}`);
+      }
+
+      if (recipient.fcmToken && admin.apps.length) {
+        await sendPushNotification(
+          recipient.fcmToken,
+          `🎥 ${mealTitle}`,
+          'La video chat è disponibile! Unisciti ora.',
+          { type: 'video_call_available', mealId }
+        ).catch(e => console.warn('[VideoCall] Push fallita:', e.message));
+      }
+    }
+  } catch (error) {
+    console.error('❌ [VideoCall] Errore:', error.message);
+  }
+};
+
+module.exports = {
+  initialize,
+  sendNotification,
+  sendPushNotification,
+  sendCombinedNotification,
+  handleChatNotification,
+  handleMealReminder,
+  handleVideoCallAvailable,
+};
