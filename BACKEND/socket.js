@@ -44,9 +44,7 @@ const allowedOrigins = [
 
 let ioInstance;
 
-// ─── Cron: reminder 30 minuti prima del pasto ────────────────────────────────
-// Gira ogni minuto, trova i pasti che iniziano tra 29 e 31 minuti e non hanno
-// ancora ricevuto il reminder, li notifica e segna reminderSent = true.
+// ─── Cron: reminder 30 minuti prima del pasto ─────────────────────────────────
 const startReminderCron = () => {
   cron.schedule('* * * * *', async () => {
     try {
@@ -146,7 +144,8 @@ async function initializeSocket(server) {
     });
 
     // Invia messaggio — 20 msg / 10s per socketId
-    socket.on('sendMessage', async ({ chatId, content }, callback) => {
+    // Accetta campo opzionale replyTo: { _id, senderName, message }
+    socket.on('sendMessage', async ({ chatId, content, replyTo }, callback) => {
       try {
         if (!checkRateLimit(`msg:${socket.id}`, 20, 10000)) {
           if (callback) callback({ success: false, error: 'Stai inviando troppi messaggi, aspetta un momento.' });
@@ -165,7 +164,13 @@ async function initializeSocket(server) {
           if (callback) callback({ success: false, error: 'Non autorizzato.' });
           return;
         }
-        await chat.addMessage(socket.user._id, content.trim());
+
+        // Sanitizza replyTo: accetta solo campi attesi, scarta il resto
+        const sanitizedReplyTo = (replyTo && replyTo._id && replyTo.message)
+          ? { _id: replyTo._id, senderName: replyTo.senderName || '', message: String(replyTo.message).substring(0, 200) }
+          : null;
+
+        await chat.addMessage(socket.user._id, content.trim(), [], sanitizedReplyTo);
         await chat.populate('messages.sender', 'nickname profileImage');
         const newMessage = chat.messages[chat.messages.length - 1];
 
@@ -204,7 +209,6 @@ async function initializeSocket(server) {
     });
   });
 
-  // Avvia il cron reminder dopo che il socket è pronto
   startReminderCron();
 }
 

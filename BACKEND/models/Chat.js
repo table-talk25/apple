@@ -20,6 +20,12 @@ const MessageSchema = new mongoose.Schema({
     type: Date,
     default: Date.now
   },
+  // Campo reply: riferimento al messaggio a cui si risponde
+  replyTo: {
+    _id: { type: mongoose.Schema.ObjectId },
+    senderName: { type: String, default: '' },
+    message: { type: String, default: '' }
+  },
   read: [{
     type: mongoose.Schema.ObjectId,
     ref: 'User'
@@ -129,22 +135,16 @@ const ChatSchema = new mongoose.Schema({
 });
 
 // Proprietà virtuale per calcolare la data di scadenza della chat.
-// La chat scade 1 ora dopo la fine del pasto.
 ChatSchema.virtual('expirationDate').get(function() {
-  // Per funzionare, il campo 'mealId' deve essere popolato!
   if (!this.mealId || !this.mealId.date || !this.mealId.duration) {
     return null;
   }
-  // Calcoliamo l'ora di fine del pasto in millisecondi
   const mealEndTime = new Date(this.mealId.date).getTime() + (this.mealId.duration * 60000);
-  // Aggiungiamo 1 ora (3600000 millisecondi)
   return new Date(mealEndTime + 3600000);
 });
 
-// Proprietà virtuale che ci dice se la chat è scaduta.
 ChatSchema.virtual('isExpired').get(function() {
   if (!this.expirationDate) return false;
-  // Ritorna 'true' se l'ora attuale ha superato l'ora di scadenza
   return new Date() > this.expirationDate;
 });
 
@@ -153,7 +153,6 @@ ChatSchema.index({ mealId: 1 });
 ChatSchema.index({ participants: 1 });
 ChatSchema.index({ updatedAt: -1 });
 ChatSchema.index({ 'messages.timestamp': -1 });
-
 
 // Middleware pre-find per popolare i riferimenti
 ChatSchema.pre(/^find/, function(next) {
@@ -183,8 +182,8 @@ ChatSchema.pre('save', function(next) {
   next();
 });
 
-// Metodo per aggiungere un messaggio
-ChatSchema.methods.addMessage = async function(senderId, content, attachments = []) {
+// Metodo per aggiungere un messaggio (con supporto replyTo opzionale)
+ChatSchema.methods.addMessage = async function(senderId, content, attachments = [], replyTo = null) {
   const message = {
     sender: senderId,
     content,
@@ -200,6 +199,15 @@ ChatSchema.methods.addMessage = async function(senderId, content, attachments = 
     message.attachments = attachments;
   }
 
+  // Salva la citazione se presente e valida
+  if (replyTo && replyTo._id && replyTo.message) {
+    message.replyTo = {
+      _id: replyTo._id,
+      senderName: replyTo.senderName || '',
+      message: String(replyTo.message).substring(0, 200)
+    };
+  }
+
   this.messages.push(message);
   this.updatedAt = Date.now();
   this.lastActivity = Date.now();
@@ -213,8 +221,6 @@ ChatSchema.methods.markAsRead = async function(userId) {
     if (!message.read.includes(userId)) {
       message.read.push(userId);
     }
-    
-    // Aggiungi anche al campo readBy con timestamp
     const existingReadBy = message.readBy.find(rb => rb.user.toString() === userId.toString());
     if (!existingReadBy) {
       message.readBy.push({
@@ -223,11 +229,9 @@ ChatSchema.methods.markAsRead = async function(userId) {
       });
     }
   });
-  
   return this.save();
 };
 
-// Metodo per ottenere i messaggi non letti
 ChatSchema.methods.getUnreadMessages = function(userId) {
   return this.messages.filter(message => 
     !message.read.includes(userId) && 
@@ -235,7 +239,6 @@ ChatSchema.methods.getUnreadMessages = function(userId) {
   );
 };
 
-// Metodo per aggiungere un partecipante
 ChatSchema.methods.addParticipant = async function(userId) {
   if (!this.participants.includes(userId)) {
     this.participants.push(userId);
@@ -244,7 +247,6 @@ ChatSchema.methods.addParticipant = async function(userId) {
   return this;
 };
 
-// Metodo per rimuovere un partecipante
 ChatSchema.methods.removeParticipant = async function(userId) {
   this.participants = this.participants.filter(
     p => p.toString() !== userId.toString()
@@ -252,32 +254,24 @@ ChatSchema.methods.removeParticipant = async function(userId) {
   return this.save();
 };
 
-// Metodo per pulire i messaggi vecchi
 ChatSchema.methods.cleanOldMessages = async function() {
   const retentionDate = new Date();
   retentionDate.setDate(retentionDate.getDate() - this.settings.messageRetention);
-  
   this.messages = this.messages.filter(
     message => message.timestamp > retentionDate
   );
-  
   return this.save();
 };
 
-// Metodo per iniziare a scrivere
 ChatSchema.methods.startTyping = async function(userId) {
   const existingTyping = this.typingUsers.find(tu => tu.user.toString() === userId.toString());
   if (!existingTyping) {
-    this.typingUsers.push({
-      user: userId,
-      startedAt: new Date()
-    });
+    this.typingUsers.push({ user: userId, startedAt: new Date() });
     return this.save();
   }
   return this;
 };
 
-// Metodo per smettere di scrivere
 ChatSchema.methods.stopTyping = async function(userId) {
   this.typingUsers = this.typingUsers.filter(
     tu => tu.user.toString() !== userId.toString()
@@ -285,16 +279,14 @@ ChatSchema.methods.stopTyping = async function(userId) {
   return this.save();
 };
 
-// Metodo per pulire gli utenti che scrivono da troppo tempo (timeout)
 ChatSchema.methods.cleanTypingUsers = async function() {
-  const timeoutThreshold = new Date(Date.now() - 10000); // 10 secondi
+  const timeoutThreshold = new Date(Date.now() - 10000);
   this.typingUsers = this.typingUsers.filter(
     tu => tu.startedAt > timeoutThreshold
   );
   return this.save();
 };
 
-// Metodo statico per trovare le chat attive di un utente
 ChatSchema.statics.findActiveChats = function(userId) {
   return this.find({
     participants: userId,
@@ -302,7 +294,6 @@ ChatSchema.statics.findActiveChats = function(userId) {
   }).sort({ lastActivity: -1 });
 };
 
-// Metodo statico per trovare le chat con messaggi non letti
 ChatSchema.statics.findUnreadChats = function(userId) {
   return this.find({
     participants: userId,

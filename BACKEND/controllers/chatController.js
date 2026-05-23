@@ -17,7 +17,6 @@ const getUserChats = asyncHandler(async (req, res, next) => {
     .populate('mealId', 'title date host')
     .lean();
 
-    // Arricchisci ogni chat con l'ultimo messaggio e il numero di messaggi non letti
     const enriched = chats.map(chat => {
         const msgs = chat.messages || [];
         const lastMsg = msgs[msgs.length - 1] || null;
@@ -36,7 +35,6 @@ const getUserChats = asyncHandler(async (req, res, next) => {
         };
     });
 
-    // Ordina: prima le chat con messaggi non letti, poi per data aggiornamento
     enriched.sort((a, b) => {
         if (b.unreadCount !== a.unreadCount) return b.unreadCount - a.unreadCount;
         return new Date(b.updatedAt) - new Date(a.updatedAt);
@@ -79,7 +77,7 @@ const getChatById = asyncHandler(async (req, res, next) => {
 // @route   POST /api/chats/:id/messages
 const sendMessage = asyncHandler(async (req, res, next) => {
     const chatId = req.params.id;
-    const { content, type = 'text' } = req.body;
+    const { content, type = 'text', replyTo } = req.body;
     const userId = req.user.id;
 
     if (!content) {
@@ -91,7 +89,12 @@ const sendMessage = asyncHandler(async (req, res, next) => {
         return next(new ErrorResponse('Chat non trovata', 404));
     }
 
-    await chat.addMessage(userId, content);
+    // Sanitizza replyTo: accetta solo campi attesi
+    const sanitizedReplyTo = (replyTo && replyTo._id && replyTo.message)
+        ? { _id: replyTo._id, senderName: replyTo.senderName || '', message: String(replyTo.message).substring(0, 200) }
+        : null;
+
+    await chat.addMessage(userId, content, [], sanitizedReplyTo);
     
     const populatedChat = await chat.populate('messages.sender', 'nickname profileImage');
     const messageToSend = populatedChat.messages[populatedChat.messages.length - 1];
