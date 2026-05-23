@@ -3,6 +3,8 @@ import React, { useEffect, Suspense, lazy } from 'react';
 import { Routes, Route, useNavigate } from 'react-router-dom';
 import { ToastContainer } from 'react-toastify';
 import { NotificationProvider } from './contexts/NotificationContext';
+import { ChatDrawerProvider } from './contexts/ChatDrawerContext';
+import ChatDrawer from './components/Chat/ChatDrawer';
 
 import Layout from './components/layout/Layout';
 import PrivateRoute from './components/common/PrivateRoute';
@@ -51,7 +53,6 @@ const App = () => {
     }
   }, []);
 
-  // Inizializza l'AudioContext e registra il listener per sblocco su mobile
   useEffect(() => {
     initNotificationSound();
   }, []);
@@ -99,59 +100,63 @@ const App = () => {
 
   return (
     <ErrorBoundary componentName="App">
-      <NotificationProvider>
-        <Suspense fallback={<Spinner fullscreen label="Caricamento app..." />}>
-          <Routes>
-            <Route path="/" element={<Layout />}>
-              {/* Rotte Pubbliche */}
-              <Route index element={<HomePage />} />
-              <Route path="meals" element={<MealsPage />} />
-              <Route path="meals/search" element={<SearchMealsPage />} />
+      <ChatDrawerProvider>
+        <NotificationProvider>
+          <Suspense fallback={<Spinner fullscreen label="Caricamento app..." />}>
+            <Routes>
+              <Route path="/" element={<Layout />}>
+                {/* Rotte Pubbliche */}
+                <Route index element={<HomePage />} />
+                <Route path="meals" element={<MealsPage />} />
+                <Route path="meals/search" element={<SearchMealsPage />} />
 
-              {/* Rotte Private */}
-              <Route path="/chat" element={
-                <PrivateRoute requireCompleteProfile={true}>
-                  <ChatListPage />
-                </PrivateRoute>
-              } />
-              <Route path="/chat/:chatId" element={
-                <PrivateRoute requireCompleteProfile={true}>
-                  <ChatPage />
-                </PrivateRoute>
-              } />
-              <Route path="/meals/:mealId/video" element={
-                <PrivateRoute requireCompleteProfile={true}>
-                  <VideoCallPage />
-                </PrivateRoute>
-              } />
-              <Route path="/video/:mealId" element={
-                <PrivateRoute requireCompleteProfile={true}>
-                  <VideoCallPage />
-                </PrivateRoute>
-              } />
-              <Route path="public-profile/:userId" element={<PublicProfilePage />} />
-              <Route path="map" element={<PrivateRoute requireCompleteProfile={true}><MapPage /></PrivateRoute>} />
-              <Route path="impostazioni/profilo" element={<PrivateRoute><ProfilePage /></PrivateRoute>} />
-              <Route path="my-meals" element={<PrivateRoute requireCompleteProfile={true}><MealHistoryPage /></PrivateRoute>} />
-              <Route path="meals/history" element={<PrivateRoute requireCompleteProfile={true}><MealHistoryPage /></PrivateRoute>} />
-              <Route path="meals/create" element={<PrivateRoute requireCompleteProfile={true}><CreateMealPage /></PrivateRoute>} />
-              <Route path="meals/edit/:id" element={<PrivateRoute requireCompleteProfile={true}><EditMealPage /></PrivateRoute>} />
-              <Route path="meals/:mealId" element={<PrivateRoute requireCompleteProfile={true}><MealDetailPage /></PrivateRoute>} />
-            </Route>
+                {/* Rotte Private */}
+                <Route path="/chat" element={
+                  <PrivateRoute requireCompleteProfile={true}>
+                    <ChatListPage />
+                  </PrivateRoute>
+                } />
+                <Route path="/chat/:chatId" element={
+                  <PrivateRoute requireCompleteProfile={true}>
+                    <ChatPage />
+                  </PrivateRoute>
+                } />
+                <Route path="/meals/:mealId/video" element={
+                  <PrivateRoute requireCompleteProfile={true}>
+                    <VideoCallPage />
+                  </PrivateRoute>
+                } />
+                <Route path="/video/:mealId" element={
+                  <PrivateRoute requireCompleteProfile={true}>
+                    <VideoCallPage />
+                  </PrivateRoute>
+                } />
+                <Route path="public-profile/:userId" element={<PublicProfilePage />} />
+                <Route path="map" element={<PrivateRoute requireCompleteProfile={true}><MapPage /></PrivateRoute>} />
+                <Route path="impostazioni/profilo" element={<PrivateRoute><ProfilePage /></PrivateRoute>} />
+                <Route path="my-meals" element={<PrivateRoute requireCompleteProfile={true}><MealHistoryPage /></PrivateRoute>} />
+                <Route path="meals/history" element={<PrivateRoute requireCompleteProfile={true}><MealHistoryPage /></PrivateRoute>} />
+                <Route path="meals/create" element={<PrivateRoute requireCompleteProfile={true}><CreateMealPage /></PrivateRoute>} />
+                <Route path="meals/edit/:id" element={<PrivateRoute requireCompleteProfile={true}><EditMealPage /></PrivateRoute>} />
+                <Route path="meals/:mealId" element={<PrivateRoute requireCompleteProfile={true}><MealDetailPage /></PrivateRoute>} />
+              </Route>
 
-            {/* Rotte senza layout */}
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/register" element={<RegisterPage />} />
-            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-            <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
-            <Route path="/verify-email" element={<VerifyEmailPage />} />
-            <Route path="/privacy" element={<PrivacyPolicyPage />} />
-            <Route path="/termini-e-condizioni" element={<TermsAndConditionsPage />} />
-            <Route path="*" element={<NotFoundPage />} />
-          </Routes>
-        </Suspense>
-        <ToastContainer position="top-right" autoClose={3000} hideProgressBar={false} />
-      </NotificationProvider>
+              {/* Rotte senza layout */}
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/register" element={<RegisterPage />} />
+              <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+              <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
+              <Route path="/verify-email" element={<VerifyEmailPage />} />
+              <Route path="/privacy" element={<PrivacyPolicyPage />} />
+              <Route path="/termini-e-condizioni" element={<TermsAndConditionsPage />} />
+              <Route path="*" element={<NotFoundPage />} />
+            </Routes>
+          </Suspense>
+          <ToastContainer position="top-right" autoClose={3000} hideProgressBar={false} />
+          {/* Drawer chat globale — visibile da tutte le pagine */}
+          <ChatDrawer />
+        </NotificationProvider>
+      </ChatDrawerProvider>
     </ErrorBoundary>
   );
 };

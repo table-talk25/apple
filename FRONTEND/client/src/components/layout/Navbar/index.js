@@ -5,6 +5,7 @@ import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { FaBars, FaTimes, FaMapMarkerAlt, FaEllipsisV } from 'react-icons/fa';
 import { IoChatbubbleEllipses } from 'react-icons/io5';
 import { useAuth } from '../../../contexts/AuthContext';
+import { useChatDrawer } from '../../../contexts/ChatDrawerContext';
 import Logo from '../../common/Logo';
 import styles from './Navbar.module.css';
 import Notifications from '../../../components/notifications/Notifications';
@@ -14,6 +15,7 @@ import LanguageMenu from '../../common/LanguageMenu';
 const Navbar = () => {
   const navigate = useNavigate();
   const { isAuthenticated, user, logout } = useAuth();
+  const { openDrawer } = useChatDrawer();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [isKebabMenuOpen, setIsKebabMenuOpen] = useState(false);
@@ -73,10 +75,10 @@ const Navbar = () => {
             <>
               {/* DESKTOP */}
               <div className={styles.desktopActions}>
-                {/* Icona Chat stile Messenger */}
+                {/* Icona Chat → apre il drawer */}
                 <button
                   className={styles.chatIconButton}
-                  onClick={() => navigate('/chat')}
+                  onClick={openDrawer}
                   aria-label="Chat"
                 >
                   <IoChatbubbleEllipses />
@@ -109,10 +111,10 @@ const Navbar = () => {
 
               {/* MOBILE */}
               <div className={styles.mobileActions}>
-                {/* Icona Chat stile Messenger */}
+                {/* Icona Chat → apre il drawer */}
                 <button
                   className={styles.chatIconButton}
-                  onClick={() => navigate('/chat')}
+                  onClick={openDrawer}
                   aria-label="Chat"
                 >
                   <IoChatbubbleEllipses />

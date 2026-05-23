@@ -5,30 +5,29 @@ const ChatDrawerContext = createContext(null);
 
 export const ChatDrawerProvider = ({ children }) => {
   const [isOpen, setIsOpen] = useState(false);
-  // activeChatId: null = lista chat, string = chat specifica aperta
   const [activeChatId, setActiveChatId] = useState(null);
 
-  const openDrawer = useCallback((chatId = null) => {
+  const openDrawer = useCallback(() => {
+    setActiveChatId(null);
+    setIsOpen(true);
+  }, []);
+
+  const openChat = useCallback((chatId) => {
     setActiveChatId(chatId);
     setIsOpen(true);
   }, []);
 
   const closeDrawer = useCallback(() => {
     setIsOpen(false);
-    // reset chat attiva dopo animazione chiusura
-    setTimeout(() => setActiveChatId(null), 300);
+    setActiveChatId(null);
   }, []);
 
   const goToList = useCallback(() => {
     setActiveChatId(null);
   }, []);
 
-  const openChat = useCallback((chatId) => {
-    setActiveChatId(chatId);
-  }, []);
-
   return (
-    <ChatDrawerContext.Provider value={{ isOpen, activeChatId, openDrawer, closeDrawer, goToList, openChat }}>
+    <ChatDrawerContext.Provider value={{ isOpen, activeChatId, openDrawer, openChat, closeDrawer, goToList }}>
       {children}
     </ChatDrawerContext.Provider>
   );
@@ -36,8 +35,6 @@ export const ChatDrawerProvider = ({ children }) => {
 
 export const useChatDrawer = () => {
   const ctx = useContext(ChatDrawerContext);
-  if (!ctx) throw new Error('useChatDrawer must be used inside ChatDrawerProvider');
+  if (!ctx) throw new Error('useChatDrawer must be used within ChatDrawerProvider');
   return ctx;
 };
-
-export default ChatDrawerContext;

@@ -72,6 +72,7 @@ const ChatList = ({ onSelectChat }) => {
   if (loading) {
     return (
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', flex: 1, padding: '3rem' }}>
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
         <div style={{
           width: 32, height: 32,
           border: '3px solid #e2e8f0',
@@ -290,7 +291,6 @@ const DrawerChat = ({ chatId }) => {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>
-      {/* Titolo chat */}
       <div style={{ padding: '6px 16px 8px', background: '#fff8f5', borderBottom: '1px solid #fde5d7', flexShrink: 0 }}>
         <span style={{ fontWeight: 600, fontSize: '0.9rem', color: '#FF6B35' }}>{chatName}</span>
         {connectionStatus === 'disconnected' && (
@@ -301,7 +301,6 @@ const DrawerChat = ({ chatId }) => {
         )}
       </div>
 
-      {/* Messaggi */}
       <div style={{
         flex: 1, overflowY: 'auto', padding: '12px 10px',
         background: '#f7f8fa', display: 'flex', flexDirection: 'column', gap: '4px'
@@ -366,7 +365,6 @@ const DrawerChat = ({ chatId }) => {
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Input */}
       <form
         onSubmit={handleSend}
         style={{
@@ -402,7 +400,7 @@ const DrawerChat = ({ chatId }) => {
             cursor: newMessage.trim() ? 'pointer' : 'not-allowed',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             fontSize: '16px', flexShrink: 0,
-            transition: 'background 0.2s, transform 0.1s',
+            transition: 'background 0.2s',
             boxShadow: newMessage.trim() ? '0 2px 8px rgba(255,107,53,0.3)' : 'none',
           }}
         >
@@ -411,6 +409,12 @@ const DrawerChat = ({ chatId }) => {
       </form>
     </div>
   );
+};
+
+// Wrapper che accede al context per passare openChat alla lista
+const ChatListWrapper = () => {
+  const { openChat } = useChatDrawer();
+  return <ChatList onSelectChat={openChat} />;
 };
 
 // ─────────────────────────────────────────────────────────────
@@ -428,7 +432,6 @@ const ChatDrawer = () => {
     }, 290);
   }, [closeDrawer]);
 
-  // Chiudi con ESC
   useEffect(() => {
     if (!isOpen) return;
     const handler = (e) => { if (e.key === 'Escape') handleClose(); };
@@ -436,7 +439,6 @@ const ChatDrawer = () => {
     return () => document.removeEventListener('keydown', handler);
   }, [isOpen, handleClose]);
 
-  // Blocca lo scroll del body quando il drawer è aperto
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
@@ -448,28 +450,21 @@ const ChatDrawer = () => {
 
   if (!isOpen && !closing) return null;
 
-  const title = activeChatId ? '← Chat' : '💬 Chat';
-
   return (
     <>
-      {/* Overlay */}
       <div
         className={`${styles.overlay} ${closing ? styles.overlayClosing : ''}`}
         onClick={handleClose}
         aria-hidden="true"
       />
-
-      {/* Pannello */}
       <div
         className={`${styles.drawer} ${closing ? styles.drawerClosing : ''}`}
         role="dialog"
         aria-modal="true"
         aria-label="Chat"
       >
-        {/* Handle mobile */}
         <div className={styles.handle} onClick={handleClose} />
 
-        {/* Header */}
         <div className={styles.header}>
           <div className={styles.headerLeft}>
             {activeChatId && (
@@ -486,11 +481,10 @@ const ChatDrawer = () => {
           </button>
         </div>
 
-        {/* Body */}
         <div className={styles.body}>
           {activeChatId
             ? <DrawerChat chatId={activeChatId} />
-            : <ChatList onSelectChat={(id) => { const { openChat } = require('../../contexts/ChatDrawerContext'); }} />
+            : <ChatListWrapper />
           }
         </div>
       </div>
