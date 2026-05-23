@@ -4,39 +4,74 @@ const User = require('../models/User');
 const notificationService = require('../services/notificationService');
 const ErrorResponse = require('../utils/errorResponse');
 
+// @desc    Lista di tutte le chat attive dell'utente loggato
+// @route   GET /api/chats
+const getUserChats = asyncHandler(async (req, res, next) => {
+    const userId = req.user.id;
+
+    const chats = await Chat.find({
+        participants: userId,
+        status: { $ne: 'closed' }
+    })
+    .populate('participants', 'nickname profileImage')
+    .populate('mealId', 'title date host')
+    .lean();
+
+    // Arricchisci ogni chat con l'ultimo messaggio e il numero di messaggi non letti
+    const enriched = chats.map(chat => {
+        const msgs = chat.messages || [];
+        const lastMsg = msgs[msgs.length - 1] || null;
+        const unread = msgs.filter(m => {
+            const readBy = m.readBy || [];
+            return !readBy.some(r => r.toString() === userId);
+        }).length;
+        return {
+            _id: chat._id,
+            name: chat.name || chat.title || null,
+            mealId: chat.mealId,
+            participants: chat.participants,
+            lastMessage: lastMsg ? { content: lastMsg.content, timestamp: lastMsg.timestamp || lastMsg.createdAt } : null,
+            unreadCount: unread,
+            updatedAt: chat.updatedAt,
+        };
+    });
+
+    // Ordina: prima le chat con messaggi non letti, poi per data aggiornamento
+    enriched.sort((a, b) => {
+        if (b.unreadCount !== a.unreadCount) return b.unreadCount - a.unreadCount;
+        return new Date(b.updatedAt) - new Date(a.updatedAt);
+    });
+
+    res.status(200).json({ success: true, data: enriched });
+});
+
 // @desc    Ottenere i dettagli di una chat e i messaggi
 // @route   GET /api/chats/:id
 const getChatById = asyncHandler(async (req, res, next) => {
     const chatId = req.params.id;
     const userId = req.user.id;
 
-    // 1. Validazione ID
     if (!chatId || !chatId.match(/^[0-9a-fA-F]{24}$/)) {
         return next(new ErrorResponse(`ID chat non valido`, 400));
     }
 
-    // 2. Trova la chat (i messaggi sono già inclusi grazie al 'populate' nel modello)
-    // Nota: Il modello Chat.js ha un middleware 'pre-find' che popola automaticamente i messaggi
     const chat = await Chat.findById(chatId);
 
     if (!chat) {
         return next(new ErrorResponse(`Chat non trovata`, 404));
     }
 
-    // 3. Sicurezza: Verifica partecipazione
     const isParticipant = chat.participants.some(p => p._id.toString() === userId);
     if (!isParticipant) {
         return next(new ErrorResponse('Non autorizzato ad accedere a questa chat', 403));
     }
 
-    // 4. Restituisci la chat e i messaggi incorporati
-    // Ordiniamo i messaggi se necessario, ma solitamente arrivano in ordine di inserimento
     const messages = chat.messages || [];
 
     res.status(200).json({
         success: true,
-        data: chat,      // Il frontend usa response.data.data come oggetto chat
-        messages: messages // Passiamo anche i messaggi esplicitamente per sicurezza
+        data: chat,
+        messages: messages
     });
 });
 
@@ -56,29 +91,19 @@ const sendMessage = asyncHandler(async (req, res, next) => {
         return next(new ErrorResponse('Chat non trovata', 404));
     }
 
-    // Usa il metodo del modello per aggiungere il messaggio (gestisce date e readBy)
     await chat.addMessage(userId, content);
     
-    // Recupera l'ultimo messaggio aggiunto e popolalo per il ritorno
-    const savedMessage = chat.messages[chat.messages.length - 1];
-    
-    // Popoliamo il sender per il frontend
     const populatedChat = await chat.populate('messages.sender', 'nickname profileImage');
     const messageToSend = populatedChat.messages[populatedChat.messages.length - 1];
 
-    // ⚡ SOCKET: Emetti l'evento alla stanza della chat
-    // Nota: Assicurati che il frontend si sia unito alla stanza 'chatId'
     if (req.io) {
         req.io.to(chatId).emit('receiveMessage', messageToSend);
     }
 
-    // 🔔 NOTIFICHE PUSH
-    // Invia notifica agli altri partecipanti
     const otherParticipants = chat.participants
         .map(p => p._id ? p._id.toString() : p.toString())
         .filter(id => id !== userId);
 
-    // (Logica notifiche semplificata)
     try {
         const sender = await User.findById(userId);
         for (const pId of otherParticipants) {
@@ -103,7 +128,7 @@ const sendMessage = asyncHandler(async (req, res, next) => {
 });
 
 module.exports = {
+    getUserChats,
     getChatById,
     sendMessage,
-    // Mantieni le altre funzioni se usate altrove, ma queste sono le principali
 };
