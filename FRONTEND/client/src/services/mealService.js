@@ -168,23 +168,12 @@ const getMealById = async (id) => {
 };
 
   // 🔄 Aggiorna un pasto esistente (aggiornamenti parziali supportati)
-  // Utilizza PATCH per comunicare l'intento di modificare solo alcuni campi
+  // mealData è già un FormData costruito da MealForm — lo passiamo direttamente
   const updateMeal = async (id, mealData) => {
     try {
-      const formData = new FormData();
-      Object.keys(mealData).forEach(key => {
-        // Gestisce correttamente anche gli array come i topics
-        if (Array.isArray(mealData[key])) {
-          mealData[key].forEach(item => formData.append(key, item));
-        } else {
-          formData.append(key, mealData[key]);
-        }
-      });
-
-      const response = await apiClient.patch(`/meals/${id}`, formData, { // 🔄 Cambiato da .put() a .patch()
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
+      // ✅ FIX: mealData è già un FormData proveniente da MealForm.
+      // Non ricostruire: Object.keys() su FormData restituisce [] e perderebbe tutti i campi.
+      const response = await apiClient.patch(`/meals/${id}`, mealData, {
         suppressErrorAlert: true,
       });
       return response.data;
