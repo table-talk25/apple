@@ -15,6 +15,8 @@ import { toast } from 'react-toastify';
 import { playNotificationSound } from '../../utils/notificationSound';
 import styles from './ChatDrawer.module.css';
 
+const REACTION_EMOJIS = ['❤️','👍','😂','😮','😢','🔥','👏','🎉'];
+
 // ─────────────────────────────────────────────────────────────
 // VISTA LISTA CHAT
 // ─────────────────────────────────────────────────────────────
@@ -232,6 +234,78 @@ const ReplyPreview = ({ replyTo, own }) => {
 };
 
 // ─────────────────────────────────────────────────────────────
+// REACTION BAR — mostra le reazioni esistenti + picker
+// ─────────────────────────────────────────────────────────────
+const ReactionBar = ({ reactions = [], currentUserId, onToggle }) => {
+  const [showPicker, setShowPicker] = useState(false);
+
+  const hasReacted = (emoji) => {
+    const r = reactions.find(r => r.emoji === emoji);
+    return r ? r.users.includes(currentUserId) : false;
+  };
+
+  return (
+    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 3, marginTop: 3, alignItems: 'center', position: 'relative' }}>
+      {reactions.map(r => (
+        <button
+          key={r.emoji}
+          onClick={() => onToggle(r.emoji)}
+          title={`${r.count} reazion${r.count === 1 ? 'e' : 'i'}`}
+          style={{
+            display: 'inline-flex', alignItems: 'center', gap: 2,
+            background: hasReacted(r.emoji) ? 'rgba(255,107,53,0.15)' : 'rgba(0,0,0,0.06)',
+            border: hasReacted(r.emoji) ? '1.5px solid #FF6B35' : '1.5px solid transparent',
+            borderRadius: 12, padding: '1px 6px',
+            cursor: 'pointer', fontSize: 13, lineHeight: 1.4,
+            transition: 'all 0.15s',
+          }}
+        >
+          <span>{r.emoji}</span>
+          <span style={{ fontSize: 10, fontWeight: 600, color: hasReacted(r.emoji) ? '#FF6B35' : '#666' }}>{r.count}</span>
+        </button>
+      ))}
+      {/* Pulsante + per aprire il picker */}
+      <button
+        onClick={() => setShowPicker(p => !p)}
+        title="Aggiungi reazione"
+        style={{
+          display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+          width: 22, height: 22, borderRadius: '50%',
+          background: 'rgba(0,0,0,0.05)', border: '1.5px solid transparent',
+          cursor: 'pointer', fontSize: 13, color: '#999',
+          transition: 'all 0.15s',
+        }}
+        onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,107,53,0.12)'; e.currentTarget.style.color = '#FF6B35'; }}
+        onMouseLeave={e => { e.currentTarget.style.background = 'rgba(0,0,0,0.05)'; e.currentTarget.style.color = '#999'; }}
+      >😊</button>
+      {showPicker && (
+        <div style={{
+          position: 'absolute', bottom: 28, left: 0,
+          background: '#fff', borderRadius: 12, padding: '6px 8px',
+          boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
+          display: 'flex', gap: 4, zIndex: 100,
+          border: '1px solid #eee',
+        }}>
+          {REACTION_EMOJIS.map(emoji => (
+            <button
+              key={emoji}
+              onClick={() => { onToggle(emoji); setShowPicker(false); }}
+              style={{
+                background: 'none', border: 'none', cursor: 'pointer',
+                fontSize: 20, padding: '2px 3px', borderRadius: 6,
+                transition: 'transform 0.1s',
+              }}
+              onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.3)'}
+              onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
+            >{emoji}</button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
+// ─────────────────────────────────────────────────────────────
 // VISTA SINGOLA CHAT
 // ─────────────────────────────────────────────────────────────
 const DrawerChat = ({ chatId }) => {
@@ -260,6 +334,7 @@ const DrawerChat = ({ chatId }) => {
       profileImage: sender.profileImage || msg.profileImage || null,
       content: msg.content,
       replyTo: msg.replyTo || null,
+      reactions: msg.reactions || [],
       timestamp: msg.timestamp || msg.createdAt || new Date().toISOString(),
     };
   }, []);
@@ -321,6 +396,13 @@ const DrawerChat = ({ chatId }) => {
       }
     });
 
+    // Aggiorna le reazioni in tempo reale
+    socket.on('reactionUpdated', ({ messageId, reactions }) => {
+      setMessages(prev => prev.map(m =>
+        m._id === messageId ? { ...m, reactions } : m
+      ));
+    });
+
     return () => {
       mounted = false;
       socket.disconnect();
@@ -341,6 +423,11 @@ const DrawerChat = ({ chatId }) => {
     });
     setTimeout(() => inputRef.current?.focus(), 50);
   }, []);
+
+  const handleToggleReaction = useCallback((messageId, emoji) => {
+    if (!socketRef.current?.connected) return;
+    socketRef.current.emit('toggleReaction', { chatId, messageId, emoji });
+  }, [chatId]);
 
   const handleSend = (e) => {
     e?.preventDefault();
@@ -400,7 +487,9 @@ const DrawerChat = ({ chatId }) => {
                 key={msg._id || index}
                 msg={msg}
                 own={own}
+                currentUserId={currentUserId}
                 onReply={handleReply}
+                onToggleReaction={handleToggleReaction}
               />
             );
           })
@@ -479,9 +568,9 @@ const DrawerChat = ({ chatId }) => {
 };
 
 // ─────────────────────────────────────────────────────────────
-// SINGOLA RIGA MESSAGGIO con pulsante reply e swipe mobile
+// SINGOLA RIGA MESSAGGIO con pulsante reply, swipe mobile e reazioni
 // ─────────────────────────────────────────────────────────────
-const MessageRow = ({ msg, own, onReply }) => {
+const MessageRow = ({ msg, own, currentUserId, onReply, onToggleReaction }) => {
   const [swipeX, setSwipeX] = useState(0);
   const [swiping, setSwiping] = useState(false);
   const touchStartX = useRef(null);
@@ -561,6 +650,14 @@ const MessageRow = ({ msg, own, onReply }) => {
             <div style={{ fontSize: '10px', opacity: 0.65, textAlign: 'right', marginTop: '3px' }}>
               {new Date(msg.timestamp).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' })}
             </div>
+          </div>
+          {/* Reazioni */}
+          <div style={{ marginTop: 2, marginLeft: own ? 0 : 4, marginRight: own ? 4 : 0 }}>
+            <ReactionBar
+              reactions={msg.reactions || []}
+              currentUserId={currentUserId?.toString()}
+              onToggle={(emoji) => onToggleReaction(msg._id, emoji)}
+            />
           </div>
           <button
             onClick={() => onReply(msg)}

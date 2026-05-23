@@ -29,6 +29,8 @@ const checkRateLimit = (key, maxRequests, windowMs) => {
   return true;
 };
 
+const ALLOWED_EMOJIS = ['❤️','👍','😂','😮','😢','🔥','👏','🎉'];
+
 const allowedOrigins = [
   'http://localhost:3000',
   'http://localhost:3001',
@@ -188,6 +190,67 @@ async function initializeSocket(server) {
       }
     });
 
+    // Toggle reazione emoji su un messaggio — 30 toggle / 10s per socket
+    socket.on('toggleReaction', async ({ chatId, messageId, emoji }, callback) => {
+      try {
+        if (!checkRateLimit(`reaction:${socket.id}`, 30, 10000)) {
+          if (callback) callback({ success: false, error: 'Troppe reazioni, aspetta un momento.' });
+          return;
+        }
+        if (!ALLOWED_EMOJIS.includes(emoji)) {
+          if (callback) callback({ success: false, error: 'Emoji non consentita.' });
+          return;
+        }
+        const chat = await Chat.findOne({ _id: chatId, participants: socket.user._id });
+        if (!chat) {
+          if (callback) callback({ success: false, error: 'Chat non trovata o non autorizzato.' });
+          return;
+        }
+        const message = chat.messages.id(messageId);
+        if (!message) {
+          if (callback) callback({ success: false, error: 'Messaggio non trovato.' });
+          return;
+        }
+
+        // Cerca la reazione esistente per questo emoji
+        let reaction = message.reactions.find(r => r.emoji === emoji);
+        if (!reaction) {
+          // Prima reazione con questo emoji
+          message.reactions.push({ emoji, users: [socket.user._id] });
+        } else {
+          const alreadyReacted = reaction.users.some(u => u.toString() === socket.user._id.toString());
+          if (alreadyReacted) {
+            // Rimuovi l'utente (toggle off)
+            reaction.users = reaction.users.filter(u => u.toString() !== socket.user._id.toString());
+            // Rimuovi l'entry se non ci sono più utenti
+            if (reaction.users.length === 0) {
+              message.reactions = message.reactions.filter(r => r.emoji !== emoji);
+            }
+          } else {
+            // Aggiungi l'utente (toggle on)
+            reaction.users.push(socket.user._id);
+          }
+        }
+
+        await chat.save();
+
+        // Invia l'aggiornamento a tutti i partecipanti nella stanza
+        ioInstance.to(chatId).emit('reactionUpdated', {
+          messageId,
+          reactions: message.reactions.map(r => ({
+            emoji: r.emoji,
+            count: r.users.length,
+            users: r.users.map(u => u.toString()),
+          })),
+        });
+
+        if (callback) callback({ success: true });
+      } catch (error) {
+        console.error('[Socket] Errore toggleReaction:', error.message);
+        if (callback) callback({ success: false, error: 'Errore server.' });
+      }
+    });
+
     socket.on('joinRoom', async ({ mealId }) => {
       try {
         const meal = await Meal.findById(mealId);
@@ -206,6 +269,7 @@ async function initializeSocket(server) {
       connectedUsers.delete(socket.user._id.toString());
       rateLimitMap.delete(`msg:${socket.id}`);
       rateLimitMap.delete(`typing:${socket.id}`);
+      rateLimitMap.delete(`reaction:${socket.id}`);
     });
   });
 

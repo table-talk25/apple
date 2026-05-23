@@ -60,6 +60,11 @@ const MessageSchema = new mongoose.Schema({
     },
     name: String,
     size: Number
+  }],
+  // Reazioni emoji: { emoji: '❤️', users: [userId, ...] }
+  reactions: [{
+    emoji: { type: String, required: true },
+    users: [{ type: mongoose.Schema.ObjectId, ref: 'User' }]
   }]
 });
 
