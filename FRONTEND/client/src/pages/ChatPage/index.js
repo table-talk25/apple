@@ -72,7 +72,7 @@ const ChatPage = () => {
       sender,
       senderId,
       username: sender.nickname || msg.username || '',
-      profileImage: sender.profileImage,
+      profileImage: sender.profileImage || msg.profileImage || null,
       content: msg.content,
       timestamp: msg.timestamp || msg.createdAt || new Date().toISOString(),
     };
@@ -197,7 +197,6 @@ const ChatPage = () => {
     });
 
     // Gestisce i messaggi in arrivo dagli ALTRI utenti
-    // Suona per ogni messaggio ricevuto (non i propri)
     socket.on('receiveMessage', (message) => {
       const nm = normalizeMessage(message);
       const mid = nm._id;
@@ -427,7 +426,7 @@ const ChatPage = () => {
               <div className={styles.messageContent}>
                 <div className={styles.messageHeader}>
                   <img 
-                    src={getHostAvatarUrl(message?.user || message?.sender)} 
+                    src={getHostAvatarUrl(message?.profileImage)}
                     alt={t('chat.userAvatarAlt')}
                     className={styles.messageAvatar}
                   />
