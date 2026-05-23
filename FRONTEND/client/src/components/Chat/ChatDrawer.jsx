@@ -176,6 +176,38 @@ const ChatList = ({ onSelectChat }) => {
 };
 
 // ─────────────────────────────────────────────────────────────
+// BUBBLE REPLY PREVIEW (inline, dentro la bubble del messaggio)
+// ─────────────────────────────────────────────────────────────
+const ReplyPreview = ({ replyTo, own }) => {
+  if (!replyTo?._id && !replyTo?.message) return null;
+  return (
+    <div style={{
+      borderLeft: `3px solid ${own ? 'rgba(255,255,255,0.55)' : '#FF6B35'}`,
+      paddingLeft: 8,
+      marginBottom: 6,
+      opacity: 0.85,
+      fontSize: 12,
+      borderRadius: '0 4px 4px 0',
+      background: own ? 'rgba(255,255,255,0.12)' : 'rgba(255,107,53,0.07)',
+      padding: '4px 8px',
+    }}>
+      <div style={{ fontWeight: 700, marginBottom: 1, color: own ? 'rgba(255,255,255,0.9)' : '#FF6B35', fontSize: 11 }}>
+        {replyTo.senderName || 'Utente'}
+      </div>
+      <div style={{
+        overflow: 'hidden',
+        whiteSpace: 'nowrap',
+        textOverflow: 'ellipsis',
+        maxWidth: 220,
+        color: own ? 'rgba(255,255,255,0.8)' : '#555',
+      }}>
+        {replyTo.message}
+      </div>
+    </div>
+  );
+};
+
+// ─────────────────────────────────────────────────────────────
 // VISTA SINGOLA CHAT
 // ─────────────────────────────────────────────────────────────
 const DrawerChat = ({ chatId }) => {
@@ -187,6 +219,7 @@ const DrawerChat = ({ chatId }) => {
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(true);
   const [connectionStatus, setConnectionStatus] = useState('connecting');
+  const [replyTo, setReplyTo] = useState(null); // { _id, senderName, message }
   const socketRef = useRef(null);
   const messagesEndRef = useRef(null);
   const messageIdsRef = useRef(new Set());
@@ -202,6 +235,7 @@ const DrawerChat = ({ chatId }) => {
       username: sender.nickname || msg.username || 'Utente',
       profileImage: sender.profileImage || msg.profileImage || null,
       content: msg.content,
+      replyTo: msg.replyTo || null,
       timestamp: msg.timestamp || msg.createdAt || new Date().toISOString(),
     };
   }, []);
@@ -214,6 +248,7 @@ const DrawerChat = ({ chatId }) => {
     let mounted = true;
     setLoading(true);
     setMessages([]);
+    setReplyTo(null);
     messageIdsRef.current = new Set();
 
     chatService.getChatById(chatId)
@@ -268,12 +303,31 @@ const DrawerChat = ({ chatId }) => {
     };
   }, [chatId, token, currentUserId, normalizeMessage]);
 
+  // ESC annulla reply
+  useEffect(() => {
+    const handler = (e) => { if (e.key === 'Escape') setReplyTo(null); };
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
+  }, []);
+
+  const handleReply = useCallback((msg) => {
+    setReplyTo({
+      _id: msg._id,
+      senderName: msg.username || 'Utente',
+      message: msg.content,
+    });
+    setTimeout(() => inputRef.current?.focus(), 50);
+  }, []);
+
   const handleSend = (e) => {
     e?.preventDefault();
     if (!newMessage.trim() || !socketRef.current?.connected) return;
     const content = newMessage.trim();
+    const payload = { chatId, content };
+    if (replyTo) payload.replyTo = replyTo;
     setNewMessage('');
-    socketRef.current.emit('sendMessage', { chatId, content }, (ack) => {
+    setReplyTo(null);
+    socketRef.current.emit('sendMessage', payload, (ack) => {
       if (ack?.success && ack?.message) {
         const nm = normalizeMessage(ack.message);
         const mid = nm._id;
@@ -291,6 +345,7 @@ const DrawerChat = ({ chatId }) => {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>
+      {/* Sub-header con nome chat e stato connessione */}
       <div style={{ padding: '6px 16px 8px', background: '#fff8f5', borderBottom: '1px solid #fde5d7', flexShrink: 0 }}>
         <span style={{ fontWeight: 600, fontSize: '0.9rem', color: '#FF6B35' }}>{chatName}</span>
         {connectionStatus === 'disconnected' && (
@@ -301,6 +356,7 @@ const DrawerChat = ({ chatId }) => {
         )}
       </div>
 
+      {/* Messaggi */}
       <div style={{
         flex: 1, overflowY: 'auto', padding: '12px 10px',
         background: '#f7f8fa', display: 'flex', flexDirection: 'column', gap: '4px'
@@ -319,52 +375,57 @@ const DrawerChat = ({ chatId }) => {
           messages.map((msg, index) => {
             const own = (msg.senderId || msg.sender?._id)?.toString() === (currentUserId || '').toString();
             return (
-              <div
+              <MessageRow
                 key={msg._id || index}
-                style={{
-                  display: 'flex',
-                  flexDirection: own ? 'row-reverse' : 'row',
-                  alignItems: 'flex-end',
-                  gap: '7px',
-                  marginBottom: '4px',
-                }}
-              >
-                {!own && (
-                  <img
-                    src={getHostAvatarUrl(msg.profileImage)}
-                    alt={msg.username}
-                    style={{ width: 28, height: 28, borderRadius: '50%', objectFit: 'cover', flexShrink: 0, border: '2px solid #fff', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}
-                  />
-                )}
-                <div style={{ maxWidth: '75%', display: 'flex', flexDirection: 'column', alignItems: own ? 'flex-end' : 'flex-start' }}>
-                  {!own && (
-                    <span style={{ fontSize: '11px', fontWeight: 600, color: '#FF6B35', marginBottom: '2px', marginLeft: '4px' }}>
-                      {msg.username}
-                    </span>
-                  )}
-                  <div style={{
-                    padding: '9px 13px',
-                    borderRadius: own ? '16px 4px 16px 16px' : '4px 16px 16px 16px',
-                    background: own ? 'linear-gradient(135deg, #FF6B35, #ff8c5a)' : '#fff',
-                    color: own ? '#fff' : '#1a1a2e',
-                    boxShadow: '0 2px 6px rgba(0,0,0,0.07)',
-                    wordBreak: 'break-word',
-                    fontSize: '14px',
-                    lineHeight: 1.45,
-                  }}>
-                    <div>{msg.content}</div>
-                    <div style={{ fontSize: '10px', opacity: 0.65, textAlign: 'right', marginTop: '3px' }}>
-                      {new Date(msg.timestamp).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' })}
-                    </div>
-                  </div>
-                </div>
-              </div>
+                msg={msg}
+                own={own}
+                onReply={handleReply}
+              />
             );
           })
         )}
         <div ref={messagesEndRef} />
       </div>
 
+      {/* Reply banner */}
+      {replyTo && (
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 8,
+          padding: '7px 12px',
+          background: '#fff0eb',
+          borderTop: '1px solid #ffd5c2',
+          fontSize: 13,
+          color: '#444',
+          flexShrink: 0,
+        }}>
+          <span style={{ color: '#FF6B35', fontWeight: 700, flexShrink: 0, fontSize: 15 }}>↩</span>
+          <div style={{ flex: 1, overflow: 'hidden', minWidth: 0 }}>
+            <span style={{ fontWeight: 700, color: '#FF6B35', fontSize: 12 }}>{replyTo.senderName}</span>
+            <span style={{
+              marginLeft: 6, fontSize: 12, color: '#666',
+              overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+              display: 'inline-block', maxWidth: 200, verticalAlign: 'bottom',
+            }}>
+              {replyTo.message}
+            </span>
+          </div>
+          <button
+            onClick={() => setReplyTo(null)}
+            aria-label="Annulla risposta"
+            style={{
+              background: 'none', border: 'none', cursor: 'pointer',
+              fontSize: 16, color: '#aaa', padding: '0 4px', lineHeight: 1,
+              flexShrink: 0,
+            }}
+          >
+            ✕
+          </button>
+        </div>
+      )}
+
+      {/* Input */}
       <form
         onSubmit={handleSend}
         style={{
@@ -378,8 +439,11 @@ const DrawerChat = ({ chatId }) => {
           type="text"
           value={newMessage}
           onChange={e => setNewMessage(e.target.value)}
-          onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
-          placeholder="Scrivi un messaggio…"
+          onKeyDown={e => {
+            if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); }
+            if (e.key === 'Escape') setReplyTo(null);
+          }}
+          placeholder={replyTo ? `Rispondi a ${replyTo.senderName}…` : 'Scrivi un messaggio…'}
           disabled={connectionStatus !== 'connected'}
           style={{
             flex: 1, padding: '9px 15px',
@@ -407,6 +471,142 @@ const DrawerChat = ({ chatId }) => {
           <IoSend />
         </button>
       </form>
+    </div>
+  );
+};
+
+// ─────────────────────────────────────────────────────────────
+// SINGOLA RIGA MESSAGGIO con pulsante reply e swipe mobile
+// ─────────────────────────────────────────────────────────────
+const MessageRow = ({ msg, own, onReply }) => {
+  const [swipeX, setSwipeX] = useState(0);
+  const [swiping, setSwiping] = useState(false);
+  const touchStartX = useRef(null);
+  const SWIPE_THRESHOLD = 60;
+
+  const handleTouchStart = (e) => {
+    touchStartX.current = e.touches[0].clientX;
+    setSwiping(true);
+  };
+  const handleTouchMove = (e) => {
+    if (touchStartX.current === null) return;
+    const dx = e.touches[0].clientX - touchStartX.current;
+    // Swipe verso destra per i propri messaggi, sinistra per gli altri
+    const direction = own ? -1 : 1;
+    const clamped = Math.max(0, Math.min(dx * direction, SWIPE_THRESHOLD + 10));
+    setSwipeX(clamped);
+  };
+  const handleTouchEnd = () => {
+    if (swipeX >= SWIPE_THRESHOLD) {
+      onReply(msg);
+    }
+    setSwipeX(0);
+    setSwiping(false);
+    touchStartX.current = null;
+  };
+
+  const swipeProgress = Math.min(swipeX / SWIPE_THRESHOLD, 1);
+
+  return (
+    <div
+      style={{
+        display: 'flex',
+        flexDirection: own ? 'row-reverse' : 'row',
+        alignItems: 'flex-end',
+        gap: '7px',
+        marginBottom: '4px',
+        position: 'relative',
+      }}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+    >
+      {/* Icona reply che appare durante lo swipe */}
+      {swiping && swipeX > 8 && (
+        <div style={{
+          position: 'absolute',
+          [own ? 'left' : 'right']: 4,
+          top: '50%',
+          transform: 'translateY(-50%)',
+          opacity: swipeProgress,
+          fontSize: 18,
+          color: '#FF6B35',
+          transition: 'opacity 0.1s',
+          pointerEvents: 'none',
+        }}>
+          ↩
+        </div>
+      )}
+
+      {/* Contenuto del messaggio traslato durante swipe */}
+      <div style={{
+        display: 'flex',
+        flexDirection: own ? 'row-reverse' : 'row',
+        alignItems: 'flex-end',
+        gap: '7px',
+        flex: 1,
+        transform: swiping ? `translateX(${own ? -swipeX : swipeX}px)` : 'translateX(0)',
+        transition: swiping ? 'none' : 'transform 0.25s cubic-bezier(0.25, 1, 0.5, 1)',
+      }}>
+        {!own && (
+          <img
+            src={getHostAvatarUrl(msg.profileImage)}
+            alt={msg.username}
+            style={{ width: 28, height: 28, borderRadius: '50%', objectFit: 'cover', flexShrink: 0, border: '2px solid #fff', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}
+          />
+        )}
+        <div style={{
+          maxWidth: '75%',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: own ? 'flex-end' : 'flex-start',
+        }}>
+          {!own && (
+            <span style={{ fontSize: '11px', fontWeight: 600, color: '#FF6B35', marginBottom: '2px', marginLeft: '4px' }}>
+              {msg.username}
+            </span>
+          )}
+
+          {/* Bubble */}
+          <div
+            style={{
+              padding: '9px 13px',
+              borderRadius: own ? '16px 4px 16px 16px' : '4px 16px 16px 16px',
+              background: own ? 'linear-gradient(135deg, #FF6B35, #ff8c5a)' : '#fff',
+              color: own ? '#fff' : '#1a1a2e',
+              boxShadow: '0 2px 6px rgba(0,0,0,0.07)',
+              wordBreak: 'break-word',
+              fontSize: '14px',
+              lineHeight: 1.45,
+            }}
+          >
+            {/* Quote preview */}
+            <ReplyPreview replyTo={msg.replyTo} own={own} />
+
+            <div>{msg.content}</div>
+            <div style={{ fontSize: '10px', opacity: 0.65, textAlign: 'right', marginTop: '3px' }}>
+              {new Date(msg.timestamp).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' })}
+            </div>
+          </div>
+
+          {/* Pulsante Rispondi (desktop hover) */}
+          <button
+            onClick={() => onReply(msg)}
+            title="Rispondi"
+            style={{
+              background: 'none', border: 'none', cursor: 'pointer',
+              fontSize: '12px', color: '#bbb',
+              padding: '2px 6px', marginTop: '2px',
+              borderRadius: '8px',
+              transition: 'color 0.15s, background 0.15s',
+            }}
+            onMouseEnter={e => { e.currentTarget.style.color = '#FF6B35'; e.currentTarget.style.background = '#fff0eb'; }}
+            onMouseLeave={e => { e.currentTarget.style.color = '#bbb'; e.currentTarget.style.background = 'none'; }}
+          >
+            ↩ Rispondi
+          </button>
+        </div>
+      </div>
     </div>
   );
 };
