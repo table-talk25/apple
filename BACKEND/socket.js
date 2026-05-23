@@ -11,27 +11,26 @@ const connectedUsers = new Map();
 // Rate limiter personalizzato per socket
 const rateLimitMap = new Map();
 
-const checkRateLimit = (userId, maxRequests, windowMs) => {
+const checkRateLimit = (key, maxRequests, windowMs) => {
   const now = Date.now();
-  const key = `${userId}`;
-  
+
   if (!rateLimitMap.has(key)) {
     rateLimitMap.set(key, { count: 1, resetTime: now + windowMs });
     return true;
   }
-  
+
   const userLimit = rateLimitMap.get(key);
-  
+
   if (now > userLimit.resetTime) {
     userLimit.count = 1;
     userLimit.resetTime = now + windowMs;
     return true;
   }
-  
+
   if (userLimit.count >= maxRequests) {
     return false;
   }
-  
+
   userLimit.count++;
   return true;
 };
@@ -103,7 +102,6 @@ async function initializeSocket(server) {
   ioInstance.on('connection', (socket) => {
     console.log(`✅ [Socket] Connesso: ${socket.user.nickname}`);
     
-    // Memorizziamo l'utente connesso per il servizio notifiche
     connectedUsers.set(socket.user._id.toString(), socket.id);
 
     // Unisciti a una chat room
@@ -128,9 +126,9 @@ async function initializeSocket(server) {
       socket.leave(chatId);
     });
 
-    // Typing indicator
+    // Typing indicator — chiave per socketId
     socket.on('typing', ({ chatId, isTyping }) => {
-      if (!checkRateLimit(socket.user._id.toString(), 20, 5000)) return;
+      if (!checkRateLimit(`typing:${socket.id}`, 20, 5000)) return;
       
       socket.to(chatId).emit('userTyping', { 
         user: { _id: socket.user._id, nickname: socket.user.nickname }, 
@@ -138,11 +136,11 @@ async function initializeSocket(server) {
       });
     });
   
-    // Invia messaggio
+    // Invia messaggio — chiave per socketId, limite 20 messaggi ogni 10 secondi
     socket.on('sendMessage', async ({ chatId, content }, callback) => {
       try {
-        if (!checkRateLimit(socket.user._id.toString(), 5, 10000)) {
-          if (callback) callback({ success: false, error: "Troppi messaggi inviati." });
+        if (!checkRateLimit(`msg:${socket.id}`, 20, 10000)) {
+          if (callback) callback({ success: false, error: "Stai inviando troppi messaggi, aspetta un momento." });
           return;
         }
         
@@ -162,11 +160,8 @@ async function initializeSocket(server) {
         await chat.populate('messages.sender', 'nickname profileImage');
         const newMessage = chat.messages[chat.messages.length - 1];
 
-        // Manda il messaggio ai WebSockets
         ioInstance.to(chatId).emit('receiveMessage', newMessage);
 
-        // Deleghiamo interamente la notifica Push al notificationService
-        // Evitiamo di chiamare Firebase admin qui dentro per pulizia.
         const notificationService = require('./services/notificationService');
         if (notificationService && typeof notificationService.handleChatNotification === 'function') {
             await notificationService.handleChatNotification(chat, socket.user, content.trim(), newMessage);
@@ -197,13 +192,15 @@ async function initializeSocket(server) {
     socket.on('disconnect', () => {
       console.log(`❌ [Socket] Disconnesso: ${socket.user.nickname}`);
       connectedUsers.delete(socket.user._id.toString());
+      // Pulizia rate limit entries per questo socket
+      rateLimitMap.delete(`msg:${socket.id}`);
+      rateLimitMap.delete(`typing:${socket.id}`);
     });
   });
 }
 
 const getIO = () => ioInstance;
 
-// FIX CRITICO: Esportiamo esplicitamente connectedUsers per il server.js
 module.exports = { 
     initializeSocket, 
     getIO,
