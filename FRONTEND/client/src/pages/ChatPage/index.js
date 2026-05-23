@@ -18,6 +18,7 @@ import mealService from '../../services/mealService';
 import { Keyboard } from '@capacitor/keyboard';
 import { Capacitor } from '@capacitor/core';
 import { API_URL } from '../../config/capacitorConfig';
+import { playNotificationSound } from '../../utils/notificationSound';
 
 const ChatPage = () => {
   const { t } = useTranslation();
@@ -196,13 +197,19 @@ const ChatPage = () => {
     });
 
     // Gestisce i messaggi in arrivo dagli ALTRI utenti
+    // Suona per ogni messaggio ricevuto (non i propri)
     socket.on('receiveMessage', (message) => {
       const nm = normalizeMessage(message);
       const mid = nm._id;
-      // Deduplicazione: ignora se già presente (es. il mittente lo ha già aggiunto via ACK)
       if (mid && messageIdsRef.current.has(mid)) return;
       if (mid) messageIdsRef.current.add(mid);
       setMessages(prev => [...prev, nm]);
+
+      // Suona solo se il messaggio è di un altro utente
+      const senderId = nm.senderId || nm.sender?._id;
+      if (senderId && senderId.toString() !== (currentUserId || '').toString()) {
+        playNotificationSound();
+      }
     });
 
     socket.on('userTyping', ({ user: typingUser, isTyping }) => {
@@ -250,8 +257,6 @@ const ChatPage = () => {
 
     socketRef.current.emit('sendMessage', { chatId: validChatId, content: contentToSend }, (ack) => {
       if (ack?.success && ack?.message) {
-        // Aggiungi subito il messaggio inviato (via ACK dal server) —
-        // la deduplicazione in receiveMessage eviterà duplicati se arriva anche via socket room.
         const nm = normalizeMessage(ack.message);
         const mid = nm._id;
         if (mid && messageIdsRef.current.has(mid)) return;
@@ -260,7 +265,6 @@ const ChatPage = () => {
       } else if (ack?.error) {
         console.error('[ChatPage] Errore invio messaggio:', ack.error);
         toast.error(ack.error);
-        // Rimetti il testo nel campo se c'è stato un errore
         setNewMessage(contentToSend);
       }
     });
