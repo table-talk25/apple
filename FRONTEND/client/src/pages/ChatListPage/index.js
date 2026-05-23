@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../contexts/AuthContext';
 import chatService from '../../services/chatService';
+import mealService from '../../services/mealService';
 import { getMealCoverImageUrl } from '../../constants/mealConstants';
 import styles from './ChatListPage.module.css';
 
@@ -20,7 +21,33 @@ const ChatListPage = () => {
     const fetchChats = async () => {
       try {
         const data = await chatService.getUserChats();
-        setChats(data);
+
+        // Per ogni chat che ha un mealId ma non ha imageUrl (backend vecchio non la popola),
+        // va a recuperare l'immagine chiamando getMealById in parallelo.
+        const enriched = await Promise.all(
+          data.map(async (chat) => {
+            const mealId = chat.mealId;
+            if (!mealId) return chat;
+            const mealIdStr = typeof mealId === 'object' ? mealId._id : mealId;
+            // Se l'imageUrl è già presente, non fare nessuna chiamata extra
+            if (mealId?.imageUrl || mealId?.coverImage) return chat;
+            try {
+              const res = await mealService.getMealById(mealIdStr);
+              const mealData = res?.data || res;
+              return {
+                ...chat,
+                mealId: {
+                  ...(typeof mealId === 'object' ? mealId : { _id: mealIdStr }),
+                  imageUrl: mealData?.imageUrl || null,
+                },
+              };
+            } catch {
+              return chat;
+            }
+          })
+        );
+
+        setChats(enriched);
       } catch (err) {
         setError('Impossibile caricare le chat.');
       } finally {
@@ -51,8 +78,6 @@ const ChatListPage = () => {
     return 'Chat';
   };
 
-  // Usa la foto del TableTalk come avatar della chat.
-  // Fallback: immagine di default del pasto.
   const getAvatarSrc = (chat) => {
     const mealImage = chat.mealId?.imageUrl || chat.mealId?.coverImage || null;
     return getMealCoverImageUrl(mealImage);
@@ -61,7 +86,7 @@ const ChatListPage = () => {
   return (
     <div className={styles.page}>
       <div className={styles.header}>
-        <h1 className={styles.title}>💬 Chat</h1>
+        <h1 className={styles.title}>\uD83D\uDCAC Chat</h1>
       </div>
 
       {loading && (
@@ -72,7 +97,7 @@ const ChatListPage = () => {
 
       {error && !loading && (
         <div className={styles.emptyState}>
-          <span className={styles.emptyIcon}>⚠️</span>
+          <span className={styles.emptyIcon}>\u26A0\uFE0F</span>
           <p>{error}</p>
           <button className={styles.retryBtn} onClick={() => { setError(null); setLoading(true); chatService.getUserChats().then(setChats).catch(() => setError('Errore.')).finally(() => setLoading(false)); }}>
             Riprova
@@ -82,11 +107,11 @@ const ChatListPage = () => {
 
       {!loading && !error && chats.length === 0 && (
         <div className={styles.emptyState}>
-          <span className={styles.emptyIcon}>💬</span>
+          <span className={styles.emptyIcon}>\uD83D\uDCAC</span>
           <p className={styles.emptyTitle}>Nessuna chat attiva</p>
-          <p className={styles.emptySubtitle}>Le tue chat appariranno qui quando parteciperai a un TableTalk®.</p>
+          <p className={styles.emptySubtitle}>Le tue chat appariranno qui quando parteciperai a un TableTalk\u00AE.</p>
           <button className={styles.retryBtn} onClick={() => navigate('/meals')}>
-            Esplora i TableTalk®
+            Esplora i TableTalk\u00AE
           </button>
         </div>
       )}
