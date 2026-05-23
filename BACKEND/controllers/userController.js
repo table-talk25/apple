@@ -109,6 +109,44 @@ exports.uploadProfileImage = (req, res, next) => {
 };
 
 /**
+ * @desc    Aggiorna l'immagine del profilo (avatar) tramite PUT /api/users/me/avatar
+ * @route   PUT /api/users/me/avatar
+ * @access  Private
+ */
+exports.updateAvatar = asyncHandler(async (req, res, next) => {
+  if (!req.file) {
+    return next(new ErrorResponse('Nessun file caricato', 400));
+  }
+
+  const user = await User.findById(req.user.id);
+
+  if (!user) {
+    return next(new ErrorResponse('Utente non trovato', 404));
+  }
+
+  // Elimina la vecchia immagine dal disco se non è quella di default
+  const defaultImages = ['default-profile.jpg', 'default.jpg', null, undefined, ''];
+  if (!defaultImages.includes(user.profileImage)) {
+    const oldImagePath = path.join(__dirname, '..', 'uploads', 'profile-images', user.profileImage);
+    if (fs.existsSync(oldImagePath)) {
+      fs.unlinkSync(oldImagePath);
+    }
+  }
+
+  // Salva il nuovo filename
+  user.profileImage = req.file.filename;
+  await user.save();
+
+  res.status(200).json({
+    success: true,
+    data: {
+      profileImage: user.profileImage,
+      profileImageUrl: `/uploads/profile-images/${user.profileImage}`
+    }
+  });
+});
+
+/**
  * @desc    Ottieni tutti gli utenti
  * @route   GET /api/users
  * @access  Private/Admin
@@ -178,7 +216,7 @@ exports.getUserById = async (req, res) => {
     console.error(err.message);
     if (err.kind === 'ObjectId') {
       return res.status(404).json({ msg: 'Utente non trovato' });
-  }
+    }
     res.status(500).send('Errore del server');
   }
 };
@@ -221,7 +259,6 @@ exports.blockUser = async (req, res) => {
     const userToBlockId = req.params.id;
     const currentUserId = req.user.id;
 
-    // Verifica che l'utente non stia cercando di bloccare se stesso
     if (currentUserId === userToBlockId) {
       return res.status(400).json({ 
         success: false,
@@ -229,7 +266,6 @@ exports.blockUser = async (req, res) => {
       });
     }
 
-    // Verifica che l'utente da bloccare esista
     const userToBlock = await User.findById(userToBlockId);
     if (!userToBlock) {
       return res.status(404).json({ 
@@ -238,7 +274,6 @@ exports.blockUser = async (req, res) => {
       });
     }
 
-    // Ottieni l'utente corrente e blocca l'altro utente
     const currentUser = await User.findById(currentUserId);
     await currentUser.blockUser(userToBlockId);
 
@@ -269,7 +304,6 @@ exports.unblockUser = async (req, res) => {
     const userToUnblockId = req.params.id;
     const currentUserId = req.user.id;
 
-    // Ottieni l'utente corrente e sblocca l'altro utente
     const currentUser = await User.findById(currentUserId);
     await currentUser.unblockUser(userToUnblockId);
 
@@ -350,16 +384,6 @@ exports.changeUserStatus = async (req, res) => {
   }
 };
 
-// Placeholder per ottenere la lista degli utenti bloccati
-exports.getBlockedUsers = asyncHandler(async (req, res, next) => {
-  res.status(200).json({ success: true, message: 'Lista utenti bloccati non ancora implementata.' });
-});
-
-// Placeholder per eliminare l'account
-exports.deleteAccount = asyncHandler(async (req, res, next) => {
-  res.status(200).json({ success: true, message: 'Eliminazione account non ancora implementata.' });
-});
-
 /**
  * @desc    Aggiorna la posizione geografica dell'utente
  * @route   PUT /api/users/me/location
@@ -372,7 +396,6 @@ exports.updateUserLocation = asyncHandler(async (req, res, next) => {
     return next(new ErrorResponse('Latitudine e Longitudine sono obbligatorie', 400));
   }
 
-  // Verifica che le coordinate siano numeri validi
   const lon = parseFloat(longitude);
   const lat = parseFloat(latitude);
   
@@ -386,7 +409,6 @@ exports.updateUserLocation = asyncHandler(async (req, res, next) => {
     return next(new ErrorResponse('Utente non trovato', 404));
   }
 
-  // Aggiorna il campo location con il formato GeoJSON
   user.location = {
     type: 'Point',
     coordinates: [lon, lat],
@@ -413,7 +435,7 @@ exports.updateUserLocationFromCoords = asyncHandler(async (req, res, next) => {
    return next(new ErrorResponse('Latitudine e Longitudine sono obbligatorie', 400));
  }
 
- const GOOGLE_API_KEY = process.env.Maps_API_KEY; // Usa la tua chiave dal file .env
+ const GOOGLE_API_KEY = process.env.Maps_API_KEY;
  const url = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${GOOGLE_API_KEY}&language=it`;
 
  const response = await axios.get(url);
@@ -422,7 +444,6 @@ exports.updateUserLocationFromCoords = asyncHandler(async (req, res, next) => {
    return next(new ErrorResponse('Impossibile trovare un indirizzo per queste coordinate', 404));
  }
  
- // Estraiamo la città e la nazione
  const addressComponents = response.data.results[0].address_components;
  const city = addressComponents.find(c => c.types.includes('locality'))?.long_name;
  const country = addressComponents.find(c => c.types.includes('country'))?.long_name;
@@ -434,12 +455,8 @@ exports.updateUserLocationFromCoords = asyncHandler(async (req, res, next) => {
    formattedAddress = country;
  }
 
- // Aggiorniamo l'utente
  const user = await User.findById(req.user.id);
- 
- // Manteniamo le coordinate esistenti e aggiorniamo solo l'indirizzo testuale
  user.location.address = formattedAddress;
- 
  await user.save();
 
  res.status(200).json({
@@ -462,7 +479,6 @@ exports.removeUserLocation = asyncHandler(async (req, res, next) => {
     return next(new ErrorResponse('Utente non trovato', 404));
   }
 
-  // Rimuove la posizione impostando i campi a null/vuoto
   user.location = {
     type: 'Point',
     coordinates: [],
@@ -490,12 +506,10 @@ exports.getNearbyUsers = asyncHandler(async (req, res, next) => {
     return next(new ErrorResponse('Longitudine e Latitudine sono necessarie per la ricerca', 400));
   }
 
-  // Distanza massima in metri (default 10km se non specificata)
   const maxDistance = distance ? parseInt(distance, 10) : 20000;
   const lon = parseFloat(longitude);
   const lat = parseFloat(latitude);
 
-  // Ottieni gli ID degli utenti da escludere (blocchi bidirezionali)
   const excludedIds = await getExcludedUserIds(req.user.id);
 
   const users = await User.aggregate([
@@ -505,13 +519,13 @@ exports.getNearbyUsers = asyncHandler(async (req, res, next) => {
           type: 'Point',
           coordinates: [lon, lat]
         },
-        distanceField: "dist.calculated", // Aggiunge un campo 'dist.calculated' con la distanza in metri
+        distanceField: "dist.calculated",
         maxDistance: maxDistance,
         query: { 
           'settings.privacy.showLocationOnMap': true,
           _id: { $nin: excludedIds.allExcludedIds }
         },
-        spherical: true // Obbligatorio per calcoli su un globo terrestre
+        spherical: true
       }
     },
     { 
@@ -575,3 +589,11 @@ exports.isUserBlocked = asyncHandler(async (req, res, next) => {
   });
 });
 
+/**
+ * @desc    Elimina l'account dell'utente corrente
+ * @route   DELETE /api/users/me
+ * @access  Private
+ */
+exports.deleteAccount = asyncHandler(async (req, res, next) => {
+  res.status(200).json({ success: true, message: 'Eliminazione account non ancora implementata.' });
+});

@@ -3,8 +3,7 @@ const router = express.Router();
 const userController = require('../controllers/userController');
 const { protect, authorize } = require('../middleware/auth');
 const { check } = require('express-validator');
-const { upload, handleUploadError } = require('../middleware/upload');
-// const { updateUserLocationFromCoords } = require('../controllers/userController');
+const { upload, handleUploadError, avatarUpload } = require('../middleware/upload');
 
 /**
  * @route   GET /api/users
@@ -115,6 +114,7 @@ router.put('/:id/status', [
   check('id', 'ID utente non valido').isMongoId(),
   check('status', 'Stato non valido').isIn(['active', 'suspended', 'banned'])
 ], userController.changeUserStatus);
+
 /**
  * @route   PUT /api/users/me/password
  * @desc    Aggiorna la password dell'utente corrente
@@ -129,6 +129,19 @@ router.put('/me/password', [
     .withMessage('La password deve contenere almeno 8 caratteri, una lettera maiuscola, una minuscola, un numero e un carattere speciale')
 ], userController.changePassword);
 
+/**
+ * @route   PUT /api/users/me/avatar
+ * @desc    Upload/update profile picture
+ * @access  Private
+ */
+router.put('/me/avatar', protect, (req, res, next) => {
+  avatarUpload(req, res, (err) => {
+    if (err) {
+      return res.status(400).json({ success: false, message: err.message });
+    }
+    next();
+  });
+}, userController.updateAvatar);
 
 /**
  * @route   DELETE /api/users/me
