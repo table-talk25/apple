@@ -1,50 +1,64 @@
-// utils/notificationSound.js
-//
-// iOS WebKit (usato da tutti i browser su iPhone, incluso Chrome) richiede che
-// l'AudioContext venga CREATO e RESUMATO dentro lo stesso evento utente sincrono.
-// Non basta resume() — se il context esiste già ma è suspended, iOS lo ignora.
-//
-// Strategia iOS-safe:
-//   1. unlockAudioContext() crea un contesto NUOVO se quello esistente è suspended,
-//      oppure fa resume() sincrono su quello esistente se è già in interrupted.
-//   2. Viene chiamato onTouchStart su input e bottone invia.
-//   3. playNotificationSound() suona solo se state === 'running'.
+// utils/notificationSound.js — DEBUG VERSION
+// Rimuovere i console.log una volta risolto il problema iOS.
 
 let _audioCtx = null;
 
 /**
  * Chiama questa funzione SINCRONA dentro un handler touchstart o click.
- * Su iOS crea un AudioContext fresco se necessario, su Android/desktop fa resume().
- * Dopo questa chiamata il suono funzionerà per tutta la sessione.
+ * Crea l'AudioContext dentro l'evento utente (obbligatorio su iOS WebKit).
  */
 export const unlockAudioContext = () => {
   const Ctx = window.AudioContext || window.webkitAudioContext;
+  console.log('[Audio] unlockAudioContext chiamato. Ctx disponibile:', !!Ctx);
   if (!Ctx) return;
 
-  // Se non esiste ancora, crealo ora (dentro l'evento utente — iOS-safe)
   if (!_audioCtx) {
-    _audioCtx = new Ctx();
-    return; // appena creato è già 'running' su iOS
+    try {
+      _audioCtx = new Ctx();
+      console.log('[Audio] AudioContext CREATO. State:', _audioCtx.state);
+    } catch (e) {
+      console.error('[Audio] Errore creazione AudioContext:', e);
+    }
+    return;
   }
 
-  // Se esiste ma è suspended o interrupted, prova resume sincrono
-  if (_audioCtx.state === 'suspended' || _audioCtx.state === 'interrupted') {
-    _audioCtx.resume(); // sincrono, senza await
-  }
+  console.log('[Audio] AudioContext esistente. State:', _audioCtx.state);
 
-  // Se lo stato è 'closed' (raro), ricrealo
   if (_audioCtx.state === 'closed') {
-    _audioCtx = new Ctx();
+    try {
+      _audioCtx = new Ctx();
+      console.log('[Audio] AudioContext ricreato (era closed). State:', _audioCtx.state);
+    } catch (e) {
+      console.error('[Audio] Errore ricreazione AudioContext:', e);
+    }
+    return;
+  }
+
+  if (_audioCtx.state === 'suspended' || _audioCtx.state === 'interrupted') {
+    try {
+      const resumePromise = _audioCtx.resume();
+      if (resumePromise && typeof resumePromise.then === 'function') {
+        resumePromise
+          .then(() => console.log('[Audio] resume() completato. State:', _audioCtx?.state))
+          .catch(e => console.error('[Audio] resume() fallito:', e));
+      }
+      console.log('[Audio] resume() chiamato sincrono. State subito dopo:', _audioCtx.state);
+    } catch (e) {
+      console.error('[Audio] Errore resume():', e);
+    }
   }
 };
 
 /**
- * Suona il beep di notifica.
- * Funziona solo dopo che unlockAudioContext() è stato chiamato almeno una volta.
+ * Suona il beep. Funziona solo se unlockAudioContext() è già stato chiamato.
  */
 export const playNotificationSound = () => {
+  console.log('[Audio] playNotificationSound. State:', _audioCtx?.state ?? 'no context');
   try {
-    if (!_audioCtx || _audioCtx.state !== 'running') return;
+    if (!_audioCtx || _audioCtx.state !== 'running') {
+      console.warn('[Audio] Non suono: state è', _audioCtx?.state ?? 'null');
+      return;
+    }
 
     const ctx = _audioCtx;
     const now = ctx.currentTime;
@@ -63,9 +77,12 @@ export const playNotificationSound = () => {
       oscillator.stop(startTime + duration);
     };
 
-    playTone(1046, now,        0.18, 0.4);  // Do6
-    playTone(784,  now + 0.15, 0.28, 0.25); // Sol5
-  } catch (_) {}
+    playTone(1046, now,        0.18, 0.4);
+    playTone(784,  now + 0.15, 0.28, 0.25);
+    console.log('[Audio] Toni avviati.');
+  } catch (e) {
+    console.error('[Audio] Errore playNotificationSound:', e);
+  }
 };
 
 // Retrocompatibilità con App.js
