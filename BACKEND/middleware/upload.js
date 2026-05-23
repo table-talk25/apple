@@ -65,7 +65,7 @@ const fileFilter = (req, file, cb) => {
   }
 };
 
-// ✅ NUOVO: Configurazione memoryStorage per meal images (Firebase)
+// ✅ Configurazione memoryStorage per meal images (Firebase)
 const memoryStorage = multer.memoryStorage();
 
 // ✅ FIX: Assicuriamoci che la directory principale 'uploads/' esista
@@ -77,19 +77,23 @@ ensureExists('uploads/meal-images/');
 const upload = multer({
   storage: storage,
   limits: {
-    fileSize: 5 * 1024 * 1024, // 5MB per i file
-    fieldSize: 2 * 1024 * 1024, // 2MB per i campi (per gestire location JSON e altri dati)
-    fields: 50, // Numero massimo di campi non-file
-    fieldNameSize: 100 // Lunghezza massima del nome del campo
+    fileSize: 5 * 1024 * 1024,   // 5MB per i file
+    fieldSize: 2 * 1024 * 1024,  // 2MB per i campi
+    fields: 50,
+    fieldNameSize: 100
   },
   fileFilter: fileFilter
 });
 
-// ✅ NUOVO: Middleware per meal uploads (usa memoryStorage per Firebase)
+// ✅ FIX: Middleware per meal uploads (memoryStorage per Firebase)
+// fieldSize alzato a 10MB per gestire eventuali base64 o JSON grandi nel FormData
 const mealUpload = multer({
   storage: memoryStorage,
   limits: {
-    fileSize: 5 * 1024 * 1024 // 5MB per le immagini
+    fileSize: 10 * 1024 * 1024,  // 10MB per il file immagine
+    fieldSize: 10 * 1024 * 1024, // 10MB per campi non-file (es. base64, JSON location)
+    fields: 50,
+    fieldNameSize: 200
   },
   fileFilter: fileFilter
 });
@@ -98,7 +102,7 @@ const mealUpload = multer({
 const avatarUpload = multer({
   storage: storage,
   limits: {
-    fileSize: 5 * 1024 * 1024, // 5MB per avatar
+    fileSize: 5 * 1024 * 1024,
     fieldSize: 2 * 1024 * 1024,
     fields: 50,
     fieldNameSize: 100
