@@ -51,12 +51,10 @@ const MealSchema = new mongoose.Schema({
       },
       {
         validator: function(date) {
-          // Esegui questo controllo solo se il documento è NUOVO.
-          // Se stiamo solo modificando, permettiamo di salvare anche date passate.
           if (this.isNew) {
             return date > new Date();
           }
-          return true; // Per le modifiche, la validazione è sempre superata.
+          return true;
         },
         message: 'La data di un nuovo pasto deve essere futura'
       }
@@ -64,14 +62,12 @@ const MealSchema = new mongoose.Schema({
   },
   duration: {
     type: Number,
-    // La durata è in minuti. Il frontend la userà per calcolare l'ora di fine.
     required: [true, 'Per favore specifica la durata del pasto'],
-    default: 60, // Impostiamo un default di 60 minuti (1 ora)
-    min: [30, 'La durata minima è di 30 minuti'], // Aggiornato a 30
+    default: 60,
+    min: [30, 'La durata minima è di 30 minuti'],
     max: [180, 'La durata massima è di 3 ore (180 minuti)'],
     validate: {
       validator: function(value) {
-        // Validiamo che sia un numero intero tra 30 e 180
         return Number.isInteger(value) && value >= 30 && value <= 180;
       },
       message: 'La durata deve essere un numero intero tra 30 e 180 minuti'
@@ -112,15 +108,12 @@ const MealSchema = new mongoose.Schema({
   },
   topics: {
     type: [String],
-    // Usiamo un unico oggetto di validazione per evitare messaggi confusi
     validate: {
       validator: function(topics) {
-        // Regola 1: Non più di 5 argomenti
         if (topics.length > 5) {
           this.invalidate('topics', 'Puoi inserire un massimo di 5 argomenti.');
           return false;
         }
-        // Regola 2: Ogni argomento deve essere tra 2 e 50 caratteri
         if (!topics.every(topic => topic.trim().length >= 2 && topic.trim().length <= 50)) {
           this.invalidate('topics', 'Ogni argomento deve essere lungo tra 2 e 50 caratteri.');
           return false;
@@ -129,39 +122,27 @@ const MealSchema = new mongoose.Schema({
       }
     }
   },
-  // Campo per la posizione - obbligatorio solo per pasti fisici
   location: {
-    type: mongoose.Schema.Types.Mixed, // Supporta sia stringa che oggetto
+    type: mongoose.Schema.Types.Mixed,
     validate: {
       validator: function(value) {
-        // Se è un pasto fisico, la location è obbligatoria
         if (this.mealType === 'physical' && (!value || (typeof value === 'string' && value.trim().length === 0) || (typeof value === 'object' && !value.address))) {
           this.invalidate('location', 'La posizione è obbligatoria per un pasto fisico');
           return false;
         }
-        // Se è un pasto virtuale, la location non è necessaria
         if (this.mealType === 'virtual') {
           return true;
         }
-        
-        // Validazione per stringhe (compatibilità con dati esistenti)
         if (typeof value === 'string') {
           return value.trim().length >= 5 && value.trim().length <= 200;
         }
-        
-        // Validazione per oggetti (nuovo formato)
         if (typeof value === 'object' && value !== null) {
-          // Deve avere almeno un indirizzo
           if (!value.address || typeof value.address !== 'string' || value.address.trim().length === 0) {
             return false;
           }
-          
-          // L'indirizzo deve essere tra 5 e 200 caratteri
           if (value.address.trim().length < 5 || value.address.trim().length > 200) {
             return false;
           }
-          
-          // Se ci sono coordinate, devono essere valide
           if (value.coordinates && Array.isArray(value.coordinates)) {
             if (value.coordinates.length !== 2) {
               return false;
@@ -173,19 +154,16 @@ const MealSchema = new mongoose.Schema({
               return false;
             }
           }
-          
           return true;
         }
-        
         return false;
       },
       message: 'La posizione deve essere valida: stringa tra 5-200 caratteri o oggetto con address e coordinate opzionali'
     }
   },
-  // Campo per distinguere pasti pubblici e privati
   isPublic: {
     type: Boolean,
-    default: true, // Di default i pasti sono pubblici
+    default: true,
     required: true
   },
   estimatedCost: {
@@ -212,7 +190,6 @@ const MealSchema = new mongoose.Schema({
   },
   twilioRoomSid: {
     type: String,
-    // Lo nascondiamo di default dalle risposte JSON per non esporre dati interni non necessari
     select: false 
   },
   status: {
@@ -231,7 +208,13 @@ const MealSchema = new mongoose.Schema({
     default: 'pending',
     required: true
   },
-  
+
+  // Flag per evitare che il cron reminder venga inviato più di una volta
+  reminderSent: {
+    type: Boolean,
+    default: false,
+  },
+
   settings: {
     allowLateJoin: {
       type: Boolean,
@@ -251,7 +234,6 @@ const MealSchema = new mongoose.Schema({
       default: true
     }
   },
-  // Nuovo campo per le notifiche
   notifications: [{
     type: {
       type: String,
@@ -276,7 +258,6 @@ const MealSchema = new mongoose.Schema({
       default: Date.now
     }
   }],
-  // Nuovo campo per i rating
   ratings: [{
     user: {
       type: mongoose.Schema.ObjectId,
@@ -310,9 +291,11 @@ MealSchema.index({ host: 1 });
 MealSchema.index({ participants: 1 });
 MealSchema.index({ language: 1 });
 MealSchema.index({ topics: 1 });
-MealSchema.index({ mealType: 1 }); // Nuovo indice per mealType
+MealSchema.index({ mealType: 1 });
 MealSchema.index({ 'notifications.recipient': 1, 'notifications.read': 1 });
 MealSchema.index({ 'ratings.user': 1 });
+// Indice per il cron reminder: cerca pasti upcoming non ancora notificati
+MealSchema.index({ date: 1, status: 1, reminderSent: 1 });
 
 // Virtual per vedere se il pasto è pieno
 MealSchema.virtual('isFull').get(function() {
@@ -335,43 +318,36 @@ MealSchema.virtual('isActive').get(function() {
 
 // Virtual per vedere il tempo rimanente
 MealSchema.virtual('timeRemaining').get(function() {
-  if (!this.date || this.isPast) return 0;
-  return Math.max(0, this.date.getTime() - new Date().getTime());
+  const now = new Date();
+  const startTime = this.date;
+  const endTime = new Date(startTime.getTime() + (this.duration || 60) * 60 * 1000);
+  if (this.status === 'cancelled') return 0;
+  if (now < startTime) return Math.ceil((startTime.getTime() - now.getTime()) / (1000 * 60));
+  if (now >= startTime && now < endTime) return Math.ceil((endTime.getTime() - now.getTime()) / (1000 * 60));
+  return 0;
 });
 
 // Virtual per la media dei rating
 MealSchema.virtual('averageRating').get(function() {
-  if (!this.ratings || this.ratings.length === 0) 
-    return 0;
+  if (!this.ratings || this.ratings.length === 0) return 0;
   const sum = this.ratings.reduce((acc, curr) => acc + curr.score, 0);
   return sum / this.ratings.length;
 });
 
 // Metodo per ottenere i pasti futuri
 MealSchema.statics.findUpcoming = function() {
-  return this.find({
-    date: { $gt: new Date() },
-    status: 'upcoming'
-  }).sort({ date: 1 });
+  return this.find({ date: { $gt: new Date() }, status: 'upcoming' }).sort({ date: 1 });
 };
 
 // Metodo per ottenere i pasti attivi
 MealSchema.statics.findActive = function() {
   const now = new Date();
-  return this.find({
-    date: { $lte: now },
-    status: 'ongoing'
-  });
+  return this.find({ date: { $lte: now }, status: 'ongoing' });
 };
 
 // Metodo per ottenere i pasti di un utente
 MealSchema.statics.findUserMeals = function(userId) {
-  return this.find({
-    $or: [
-      { host: userId },
-      { participants: userId }
-    ]
-  });
+  return this.find({ $or: [{ host: userId }, { participants: userId }] });
 };
 
 // Metodo per ottenere pasti virtuali
@@ -386,16 +362,12 @@ MealSchema.statics.findPhysicalMeals = function() {
 
 // Unico pre-save hook combinato e corretto
 MealSchema.pre('save', function(next) {
-  // Aggiorna il conteggio dei partecipanti se l'array è stato modificato
   if (this.isModified('participants')) {
     this.participantsCount = this.participants.length;
   }
-
-  // Aggiunge automaticamente l'organizzatore (host) ai partecipanti alla creazione del pasto
   if (this.isNew && !this.participants.includes(this.host)) {
     this.participants.push(this.host);
   }
-
   next();
 });
 
@@ -416,183 +388,67 @@ MealSchema.virtual('virtualStatus').get(function() {
   const now = new Date();
   const startTime = this.date;
   const endTime = new Date(startTime.getTime() + (this.duration || 60) * 60 * 1000);
-  
-  // Se il pasto è stato cancellato, mantieni lo stato
-  if (this.status === 'cancelled') {
-    return 'cancelled';
-  }
-  
-  // Calcola lo stato basato su data/ora attuale
-  if (now < startTime) {
-    return 'upcoming';
-  } else if (now >= startTime && now < endTime) {
-    return 'ongoing';
-  } else {
-    return 'completed';
-  }
+  if (this.status === 'cancelled') return 'cancelled';
+  if (now < startTime) return 'upcoming';
+  if (now >= startTime && now < endTime) return 'ongoing';
+  return 'completed';
 });
 
-// 🕐 STATUS DETTAGLIATO: Informazioni aggiuntive sullo stato
+// 🕐 STATUS DETTAGLIATO
 MealSchema.virtual('statusInfo').get(function() {
   const now = new Date();
   const startTime = this.date;
   const endTime = new Date(startTime.getTime() + (this.duration || 60) * 60 * 1000);
-  
   if (this.status === 'cancelled') {
-    return {
-      status: 'cancelled',
-      message: 'Pasto cancellato',
-      isActive: false,
-      isUpcoming: false,
-      isCompleted: false
-    };
+    return { status: 'cancelled', message: 'Pasto cancellato', isActive: false, isUpcoming: false, isCompleted: false };
   }
-  
   if (now < startTime) {
-    const timeUntilStart = startTime.getTime() - now.getTime();
-    const minutesUntilStart = Math.ceil(timeUntilStart / (1000 * 60));
-    
-    return {
-      status: 'upcoming',
-      message: `Inizia tra ${minutesUntilStart} minuti`,
-      isActive: false,
-      isUpcoming: true,
-      isCompleted: false,
-      timeUntilStart: minutesUntilStart,
-      startTime: startTime,
-      endTime: endTime
-    };
+    const minutesUntilStart = Math.ceil((startTime.getTime() - now.getTime()) / (1000 * 60));
+    return { status: 'upcoming', message: `Inizia tra ${minutesUntilStart} minuti`, isActive: false, isUpcoming: true, isCompleted: false, timeUntilStart: minutesUntilStart, startTime, endTime };
   } else if (now >= startTime && now < endTime) {
-    const timeElapsed = now.getTime() - startTime.getTime();
-    const timeRemaining = endTime.getTime() - now.getTime();
-    const minutesElapsed = Math.ceil(timeElapsed / (1000 * 60));
-    const minutesRemaining = Math.ceil(timeRemaining / (1000 * 60));
-    
-    return {
-      status: 'ongoing',
-      message: `In corso (${minutesRemaining} minuti rimanenti)`,
-      isActive: true,
-      isUpcoming: false,
-      isCompleted: false,
-      timeElapsed: minutesElapsed,
-      timeRemaining: minutesRemaining,
-      startTime: startTime,
-      endTime: endTime,
-      progress: Math.round((timeElapsed / (this.duration * 60 * 1000)) * 100)
-    };
+    const minutesElapsed = Math.ceil((now.getTime() - startTime.getTime()) / (1000 * 60));
+    const minutesRemaining = Math.ceil((endTime.getTime() - now.getTime()) / (1000 * 60));
+    return { status: 'ongoing', message: `In corso (${minutesRemaining} minuti rimanenti)`, isActive: true, isUpcoming: false, isCompleted: false, timeElapsed: minutesElapsed, timeRemaining: minutesRemaining, startTime, endTime, progress: Math.round(((now - startTime) / (this.duration * 60 * 1000)) * 100) };
   } else {
-    const timeSinceEnd = now.getTime() - endTime.getTime();
-    const minutesSinceEnd = Math.ceil(timeSinceEnd / (1000 * 60));
-    
-    return {
-      status: 'completed',
-      message: `Completato ${minutesSinceEnd} minuti fa`,
-      isActive: false,
-      isUpcoming: false,
-      isCompleted: true,
-      timeSinceEnd: minutesSinceEnd,
-      startTime: startTime,
-      endTime: endTime
-    };
+    const minutesSinceEnd = Math.ceil((now.getTime() - endTime.getTime()) / (1000 * 60));
+    return { status: 'completed', message: `Completato ${minutesSinceEnd} minuti fa`, isActive: false, isUpcoming: false, isCompleted: true, timeSinceEnd: minutesSinceEnd, startTime, endTime };
   }
 });
 
-// 🕐 TEMPO RIMANENTE: Calcola minuti rimanenti per pasti attivi
-MealSchema.virtual('timeRemaining').get(function() {
-  const now = new Date();
-  const startTime = this.date;
-  const endTime = new Date(startTime.getTime() + (this.duration || 60) * 60 * 1000);
-  
-  if (this.status === 'cancelled') {
-    return 0;
-  }
-  
-  if (now < startTime) {
-    return Math.ceil((startTime.getTime() - now.getTime()) / (1000 * 60));
-  } else if (now >= startTime && now < endTime) {
-    return Math.ceil((endTime.getTime() - now.getTime()) / (1000 * 60));
-  } else {
-    return 0;
-  }
-});
-
-// 🕐 PROSSIMO AGGIORNAMENTO: Calcola quando aggiornare lo status
+// 🕐 PROSSIMO AGGIORNAMENTO
 MealSchema.virtual('nextStatusUpdate').get(function() {
   const now = new Date();
   const startTime = this.date;
   const endTime = new Date(startTime.getTime() + (this.duration || 60) * 60 * 1000);
-  
-  if (this.status === 'cancelled') {
-    return null;
-  }
-  
-  if (now < startTime) {
-    return startTime; // Aggiorna quando inizia
-  } else if (now >= startTime && now < endTime) {
-    return endTime; // Aggiorna quando finisce
-  } else {
-    return null; // Non serve aggiornare
-  }
+  if (this.status === 'cancelled') return null;
+  if (now < startTime) return startTime;
+  if (now >= startTime && now < endTime) return endTime;
+  return null;
 });
 
 // Metodo per aggiungere un partecipante
 MealSchema.methods.addParticipant = function(userId) {
-  if (this.isFull) {
-    throw new Error('Il pasto ha raggiunto il numero massimo di partecipanti');
-  }
-  if (this.isParticipant(userId)) {
-    throw new Error('Sei già un partecipante di questo pasto');
-  }
-  if (this.isPast) {
-    throw new Error('Non è possibile unirsi a un pasto già passato');
-  }
-  if (!this.settings.allowLateJoin && this.isActive) {
-    throw new Error('Non è possibile unirsi a un pasto già iniziato');
-  }
-  
+  if (this.isFull) throw new Error('Il pasto ha raggiunto il numero massimo di partecipanti');
+  if (this.isParticipant(userId)) throw new Error('Sei già un partecipante di questo pasto');
+  if (this.isPast) throw new Error('Non è possibile unirsi a un pasto già passato');
+  if (!this.settings.allowLateJoin && this.isActive) throw new Error('Non è possibile unirsi a un pasto già iniziato');
   this.participants.push(userId);
-  
-  // Aggiungi notifica all'array, ma non salvare ancora
-  this.notifications.push({
-    type: 'join',
-    message: 'Un nuovo partecipante si è unito al pasto',
-    recipient: this.host
-  });
-  
-  // Un solo salvataggio alla fine
+  this.notifications.push({ type: 'join', message: 'Un nuovo partecipante si è unito al pasto', recipient: this.host });
   return this.save();
 };
 
 // Metodo per rimuovere un partecipante
 MealSchema.methods.removeParticipant = function(userId) {
-  if (this.isHost(userId)) {
-    throw new Error('L\'host non può lasciare il pasto');
-  }
-  if (!this.isParticipant(userId)) {
-    throw new Error('Non sei un partecipante di questo pasto');
-  }
-  
-  this.participants = this.participants.filter(
-    p => p.toString() !== userId.toString()
-  );
-  
-  // Aggiungi notifica all'array, ma non salvare ancora
-  this.notifications.push({
-    type: 'leave',
-    message: 'Un partecipante ha lasciato il pasto',
-    recipient: this.host
-  });
-  
-  // Un solo salvataggio alla fine
+  if (this.isHost(userId)) throw new Error('L\'host non può lasciare il pasto');
+  if (!this.isParticipant(userId)) throw new Error('Non sei un partecipante di questo pasto');
+  this.participants = this.participants.filter(p => p.toString() !== userId.toString());
+  this.notifications.push({ type: 'leave', message: 'Un partecipante ha lasciato il pasto', recipient: this.host });
   return this.save();
 };
 
 // Metodo per aggiungere un rating
 MealSchema.methods.addRating = function(userId, score, comment) {
-  if (!this.isParticipant(userId)) {
-    throw new Error('Solo i partecipanti possono lasciare un rating');
-  }
-  
+  if (!this.isParticipant(userId)) throw new Error('Solo i partecipanti possono lasciare un rating');
   const existingRating = this.ratings.find(r => r.user.toString() === userId.toString());
   if (existingRating) {
     existingRating.score = score;
@@ -601,78 +457,48 @@ MealSchema.methods.addRating = function(userId, score, comment) {
   } else {
     this.ratings.push({ user: userId, score, comment });
   }
-  
   return this.save();
 };
 
 // Metodo per aggiungere una notifica
 MealSchema.methods.addNotification = function(type, message, recipient) {
-  this.notifications.push({
-    type,
-    message,
-    recipient,
-    read: false
-  });
+  this.notifications.push({ type, message, recipient, read: false });
   return this.save();
 };
 
 // Metodo per marcare le notifiche come lette
 MealSchema.methods.markNotificationsAsRead = function(userId) {
   this.notifications.forEach(notification => {
-    if (notification.recipient.toString() === userId.toString()) {
-      notification.read = true;
-    }
+    if (notification.recipient.toString() === userId.toString()) notification.read = true;
   });
   return this.save();
 };
 
-// 🕐 SINCRONIZZAZIONE STATUS: Sincronizza status virtuale con fisico
+// 🕐 SINCRONIZZAZIONE STATUS
 MealSchema.methods.syncStatus = function() {
   const virtualStatus = this.virtualStatus;
-  
-  // Se lo status virtuale è diverso da quello fisico, aggiornalo
   if (virtualStatus !== this.status && virtualStatus !== 'cancelled') {
     this.status = virtualStatus;
-    
-    // Log per debugging
     console.log(`🔄 [Meal] Status sincronizzato: ${this.status} -> ${virtualStatus} (Meal ID: ${this._id})`);
-    
-    // Aggiungi notifica per tutti i partecipanti
     const notificationMessage = `Il pasto è ora ${virtualStatus}`;
     this.participants.forEach(participant => {
-      this.notifications.push({
-        type: 'status_update',
-        message: notificationMessage,
-        recipient: participant
-      });
+      this.notifications.push({ type: 'status_update', message: notificationMessage, recipient: participant });
     });
   }
-  
   return this;
 };
 
 // Metodo per aggiornare lo stato del pasto
 MealSchema.methods.updateStatus = function(newStatus) {
-  if (!['upcoming', 'ongoing', 'completed', 'cancelled'].includes(newStatus)) {
-    throw new Error('Stato non valido');
-  }
-  
+  if (!['upcoming', 'ongoing', 'completed', 'cancelled'].includes(newStatus)) throw new Error('Stato non valido');
   this.status = newStatus;
-  
-  // Aggiungi notifica per tutti i partecipanti
   const notificationMessage = `Il pasto è stato ${newStatus}`;
   this.participants.forEach(participant => {
-    this.notifications.push({
-      type: 'update',
-      message: notificationMessage,
-      recipient: participant
-    });
+    this.notifications.push({ type: 'update', message: notificationMessage, recipient: participant });
   });
-  
   return this.save();
 };
 
-// Configurazione per includere virtuals nelle risposte JSON
 MealSchema.set('toJSON', { virtuals: true });
 MealSchema.set('toObject', { virtuals: true });
 
