@@ -47,12 +47,14 @@ const sendMealNotifications = async (meal, eventType) => {
 
     // 1. GESTIONE EMAIL CANCELLAZIONE
     if (eventType === 'meal_cancelled') {
+      // Popoliamo i partecipanti se non ci sono
       const mealWithParticipants = await Meal.findById(meal._id).populate('participants', 'email nickname name');
       
       if (mealWithParticipants && mealWithParticipants.participants) {
           console.log(`📧 Invio email cancellazione a ${mealWithParticipants.participants.length} partecipanti`);
           
           for (const participant of mealWithParticipants.participants) {
+              // Non mandare email all'host che ha cancellato
               if (participant._id.toString() !== meal.host.toString()) {
                   try {
                       await sendEmail.sendMealCancellationEmail(
@@ -68,6 +70,7 @@ const sendMealNotifications = async (meal, eventType) => {
       }
     }
 
+    // Trova utenti nelle vicinanze per notificare
     if (meal.location && meal.location.coordinates) {
       const nearbyUsers = await User.find({
         'location.coordinates': {
@@ -76,11 +79,11 @@ const sendMealNotifications = async (meal, eventType) => {
               type: 'Point',
               coordinates: meal.location.coordinates
             },
-            $maxDistance: 5000
+            $maxDistance: 5000 // 5km per notifiche immediate
           }
         },
         fcmToken: { $exists: true, $ne: null },
-        _id: { $ne: meal.host }
+        _id: { $ne: meal.host } // Escludi l'host
       }).limit(20); 
 
       console.log(`📱 Invio notifiche ${eventType} a ${nearbyUsers.length} utenti nelle vicinanze`);
@@ -220,14 +223,17 @@ exports.getMealsForMap = asyncHandler(async (req, res, next) => {
   }
 });
 
+// @desc    Get geospatial statistics for meals
 exports.getMealsGeoStats = asyncHandler(async (req, res, next) => {
     res.status(200).json({ success: true, message: "Stats endpoint placeholder" });
 });
 
+// @desc    Advanced geospatial search
 exports.advancedGeospatialSearch = asyncHandler(async (req, res, next) => {
     res.status(200).json({ success: true, message: "Advanced Search endpoint placeholder" });
 });
 
+// Query builder helper
 const buildGetMealsQuery = async (queryParams, user) => {
   const { status, mealType, near } = queryParams;
   const statusFilter = status ? status.split(',') : ['upcoming'];
@@ -380,33 +386,33 @@ exports.updateMeal = asyncHandler(async (req, res, next) => {
 
   const updates = { ...sanitizeMealData(req.body) };
 
-  // Rimuovi imageUrl da updates se arriva dal body (non deve essere sovrascritta via body)
-  delete updates.imageUrl;
-
-  console.log(`📸 [UpdateMeal] req.file presente: ${!!req.file}, buffer presente: ${!!(req.file && req.file.buffer)}`);
-
-  // Gestione upload immagine con Firebase
+  // ✅ NUOVO: Gestisci immagini con Firebase
   if (req.file && req.file.buffer) {
     const { uploadImage, deleteImage } = require('../services/firebaseStorageService');
 
-    // Elimina vecchia immagine se esiste su Firebase
-    if (meal.imageUrl && meal.imageUrl.includes('storage.googleapis.com')) {
-      try {
-        await deleteImage(meal.imageUrl);
-        console.log('✅ [UpdateMeal] Immagine vecchia eliminata da Firebase');
-      } catch (err) {
-        console.error('⚠️ [UpdateMeal] Errore eliminazione immagine vecchia (non bloccante):', err.message);
+    try {
+      // Elimina vecchia immagine se esiste su Firebase
+      if (meal.imageUrl && meal.imageUrl.includes('storage.googleapis.com')) {
+        try {
+          await deleteImage(meal.imageUrl);
+          console.log('✅ [UpdateMeal] Immagine vecchia eliminata da Firebase');
+        } catch (err) {
+          console.error('⚠️ [UpdateMeal] Errore eliminazione immagine vecchia:', err);
+        }
       }
-    }
 
-    // Carica nuova immagine — se fallisce, restituisce errore al client
-    const imageUrl = await uploadImage(
-      req.file.buffer,
-      req.file.originalname,
-      'meal-images'
-    );
-    updates.imageUrl = imageUrl;
-    console.log('✅ [UpdateMeal] Nuova immagine caricata su Firebase:', imageUrl);
+      // Carica nuova immagine
+      const imageUrl = await uploadImage(
+        req.file.buffer,
+        req.file.originalname,
+        'meal-images'
+      );
+      updates.imageUrl = imageUrl;
+      console.log('✅ [UpdateMeal] Nuova immagine caricata su Firebase:', imageUrl);
+    } catch (error) {
+      console.error('❌ [UpdateMeal] Errore upload Firebase:', error);
+      // Continua anche se l'upload fallisce
+    }
   }
 
   if (updates.location) {
@@ -431,6 +437,7 @@ exports.deleteMeal = asyncHandler(async (req, res, next) => {
   if (!meal) return next(new ErrorResponse(`Pasto non trovato`, 404));
   if (meal.host.toString() !== req.user.id) return next(new ErrorResponse(`Non autorizzato`, 403));
 
+  // ✅ NUOVO: Elimina immagine da Firebase quando il pasto viene cancellato
   if (meal.imageUrl && meal.imageUrl.includes('storage.googleapis.com')) {
     try {
       const { deleteImage } = require('../services/firebaseStorageService');
@@ -609,7 +616,35 @@ exports.searchMeals = asyncHandler(async (req, res, next) => {
     pages: Math.ceil(total / limit),
     meta: {
       searchTerm,
+      matchedHosts: matchedHostIds.length,
+      geo: hasGeo ? { lat, lng, radiusKm } : null,
     },
     data: meals,
   });
+});
+
+exports.getUserMeals = asyncHandler(async (req, res) => {
+  const userId = req.user.id;
+  const statusFilter = req.query.status ? req.query.status.split(',') : ['upcoming', 'ongoing', 'completed', 'cancelled'];
+  const meals = await Meal.find({
+    status: { $in: statusFilter },
+    $or: [ { host: userId }, { participants: userId } ]
+  }).sort({ date: -1 }).populate('host', 'nickname profileImage').populate('participants', 'nickname profileImage');
+  res.status(200).json({ success: true, count: meals.length, data: meals });
+});
+
+exports.getVideoCallUrl = asyncHandler(async (req, res, next) => {
+  const meal = await Meal.findById(req.params.id).populate('participants');
+  if (!meal) return next(new ErrorResponse('Pasto non trovato', 404));
+  
+  const isParticipant = meal.participants.some(p => p._id.equals(req.user._id));
+  const isHost = meal.host.equals(req.user._id);
+  if (!isParticipant && !isHost) return next(new ErrorResponse('Non autorizzato', 403));
+  
+  if (!meal.videoCallLink) {
+    const roomName = `TableTalk-${meal._id}-${uuidv4()}`;
+    meal.videoCallLink = `https://meet.jit.si/${roomName}`;
+    await meal.save();
+  }
+  res.status(200).json({ success: true, data: { videoCallLink: meal.videoCallLink } });
 });
