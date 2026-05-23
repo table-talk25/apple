@@ -1,63 +1,45 @@
 // utils/notificationSound.js
-// Gestione AudioContext con sblocco su mobile (autoplay policy).
 //
-// Su Safari/Chrome mobile l'AudioContext parte come 'suspended' e può essere
-// ripreso SOLO dentro un evento utente diretto (tap/click/keydown).
-// La strategia: al primo tap/click ovunque nella pagina, facciamo resume() —
-// da quel momento i suoni successivi funzionano anche senza interazione diretta.
+// Su Chrome/Safari mobile l'AudioContext è sempre 'suspended' finché non si fa
+// ctx.resume() in modo SINCRONO dentro un evento utente (touchstart/click).
+// Qualsiasi await prima del resume() lo invalida su mobile.
+//
+// Strategia:
+//   1. unlockAudioContext() va chiamato SINCRONO dentro un handler touchstart/click
+//   2. playNotificationSound() suona se il context è già 'running'
 
 let _audioCtx = null;
-let _unlocked = false;
 
 const getAudioContext = () => {
-  const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-  if (!AudioContextClass) return null;
-  if (!_audioCtx) {
-    _audioCtx = new AudioContextClass();
-    _tryUnlock();
-  }
+  if (_audioCtx) return _audioCtx;
+  const Ctx = window.AudioContext || window.webkitAudioContext;
+  if (!Ctx) return null;
+  _audioCtx = new Ctx();
   return _audioCtx;
 };
 
-// Tenta resume() subito se siamo già dentro un evento utente,
-// altrimenti registra un listener una-tantum su touchstart + click.
-const _tryUnlock = () => {
-  if (!_audioCtx || _unlocked) return;
-
-  const unlock = async () => {
-    if (!_audioCtx || _unlocked) return;
-    try {
-      if (_audioCtx.state === 'suspended') {
-        await _audioCtx.resume();
-      }
-      _unlocked = true;
-      document.removeEventListener('touchstart', unlock, true);
-      document.removeEventListener('touchend',   unlock, true);
-      document.removeEventListener('click',      unlock, true);
-      document.removeEventListener('keydown',    unlock, true);
-    } catch (_) {}
-  };
-
-  // Prova subito (funziona se siamo già dentro un evento)
-  unlock();
-
-  // Fallback: aspetta il primo gesto utente
-  document.addEventListener('touchstart', unlock, { capture: true, once: true });
-  document.addEventListener('touchend',   unlock, { capture: true, once: true });
-  document.addEventListener('click',      unlock, { capture: true, once: true });
-  document.addEventListener('keydown',    unlock, { capture: true, once: true });
+/**
+ * Chiama questa funzione in modo SINCRONO dentro un handler touchstart o click.
+ * Crea l'AudioContext (se non esiste) e chiama resume() sincrono.
+ * Dopo questa chiamata il context sarà 'running' e i suoni funzioneranno.
+ */
+export const unlockAudioContext = () => {
+  const ctx = getAudioContext();
+  if (!ctx) return;
+  if (ctx.state === 'suspended') {
+    // .resume() è sincrono qui — non usare await
+    ctx.resume();
+  }
 };
 
-export const playNotificationSound = async () => {
+/**
+ * Suona il beep di notifica.
+ * Funziona solo se unlockAudioContext() è già stato chiamato in precedenza.
+ */
+export const playNotificationSound = () => {
   try {
     const ctx = getAudioContext();
-    if (!ctx) return;
-
-    // Se ancora suspended (nessuna interazione avvenuta), non possiamo fare nulla
-    if (ctx.state === 'suspended') {
-      try { await ctx.resume(); } catch (_) { return; }
-    }
-    if (ctx.state !== 'running') return;
+    if (!ctx || ctx.state !== 'running') return;
 
     const now = ctx.currentTime;
 
@@ -77,13 +59,10 @@ export const playNotificationSound = async () => {
 
     playTone(1046, now,        0.18, 0.4);  // Do6
     playTone(784,  now + 0.15, 0.28, 0.25); // Sol5
-  } catch (_) {
-    // Silenzioso se il browser blocca
-  }
+  } catch (_) {}
 };
 
-// Inizializza subito il contesto e registra i listener —
-// così al primo tap dell'utente (anche non correlato al suono) sbloccheremo.
+// Kept for backward compatibility (chiamato in App.js)
 export const initNotificationSound = () => {
   getAudioContext();
 };

@@ -1,4 +1,4 @@
-// File: src/pages/ChatPage/index.js (Versione Finale e Moderna)
+// File: src/pages/ChatPage/index.js
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
@@ -18,7 +18,7 @@ import mealService from '../../services/mealService';
 import { Keyboard } from '@capacitor/keyboard';
 import { Capacitor } from '@capacitor/core';
 import { API_URL } from '../../config/capacitorConfig';
-import { playNotificationSound } from '../../utils/notificationSound';
+import { playNotificationSound, unlockAudioContext } from '../../utils/notificationSound';
 
 const ChatPage = () => {
   const { t } = useTranslation();
@@ -58,7 +58,6 @@ const ChatPage = () => {
   const typingTimeoutRef = useRef(null);
 
   const currentUserId = user?._id || user?.id;
-  const currentUserName = user?.nickname || user?.name || 'Tu';
 
   const [hostAvatar, setHostAvatar] = useState(null);
   const [participantsCount, setParticipantsCount] = useState(null);
@@ -196,7 +195,6 @@ const ChatPage = () => {
       }
     });
 
-    // Gestisce i messaggi in arrivo dagli ALTRI utenti
     socket.on('receiveMessage', (message) => {
       const nm = normalizeMessage(message);
       const mid = nm._id;
@@ -204,7 +202,6 @@ const ChatPage = () => {
       if (mid) messageIdsRef.current.add(mid);
       setMessages(prev => [...prev, nm]);
 
-      // Suona solo se il messaggio è di un altro utente
       const senderId = nm.senderId || nm.sender?._id;
       if (senderId && senderId.toString() !== (currentUserId || '').toString()) {
         playNotificationSound();
@@ -243,6 +240,11 @@ const ChatPage = () => {
         }
       }, 1000);
     }
+  };
+
+  // Sblocca AudioContext sul primo touchstart dell'input (sincrono, richiesto da mobile)
+  const handleInputTouchStart = () => {
+    unlockAudioContext();
   };
 
   const handleSendMessage = (e) => {
@@ -460,6 +462,7 @@ const ChatPage = () => {
             setNewMessage(e.target.value);
             handleTyping();
           }}
+          onTouchStart={handleInputTouchStart}
           placeholder={t('chat.messagePlaceholder')}
           className={styles.messageInput}
           disabled={connectionStatus !== 'connected'}
@@ -475,6 +478,7 @@ const ChatPage = () => {
           type="submit" 
           className={styles.sendButton}
           disabled={!newMessage.trim() || connectionStatus !== 'connected'}
+          onTouchStart={handleInputTouchStart}
         >
           <IoSend />
         </button>
