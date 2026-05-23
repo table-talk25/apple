@@ -47,14 +47,12 @@ const sendMealNotifications = async (meal, eventType) => {
 
     // 1. GESTIONE EMAIL CANCELLAZIONE
     if (eventType === 'meal_cancelled') {
-      // Popoliamo i partecipanti se non ci sono
       const mealWithParticipants = await Meal.findById(meal._id).populate('participants', 'email nickname name');
       
       if (mealWithParticipants && mealWithParticipants.participants) {
           console.log(`📧 Invio email cancellazione a ${mealWithParticipants.participants.length} partecipanti`);
           
           for (const participant of mealWithParticipants.participants) {
-              // Non mandare email all'host che ha cancellato
               if (participant._id.toString() !== meal.host.toString()) {
                   try {
                       await sendEmail.sendMealCancellationEmail(
@@ -70,7 +68,6 @@ const sendMealNotifications = async (meal, eventType) => {
       }
     }
 
-    // Trova utenti nelle vicinanze per notificare
     if (meal.location && meal.location.coordinates) {
       const nearbyUsers = await User.find({
         'location.coordinates': {
@@ -79,11 +76,11 @@ const sendMealNotifications = async (meal, eventType) => {
               type: 'Point',
               coordinates: meal.location.coordinates
             },
-            $maxDistance: 5000 // 5km per notifiche immediate
+            $maxDistance: 5000
           }
         },
         fcmToken: { $exists: true, $ne: null },
-        _id: { $ne: meal.host } // Escludi l'host
+        _id: { $ne: meal.host }
       }).limit(20); 
 
       console.log(`📱 Invio notifiche ${eventType} a ${nearbyUsers.length} utenti nelle vicinanze`);
@@ -164,12 +161,11 @@ exports.getMealsForMap = asyncHandler(async (req, res, next) => {
 
     const radiusInRad = radiusKm / 6371;
 
-    // --- FIX QUI SOTTO: Aggiunta la virgola mancante ---
     const baseQuery = {
       mealType: mealType,
       status: { $in: status.split(',') },
-      'location.coordinates': { $exists: true, $ne: null }, // <--- AGGIUNTA VIRGOLA QUI
-      isPublic: true // 🔒 FIX PRIVACY: Mostra solo i pasti pubblici sulla mappa
+      'location.coordinates': { $exists: true, $ne: null },
+      isPublic: true
     }; 
 
     const geoQuery = {
@@ -224,19 +220,14 @@ exports.getMealsForMap = asyncHandler(async (req, res, next) => {
   }
 });
 
-// @desc    Get geospatial statistics for meals
 exports.getMealsGeoStats = asyncHandler(async (req, res, next) => {
-    // ... codice esistente per geostats ...
     res.status(200).json({ success: true, message: "Stats endpoint placeholder" });
 });
 
-// @desc    Advanced geospatial search
 exports.advancedGeospatialSearch = asyncHandler(async (req, res, next) => {
-    // ... codice esistente per advanced search ...
     res.status(200).json({ success: true, message: "Advanced Search endpoint placeholder" });
 });
 
-// Query builder helper
 const buildGetMealsQuery = async (queryParams, user) => {
   const { status, mealType, near } = queryParams;
   const statusFilter = status ? status.split(',') : ['upcoming'];
@@ -257,8 +248,6 @@ const buildGetMealsQuery = async (queryParams, user) => {
     } catch (error) {}
   }
 
-  // 🔒 PRIVACY: i TableTalk® privati sono visibili solo a host e partecipanti già confermati.
-  // Per gli utenti non autenticati: solo i pubblici.
   if (user) {
     const currentUser = await User.findById(user.id).select('blockedUsers');
     const usersWhoBlockedMe = await User.find({ blockedUsers: user.id }).select('_id');
@@ -329,8 +318,6 @@ exports.getMeal = asyncHandler(async (req, res, next) => {
     .populate('chatId', 'name participants');
   if (!meal) return next(new ErrorResponse(`Pasto non trovato`, 404));
 
-  // 🔒 PRIVACY: se il TableTalk® è privato, solo host e partecipanti possono vederlo.
-  // Restituiamo 404 (non 403) per non rivelare l'esistenza del pasto a estranei.
   if (meal.isPublic === false) {
     const userId = req.user ? req.user.id : null;
     const hostId = (meal.host && meal.host._id) ? meal.host._id.toString() : (meal.host ? meal.host.toString() : null);
@@ -393,33 +380,33 @@ exports.updateMeal = asyncHandler(async (req, res, next) => {
 
   const updates = { ...sanitizeMealData(req.body) };
 
-  // ✅ NUOVO: Gestisci immagini con Firebase
+  // Rimuovi imageUrl da updates se arriva dal body (non deve essere sovrascritta via body)
+  delete updates.imageUrl;
+
+  console.log(`📸 [UpdateMeal] req.file presente: ${!!req.file}, buffer presente: ${!!(req.file && req.file.buffer)}`);
+
+  // Gestione upload immagine con Firebase
   if (req.file && req.file.buffer) {
     const { uploadImage, deleteImage } = require('../services/firebaseStorageService');
 
-    try {
-      // Elimina vecchia immagine se esiste su Firebase
-      if (meal.imageUrl && meal.imageUrl.includes('storage.googleapis.com')) {
-        try {
-          await deleteImage(meal.imageUrl);
-          console.log('✅ [UpdateMeal] Immagine vecchia eliminata da Firebase');
-        } catch (err) {
-          console.error('⚠️ [UpdateMeal] Errore eliminazione immagine vecchia:', err);
-        }
+    // Elimina vecchia immagine se esiste su Firebase
+    if (meal.imageUrl && meal.imageUrl.includes('storage.googleapis.com')) {
+      try {
+        await deleteImage(meal.imageUrl);
+        console.log('✅ [UpdateMeal] Immagine vecchia eliminata da Firebase');
+      } catch (err) {
+        console.error('⚠️ [UpdateMeal] Errore eliminazione immagine vecchia (non bloccante):', err.message);
       }
-
-      // Carica nuova immagine
-      const imageUrl = await uploadImage(
-        req.file.buffer,
-        req.file.originalname,
-        'meal-images'
-      );
-      updates.imageUrl = imageUrl;
-      console.log('✅ [UpdateMeal] Nuova immagine caricata su Firebase:', imageUrl);
-    } catch (error) {
-      console.error('❌ [UpdateMeal] Errore upload Firebase:', error);
-      // Continua anche se l'upload fallisce
     }
+
+    // Carica nuova immagine — se fallisce, restituisce errore al client
+    const imageUrl = await uploadImage(
+      req.file.buffer,
+      req.file.originalname,
+      'meal-images'
+    );
+    updates.imageUrl = imageUrl;
+    console.log('✅ [UpdateMeal] Nuova immagine caricata su Firebase:', imageUrl);
   }
 
   if (updates.location) {
@@ -444,7 +431,6 @@ exports.deleteMeal = asyncHandler(async (req, res, next) => {
   if (!meal) return next(new ErrorResponse(`Pasto non trovato`, 404));
   if (meal.host.toString() !== req.user.id) return next(new ErrorResponse(`Non autorizzato`, 403));
 
-  // ✅ NUOVO: Elimina immagine da Firebase quando il pasto viene cancellato
   if (meal.imageUrl && meal.imageUrl.includes('storage.googleapis.com')) {
     try {
       const { deleteImage } = require('../services/firebaseStorageService');
@@ -452,7 +438,6 @@ exports.deleteMeal = asyncHandler(async (req, res, next) => {
       console.log('✅ [DeleteMeal] Immagine eliminata da Firebase');
     } catch (error) {
       console.error('⚠️ [DeleteMeal] Errore eliminazione immagine:', error);
-      // Continua comunque con la cancellazione del pasto
     }
   }
 
@@ -482,7 +467,6 @@ exports.joinMeal = asyncHandler(async (req, res, next) => {
   const hostId = (meal.host && meal.host._id) ? meal.host._id.toString() : meal.host.toString();
   if (hostId === req.user.id) return next(new ErrorResponse('Sei l\'host', 400));
   if (meal.participants.some(p => p.toString() === req.user.id)) return next(new ErrorResponse('Già iscritto', 400));
-  // 🔒 PRIVACY: non si può entrare in un TableTalk® privato senza essere già stato aggiunto dall'host
   if (meal.isPublic === false) {
     return next(new ErrorResponse('Questo TableTalk® è privato. Puoi unirti solo su invito dell\'host.', 403));
   }
@@ -515,31 +499,25 @@ exports.searchMeals = asyncHandler(async (req, res, next) => {
     return res.status(200).json({ success: true, count: 0, total: 0, data: [] });
   }
 
-  // Escape regex per evitare ReDoS / crash su input come ".*", "(", "[abc"
   const escapeRegex = (s) => String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   const safeTerm = escapeRegex(searchTerm);
   const regex = { $regex: safeTerm, $options: 'i' };
 
-  // Pagination
   const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
   const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 50, 1), 100);
   const skip = (page - 1) * limit;
 
-  // Status filter
   const statusFilter = req.query.status
     ? req.query.status.split(',').map(s => s.trim()).filter(Boolean)
     : ['upcoming', 'ongoing'];
 
-  // Filtro temporale: solo meal non troppo nel passato (1h di tolleranza)
   const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
 
-  // Geo opzionale
   const lat = parseFloat(req.query.lat);
   const lng = parseFloat(req.query.lng);
   const radiusKm = Math.min(Math.max(parseFloat(req.query.radius) || 50, 1), 500);
   const hasGeo = !Number.isNaN(lat) && !Number.isNaN(lng);
 
-  // STEP 1: trova utenti che matchano nei campi profilo
   let matchedHostIds = [];
   try {
     const matchedUsers = await User.find({
@@ -555,9 +533,8 @@ exports.searchMeals = asyncHandler(async (req, res, next) => {
       .limit(500)
       .lean();
     matchedHostIds = matchedUsers.map(u => u._id);
-  } catch (_) { /* fallback senza match profilo */ }
+  } catch (_) {}
 
-  // STEP 2: build query meal
   const baseAnd = [
     { status: { $in: statusFilter } },
     { date: { $gte: oneHourAgo } },
@@ -574,7 +551,6 @@ exports.searchMeals = asyncHandler(async (req, res, next) => {
   }
   baseAnd.push({ $or: textOr });
 
-  // Privacy: utenti loggati vedono pubblici + propri (host/partecipante)
   if (req.user && req.user.id) {
     baseAnd.push({
       $or: [
@@ -594,12 +570,11 @@ exports.searchMeals = asyncHandler(async (req, res, next) => {
       if (excludedIds.length > 0) {
         baseAnd.push({ host: { $nin: excludedIds } });
       }
-    } catch (_) { /* fallback senza esclusione */ }
+    } catch (_) {}
   } else {
     baseAnd.push({ isPublic: true });
   }
 
-  // Geo opzionale (solo per fisici con coordinate; virtuali sempre inclusi)
   if (hasGeo) {
     const radiusInRad = radiusKm / 6371;
     baseAnd.push({
@@ -634,35 +609,7 @@ exports.searchMeals = asyncHandler(async (req, res, next) => {
     pages: Math.ceil(total / limit),
     meta: {
       searchTerm,
-      matchedHosts: matchedHostIds.length,
-      geo: hasGeo ? { lat, lng, radiusKm } : null,
     },
     data: meals,
   });
-});
-
-exports.getUserMeals = asyncHandler(async (req, res) => {
-  const userId = req.user.id;
-  const statusFilter = req.query.status ? req.query.status.split(',') : ['upcoming', 'ongoing', 'completed', 'cancelled'];
-  const meals = await Meal.find({
-    status: { $in: statusFilter },
-    $or: [ { host: userId }, { participants: userId } ]
-  }).sort({ date: -1 }).populate('host', 'nickname profileImage').populate('participants', 'nickname profileImage');
-  res.status(200).json({ success: true, count: meals.length, data: meals });
-});
-
-exports.getVideoCallUrl = asyncHandler(async (req, res, next) => {
-  const meal = await Meal.findById(req.params.id).populate('participants');
-  if (!meal) return next(new ErrorResponse('Pasto non trovato', 404));
-  
-  const isParticipant = meal.participants.some(p => p._id.equals(req.user._id));
-  const isHost = meal.host.equals(req.user._id);
-  if (!isParticipant && !isHost) return next(new ErrorResponse('Non autorizzato', 403));
-  
-  if (!meal.videoCallLink) {
-    const roomName = `TableTalk-${meal._id}-${uuidv4()}`;
-    meal.videoCallLink = `https://meet.jit.si/${roomName}`;
-    await meal.save();
-  }
-  res.status(200).json({ success: true, data: { videoCallLink: meal.videoCallLink } });
 });
