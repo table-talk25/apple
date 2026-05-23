@@ -23,22 +23,17 @@ const ChatPage = () => {
   const { t } = useTranslation();
   const params = useParams();
   
-  // Normalizza chatId: estrai la stringa dall'oggetto params con logica più robusta
   let chatIdRaw = params.chatId;
   
-  // Se è già una stringa valida, usala direttamente
   if (typeof chatIdRaw === 'string' && chatIdRaw.trim() !== '' && chatIdRaw !== 'undefined' && chatIdRaw !== 'null' && !chatIdRaw.includes('[object Object]')) {
-    // È una stringa valida
+    // stringa valida
   } else if (typeof chatIdRaw === 'object' && chatIdRaw !== null) {
-    // Se è un oggetto, prova a estrarre l'ID
     chatIdRaw = chatIdRaw._id || chatIdRaw.id || chatIdRaw.chatId || chatIdRaw.toString();
     console.warn('⚠️ [ChatPage] params.chatId era un oggetto, estratto:', chatIdRaw);
   }
   
-  // Converti sempre in stringa e rimuovi valori invalidi
   const chatId = String(chatIdRaw || '').trim();
   
-  // Validazione finale: controlla se è valido
   const isValidChatId = chatId && 
                         chatId !== 'undefined' && 
                         chatId !== 'null' && 
@@ -47,12 +42,6 @@ const ChatPage = () => {
   
   const { user, token } = useAuth();
   const navigate = useNavigate();
-
-  // Log per debug
-  console.log('[ChatPage] params completo:', params);
-  console.log('[ChatPage] chatIdRaw originale:', chatIdRaw);
-  console.log('[ChatPage] chatId normalizzato:', chatId);
-  console.log('[ChatPage] chatId valido?', isValidChatId);
 
   const [chat, setChat] = useState(null);
   const [messages, setMessages] = useState([]);
@@ -63,9 +52,6 @@ const ChatPage = () => {
   const socketRef = useRef(null);
   const messagesEndRef = useRef(null);
   const messageIdsRef = useRef(new Set());
-
-  console.log(`[DEBUG] Render - Stato Connessione: ${connectionStatus}`);
-
 
   const [typingUsers, setTypingUsers] = useState([]);
   const typingTimeoutRef = useRef(null);
@@ -92,24 +78,17 @@ const ChatPage = () => {
   };
   const [showLeaveModal, setShowLeaveModal] = useState(false);
 
-  // Effetto per lo scroll automatico 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  // Gestione tastiera mobile: usa 'native' per ridimensionamento automatico della WebView
   useEffect(() => {
     let showSub;
-    
     const setupKeyboard = async () => {
       try {
         if (Capacitor.isNativePlatform()) {
-          // 'native' ridimensiona l'intera WebView visibile quando appare la tastiera
           await Keyboard.setResizeMode({ mode: 'native' });
-          
-          // Quando la tastiera si apre, scrolla in fondo per vedere l'ultimo messaggio
           showSub = Keyboard.addListener('keyboardDidShow', () => {
-            // Aspetta che la WebView si sia ridimensionata, poi scrolla
             setTimeout(() => {
               messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
             }, 100);
@@ -119,50 +98,28 @@ const ChatPage = () => {
         console.warn('[ChatPage] Errore nella configurazione della tastiera:', error);
       }
     };
-    
     setupKeyboard();
-    
-    return () => {
-      showSub?.remove?.();
-    };
+    return () => { showSub?.remove?.(); };
   }, []);
 
-  // Effetto principale per dati e socket 
   useEffect(() => {
     let mounted = true;
 
     const fetchChatHistory = async () => {
-      // Validazione chatId: deve essere una stringa valida
       if (!isValidChatId) {
-        console.error('[ChatPage] ERRORE: chatId non valido dopo normalizzazione:', {
-          chatIdRaw: params.chatId,
-          chatIdNormalized: chatId,
-          isValidChatId
-        });
         setError(t('chat.loadError'));
         setLoading(false);
         return;
       }
-
       try {
         setLoading(true);
-        console.log('[ChatPage] Chiamata API con chatId:', chatId, 'Tipo:', typeof chatId);
         const chatData = await chatService.getChatById(chatId.trim());
-        console.log('[ChatPage] Dati chat ricevuti dal servizio:', {
-          hasChat: !!chatData,
-          hasMessages: !!chatData?.messages,
-          messagesCount: chatData?.messages?.length || 0,
-          chatKeys: chatData ? Object.keys(chatData) : []
-        });
         if (mounted) {
           setChat(chatData);
           const initial = (chatData.messages || []).map(normalizeMessage);
-          console.log('[ChatPage] Messaggi normalizzati:', initial.length);
           setMessages(initial);
-          // Registra gli ID per deduplicare
           messageIdsRef.current = new Set(initial.map(m => m._id).filter(Boolean));
 
-          // Prova a ricavare meta dalla chat; altrimenti fallback al meal
           const countFromChat = Array.isArray(chatData.participants) ? chatData.participants.length : null;
           const maxFromChat = typeof chatData.maxParticipants === 'number' ? chatData.maxParticipants : null;
           if (countFromChat != null) setParticipantsCount(countFromChat);
@@ -171,7 +128,6 @@ const ChatPage = () => {
           if (chatData.mealId) {
             try {
               const meal = await mealService.getMealById(chatData.mealId);
-              // Se il servizio restituisce { data: meal }, uniformiamo
               const mealObj = meal?.data || meal;
               if (mealObj) {
                 setParticipantsCount(mealObj.participants?.length ?? participantsCount);
@@ -184,8 +140,8 @@ const ChatPage = () => {
         }
       } catch (err) {
         if (mounted) {
-            setError(t('chat.loadError'));
-            toast.error(err.response?.data?.error || t('chat.loadError'));
+          setError(t('chat.loadError'));
+          toast.error(err.response?.data?.error || t('chat.loadError'));
         }
       } finally {
         if (mounted) setLoading(false);
@@ -194,28 +150,17 @@ const ChatPage = () => {
 
     fetchChatHistory();
 
-    console.log('[DEBUG] Tentativo di connessione, token presente:', !!token);
-
-  
-    // Se non c'è il token, non tentare di connettere il socket
     if (!token) {
       setConnectionStatus('error');
       setError(t('chat.authRequired'));
-      console.error('[DEBUG] ERRORE: Token non trovato. Impossibile connettere il socket.');
-
       return;
-  }
+    }
 
-
-    // Usa esattamente lo stesso indirizzo IP delle API HTTP
     const apiUrl = (process.env.REACT_APP_API_URL || API_URL || '').replace(/\/$/, '');
     const socketUrl = apiUrl.replace(/\/api\/?$/, '');
-    console.log(`[DEBUG] API URL: ${apiUrl}`);
-    console.log(`[DEBUG] Socket URL: ${socketUrl}`);
     
     const socket = io(socketUrl, { 
       auth: { token },
-      // Permetti fallback a polling per reti che bloccano i WebSocket
       transports: ['websocket', 'polling'],
       reconnection: true,
       reconnectionAttempts: Infinity,
@@ -227,44 +172,34 @@ const ChatPage = () => {
     socketRef.current = socket;
 
     socket.on('connect', () => {
-      console.log('[DEBUG] Socket connesso!');
       setConnectionStatus('connected');
-      // Unisciti alla stanza dopo la connessione - passa solo la stringa chatId
       if (chatId && typeof chatId === 'string' && chatId.trim() !== '') {
-        console.log('[ChatPage] joinChatRoom con chatId:', chatId.trim());
         socket.emit('joinChatRoom', chatId.trim());
-      } else {
-        console.error('[ChatPage] ERRORE: chatId non valido per joinChatRoom:', chatId);
       }
     });
 
     socket.on('disconnect', () => {
-      console.log('[DEBUG] Socket disconnesso!');
       setConnectionStatus('disconnected');
     });
 
     socket.on('connect_error', (error) => {
-      console.error('[DEBUG] Errore di connessione socket:', error);
+      console.error('[ChatPage] Errore connessione socket:', error);
       setConnectionStatus('error');
       setError(t('chat.connectionError'));
     });
 
-    socket.on('reconnect', (attempt) => {
-      console.log('[DEBUG] Socket riconnesso, tentativo:', attempt);
+    socket.on('reconnect', () => {
       setConnectionStatus('connected');
-      // Riunisciti alla stanza dopo la riconnessione - passa solo la stringa chatId
       if (chatId && typeof chatId === 'string' && chatId.trim() !== '') {
-        console.log('[ChatPage] joinChatRoom (reconnect) con chatId:', chatId.trim());
         socket.emit('joinChatRoom', chatId.trim());
-      } else {
-        console.error('[ChatPage] ERRORE: chatId non valido per joinChatRoom (reconnect):', chatId);
       }
     });
 
+    // Gestisce i messaggi in arrivo dagli ALTRI utenti
     socket.on('receiveMessage', (message) => {
-      console.log('[DEBUG] Nuovo messaggio ricevuto:', message);
       const nm = normalizeMessage(message);
       const mid = nm._id;
+      // Deduplicazione: ignora se già presente (es. il mittente lo ha già aggiunto via ACK)
       if (mid && messageIdsRef.current.has(mid)) return;
       if (mid) messageIdsRef.current.add(mid);
       setMessages(prev => [...prev, nm]);
@@ -282,8 +217,6 @@ const ChatPage = () => {
       });
     });
 
-    // Join gestito sui callback di connect/reconnect
-
     return () => {
       mounted = false;
       if (socketRef.current) {
@@ -293,11 +226,7 @@ const ChatPage = () => {
   }, [chatId, token, t]);
 
   const handleTyping = () => {
-    // Validazione chatId prima di inviare typing
-    if (!chatId || typeof chatId !== 'string' || chatId.trim() === '') {
-      return;
-    }
-    
+    if (!chatId || typeof chatId !== 'string' || chatId.trim() === '') return;
     const validChatId = chatId.trim();
     if (socketRef.current && socketRef.current.connected) {
       socketRef.current.emit('typing', { chatId: validChatId, isTyping: true });
@@ -313,27 +242,29 @@ const ChatPage = () => {
   const handleSendMessage = (e) => {
     e.preventDefault();
     if (!newMessage.trim() || !socketRef.current?.connected) return;
-    
-    // Validazione chatId prima di inviare
-    if (!chatId || typeof chatId !== 'string' || chatId.trim() === '') {
-      console.error('[ChatPage] ERRORE: chatId non valido in handleSendMessage:', chatId);
-      return;
-    }
+    if (!chatId || typeof chatId !== 'string' || chatId.trim() === '') return;
 
     const validChatId = chatId.trim();
-    const messageData = {
-      chatId: validChatId,
-      content: newMessage.trim(),
-      timestamp: new Date().toISOString()
-    };
-
-    socketRef.current.emit('sendMessage', { chatId: validChatId, content: messageData.content }, (ack) => {
-      // Non aggiungiamo subito il messaggio: arriverà tramite 'receiveMessage'.
-      // Evitiamo duplicati lato mittente.
-    });
+    const contentToSend = newMessage.trim();
     setNewMessage('');
-    
-    // Stop typing indicator
+
+    socketRef.current.emit('sendMessage', { chatId: validChatId, content: contentToSend }, (ack) => {
+      if (ack?.success && ack?.message) {
+        // Aggiungi subito il messaggio inviato (via ACK dal server) —
+        // la deduplicazione in receiveMessage eviterà duplicati se arriva anche via socket room.
+        const nm = normalizeMessage(ack.message);
+        const mid = nm._id;
+        if (mid && messageIdsRef.current.has(mid)) return;
+        if (mid) messageIdsRef.current.add(mid);
+        setMessages(prev => [...prev, nm]);
+      } else if (ack?.error) {
+        console.error('[ChatPage] Errore invio messaggio:', ack.error);
+        toast.error(ack.error);
+        // Rimetti il testo nel campo se c'è stato un errore
+        setNewMessage(contentToSend);
+      }
+    });
+
     if (socketRef.current?.connected && validChatId) {
       socketRef.current.emit('typing', { chatId: validChatId, isTyping: false });
     }
@@ -351,7 +282,6 @@ const ChatPage = () => {
       toast.success(t('chat.leaveSuccess'));
       navigate('/meals');
     } catch (err) {
-      // Silenzia errori di rete transitori
       const transient = err?.code === 'ERR_NETWORK' || err?.code === 'ECONNABORTED' || !err?.response;
       if (!transient) toast.error(t('chat.leaveError'));
       navigate('/meals');
@@ -362,6 +292,7 @@ const ChatPage = () => {
 
   const hostId = chat?.mealId?.host?._id || chat?.mealId?.host || chat?.host?._id || chat?.host;
   const isHost = !!(chat && hostId && hostId.toString() === (currentUserId || '').toString());
+
   const handleCloseChat = async () => {
     try {
       await chatService.closeChat(chatId);
@@ -374,7 +305,6 @@ const ChatPage = () => {
     }
   };
 
-  // Funzione per riprovare a caricare la chat
   const loadChat = async () => {
     setError('');
     setLoading(true);
@@ -389,12 +319,10 @@ const ChatPage = () => {
       const initial = (chatData.messages || []).map(normalizeMessage);
       setMessages(initial);
       messageIdsRef.current = new Set(initial.map(m => m._id).filter(Boolean));
-      
       const countFromChat = Array.isArray(chatData.participants) ? chatData.participants.length : null;
       const maxFromChat = typeof chatData.maxParticipants === 'number' ? chatData.maxParticipants : null;
       if (countFromChat != null) setParticipantsCount(countFromChat);
       if (maxFromChat != null) setMaxParticipants(maxFromChat);
-
       if (chatData.mealId) {
         try {
           const meal = await mealService.getMealById(chatData.mealId);
@@ -416,13 +344,7 @@ const ChatPage = () => {
     }
   };
 
-  // --- NUOVA LOGICA DI RENDERING CON PRIORITÀ AI DATI ---
-  // Mostra lo spinner solo se sta caricando E non abbiamo ancora dati da mostrare
-  // --- INSERISCI QUESTI LOG DI DEBUG QUI ---
-  console.log(`[ChatPage Rendering Check] loading=${loading}, error=${JSON.stringify(error)}, chatExists=${!!chat}`);
-  // -----------------------------------------
   if (loading && !chat) {
-    console.log('[ChatPage Rendering Decision] Mostro Spinner (loading e no chat)');
     return (
       <div className="d-flex flex-column justify-content-center align-items-center" style={{ minHeight: '50vh' }}>
         <Spinner animation="border" />
@@ -431,53 +353,40 @@ const ChatPage = () => {
     );
   }
 
-  // Se c'è un errore E NON abbiamo dati validi da mostrare, allora mostra l'errore
   if (error && !chat) {
-    console.log(`[ChatPage Rendering Decision] Mostro Errore Bloccante (error=${JSON.stringify(error)} e no chat)`);
     return (
       <div className="text-center py-5">
         <Alert variant="danger">
           <Alert.Heading>{t('chat.errorTitle')}</Alert.Heading>
           <p>{error}</p>
           <Button onClick={loadChat} variant="primary" className="mt-2">{t('chat.retry') || 'Riprova'}</Button>
-          <div className="mt-2">
-            <BackButton />
-          </div>
+          <div className="mt-2"><BackButton /></div>
         </Alert>
       </div>
     );
   }
   
-  // Controllo finale: se non abbiamo chat e non stiamo caricando, mostra un warning
   if (!chat && !loading) {
-    console.log('[ChatPage Rendering Decision] Mostro No Data Alert (chat is null/undefined)');
     return (
       <div className="text-center py-5">
         <Alert variant="warning">
           <Alert.Heading>{t('chat.notFoundTitle')}</Alert.Heading>
           <p>{t('chat.notFoundMessage')}</p>
           <Button onClick={loadChat} variant="primary" className="mt-2">{t('chat.retry') || 'Riprova'}</Button>
-          <div className="mt-2">
-            <BackButton />
-          </div>
+          <div className="mt-2"><BackButton /></div>
         </Alert>
       </div>
     );
   }
 
-  console.log('[ChatPage Rendering Decision] Mostro Interfaccia Chat Principale');
   return (
     <div className={styles.chatPage}>
-      {/* Mostra un piccolo avviso se c'è stato un errore ma stiamo mostrando dati esistenti */}
       {error && chat && (
-        <>
-          {console.log(`[ChatPage Rendering Decision] Mostro Warning Non Bloccante (error=${JSON.stringify(error)} ma chat esiste)`)}
         <Alert variant="warning" dismissible onClose={() => setError('')} className="m-2">
           <Alert.Heading>{t('chat.loadErrorButShowingOld') || 'Errore di caricamento'}</Alert.Heading>
           <p>{error}</p>
           <Button size="sm" onClick={loadChat} variant="outline-primary">{t('chat.retry') || 'Riprova'}</Button>
         </Alert>
-        </>
       )}
       
       <div className={styles.chatHeader}>
@@ -507,25 +416,25 @@ const ChatPage = () => {
       <div className={styles.messagesContainer}>
         {messages && messages.length > 0 ? (
           messages.map((message, index) => (
-          <div 
-            key={message?._id || index} 
-            className={`${styles.message} ${message?.senderId === currentUserId ? styles.ownMessage : styles.otherMessage}`}
-          >
-            <div className={styles.messageContent}>
-              <div className={styles.messageHeader}>
-                <img 
-                  src={getHostAvatarUrl(message?.user || message?.sender)} 
-                  alt={t('chat.userAvatarAlt')}
-                  className={styles.messageAvatar}
-                />
-                <span className={styles.messageAuthor}>{message?.username || message?.sender?.nickname || t('chat.unknownUser')}</span>
-                <span className={styles.messageTime}>
-                  {message?.timestamp ? new Date(message.timestamp).toLocaleTimeString() : ''}
-                </span>
+            <div 
+              key={message?._id || index} 
+              className={`${styles.message} ${message?.senderId === currentUserId ? styles.ownMessage : styles.otherMessage}`}
+            >
+              <div className={styles.messageContent}>
+                <div className={styles.messageHeader}>
+                  <img 
+                    src={getHostAvatarUrl(message?.user || message?.sender)} 
+                    alt={t('chat.userAvatarAlt')}
+                    className={styles.messageAvatar}
+                  />
+                  <span className={styles.messageAuthor}>{message?.username || message?.sender?.nickname || t('chat.unknownUser')}</span>
+                  <span className={styles.messageTime}>
+                    {message?.timestamp ? new Date(message.timestamp).toLocaleTimeString() : ''}
+                  </span>
+                </div>
+                <div className={styles.messageText}>{message?.content || ''}</div>
               </div>
-              <div className={styles.messageText}>{message?.content || ''}</div>
             </div>
-          </div>
           ))
         ) : (
           <div className="text-center py-4 text-muted">{t('chat.noMessagesYet') || 'Nessun messaggio ancora'}</div>
