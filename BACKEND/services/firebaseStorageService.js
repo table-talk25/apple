@@ -9,13 +9,33 @@ const STORAGE_BUCKET =
 
 if (!admin.apps.length) {
   const serviceAccountPath = path.join(__dirname, '..', 'firebase-service-account.json');
+
   if (fs.existsSync(serviceAccountPath)) {
+    // Sviluppo locale: usa il file JSON
     const serviceAccount = require(serviceAccountPath);
     admin.initializeApp({
       credential: admin.credential.cert(serviceAccount),
       storageBucket: STORAGE_BUCKET,
     });
+    console.log('✅ [Firebase Admin] Inizializzato con service account file (locale)');
+  } else if (process.env.FIREBASE_SERVICE_ACCOUNT_JSON) {
+    // Produzione: usa la variabile d'ambiente con il JSON completo
+    try {
+      const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_JSON);
+      admin.initializeApp({
+        credential: admin.credential.cert(serviceAccount),
+        storageBucket: STORAGE_BUCKET,
+      });
+      console.log('✅ [Firebase Admin] Inizializzato con FIREBASE_SERVICE_ACCOUNT_JSON (produzione)');
+    } catch (e) {
+      console.error('❌ [Firebase Admin] Errore parsing FIREBASE_SERVICE_ACCOUNT_JSON:', e.message);
+      admin.initializeApp({
+        projectId: process.env.FIREBASE_PROJECT_ID || 'tabletalk-social',
+        storageBucket: STORAGE_BUCKET,
+      });
+    }
   } else {
+    console.warn('⚠️ [Firebase Admin] Nessuna credenziale trovata. Imposta FIREBASE_SERVICE_ACCOUNT_JSON su Coolify.');
     admin.initializeApp({
       projectId: process.env.FIREBASE_PROJECT_ID || 'tabletalk-social',
       storageBucket: STORAGE_BUCKET,
