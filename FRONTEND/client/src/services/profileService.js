@@ -1,37 +1,20 @@
-// File: frontend/client/src/services/profileService.js (Versione Corretta)
+// File: frontend/client/src/services/profileService.js
 
 import apiClient from './apiService';
 
+const DEFAULT_AVATAR = 'https://storage.googleapis.com/tabletalk-social.firebasestorage.app/profile-images/default-avatar.jpg';
+
 const getProfile = async () => {
   try {
-    console.log('[ProfileService] Caricamento profilo...');
     const response = await apiClient.get('/profile/me', { suppressErrorAlert: true });
-    console.log('[ProfileService] Risposta ricevuta:', {
-      status: response.status,
-      hasData: !!response.data,
-      hasNestedData: !!response.data?.data,
-      dataKeys: response.data ? Object.keys(response.data) : []
-    });
-    
-    if (!response.data) {
-      console.error('[ProfileService] ❌ Risposta senza data');
-      throw new Error('Risposta del server non valida');
-    }
-    
-    if (!response.data.data) {
-      console.error('[ProfileService] ❌ Risposta senza data.data:', response.data);
-      return response.data;
-    }
-    
-    console.log('[ProfileService] ✅ Profilo caricato con successo');
+    if (!response.data) throw new Error('Risposta del server non valida');
+    if (!response.data.data) return response.data;
     return response.data.data;
   } catch (error) {
     console.error('[ProfileService] ❌ Errore nel caricamento profilo:', {
       message: error.message,
       status: error?.response?.status,
-      statusText: error?.response?.statusText,
       data: error?.response?.data,
-      url: error?.config?.url
     });
     throw error;
   }
@@ -56,34 +39,35 @@ const updateProfileImage = async (formData) => {
 };
 
 const deleteAccount = async (password) => {
-  const response = await apiClient.delete('/profile/me', {
-    data: { password }
-  });
+  const response = await apiClient.delete('/profile/me', { data: { password } });
   return response.data;
 };
 
+/**
+ * Restituisce l'URL completo dell'immagine profilo.
+ * - URL Firebase (https://...) → restituito invariato
+ * - null / undefined / "null" / "undefined" / qualsiasi path relativo con "default-avatar" → DEFAULT_AVATAR costante
+ * - Path relativo locale (es. "uploads/profile-images/abc.jpg") → baseUrl + path
+ */
 const getFullImageUrl = (imageName) => {
-  console.log('🖼️ [ProfileService] getFullImageUrl called with:', imageName);
+  // Casi invalidi → avatar di default statico (nessuna chiamata al backend)
+  if (
+    !imageName ||
+    imageName === 'null' ||
+    imageName === 'undefined' ||
+    imageName.includes('default-avatar')
+  ) {
+    return DEFAULT_AVATAR;
+  }
 
-  // URL Firebase completo: restituiscilo così com'è (niente timestamp)
-  if (imageName && imageName.includes('storage.googleapis.com')) {
-    console.log('🖼️ [ProfileService] Using Firebase URL:', imageName);
+  // URL assoluto (Firebase o altro CDN) → usalo direttamente
+  if (imageName.startsWith('http://') || imageName.startsWith('https://')) {
     return imageName;
   }
 
-  if (!imageName || imageName === 'null' || imageName === 'undefined' || imageName.includes('default-avatar.jpg')) {
-    const baseUrl = (apiClient.defaults.baseURL || '').replace('/api', '');
-    const defaultUrl = `${baseUrl}/uploads/profile-images/default-avatar.jpg`;
-    console.log('🖼️ [ProfileService] Using default avatar:', defaultUrl);
-    return defaultUrl;
-  }
-
-  // Immagine locale backend: URL stabile, SENZA ?t=timestamp
-  // (il timestamp causava un nuovo fetch ad ogni render, loop di ricaricamento)
+  // Path relativo locale → costruisci URL dal backend (senza /api)
   const baseUrl = (apiClient.defaults.baseURL || '').replace('/api', '');
-  const fullUrl = `${baseUrl}/${imageName}`;
-  console.log('🖼️ [ProfileService] Using custom avatar:', fullUrl);
-  return fullUrl;
+  return `${baseUrl}/${imageName}`;
 };
 
 const updateUserLocation = async (locationData) => {
