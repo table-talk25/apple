@@ -320,7 +320,9 @@ exports.getMeals = asyncHandler(async (req, res) => {
       else if (now >= startTime && now < endTime) virtualStatus = 'ongoing';
       else virtualStatus = 'completed';
     }
-    return { ...normalizeMealLocation(meal), virtualStatus };
+    const normalizedMeal = normalizeMealLocation(meal);
+const filteredMeal = filterMealLocationByAuthorization(normalizedMeal, req.user);
+return { ...filteredMeal, virtualStatus };
   });
 
   res.status(200).json({
