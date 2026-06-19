@@ -137,7 +137,7 @@ const normalizeMealLocation = (mealDoc) => {
 };
 
 // 🔒 NUOVO: Filtra location in base all'autorizzazione
-const filterMealLocationByAuthorization = (meal, requestingUser) => {
+//const filterMealLocationByAuthorization = (meal, requestingUser) => {
   // Se è un pasto virtuale, non c'è location
   if (meal.mealType === 'virtual') {
     return meal;
