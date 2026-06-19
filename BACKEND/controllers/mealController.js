@@ -136,37 +136,6 @@ const normalizeMealLocation = (mealDoc) => {
   return meal;
 };
 
-// 🔒 NUOVO: Filtra location in base all'autorizzazione
-//const filterMealLocationByAuthorization = (meal, requestingUser) => {
-  // Se è un pasto virtuale, non c'è location
-  if (meal.mealType === 'virtual') {
-    return meal;
-  }
-  
-  // Se è fisico, controlla autorizzazioni
-  if (meal.mealType === 'physical' && meal.location) {
-    const userId = requestingUser ? requestingUser._id.toString() : null;
-    const hostId = meal.host ? meal.host.toString() : null;
-    
-    const isHost = userId && hostId && userId === hostId;
-    
-    const isParticipant = meal.participants && 
-                          userId && 
-                          meal.participants.some(p => p.toString() === userId);
-    
-    // Se privato E utente non è host/partecipante → nascondi location
-    if (meal.isPublic === false && !isHost && !isParticipant) {
-      meal.location = null;
-      return meal;
-    }
-    
-    // Se pubblico O sei host/partecipante → mostra location
-    return meal;
-  }
-  
-  return meal;
-};
-
 // @desc    Get meals within a certain radius for the map
 // @route   GET /api/meals/map
 // @access  Public
