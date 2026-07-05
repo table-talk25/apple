@@ -444,7 +444,8 @@ class InteractiveNotificationService {
 
         // Aggiungi il protocollo e il dominio
         const baseUrl = process.env.FRONTEND_URL || process.env.APP_BASE_URL || 'https://tabletalk.app';
-        return `${baseUrl}${deepLink}`;
+        // HashRouter: le route del frontend vivono dopo il # (es. https://dominio/#/meals/123)
+        return `${baseUrl}/#${deepLink}`;
     }
 
     /**

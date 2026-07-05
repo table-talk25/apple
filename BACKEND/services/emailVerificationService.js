@@ -37,7 +37,8 @@ class EmailVerificationService {
       await user.save();
       
       // Costruisci l'URL di verifica
-      const verificationUrl = `${this.FRONTEND_URL}/verify-email?token=${verificationToken}`;
+      // HashRouter: il frontend usa route con hash, il link deve contenere /#/
+      const verificationUrl = `${this.FRONTEND_URL}/#/verify-email?token=${verificationToken}`;
       
       // Prepara i dati per il template
       const emailData = {

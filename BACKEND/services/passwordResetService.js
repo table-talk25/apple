@@ -67,7 +67,8 @@ class PasswordResetService {
       await user.save();
       
       // Costruisci l'URL di reset
-      const resetUrl = `${this.FRONTEND_URL}/reset-password/${resetToken}`;
+      // HashRouter: il frontend usa route con hash, il link deve contenere /#/
+      const resetUrl = `${this.FRONTEND_URL}/#/reset-password/${resetToken}`;
       
       // Prepara i dati per il template
       const emailData = {
