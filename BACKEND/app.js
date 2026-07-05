@@ -3,6 +3,8 @@ const express = require('express');
 const cors = require('cors');
 const morgan = require('morgan');
 const helmet = require('helmet');
+const mongoSanitize = require('express-mongo-sanitize');
+const hpp = require('hpp');
 const compression = require('compression');
 const errorHandler = require('./middleware/error');
 const { buildCorsOptions } = require('./config/corsOptions');
@@ -26,6 +28,10 @@ function logRegisteredRoutes(app) {
 
 function createApp() {
   const app = express();
+
+  // Dietro reverse proxy (Coolify/Traefik/Render): serve per avere il vero IP client
+  // in req.ip — senza questo il rate limiting conta tutti gli utenti come un solo IP.
+  app.set('trust proxy', 1);
   const { corsOptions, effectiveAllowedOrigins, envAllowedOrigins } = buildCorsOptions();
 
   console.log('🔧 [ENV] CORS_ORIGIN:', process.env.CORS_ORIGIN);
@@ -52,6 +58,9 @@ function createApp() {
   app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
   app.use(express.json({ limit: '10mb' }));
   app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+  // Sanitizzazione input: rimuove operatori Mongo ($, .) e parametri HTTP duplicati
+  app.use(mongoSanitize());
+  app.use(hpp());
   app.use(compression());
   if (process.env.NODE_ENV === 'development') {
     app.use(morgan('dev'));
