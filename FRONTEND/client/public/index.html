@@ -12,6 +12,21 @@
     <link rel="apple-touch-icon" href="%PUBLIC_URL%/logo192.png" />
     <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
     <title>TableTalk</title>
+    <!-- Retrocompatibilità link senza hash: /meals/123 → /#/meals/123 (HashRouter).
+         Solo su web (http/https) e mai per index.html o asset statici. -->
+    <script>
+      (function () {
+        try {
+          var loc = window.location;
+          var isWeb = loc.protocol === 'http:' || loc.protocol === 'https:';
+          var p = loc.pathname || '/';
+          var isAsset = p === '/index.html' || p.indexOf('/static/') === 0 || p.indexOf('.') !== -1;
+          if (isWeb && !loc.hash && p !== '/' && !isAsset) {
+            loc.replace(loc.origin + '/#' + p + loc.search);
+          }
+        } catch (e) {}
+      })();
+    </script>
     <!-- Configurazione per accesso remoto -->
     <script src="%PUBLIC_URL%/config.js"></script>
   </head>
