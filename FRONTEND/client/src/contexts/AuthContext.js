@@ -21,8 +21,9 @@ function mergeUserFromServer(prev, server) {
 }
 
 // Chiavi usate da @capacitor/preferences su web (localStorage sottostante)
-const CAP_PREF_KEYS = ['user', 'cap_usr', 'tt_user', 'authUser'];
-const CAP_TOK_KEYS  = ['token', 'cap_tok', 'tt_token', 'authToken'];
+// ⚠️ @capacitor/preferences su web salva in localStorage con prefisso 'CapacitorStorage.'
+const CAP_PREF_KEYS = ['CapacitorStorage.user', 'user', 'cap_usr', 'tt_user', 'authUser'];
+const CAP_TOK_KEYS  = ['CapacitorStorage.token', 'token', 'cap_tok', 'tt_token', 'authToken'];
 
 /** Lettura sincrona da localStorage: istantanea su web, nessun await */
 function readFromLocalStorage() {
@@ -79,7 +80,17 @@ export const AuthProvider = ({ children }) => {
                     .then(freshUser => {
                         if (isMounted && freshUser) setUser(prev => mergeUserFromServer(prev, freshUser));
                     })
-                    .catch(e => console.log('Verifica background:', e))
+                    .catch(async (e) => {
+                        const st = e?.response?.status;
+                        if (st === 401 || st === 403) {
+                            // Token rifiutato dal server: pulizia completa per evitare stati incoerenti
+                            console.warn('[AuthContext] Token non valido/scaduto: logout locale.');
+                            try { await authPreferences.clearAuth(); } catch (_) {}
+                            if (isMounted) { setUser(null); setToken(null); setIsAuthenticated(false); }
+                        } else {
+                            console.log('Verifica background:', e);
+                        }
+                    })
                     .finally(() => { if (isMounted) setServerVerified(true); });
                 flushPendingPushToken();
                 return; // uscita anticipata, nessun timeout necessario
@@ -114,7 +125,17 @@ export const AuthProvider = ({ children }) => {
                             .then(freshUser => {
                                 if (isMounted && freshUser) setUser(prev => mergeUserFromServer(prev, freshUser));
                             })
-                            .catch(e => console.log('Verifica background:', e))
+                            .catch(async (e) => {
+                        const st = e?.response?.status;
+                        if (st === 401 || st === 403) {
+                            // Token rifiutato dal server: pulizia completa per evitare stati incoerenti
+                            console.warn('[AuthContext] Token non valido/scaduto: logout locale.');
+                            try { await authPreferences.clearAuth(); } catch (_) {}
+                            if (isMounted) { setUser(null); setToken(null); setIsAuthenticated(false); }
+                        } else {
+                            console.log('Verifica background:', e);
+                        }
+                    })
                             .finally(() => { if (isMounted) setServerVerified(true); });
                         flushPendingPushToken();
                     } else {
