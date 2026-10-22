@@ -1,0 +1,60 @@
+name: Import verified backend lockfile
+
+on:
+  push:
+    branches: [fix/backend-startup]
+    paths:
+      - '.github/workflows/import-backend-lockfile.yml'
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  import-lockfile:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/backend-startup
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Download original repaired lockfile
+        uses: actions/download-artifact@v4
+        with:
+          github-token: ${{ github.token }}
+          run-id: 39828953382
+          name: backend-lockfile-6bbda98468f566c7403539dcc46d99bfefe349b0
+          path: ${{ runner.temp }}/verified-lockfile
+      - name: Verify exact uploaded file and copy lockfile
+        env:
+          ARTIFACT_DIR: ${{ runner.temp }}/verified-lockfile
+        run: |
+          set -euo pipefail
+          test "$(cat "$ARTIFACT_DIR/lockfile-source-revision.txt")" = '6bbda98468f566c7403539dcc46d99bfefe349b0'
+          echo "ab0989fdc779ff916563a74f8ae5864344f7d18a362a8890e5eae1270d89a27e  $ARTIFACT_DIR/package-lock.json" | sha256sum --check
+          cp "$ARTIFACT_DIR/package-lock.json" BACKEND/package-lock.json
+      - name: Verify clean installation
+        working-directory: BACKEND
+        run: npm ci --include=dev --no-audit --no-fund
+      - name: Run backend tests
+        working-directory: BACKEND
+        env:
+          NODE_ENV: test
+        run: npm test -- --ci
+      - name: Commit only the verified lockfile
+        run: |
+          set -euo pipefail
+          echo 'ab0989fdc779ff916563a74f8ae5864344f7d18a362a8890e5eae1270d89a27e  BACKEND/package-lock.json' | sha256sum --check
+          git diff --exit-code -- . ':!BACKEND/package-lock.json'
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -- BACKEND/package-lock.json
+          if git diff --cached --quiet; then
+            echo 'Lockfile already synchronized; no commit needed.'
+            exit 0
+          fi
+          git commit -m 'fix(backend): synchronize dependency lockfile'
+          git push origin HEAD:refs/heads/fix/backend-startup
