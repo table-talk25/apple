@@ -1,0 +1,45 @@
+name: Validate backend startup
+
+on:
+  push:
+    branches: [fix/backend-startup]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  backend-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout revision under review
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: BACKEND/package-lock.json
+      - name: Record checked-out revision
+        run: git rev-parse HEAD
+      - name: Check JavaScript syntax
+        run: |
+          node --check BACKEND/config/db.js
+          node --check BACKEND/config/validateEnv.js
+          node --check BACKEND/bootstrap/startBackend.js
+          node --check BACKEND/server.js
+          node --check BACKEND/tests/backend-startup.test.js
+          node --check BACKEND/tests/validate-env-logging.test.js
+      - name: Install backend dependencies
+        working-directory: BACKEND
+        run: npm ci --include=dev --no-audit --no-fund
+      - name: Run backend Jest suite
+        working-directory: BACKEND
+        env:
+          NODE_ENV: test
+        run: npm test -- --ci

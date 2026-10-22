@@ -1,0 +1,56 @@
+name: Repair backend lockfile
+
+on:
+  push:
+    branches: [fix/backend-startup]
+    paths:
+      - '.github/workflows/repair-backend-lockfile.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  repair-and-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout revision to repair
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Record source revision and npm version
+        run: |
+          git rev-parse HEAD > BACKEND/lockfile-source-revision.txt
+          node --version
+          npm --version
+      - name: Regenerate backend lockfile
+        id: repair
+        working-directory: BACKEND
+        run: npm install --package-lock-only --ignore-scripts --include=dev --no-audit --no-fund
+      - name: Check that only the lockfile changed
+        run: |
+          git diff --exit-code -- . ':!BACKEND/package-lock.json'
+          git diff --stat -- BACKEND/package-lock.json
+      - name: Save repaired lockfile
+        if: ${{ always() && steps.repair.outcome == 'success' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-lockfile-${{ github.sha }}
+          path: |
+            BACKEND/package-lock.json
+            BACKEND/lockfile-source-revision.txt
+          if-no-files-found: error
+          retention-days: 7
+      - name: Verify clean backend installation
+        working-directory: BACKEND
+        run: npm ci --include=dev --no-audit --no-fund
+      - name: Run backend Jest suite
+        working-directory: BACKEND
+        env:
+          NODE_ENV: test
+        run: npm test -- --ci

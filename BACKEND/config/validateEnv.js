@@ -1,91 +1,39 @@
-/**
- * Valida che variabili sensibili non contengano valori di test in produzione.
- */
+/** Reject placeholder credentials in production without logging their values. */
 function validateEnvironmentVariables() {
   const isProduction = process.env.NODE_ENV === 'production';
-  const testValuePatterns = [
-    /^test-/i,
-    /^test_/i,
-    /test$/i,
-    /^fake-/i,
-    /^fake_/i,
-    /fake$/i,
-    /^dummy-/i,
-    /^dummy_/i,
-    /dummy$/i,
-    /^example-/i,
-    /^example_/i,
-    /example$/i,
+  const patterns = [
+    /^test-/i, /^test_/i, /test$/i,
+    /^fake-/i, /^fake_/i, /fake$/i,
+    /^dummy-/i, /^dummy_/i, /dummy$/i,
+    /^example-/i, /^example_/i, /example$/i,
   ];
+  const names = [
+    'TWILIO_ACCOUNT_SID', 'TWILIO_AUTH_TOKEN', 'TWILIO_API_KEY',
+    'TWILIO_API_SECRET', 'SENDGRID_API_KEY',
+  ];
+  const invalid = names.filter((name) => {
+    const value = process.env[name];
+    return value && patterns.some((pattern) => pattern.test(value));
+  });
 
-  const criticalVars = {
-    TWILIO_ACCOUNT_SID: process.env.TWILIO_ACCOUNT_SID,
-    TWILIO_AUTH_TOKEN: process.env.TWILIO_AUTH_TOKEN,
-    TWILIO_API_KEY: process.env.TWILIO_API_KEY,
-    TWILIO_API_SECRET: process.env.TWILIO_API_SECRET,
-    SENDGRID_API_KEY: process.env.SENDGRID_API_KEY,
-  };
-
-  const errors = [];
-
-  for (const [varName, varValue] of Object.entries(criticalVars)) {
-    if (varValue) {
-      const isTestValue = testValuePatterns.some((pattern) => pattern.test(varValue));
-
-      if (isTestValue) {
-        const errorMsg = `❌ ERRORE CRITICO: ${varName} contiene un valore di test: "${varValue}"`;
-        errors.push(errorMsg);
-        console.error(errorMsg);
-
-        if (isProduction) {
-          console.error("🚨 PRODUZIONE: Non è possibile avviare il server con valori di test!");
-          console.error(`💡 Soluzione: Imposta ${varName} con una chiave API reale su Render Dashboard`);
-        } else {
-          console.warn(
-            `⚠️  SVILUPPO: ${varName} contiene un valore di test. Funzionalità correlate non funzioneranno.`
-          );
-        }
-      }
-    }
+  for (const name of invalid) {
+    console.error(`Configurazione non valida: ${name} contiene un valore di test.`);
   }
 
-  if (isProduction && errors.length > 0) {
-    console.error('\n🚨 ============================================');
-    console.error('🚨 ERRORE: VALORI DI TEST RILEVATI IN PRODUZIONE');
-    console.error('🚨 ============================================');
-    errors.forEach((err) => console.error(err));
-    console.error('\n💡 AZIONE RICHIESTA:');
-    console.error('   1. Vai su Render Dashboard → Environment');
-    console.error('   2. Rimuovi o aggiorna le variabili con valori di test');
-    console.error('   3. Imposta le chiavi API reali per:');
-    errors.forEach((err) => {
-      const varName = err.match(/^❌ ERRORE CRITICO: (\w+)/)?.[1];
-      if (varName) console.error(`      - ${varName}`);
-    });
-    console.error("\n❌ Il server non si avvierà fino a quando non correggi queste variabili.\n");
+  if (isProduction && invalid.length > 0) {
+    console.error('Avvio bloccato: sostituire i valori di test nella configurazione.');
     process.exit(1);
+    return;
   }
 
-  if (!isProduction && errors.length > 0) {
-    console.warn('\n⚠️  ============================================');
-    console.warn('⚠️  AVVISO: VALORI DI TEST RILEVATI IN SVILUPPO');
-    console.warn('⚠️  ============================================');
-    errors.forEach((err) => console.warn(err));
-    console.warn(
-      '\n💡 Nota: In sviluppo è permesso, ma le funzionalità correlate non funzioneranno.\n'
-    );
+  if (!isProduction && invalid.length > 0) {
+    console.warn('Valori di test consentiti fuori produzione; i servizi correlati potrebbero non funzionare.');
   }
 
   if (isProduction) {
-    console.log("✅ Validazione variabili d'ambiente completata");
-    for (const [varName, varValue] of Object.entries(criticalVars)) {
-      if (varValue && !testValuePatterns.some((p) => p.test(varValue))) {
-        const masked =
-          varValue.length > 8
-            ? `${varValue.substring(0, 4)}...${varValue.substring(varValue.length - 4)}`
-            : '***';
-        console.log(`   ✓ ${varName}: ${masked} (valida)`);
-      }
+    console.log('Controllo dei valori di test completato; credenziali non verificate con i provider.');
+    for (const name of names) {
+      if (process.env[name]) console.log(`${name}: configurata (valore omesso)`);
     }
   }
 }
