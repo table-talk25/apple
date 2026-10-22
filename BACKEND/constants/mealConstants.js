@@ -44,7 +44,7 @@ const mealTypeOptions = [
   { value: MEAL_TYPES.DINNER,    label: MEAL_TYPE_LABELS[MEAL_TYPES.DINNER] },
 ];
 
-export const MEAL_ICONS = {
+const MEAL_ICONS = {
   [MEAL_TYPES.BREAKFAST]: '☕', // Caffè
   [MEAL_TYPES.BRUNCH]:    '🥞', // Pancakes (Perfetto per l'Arancione!)
   [MEAL_TYPES.LUNCH]:     '🍝', // Pasta
@@ -93,6 +93,7 @@ module.exports = {
   MEAL_TYPE_LABELS,
   MEAL_TYPE_COLORS,
   mealTypeOptions,
+  MEAL_ICONS,
   MEAL_STATUS,
   MEAL_STATUS_LABELS,
   MEAL_CONSTRAINTS,
