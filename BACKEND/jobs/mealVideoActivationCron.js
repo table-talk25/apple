@@ -2,54 +2,62 @@ const cron = require('node-cron');
 const Meal = require('../models/Meal');
 const pushNotificationService = require('../services/pushNotificationService');
 
-function scheduleMealVideoActivationCron() {
-  cron.schedule('* * * * *', async () => {
-    const now = new Date();
-    console.log(`[Cron Job] Esecuzione alle: ${now.toISOString()}`);
-    try {
-      const tenMinutesFromNow = new Date(now.getTime() + 10 * 60 * 1000);
+let task;
 
-      const mealsToActivate = await Meal.find({
-        date: { $lte: tenMinutesFromNow },
-        status: 'upcoming',
-        videoCallStatus: 'pending',
-      }).populate('participants', 'fcmTokens');
-
-      if (mealsToActivate.length > 0) {
-        console.log(`[Cron Job] Attivazione di ${mealsToActivate.length} videochiamate.`);
-
-        for (const meal of mealsToActivate) {
-          meal.videoCallStatus = 'active';
-          await meal.save();
-
-          const allParticipantTokens = meal.participants.flatMap((p) => p.fcmTokens).filter((token) => token);
-
-          const uniqueTokens = [...new Set(allParticipantTokens)];
-
-          if (uniqueTokens.length > 0) {
-            console.log(
-              `[Cron Job] Invio notifiche a ${uniqueTokens.length} token per il pasto "${meal.title}"`
-            );
-
-            pushNotificationService.sendPushNotification(
-              uniqueTokens,
-              'La videochiamata sta per iniziare!',
-              `Unisciti ora al pasto "${meal.title}".`,
-              { mealId: meal._id.toString() }
-            );
-          }
+async function activateMealVideos() {
+  const now = new Date();
+  const eligibility = {
+    mealType: 'virtual',
+    status: { $in: ['upcoming', 'ongoing'] },
+    videoCallStatus: 'pending',
+    date: { $lte: new Date(now.getTime() + 10 * 60000) },
+    $expr: { $gt: [
+      { $add: ['$date', { $multiply: [{ $ifNull: ['$duration', 60] }, 60000] }] }, now,
+    ] },
+  };
+  try {
+    const candidates = await Meal.find(eligibility).select('_id date duration');
+    let activated = 0;
+    let failed = 0;
+    for (const candidate of candidates) {
+      try {
+        // Recheck eligibility atomically: only one worker can claim a pending call.
+        const meal = await Meal.findOneAndUpdate(
+          { ...eligibility, _id: candidate._id },
+          { $set: { videoCallStatus: 'active' } },
+          { new: true, runValidators: true }
+        ).populate('participants', 'fcmTokens');
+        if (!meal) continue;
+        activated++;
+        const tokens = [...new Set((meal.participants || []).filter(Boolean)
+          .flatMap((participant) => Array.isArray(participant.fcmTokens) ? participant.fcmTokens : [])
+          .filter((token) => typeof token === 'string' && token.trim()))];
+        if (tokens.length > 0) {
+          await pushNotificationService.sendPushNotification(
+            tokens, 'La videochiamata sta per iniziare!',
+            `Unisciti ora al pasto "${meal.title}".`, { mealId: meal._id.toString() }
+          );
         }
+      } catch {
+        failed++;
+        console.error('[MealVideoJob] Attivazione o notifica fallita per un pasto');
       }
-
-      const fourHoursAgoHourAgo = new Date(now.getTime() - 4 * 60 * 60 * 1000);
-      await Meal.updateMany(
-        { date: { $lt: fourHoursAgoHourAgo }, status: 'upcoming', participantsCount: { $lte: 1 } },
-        { $set: { status: 'completed' } }
-      );
-    } catch (error) {
-      console.error('[Cron Job] ❌ Errore:', error);
     }
-  });
+    return { success: failed === 0, activated, failed };
+  } catch {
+    console.error('[MealVideoJob] Ricerca pasti da attivare fallita');
+    return { success: false, activated: 0 };
+  }
 }
 
-module.exports = { scheduleMealVideoActivationCron };
+function scheduleMealVideoActivationCron() {
+  if (task) return;
+  task = cron.schedule('* * * * *', activateMealVideos, { noOverlap: true, name: 'meal-video-activation' });
+}
+
+function stopMealVideoActivationCron() {
+  if (task) task.destroy();
+  task = undefined;
+}
+
+module.exports = { scheduleMealVideoActivationCron, stopMealVideoActivationCron, activateMealVideos };

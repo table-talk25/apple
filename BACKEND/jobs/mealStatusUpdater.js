@@ -1,120 +1,101 @@
-// File: BACKEND/jobs/mealStatusUpdater.js (Versione con Archiviazione Intelligente)
-
 const cron = require('node-cron');
 const Meal = require('../models/Meal');
-const sendEmail = require('../utils/sendEmail');
-const User = require('../models/User');
 
-const updateMealStatuses = async () => {
+let statusTask;
+let reminderTask;
+
+async function updateMealStatuses() {
   const now = new Date();
-  console.log(`[Cron Job] Esecuzione alle: ${now.toISOString()} (UTC)`);
-
   try {
-    // --- PASSO 1: Aggiorna i pasti da 'upcoming' a 'ongoing' (invariato) ---
-    const upcomingResults = await Meal.updateMany(
+    await Meal.updateMany(
       { status: 'upcoming', date: { $lte: now } },
       { $set: { status: 'ongoing' } }
     );
-    if (upcomingResults.modifiedCount > 0) {
-      console.log(`[Cron Job] ✅ Trovati e aggiornati ${upcomingResults.modifiedCount} pasti a 'ongoing'.`);
-    } else {
-      console.log("[Cron Job] Nessun pasto 'upcoming' da aggiornare a 'ongoing'.");
-    }
-
-    // --- PASSO 2: Gestisce i pasti 'ongoing' che sono terminati ---
-    const ongoingMeals = await Meal.find({ status: 'ongoing' }).populate('participants');
-
-    if (ongoingMeals.length > 0) {
-      let changedCount = 0;
-      for (const meal of ongoingMeals) {
-        const endTime = new Date(meal.date.getTime() + meal.duration * 60000);
-        
-        if (endTime < now) {
-          // ▼▼▼ NUOVA LOGICA INTELLIGENTE ▼▼▼
-          // Se il pasto è finito e ha solo 1 partecipante (l'host), lo annulliamo.
-          if (meal.participants.length <= 1) {
-            meal.status = 'cancelled';
-            console.log(`[Cron Job] 🚮 Pasto vuoto "${meal.title}" archiviato come 'cancellato'.`);
-          } else {
-            // Altrimenti, se c'erano partecipanti, lo completiamo.
-            meal.status = 'completed';
-            console.log(`[Cron Job] ✅ Pasto "${meal.title}" archiviato come 'completato'.`);
-          }
-          await meal.save();
-          changedCount++;
-          // ▲▲▲ FINE NUOVA LOGICA ▲▲▲
-        }
-      }
-
-      if (changedCount === 0) {
-        console.log("[Cron Job] Nessun pasto 'ongoing' è ancora terminato.");
-      }
-    } else {
-      console.log("[Cron Job] Nessun pasto 'ongoing' trovato.");
-    }
-
-  } catch (error) {
-    console.error('[Cron Job] ❌ Errore durante l\'aggiornamento degli stati:', error);
-  }
-};
-
-const startMealStatusUpdater = () => {
-  cron.schedule('* * * * *', updateMealStatuses); // Eseguiamo ogni minuto
-  console.log('🚀 Job per l\'aggiornamento dello stato dei pasti avviato. Si eseguirà ogni minuto.');
-};
-
-// Job: invia mail riepilogativa all'host 10 minuti prima dell'inizio del pasto
-cron.schedule('*/5 * * * *', async () => {
-  const now = new Date();
-  const tenMinutesLater = new Date(now.getTime() + 10 * 60 * 1000);
-  // Trova pasti che iniziano tra 10 e 15 minuti (per evitare doppioni)
-  const meals = await Meal.find({
-    status: 'upcoming',
-    date: { $gte: tenMinutesLater, $lt: new Date(tenMinutesLater.getTime() + 5 * 60 * 1000) }
-  }).populate('host participants', 'email nickname name settings');
-
-  for (const meal of meals) {
-    // Invia solo se l'host ha attivato le notifiche email
-    if (meal.host && meal.host.settings?.notifications?.email) {
+    const meals = await Meal.find({ status: 'ongoing' });
+    let failed = 0;
+    for (const meal of meals) {
       try {
-        await sendEmail.sendHostMealReminderEmail(
-          meal.host.email,
-          meal.host.nickname || meal.host.name,
-          {
-            title: meal.title,
-            date: meal.date,
-            participantCount: meal.participants.length,
-            participantNicknames: meal.participants.map(p => p.nickname || p.name),
-            mealId: meal._id
-          }
-        );
-        console.log(`[EMAIL] Promemoria host inviato per il pasto "${meal.title}"`);
-      } catch (err) {
-        console.error('Errore invio email promemoria host:', err.message);
+        const end = new Date(meal.date.getTime() + meal.duration * 60000);
+        if (end <= now) {
+          meal.status = meal.participants.length <= 1 ? 'cancelled' : 'completed';
+          await meal.save();
+        }
+      } catch {
+        failed++;
+        console.error('[MealJobs] Aggiornamento di un pasto fallito');
       }
     }
+    return { success: failed === 0, failed };
+  } catch {
+    console.error('[MealJobs] Aggiornamento stati fallito');
+    return { success: false };
+  }
+}
 
-    // Invia promemoria anche ai partecipanti che hanno attivato le email
-    for (const participant of meal.participants) {
-      if (participant && participant.settings?.notifications?.email) {
+async function sendMealReminders() {
+  try {
+    const sendEmail = require('../utils/sendEmail');
+    const now = new Date();
+    const meals = await Meal.find({
+      status: 'upcoming',
+      date: { $gte: new Date(now.getTime() + 10 * 60000), $lt: new Date(now.getTime() + 15 * 60000) },
+    }).populate('host participants', 'email nickname name settings');
+    let failed = 0;
+    for (const meal of meals) {
+      const participants = (meal.participants || []).filter(Boolean);
+      if (meal.host && meal.host.settings?.notifications?.email) {
         try {
-          await sendEmail.sendMealReminderEmail(
-            participant.email,
-            participant.nickname || participant.name,
-            {
-              title: meal.title,
-              date: meal.date,
-              hostName: meal.host?.nickname || meal.host?.name || 'Host',
-              mealId: meal._id
-            }
-          );
-          console.log(`[EMAIL] Promemoria partecipante inviato a ${participant.email} per "${meal.title}"`);
-        } catch (err) {
-          console.error('Errore invio email promemoria partecipante:', err.message);
+          await sendEmail.sendHostMealReminderEmail(meal.host.email, meal.host.nickname || meal.host.name, {
+            title: meal.title, date: meal.date, participantCount: participants.length,
+            participantNicknames: participants.map((participant) => participant.nickname || participant.name),
+            mealId: meal._id,
+          });
+        } catch {
+          failed++;
+          console.error('[MealJobs] Invio promemoria host fallito');
+        }
+      }
+      const sent = new Set();
+      for (const participant of participants) {
+        const id = participant._id?.toString();
+        if (!id || id === meal.host?._id?.toString() || sent.has(id) || !participant.settings?.notifications?.email) continue;
+        sent.add(id);
+        try {
+          await sendEmail.sendMealReminderEmail(participant.email, participant.nickname || participant.name, {
+            title: meal.title, date: meal.date, hostName: meal.host?.nickname || meal.host?.name || 'Host', mealId: meal._id,
+          });
+        } catch {
+          failed++;
+          console.error('[MealJobs] Invio promemoria partecipante fallito');
         }
       }
     }
+    return { success: failed === 0, failed };
+  } catch {
+    console.error('[MealJobs] Ricerca o invio promemoria fallito');
+    return { success: false };
   }
-});
+}
 
+function stop() {
+  if (statusTask) statusTask.destroy();
+  if (reminderTask) reminderTask.destroy();
+  statusTask = undefined;
+  reminderTask = undefined;
+}
+
+function startMealStatusUpdater() {
+  if (statusTask && reminderTask) return;
+  try {
+    statusTask = cron.schedule('* * * * *', updateMealStatuses, { noOverlap: true, name: 'meal-status-updater' });
+    reminderTask = cron.schedule('*/5 * * * *', sendMealReminders, { noOverlap: true, name: 'meal-email-reminders' });
+  } catch (error) {
+    stop();
+    throw error;
+  }
+}
+
+startMealStatusUpdater.stop = stop;
+startMealStatusUpdater.updateMealStatuses = updateMealStatuses;
+startMealStatusUpdater.sendMealReminders = sendMealReminders;
 module.exports = startMealStatusUpdater;
