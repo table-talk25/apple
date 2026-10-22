@@ -1,54 +1,49 @@
 jest.mock('node-cron', () => ({ schedule: jest.fn(() => ({ destroy: jest.fn() })) }));
 jest.mock('../models/Meal', () => ({ find: jest.fn(), findOneAndUpdate: jest.fn() }));
-jest.mock('../services/pushNotificationService', () => ({ sendPushNotification: jest.fn() }));
+jest.mock('../services/videoNotificationService', () => ({ queueActivationEvent: jest.fn(), processVideoNotificationEvents: jest.fn() }));
 const cron = require('node-cron');
 const Meal = require('../models/Meal');
-const push = require('../services/pushNotificationService');
+const notifications = require('../services/videoNotificationService');
 const job = require('../jobs/mealVideoActivationCron');
 
-describe('meal video activation', () => {
+describe('video activation with durable notification intent', () => {
   beforeEach(() => {
-    job.stopMealVideoActivationCron(); jest.clearAllMocks();
+    job.stopMealVideoActivationCron(); jest.resetAllMocks();
+    cron.schedule.mockImplementation(() => ({ destroy: jest.fn() }));
     jest.spyOn(console, 'error').mockImplementation(() => {});
+    Meal.find.mockReturnValue({ select: jest.fn().mockResolvedValue([]) });
+    notifications.queueActivationEvent.mockResolvedValue({});
+    notifications.processVideoNotificationEvents.mockResolvedValue({ success: true, failed: 0 });
   });
   afterEach(() => { job.stopMealVideoActivationCron(); jest.restoreAllMocks(); });
-  const candidates = (values) => Meal.find.mockReturnValue({ select: jest.fn().mockResolvedValue(values) });
-  const claim = (value) => Meal.findOneAndUpdate.mockReturnValue({ populate: jest.fn().mockResolvedValue(value) });
-
-  it('schedules only once with local overlap prevention', () => {
+  it('schedules only once without local overlap', () => {
     job.scheduleMealVideoActivationCron(); job.scheduleMealVideoActivationCron();
-    expect(cron.schedule).toHaveBeenCalledTimes(1);
-    expect(cron.schedule.mock.calls[0][2].noOverlap).toBe(true);
+    expect(cron.schedule).toHaveBeenCalledTimes(1); expect(cron.schedule.mock.calls[0][2].noOverlap).toBe(true);
   });
-  it('queries only virtual, nonterminal, pending and unexpired meals', async () => {
-    candidates([]);
+  it('keeps virtual and unexpired eligibility guards', async () => {
     await job.activateMealVideos();
-    const filter = Meal.find.mock.calls[0][0];
-    expect(filter.mealType).toBe('virtual');
-    expect(filter.status.$in).toEqual(['upcoming', 'ongoing']);
-    expect(filter.videoCallStatus).toBe('pending');
-    expect(filter.$expr.$gt).toBeDefined();
+    expect(Meal.find.mock.calls[0][0]).toMatchObject({ mealType: 'virtual', videoCallStatus: 'pending', status: { $in: ['upcoming', 'ongoing'] } });
+    expect(Meal.find.mock.calls[0][0].$expr.$gt).toBeDefined();
   });
-  it('does not notify if another worker has already claimed activation', async () => {
-    candidates([{ _id: 'm1' }]); claim(null);
-    await job.activateMealVideos();
-    expect(push.sendPushNotification).not.toHaveBeenCalled();
+  it('processes outstanding notifications without new activations', async () => {
+    await job.activateMealVideos(); expect(notifications.processVideoNotificationEvents).toHaveBeenCalledTimes(1);
   });
-  it('awaits push completion and tolerates missing participants', async () => {
-    candidates([{ _id: 'm1' }]);
-    claim({ _id: 'm1', title: 'Meal', participants: [null, { fcmTokens: ['a', 'a'] }, {}] });
-    let complete;
-    push.sendPushNotification.mockImplementation(() => new Promise((resolve) => { complete = resolve; }));
-    const running = job.activateMealVideos();
-    await Promise.resolve(); await Promise.resolve();
-    expect(push.sendPushNotification.mock.calls[0][0]).toEqual(['a']);
-    complete();
-    await expect(running).resolves.toMatchObject({ success: true, activated: 1 });
+  it('persists intent before activation and guards the observed schedule', async () => {
+    const candidate = { _id: 'meal', date: new Date(), duration: 60 };
+    Meal.find.mockReturnValue({ select: jest.fn().mockResolvedValue([candidate]) });
+    Meal.findOneAndUpdate.mockResolvedValue(candidate);
+    await expect(job.activateMealVideos()).resolves.toMatchObject({ activated: 1, success: true });
+    expect(notifications.queueActivationEvent.mock.invocationCallOrder[0]).toBeLessThan(Meal.findOneAndUpdate.mock.invocationCallOrder[0]);
+    expect(Meal.findOneAndUpdate.mock.calls[0][0]).toMatchObject({ date: candidate.date, duration: 60 });
   });
-  it('handles rejected push promises without an unhandled rejection', async () => {
-    candidates([{ _id: 'm1' }]);
-    claim({ _id: 'm1', title: 'Meal', participants: [{ fcmTokens: ['a'] }] });
-    push.sendPushNotification.mockRejectedValue(new Error('FCM'));
-    await expect(job.activateMealVideos()).resolves.toMatchObject({ success: false, activated: 1, failed: 1 });
+  it('does not activate when intent cannot be persisted', async () => {
+    Meal.find.mockReturnValue({ select: jest.fn().mockResolvedValue([{ _id: 'meal' }]) });
+    notifications.queueActivationEvent.mockRejectedValue(new Error('db'));
+    await expect(job.activateMealVideos()).resolves.toMatchObject({ success: false });
+    expect(Meal.findOneAndUpdate).not.toHaveBeenCalled();
+  });
+  it('surfaces retry or delivery failures', async () => {
+    notifications.processVideoNotificationEvents.mockResolvedValue({ success: false, failed: 0, retry: 1 });
+    await expect(job.activateMealVideos()).resolves.toMatchObject({ success: false });
   });
 });
