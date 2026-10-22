@@ -1,0 +1,16 @@
+/* Opt-in palette: compose this class on the page being migrated. */
+.palette {
+  --tt-background: #FAF7F2;
+  --tt-surface: #FFFFFF;
+  --tt-primary: #B54735;
+  --tt-primary-hover: #933829;
+  --tt-on-primary: #FFFFFF;
+  --tt-accent: #245C4A;
+  --tt-on-accent: #FFFFFF;
+  --tt-text: #242824;
+  --tt-text-muted: #5C625C;
+  --tt-border: #DDD5CA;
+  --tt-focus: #245C4A;
+  --tt-focus-on-dark: #FFFFFF;
+  --tt-shadow: 0 8px 25px rgba(36, 40, 36, 0.08);
+}
