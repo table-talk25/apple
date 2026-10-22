@@ -1,426 +1,144 @@
-// File: BACKEND/services/pushNotificationService.js (VERSIONE AGGIORNATA)
-
-const path = require('path');
-const fs = require('fs');
-const admin = require('firebase-admin');
+const admin = require('../bootstrap/firebaseAdmin');
 const notificationPreferencesService = require('./notificationPreferencesService');
 
-/**
- * Inizializza Firebase Admin se non è già inizializzato
- * Nota: Firebase viene già inizializzato in server.js, quindi questo serve
- * solo come fallback se il servizio viene usato indipendentemente
- */
-const initializeFirebase = () => {
-  if (!admin.apps.length) {
-    try {
-      const serviceAccountPath = path.join(__dirname, '..', 'firebase-service-account.json');
-      
-      if (fs.existsSync(serviceAccountPath)) {
-        try {
-          // Usa readFileSync invece di require per evitare errori
-          const fileContent = fs.readFileSync(serviceAccountPath, 'utf8');
-          const serviceAccount = JSON.parse(fileContent);
-      admin.initializeApp({
-        credential: admin.credential.cert(serviceAccount),
-        projectId: process.env.FIREBASE_PROJECT_ID || 'tabletalk-social'
-      });
-      console.log('✅ Firebase Admin inizializzato con successo');
-        } catch (parseError) {
-          console.error('❌ Errore nel parsing del file Firebase:', parseError.message);
-          // Continua con modalità limitata
-          admin.initializeApp({
-            projectId: process.env.FIREBASE_PROJECT_ID || 'tabletalk-social'
-          });
-          console.log('✅ Firebase Admin inizializzato in modalità limitata (errore parsing)');
-        }
-      } else {
-        // File non trovato - Firebase sarà inizializzato in modalità limitata in server.js
-        console.log('⚠️  File firebase-service-account.json non trovato - Firebase verrà inizializzato in server.js');
-        // Inizializza in modalità limitata per evitare errori
-        admin.initializeApp({
-          projectId: process.env.FIREBASE_PROJECT_ID || 'tabletalk-social'
-        });
-        console.log('✅ Firebase Admin inizializzato in modalità limitata (senza credenziali)');
-      }
-    } catch (error) {
-      console.error('❌ Errore nell\'inizializzazione Firebase Admin:', error);
-      // Non lanciare errore - Firebase potrebbe essere già inizializzato in server.js
-      // o funzionare in modalità limitata
-      console.log('⚠️  Firebase Admin non può essere inizializzato qui - potrebbe essere già inizializzato in server.js');
-    }
-  }
-};
+// Bootstrap is shared with server.js; importing this service does not create a second app.
+const initializeFirebase = () => {};
 
-/**
- * Invia notifiche push a un elenco di token di dispositivo tramite FCM.
- * @param {Array<string>} tokens - Array di token di registrazione FCM.
- * @param {string} title - Il titolo della notifica.
- * @param {string} body - Il corpo del messaggio della notifica.
- * @param {object} [data={}] - Dati aggiuntivi da inviare nel payload (es. per il deep linking).
- * @param {string} [type='general'] - Tipo di notifica per gestire azioni specifiche.
- */
+const toStringData = (data) => Object.fromEntries(
+  Object.entries(data).filter(([, value]) => value !== undefined && value !== null)
+    .map(([key, value]) => [key, typeof value === 'string' ? value :
+      (typeof value === 'object' ? JSON.stringify(value) : String(value))])
+);
+
 const sendPushNotification = async (tokens, title, body, data = {}, type = 'general') => {
-  try {
-    // Inizializza Firebase se necessario
-    initializeFirebase();
-    
-    if (!tokens || tokens.length === 0) {
-      console.log('[Push Notification] Nessun token a cui inviare');
-      return;
-    }
-
-    // Rimuovi eventuali token duplicati per efficienza
-    const uniqueTokens = [...new Set(tokens)];
-
-    // Prepara i dati per il deep linking
-    const notificationData = {
-      type: type,
-      timestamp: Date.now().toString(),
-      ...data
-    };
-
-    // Prepara configurazione per notifiche interattive
-    const isInteractive = data.actions && Array.isArray(data.actions) && data.actions.length > 0;
-    const deepLink = data.deepLink || null;
-    const action = data.action || null;
-
-    const message = {
+  if (!tokens || tokens.length === 0) return;
+  if (!Array.isArray(tokens)) throw new TypeError('FCM tokens must be an array');
+  const uniqueTokens = [...new Set(tokens.filter((token) => typeof token === 'string' && token.trim()))];
+  if (uniqueTokens.length === 0) return;
+  const interactive = Array.isArray(data.actions) && data.actions.length > 0;
+  const message = {
+    notification: { title, body },
+    data: toStringData({ type, timestamp: Date.now().toString(), ...data }),
+    android: {
+      priority: 'high',
       notification: {
-        title,
-        body,
+        channelId: interactive ? 'tabletalk-interactive' : 'tabletalk-general',
+        icon: 'ic_stat_icon_config_sample',
+        color: data.color || '#488AFF',
+        sound: 'default',
+        clickAction: 'FLUTTER_NOTIFICATION_CLICK',
       },
-      tokens: uniqueTokens,
-      data: notificationData,
-      android: {
-        priority: 'high',
-        notification: {
-          channel_id: isInteractive ? 'tabletalk-interactive' : 'tabletalk-general',
-          icon: 'ic_stat_icon_config_sample',
-          color: data.color || '#488AFF',
-          sound: 'default',
-          click_action: 'FLUTTER_NOTIFICATION_CLICK',
-          // Configurazione per notifiche interattive
-          ...(isInteractive && {
-            actions: data.actions.map(action => ({
-              title: action.title,
-              icon: action.icon,
-              action: action.action
-            })),
-            intent_filter: deepLink ? {
-              action: 'VIEW',
-              data: {
-                scheme: 'tabletalk',
-                host: 'app',
-                path: deepLink
-              }
-            } : undefined
-          })
-        }
-      },
-      apns: {
-        payload: {
-          aps: {
-            'content-available': 1,
-            sound: 'default',
-            badge: 1,
-            // Configurazione per notifiche interattive
-            ...(isInteractive && {
-              category: 'tabletalk-interactive',
-              'mutable-content': 1,
-              'thread-id': type
-            })
-          },
-          // Azioni personalizzate per iOS
-          ...(isInteractive && {
-            actions: data.actions.map(action => ({
-              identifier: action.action,
-              title: action.title,
-              icon: action.icon
-            }))
-          })
+    },
+    apns: {
+      payload: {
+        aps: {
+          contentAvailable: true, sound: 'default', badge: 1,
+          ...(interactive ? { category: 'tabletalk-interactive', mutableContent: true, threadId: type } : {}),
         },
-        fcm_options: {
-          image: process.env.APP_LOGO_URL || 'https://tabletalk.app/logo.png'
-        }
+        ...(interactive ? { actions: data.actions.map((action) => ({
+          identifier: action.action, title: action.title, icon: action.icon,
+        })) } : {}),
       },
-      webpush: {
-        notification: {
-                  icon: process.env.APP_LOGO_URL || 'https://tabletalk.app/logo.png',
+      fcmOptions: { imageUrl: process.env.APP_LOGO_URL || 'https://tabletalk.app/logo.png' },
+    },
+    webpush: {
+      notification: {
+        icon: process.env.APP_LOGO_URL || 'https://tabletalk.app/logo.png',
         badge: process.env.APP_BADGE_URL || 'https://tabletalk.app/badge.png',
-          // Configurazione per notifiche interattive
-          ...(isInteractive && {
-            requireInteraction: true,
-            tag: `tabletalk-${type}`,
-            actions: data.actions.map(action => ({
-              action: action.action,
-              title: action.title,
-              icon: action.icon
-            })),
-            data: {
-              deepLink: deepLink,
-              action: action,
-              type: type
-            }
-          })
-        }
-      }
-    };
-
-    console.log(`[Push Notification] Invio notifica "${type}" a ${uniqueTokens.length} dispositivi${isInteractive ? ' (INTERATTIVA)' : ''}`);
-    
-    const response = await admin.messaging().sendMulticast(message);
-    
-    console.log(`✅ [Push Notification] Inviate con successo: ${response.successCount}/${uniqueTokens.length}${isInteractive ? ' - Notifica interattiva con ${data.actions.length} azioni' : ''}`);
-    
-    if (response.failureCount > 0) {
-      console.log(`⚠️ [Push Notification] Invii falliti: ${response.failureCount}`);
-      
-      // Log dei token falliti per debug
-      response.responses.forEach((resp, idx) => {
-        if (!resp.success) {
-          console.error(`❌ Token fallito ${idx}:`, resp.error);
-        }
-      });
+        ...(interactive ? {
+          requireInteraction: true, tag: `tabletalk-${type}`,
+          actions: data.actions.map((action) => ({ action: action.action, title: action.title, icon: action.icon })),
+          data: { deepLink: data.deepLink || null, action: data.action || null, type },
+        } : {}),
+      },
+    },
+  };
+  try {
+    const result = { responses: [], successCount: 0, failureCount: 0 };
+    const messaging = admin.messaging();
+    for (let offset = 0; offset < uniqueTokens.length; offset += 500) {
+      const batch = await messaging.sendEachForMulticast({ ...message, tokens: uniqueTokens.slice(offset, offset + 500) });
+      result.responses.push(...batch.responses);
+      result.successCount += batch.successCount;
+      result.failureCount += batch.failureCount;
     }
-    
-    return response;
-    
+    console.log(`[Push] Esito: ${result.successCount} riuscite, ${result.failureCount} fallite`);
+    return result;
   } catch (error) {
-    console.error('❌ Errore durante l\'invio delle notifiche push:', error);
+    console.error('[Push] Invio fallito (dettagli destinatari omessi)');
     throw error;
   }
 };
 
-/**
- * Invia notifica per nuovo messaggio in chat
- */
-const sendChatNotification = async (tokens, senderName, message, chatId) => {
-  return sendPushNotification(
-    tokens,
-    `Nuovo messaggio da ${senderName}`,
-    message,
-    { chatId, senderName },
-    'new_message'
-  );
-};
+const sendChatNotification = (tokens, senderName, message, chatId) =>
+  sendPushNotification(tokens, `Nuovo messaggio da ${senderName}`, message, { chatId, senderName }, 'new_message');
+const sendInvitationNotification = (tokens, inviterName, mealTitle) =>
+  sendPushNotification(tokens, `Nuovo invito da ${inviterName}`, `Ti ha invitato a: ${mealTitle}`, { inviterName, mealTitle }, 'new_invitation');
+const sendInvitationAcceptedNotification = (tokens, accepterName, mealTitle) =>
+  sendPushNotification(tokens, 'Invito accettato!', `${accepterName} ha accettato l'invito a: ${mealTitle}`, { accepterName, mealTitle }, 'invitation_accepted');
+const sendMealReminderNotification = (tokens, mealTitle, mealTime) =>
+  sendPushNotification(tokens, 'Promemoria pasto', `${mealTitle} tra ${mealTime}`, { mealTitle, mealTime }, 'meal_reminder');
+const sendMealUpdateNotification = (tokens, mealTitle, updateType) =>
+  sendPushNotification(tokens, 'Aggiornamento pasto', `${mealTitle}: ${updateType}`, { mealTitle, updateType }, 'meal_update');
 
-/**
- * Invia notifica per nuovo invito
- */
-const sendInvitationNotification = async (tokens, inviterName, mealTitle) => {
-  return sendPushNotification(
-    tokens,
-    `Nuovo invito da ${inviterName}`,
-    `Ti ha invitato a: ${mealTitle}`,
-    { inviterName, mealTitle },
-    'new_invitation'
-  );
-};
-
-/**
- * Invia notifica per accettazione invito
- */
-const sendInvitationAcceptedNotification = async (tokens, accepterName, mealTitle) => {
-  return sendPushNotification(
-    tokens,
-    `Invito accettato!`,
-    `${accepterName} ha accettato l'invito a: ${mealTitle}`,
-    { accepterName, mealTitle },
-    'invitation_accepted'
-  );
-};
-
-/**
- * Invia notifica per promemoria pasto
- */
-const sendMealReminderNotification = async (tokens, mealTitle, mealTime) => {
-  return sendPushNotification(
-    tokens,
-    `Promemoria pasto`,
-    `${mealTitle} tra ${mealTime}`,
-    { mealTitle, mealTime },
-    'meal_reminder'
-  );
-};
-
-/**
- * Invia notifica per aggiornamento pasto
- */
-const sendMealUpdateNotification = async (tokens, mealTitle, updateType) => {
-  return sendPushNotification(
-    tokens,
-    `Aggiornamento pasto`,
-    `${mealTitle}: ${updateType}`,
-    { mealTitle, updateType },
-    'meal_update'
-  );
-};
-
-/**
- * Verifica se Firebase è configurato correttamente
- */
+// These status helpers report SDK initialization, not verified FCM delivery.
 const isFirebaseConfigured = () => {
-  try {
-    return admin.apps.length > 0;
-  } catch {
-    return false;
-  }
+  try { return admin.apps.length > 0; } catch { return false; }
 };
-
-/**
- * Ottieni informazioni sulla configurazione Firebase
- */
 const getFirebaseStatus = () => {
   try {
-    if (admin.apps.length > 0) {
-      const app = admin.app();
-      return {
-        configured: true,
-        projectId: app.options.projectId,
-        serviceAccount: !!app.options.credential
-      };
-    }
-    return { configured: false };
-  } catch (error) {
-    return { configured: false, error: error.message };
-  }
+    if (!admin.apps.length) return { configured: false };
+    const app = admin.app();
+    return { configured: true, projectId: app.options.projectId, serviceAccount: !!app.options.credential };
+  } catch { return { configured: false, error: 'Firebase status unavailable' }; }
 };
 
-/**
- * Invia notifica push con controllo delle preferenze utente
- * @param {string} userId - ID dell'utente destinatario
- * @param {string} title - Titolo della notifica
- * @param {string} body - Corpo della notifica
- * @param {object} data - Dati aggiuntivi
- * @param {string} type - Tipo di notifica per verificare preferenze
- * @returns {Promise<Object>} Risultato dell'invio
- */
 const sendPushNotificationWithPreferences = async (userId, title, body, data = {}, type = 'general') => {
   try {
-    // Verifica se l'utente può ricevere questo tipo di notifica
     const canReceive = await notificationPreferencesService.canReceiveNotification(userId, type);
-    
-    if (!canReceive) {
-      console.log(`ℹ️ [PushNotification] Utente ${userId} ha disabilitato notifiche di tipo ${type}`);
-      return {
-        success: true,
-        message: 'Notifica non inviata - preferenze utente',
-        skipped: true,
-        userId,
-        type
-      };
-    }
-
-    // Ottieni i token FCM dell'utente
+    if (!canReceive) return { success: true, message: 'Notifica non inviata - preferenze utente', skipped: true, userId, type };
     const User = require('../models/User');
     const user = await User.findById(userId).select('fcmTokens');
-    
     if (!user || !user.fcmTokens || user.fcmTokens.length === 0) {
-      console.log(`ℹ️ [PushNotification] Utente ${userId} non ha token FCM registrati`);
-      return {
-        success: true,
-        message: 'Utente senza token FCM',
-        skipped: true,
-        userId,
-        type
-      };
+      return { success: true, message: 'Utente senza token FCM', skipped: true, userId, type };
     }
-
-    // Invia la notifica
     const result = await sendPushNotification(user.fcmTokens, title, body, data, type);
-    
-    return {
-      success: true,
-      message: 'Notifica inviata con successo',
-      userId,
-      type,
-      tokensCount: user.fcmTokens.length,
-      result
-    };
-
-  } catch (error) {
-    console.error(`❌ [PushNotification] Errore nell'invio notifica con preferenze per utente ${userId}:`, error);
-    return {
-      success: false,
-      message: 'Errore nell\'invio notifica',
-      error: error.message,
-      userId,
-      type
-    };
+    const delivered = !!result && result.successCount > 0;
+    return { success: delivered, message: delivered ? 'Notifica inviata con successo' : 'Nessun invio FCM riuscito', userId, type, tokensCount: user.fcmTokens.length, result };
+  } catch {
+    console.error('[Push] Errore invio con preferenze (dettagli omessi)');
+    return { success: false, message: 'Errore invio notifica', error: 'Invio FCM fallito', userId, type };
   }
 };
 
-/**
- * Invia notifiche multiple con controllo delle preferenze
- * @param {Array<Object>} notifications - Array di notifiche da inviare
- * @returns {Promise<Object>} Risultato dell'invio
- */
 const sendMultiplePushNotificationsWithPreferences = async (notifications) => {
   try {
     const results = [];
     let successCount = 0;
     let skippedCount = 0;
     let errorCount = 0;
-
     for (const notification of notifications) {
       const { userId, title, body, data = {}, type = 'general' } = notification;
-      
       try {
         const result = await sendPushNotificationWithPreferences(userId, title, body, data, type);
         results.push(result);
-        
-        if (result.success) {
-          if (result.skipped) {
-            skippedCount++;
-          } else {
-            successCount++;
-          }
-        } else {
-          errorCount++;
-        }
-      } catch (error) {
-        console.error(`❌ [PushNotification] Errore nell'invio notifica per utente ${userId}:`, error);
-        results.push({
-          success: false,
-          message: 'Errore nell\'invio',
-          error: error.message,
-          userId,
-          type
-        });
+        if (!result.success) errorCount++;
+        else if (result.skipped) skippedCount++;
+        else successCount++;
+      } catch {
         errorCount++;
+        results.push({ success: false, message: 'Errore invio', error: 'Invio FCM fallito', userId, type });
       }
     }
-
-    return {
-      success: true,
-      message: `Processamento completato: ${successCount} inviate, ${skippedCount} saltate, ${errorCount} errori`,
-      total: notifications.length,
-      successCount,
-      skippedCount,
-      errorCount,
-      results
-    };
-
-  } catch (error) {
-    console.error('❌ [PushNotification] Errore nell\'invio notifiche multiple:', error);
-    return {
-      success: false,
-      message: 'Errore nell\'invio notifiche multiple',
-      error: error.message
-    };
+    return { success: true, message: `Processamento completato: ${successCount} inviate, ${skippedCount} saltate, ${errorCount} errori`, total: notifications.length, successCount, skippedCount, errorCount, results };
+  } catch {
+    return { success: false, message: 'Errore invio notifiche multiple', error: 'Elaborazione fallita' };
   }
 };
 
-module.exports = { 
-  sendPushNotification,
-  sendChatNotification,
-  sendInvitationNotification,
-  sendInvitationAcceptedNotification,
-  sendMealReminderNotification,
-  sendMealUpdateNotification,
-  sendPushNotificationWithPreferences,
-  sendMultiplePushNotificationsWithPreferences,
-  isFirebaseConfigured,
-  getFirebaseStatus,
-  initializeFirebase
+module.exports = {
+  sendPushNotification, sendChatNotification, sendInvitationNotification,
+  sendInvitationAcceptedNotification, sendMealReminderNotification, sendMealUpdateNotification,
+  sendPushNotificationWithPreferences, sendMultiplePushNotificationsWithPreferences,
+  isFirebaseConfigured, getFirebaseStatus, initializeFirebase,
 };
