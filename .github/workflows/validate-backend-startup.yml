@@ -1,10 +1,10 @@
-name: Validate backend startup 8cb657e
+name: Validate backend startup
 
 on:
   push:
     branches: [fix/backend-startup]
-    paths:
-      - '.github/workflows/validate-backend-startup.yml'
+  pull_request:
+    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -15,10 +15,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - name: Checkout exact commit under review
+      - name: Checkout revision under review
         uses: actions/checkout@v4
         with:
-          ref: 8cb657e62ca957331b17fe9343da7faaa4821d88
           persist-credentials: false
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -26,14 +25,16 @@ jobs:
           node-version: '22'
           cache: npm
           cache-dependency-path: BACKEND/package-lock.json
-      - name: Verify checked-out commit
-        run: test "$(git rev-parse HEAD)" = "8cb657e62ca957331b17fe9343da7faaa4821d88"
+      - name: Record checked-out revision
+        run: git rev-parse HEAD
       - name: Check JavaScript syntax
         run: |
           node --check BACKEND/config/db.js
+          node --check BACKEND/config/validateEnv.js
           node --check BACKEND/bootstrap/startBackend.js
           node --check BACKEND/server.js
           node --check BACKEND/tests/backend-startup.test.js
+          node --check BACKEND/tests/validate-env-logging.test.js
       - name: Install backend dependencies
         working-directory: BACKEND
         run: npm ci --include=dev --no-audit --no-fund
