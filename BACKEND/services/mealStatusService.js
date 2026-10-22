@@ -1,275 +1,82 @@
 const Meal = require('../models/Meal');
+const { calculateMealStatus, isTerminal } = require('../utils/mealLifecycle');
+const FIELDS = '_id title date duration status host participants';
 
-/**
- * 🕐 SERVIZIO STATUS PASTI
- * Gestisce aggiornamenti di status in tempo reale e sincronizzazione
- */
+async function synchronizeSnapshot(meal, now) {
+  const nextStatus = calculateMealStatus(meal, now);
+  if (nextStatus === meal.status) return { changed: false };
+  const changes = { status: nextStatus };
+  if (isTerminal(nextStatus)) changes.videoCallStatus = 'ended';
+  const updatedMeal = await Meal.findOneAndUpdate({
+    _id: meal._id, status: meal.status, date: meal.date, duration: meal.duration,
+    host: meal.host, participants: meal.participants,
+  }, { $set: changes }, { new: true, runValidators: true });
+  if (!updatedMeal) throw new Error('Pasto modificato durante la sincronizzazione; riprovare');
+  return { changed: true, updatedMeal, nextStatus };
+}
 
-/**
- * 🔄 Sincronizza lo status di tutti i pasti attivi
- * @returns {Promise<Object>} Risultato della sincronizzazione
- */
-const syncAllMealStatuses = async () => {
+async function syncAllMealStatuses() {
   try {
-    console.log('🔄 [MealStatusService] Inizio sincronizzazione status pasti...');
-    
-    // Trova tutti i pasti non cancellati
-    const meals = await Meal.find({ 
-      status: { $ne: 'cancelled' } 
-    }).select('_id title date duration status');
-    
-    let updatedCount = 0;
-    let skippedCount = 0;
-    
+    const now = new Date();
+    const meals = await Meal.find({ status: { $in: ['upcoming', 'ongoing'] } }).select(FIELDS);
+    let updated = 0;
+    let skipped = 0;
+    let failed = 0;
     for (const meal of meals) {
       try {
-        // Calcola lo status virtuale
-        const now = new Date();
-        const startTime = meal.date;
-        const endTime = new Date(startTime.getTime() + (meal.duration || 60) * 60 * 1000);
-        
-        let virtualStatus = meal.status;
-        
-        if (now < startTime) {
-          virtualStatus = 'upcoming';
-        } else if (now >= startTime && now < endTime) {
-          virtualStatus = 'ongoing';
-        } else {
-          virtualStatus = 'completed';
-        }
-        
-        // Aggiorna solo se necessario
-        if (virtualStatus !== meal.status) {
-          await Meal.findByIdAndUpdate(meal._id, { 
-            status: virtualStatus,
-            lastStatusUpdate: new Date()
-          });
-          
-          updatedCount++;
-          console.log(`🔄 [MealStatusService] Status aggiornato: ${meal.title} (${meal.status} -> ${virtualStatus})`);
-        } else {
-          skippedCount++;
-        }
-      } catch (error) {
-        console.error(`❌ [MealStatusService] Errore aggiornamento pasto ${meal._id}:`, error);
+        const result = await synchronizeSnapshot(meal, now);
+        if (result.changed) updated++; else skipped++;
+      } catch {
+        failed++;
+        console.error('[MealStatus] Sincronizzazione di un pasto fallita');
       }
     }
-    
-    console.log(`✅ [MealStatusService] Sincronizzazione completata: ${updatedCount} aggiornati, ${skippedCount} saltati`);
-    
-    return {
-      success: true,
-      updated: updatedCount,
-      skipped: skippedCount,
-      total: meals.length
-    };
-    
-  } catch (error) {
-    console.error('❌ [MealStatusService] Errore sincronizzazione generale:', error);
-    return {
-      success: false,
-      error: error.message
-    };
+    return { success: failed === 0, updated, skipped, failed, total: meals.length,
+      ...(failed ? { error: 'Sincronizzazione incompleta' } : {}) };
+  } catch {
+    console.error('[MealStatus] Ricerca pasti da sincronizzare fallita');
+    return { success: false, error: 'Sincronizzazione stati fallita' };
   }
-};
+}
 
-/**
- * 🕐 Sincronizza lo status di un pasto specifico
- * @param {string} mealId - ID del pasto da sincronizzare
- * @returns {Promise<Object>} Risultato della sincronizzazione
- */
-const syncMealStatus = async (mealId) => {
+async function syncMealStatus(mealId) {
   try {
     const meal = await Meal.findById(mealId);
-    if (!meal) {
-      return { success: false, error: 'Pasto non trovato' };
-    }
-    
-    if (meal.status === 'cancelled') {
-      return { success: true, message: 'Pasto cancellato, status non modificabile' };
-    }
-    
-    // Calcola lo status virtuale
-    const now = new Date();
-    const startTime = meal.date;
-    const endTime = new Date(startTime.getTime() + (meal.duration || 60) * 60 * 1000);
-    
-    let virtualStatus = meal.status;
-    
-    if (now < startTime) {
-      virtualStatus = 'upcoming';
-    } else if (now >= startTime && now < endTime) {
-      virtualStatus = 'ongoing';
-    } else {
-      virtualStatus = 'completed';
-    }
-    
-    // Aggiorna solo se necessario
-    if (virtualStatus !== meal.status) {
-      const updatedMeal = await Meal.findByIdAndUpdate(mealId, { 
-        status: virtualStatus,
-        lastStatusUpdate: new Date()
-      }, { new: true });
-      
-      console.log(`🔄 [MealStatusService] Status pasto ${meal.title} aggiornato: ${meal.status} -> ${virtualStatus}`);
-      
-      return {
-        success: true,
-        mealId: meal._id,
-        oldStatus: meal.status,
-        newStatus: virtualStatus,
-        updatedMeal
-      };
-    } else {
-      return {
-        success: true,
-        message: 'Status già aggiornato',
-        mealId: meal._id,
-        status: meal.status
-      };
-    }
-    
-  } catch (error) {
-    console.error(`❌ [MealStatusService] Errore sincronizzazione pasto ${mealId}:`, error);
-    return {
-      success: false,
-      error: error.message
-    };
+    if (!meal) return { success: false, error: 'Pasto non trovato' };
+    const result = await synchronizeSnapshot(meal, new Date());
+    if (!result.changed) return { success: true, message: 'Status invariato', mealId: meal._id, status: meal.status };
+    return { success: true, mealId: meal._id, oldStatus: meal.status, newStatus: result.nextStatus, updatedMeal: result.updatedMeal };
+  } catch {
+    return { success: false, error: 'Sincronizzazione pasto fallita; riprovare' };
   }
-};
+}
 
-/**
- * 🕐 Ottieni pasti che necessitano aggiornamento status
- * @returns {Promise<Array>} Array di pasti da aggiornare
- */
-const getMealsNeedingStatusUpdate = async () => {
+async function getMealsNeedingStatusUpdate() {
+  const now = new Date();
+  // Let the caller observe database failures instead of returning a false empty result.
+  return Meal.find({ status: { $in: ['upcoming', 'ongoing'] }, $or: [
+    { status: 'upcoming', date: { $lte: now } },
+    { $expr: { $lte: [
+      { $add: ['$date', { $multiply: [{ $ifNull: ['$duration', 60] }, 60000] }] }, now,
+    ] } },
+  ] }).select(FIELDS);
+}
+
+async function getMealStatusStats() {
   try {
     const now = new Date();
-    
-    // Trova pasti che potrebbero necessitare aggiornamento
-    const meals = await Meal.find({
-      status: { $ne: 'cancelled' },
-      $or: [
-        // Pasti che dovrebbero essere 'ongoing'
-        {
-          status: 'upcoming',
-          date: { $lte: now }
-        },
-        // Pasti che dovrebbero essere 'completed'
-        {
-          status: { $in: ['upcoming', 'ongoing'] },
-          $expr: {
-            $lte: [
-              { $add: ['$date', { $multiply: ['$duration', 60000] }] },
-              now
-            ]
-          }
-        }
-      ]
-    }).select('_id title date duration status');
-    
-    return meals;
-    
-  } catch (error) {
-    console.error('❌ [MealStatusService] Errore ricerca pasti da aggiornare:', error);
-    return [];
-  }
-};
+    const statusStats = await Meal.aggregate([{ $group: { _id: '$status', count: { $sum: 1 } } }]);
+    const meals = await Meal.find({}).select(FIELDS);
+    const virtual = { upcoming: 0, ongoing: 0, completed: 0, cancelled: 0 };
+    for (const meal of meals) virtual[calculateMealStatus(meal, now)]++;
+    return { success: true, stored: Object.fromEntries(statusStats.map((item) => [item._id, item.count])), virtual, timestamp: now };
+  } catch { return { success: false, error: 'Calcolo statistiche fallito' }; }
+}
 
-/**
- * 🕐 Calcola statistiche status pasti
- * @returns {Promise<Object>} Statistiche sui status
- */
-const getMealStatusStats = async () => {
-  try {
-    const now = new Date();
-    
-    // Aggregazione per status
-    const statusStats = await Meal.aggregate([
-      {
-        $group: {
-          _id: '$status',
-          count: { $sum: 1 }
-        }
-      }
-    ]);
-    
-    // Calcola status virtuali per statistiche precise
-    const allMeals = await Meal.find({ status: { $ne: 'cancelled' } })
-      .select('date duration status');
-    
-    let virtualUpcoming = 0;
-    let virtualOngoing = 0;
-    let virtualCompleted = 0;
-    
-    allMeals.forEach(meal => {
-      const startTime = meal.date;
-      const endTime = new Date(startTime.getTime() + (meal.duration || 60) * 60 * 1000);
-      
-      if (now < startTime) {
-        virtualUpcoming++;
-      } else if (now >= startTime && now < endTime) {
-        virtualOngoing++;
-      } else {
-        virtualCompleted++;
-      }
-    });
-    
-    return {
-      success: true,
-      stored: statusStats.reduce((acc, stat) => {
-        acc[stat._id] = stat.count;
-        return acc;
-      }, {}),
-      virtual: {
-        upcoming: virtualUpcoming,
-        ongoing: virtualOngoing,
-        completed: virtualCompleted
-      },
-      timestamp: now
-    };
-    
-  } catch (error) {
-    console.error('❌ [MealStatusService] Errore calcolo statistiche:', error);
-    return {
-      success: false,
-      error: error.message
-    };
-  }
-};
+async function initializeStatusService() {
+  const initialSync = await syncAllMealStatuses();
+  if (!initialSync.success) return { success: false, error: initialSync.error || 'Sincronizzazione iniziale fallita', initialSync };
+  return { success: true, message: 'Servizio status pasti inizializzato', initialSync };
+}
 
-/**
- * 🕐 Inizializza il servizio di status
- * @returns {Promise<Object>} Risultato inizializzazione
- */
-const initializeStatusService = async () => {
-  try {
-    console.log('🚀 [MealStatusService] Inizializzazione servizio status pasti...');
-    
-    // Prima sincronizzazione
-    const initialSync = await syncAllMealStatuses();
-    
-    console.log('✅ [MealStatusService] Servizio inizializzato con successo');
-    
-    return {
-      success: true,
-      message: 'Servizio status pasti inizializzato',
-      initialSync
-    };
-    
-  } catch (error) {
-    console.error('❌ [MealStatusService] Errore inizializzazione:', error);
-    return {
-      success: false,
-      error: error.message
-    };
-  }
-};
-
-module.exports = {
-  syncAllMealStatuses,
-  syncMealStatus,
-  getMealsNeedingStatusUpdate,
-  getMealStatusStats,
-  initializeStatusService
-};
+module.exports = { syncAllMealStatuses, syncMealStatus, getMealsNeedingStatusUpdate, getMealStatusStats, initializeStatusService };

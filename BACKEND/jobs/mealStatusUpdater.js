@@ -1,31 +1,15 @@
 const cron = require('node-cron');
 const Meal = require('../models/Meal');
+const mealStatusService = require('../services/mealStatusService');
 
 let statusTask;
 let reminderTask;
 
 async function updateMealStatuses() {
-  const now = new Date();
   try {
-    await Meal.updateMany(
-      { status: 'upcoming', date: { $lte: now } },
-      { $set: { status: 'ongoing' } }
-    );
-    const meals = await Meal.find({ status: 'ongoing' });
-    let failed = 0;
-    for (const meal of meals) {
-      try {
-        const end = new Date(meal.date.getTime() + meal.duration * 60000);
-        if (end <= now) {
-          meal.status = meal.participants.length <= 1 ? 'cancelled' : 'completed';
-          await meal.save();
-        }
-      } catch {
-        failed++;
-        console.error('[MealJobs] Aggiornamento di un pasto fallito');
-      }
-    }
-    return { success: failed === 0, failed };
+    const result = await mealStatusService.syncAllMealStatuses();
+    if (!result.success) console.error('[MealJobs] Sincronizzazione stati incompleta');
+    return result;
   } catch {
     console.error('[MealJobs] Aggiornamento stati fallito');
     return { success: false };
@@ -83,18 +67,13 @@ function stop() {
   statusTask = undefined;
   reminderTask = undefined;
 }
-
 function startMealStatusUpdater() {
   if (statusTask && reminderTask) return;
   try {
     statusTask = cron.schedule('* * * * *', updateMealStatuses, { noOverlap: true, name: 'meal-status-updater' });
     reminderTask = cron.schedule('*/5 * * * *', sendMealReminders, { noOverlap: true, name: 'meal-email-reminders' });
-  } catch (error) {
-    stop();
-    throw error;
-  }
+  } catch (error) { stop(); throw error; }
 }
-
 startMealStatusUpdater.stop = stop;
 startMealStatusUpdater.updateMealStatuses = updateMealStatuses;
 startMealStatusUpdater.sendMealReminders = sendMealReminders;
