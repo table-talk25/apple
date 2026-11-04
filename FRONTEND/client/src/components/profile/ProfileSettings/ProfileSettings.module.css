@@ -11,12 +11,12 @@
     margin-top: 0;
     margin-bottom: 1.5rem;
     font-size: 1.4rem;
-    color: #333;
+    color: var(--tt-text);
 }
 
 .section {
     padding: 1.5rem 0;
-    border-bottom: 1px solid #f0f0f0;
+    border-bottom: 1px solid var(--tt-border);
 }
 .section:last-of-type {
     border-bottom: none;
@@ -41,7 +41,7 @@
 }
 .settingItem p {
     margin: 0;
-    color: #4a5568;
+    color: var(--tt-text-muted);
 }
 
 .actionButton {
@@ -49,8 +49,8 @@
     padding: 0.75rem;
     margin-top: 0.75rem;
     border-radius: 8px;
-    border: 1px solid #e2e8f0;
-    background-color: #f7fafc;
+    border: 1px solid var(--tt-border);
+    background-color: var(--tt-background);
     font-weight: 600;
     cursor: pointer;
     transition: all 0.2s;
@@ -60,12 +60,12 @@
     gap: 0.5rem;
 }
 .actionButton:hover {
-    background-color: #e2e8f0;
+    background-color: var(--tt-border);
     border-color: #cbd5e0;
 }
 
 .deleteBtn {
-    background-color: #fff5f5;
+    background-color: var(--tt-background);
     color: #c53030;
     border-color: #fed7d7;
 }
@@ -73,21 +73,21 @@
 
 .logoutBtn {
     background-color: #ebf4ff;
-    color: #3182ce;
+    color: var(--tt-accent);
     border-color: #bee3f8;
 }
 .logoutBtn:hover { background-color: #bee3f8; }
 
 .infoLink {
     font-size: 0.9rem;
-    color: #718096;
+    color: var(--tt-text-muted);
     margin-top: 1rem;
     display: flex;
     align-items: center;
     gap: 0.5rem;
 }
 .infoLink a {
-    color: #3182ce;
+    color: var(--tt-accent);
     text-decoration: none;
     font-weight: 600;
 }

@@ -26,7 +26,7 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  color: #333;
+  color: var(--tt-text);
   font-weight: 600;
 }
 
@@ -44,12 +44,12 @@
 }
 
 .btnEdit {
-  background-color: #f0f0f0;
-  color: #333;
+  background-color: var(--tt-border);
+  color: var(--tt-text);
 }
 
 .btnEdit:hover {
-  background-color: #e0e0e0;
+  background-color: var(--tt-border);
   transform: translateY(-1px);
 }
 

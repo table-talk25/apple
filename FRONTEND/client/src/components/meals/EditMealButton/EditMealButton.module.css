@@ -5,9 +5,9 @@
     text-align: center;
     width: 100%;
     padding: 0.75rem 1rem;
-    border: 1px solid #6c757d;
+    border: 1px solid var(--tt-text-muted);
     background-color: white;
-    color: #343a40;
+    color: var(--tt-text);
     border-radius: 8px;
     font-weight: 600;
     cursor: pointer;
@@ -16,6 +16,6 @@
   }
   
   .editButton:hover {
-    background-color: #f8f9fa;
-    border-color: #343a40;
+    background-color: var(--tt-background);
+    border-color: var(--tt-text);
   }

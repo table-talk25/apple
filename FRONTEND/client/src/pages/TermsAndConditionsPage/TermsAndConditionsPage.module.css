@@ -6,7 +6,7 @@
   border-radius: 8px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
   line-height: 1.7;
-  color: #333;
+  color: var(--tt-text);
 }
 
 .topBar {
@@ -15,20 +15,20 @@
 }
 
 .backButton {
-  background-color: #f8f9fa;
-  border: 1px solid #dee2e6;
+  background-color: var(--tt-background);
+  border: 1px solid var(--tt-border);
   border-radius: 5px;
   padding: 8px 16px;
   font-size: 0.9em;
   font-weight: bold;
-  color: #495057;
+  color: var(--tt-text-muted);
   cursor: pointer;
   transition: background-color 0.2s;
   margin-bottom: 10px;
 }
 
 .backButton:hover {
-  background-color: #e9ecef;
+  background-color: var(--tt-border);
 }
 
 .title { font-size: 1.75rem; }

@@ -8,12 +8,12 @@
   gap: 0.5rem;
   font-size: 1.2rem;
   font-weight: 600;
-  color: #495057;
+  color: var(--tt-text-muted);
   margin-bottom: 1rem;
 }
 
 .sectionTitle svg {
-  color: #007bff;
+  color: var(--tt-primary);
 }
 
 .languagesList {
@@ -27,8 +27,8 @@
   align-items: center;
   gap: 0.5rem;
   padding: 0.5rem 0.75rem;
-  background: #e3f2fd;
-  border: 1px solid #bbdefb;
+  background: color-mix(in srgb, var(--tt-accent) 10%, #FFFFFF);
+  border: 1px solid color-mix(in srgb, var(--tt-accent) 22%, #FFFFFF);
   border-radius: 20px;
   font-size: 0.9rem;
   color: #1976d2;
@@ -40,11 +40,11 @@
 }
 
 .languageName {
-  color: #1565c0;
+  color: var(--tt-accent);
 }
 
 .noLanguages {
-  color: #6c757d;
+  color: var(--tt-text-muted);
   font-style: italic;
   margin: 0;
 }
@@ -81,7 +81,7 @@
 
 .addButton {
   padding: 0.5rem 1rem;
-  background: #007bff;
+  background: var(--tt-primary);
   color: white;
   border: none;
   border-radius: 6px;
@@ -95,7 +95,7 @@
 }
 
 .addButton:disabled {
-  background: #6c757d;
+  background: var(--tt-text-muted);
   cursor: not-allowed;
 }
 
@@ -104,7 +104,7 @@
   top: 100%;
   left: 0;
   background: white;
-  border: 1px solid #ddd;
+  border: 1px solid var(--tt-border);
   border-radius: 6px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   z-index: 1000;
@@ -129,19 +129,19 @@
 }
 
 .languageOption:hover {
-  background: #f8f9fa;
+  background: var(--tt-background);
 }
 
 .languageOption .languageCode {
   font-weight: 600;
-  color: #007bff;
+  color: var(--tt-primary);
   font-size: 0.8rem;
   min-width: 25px;
 }
 
 .languageOption .languageName {
   flex: 1;
-  color: #495057;
+  color: var(--tt-text-muted);
 }
 
 .addIcon {
@@ -150,7 +150,7 @@
 }
 
 .helpText {
-  color: #6c757d;
+  color: var(--tt-text-muted);
   font-size: 0.9rem;
   margin: 0.5rem 0 0 0;
   font-style: italic;
@@ -223,7 +223,7 @@
   background: none;
   border: none;
   cursor: pointer;
-  color: #007bff; /* Colore blu come le icone */
+  color: var(--tt-primary); /* Colore blu come le icone */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -233,7 +233,7 @@
 }
 
 .editIconBtn:hover {
-  background-color: #e3f2fd; /* Sfondo leggero all'hover */
+  background-color: color-mix(in srgb, var(--tt-accent) 10%, #FFFFFF); /* Sfondo leggero all'hover */
 }
 
 .editContainer {

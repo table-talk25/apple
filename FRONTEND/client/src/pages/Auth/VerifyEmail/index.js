@@ -130,7 +130,7 @@ const styles = {
     alignItems: 'center',
     justifyContent: 'center',
     padding: '24px',
-    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+    background: 'linear-gradient(135deg, var(--tt-accent) 0%, color-mix(in srgb, var(--tt-accent) 80%, var(--tt-text)) 100%)',
   },
   card: {
     background: '#fff',
@@ -150,7 +150,7 @@ const styles = {
     marginTop: '16px',
     padding: '10px 22px',
     borderRadius: '8px',
-    background: '#667eea',
+    background: 'var(--tt-accent)',
     color: '#fff',
     textDecoration: 'none',
     fontWeight: 600,

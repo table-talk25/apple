@@ -10,7 +10,7 @@
     display: flex;
     flex-direction: column;
     min-height: 100vh;
-    background-color: #f8f9fa; /* Un colore di sfondo neutro per tutta l'app */
+    background-color: var(--tt-background); /* Un colore di sfondo neutro per tutta l'app */
   }
   
   /* mainContent gestisce lo spazio per la navbar e il padding verticale */

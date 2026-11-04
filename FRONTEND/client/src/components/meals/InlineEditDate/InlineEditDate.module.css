@@ -9,7 +9,7 @@
 }
 
 .dateIcon {
-  color: #007bff;
+  color: var(--tt-primary);
   font-size: 1.2rem;
   flex-shrink: 0;
 }
@@ -23,24 +23,24 @@
 
 .dateValue {
   font-weight: 500;
-  color: #333;
+  color: var(--tt-text);
   font-size: 1rem;
 }
 
 .timeValue {
-  color: #666;
+  color: var(--tt-text-muted);
   font-size: 0.9rem;
 }
 
 .editButton {
   padding: 4px 8px;
-  color: #6c757d;
+  color: var(--tt-text-muted);
   transition: color 0.2s ease;
   flex-shrink: 0;
 }
 
 .editButton:hover {
-  color: #007bff;
+  color: var(--tt-primary);
   text-decoration: none;
 }
 
@@ -64,7 +64,7 @@
 .inputLabel {
   font-size: 0.9rem;
   font-weight: 500;
-  color: #555;
+  color: var(--tt-text-muted);
   margin: 0;
   display: flex;
   align-items: center;
@@ -73,7 +73,7 @@
 
 .dateInput,
 .timeInput {
-  border: 2px solid #007bff;
+  border: 2px solid var(--tt-primary);
   border-radius: 6px;
   padding: 8px 12px;
   font-size: 1rem;

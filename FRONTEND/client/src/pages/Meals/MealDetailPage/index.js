@@ -417,7 +417,7 @@ const MealDetailPage = () => {
                         }}
                         style={{ cursor: hostId ? 'pointer' : 'default' }}
                       >
-                        <img src={getHostAvatarUrl(meal.host?.profileImage)} className={styles.miniAvatar} style={{ border: '2px solid #ff6b6b' }} alt="Host" />
+                        <img src={getHostAvatarUrl(meal.host?.profileImage)} className={styles.miniAvatar} style={{ border: '2px solid var(--tt-primary)' }} alt="Host" />
                       </div>
                     );
                   })()}

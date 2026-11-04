@@ -51,8 +51,8 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-  color: #6c757d;
+  background: linear-gradient(135deg, var(--tt-background) 0%, var(--tt-border) 100%);
+  color: var(--tt-text-muted);
   padding: 1rem;
   text-align: center;
   transition: all 0.3s ease;
@@ -84,16 +84,16 @@
 .upload-requirements {
   margin-top: 1rem;
   padding: 1rem;
-  background: #f8f9fa;
+  background: var(--tt-background);
   border-radius: 12px;
   font-size: 0.75rem;
-  color: #6c757d;
+  color: var(--tt-text-muted);
 }
 
 .upload-requirements p {
   font-weight: 600;
   margin: 0 0 0.5rem 0;
-  color: #495057;
+  color: var(--tt-text-muted);
 }
 
 .upload-requirements ul {

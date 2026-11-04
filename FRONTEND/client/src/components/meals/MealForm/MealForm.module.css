@@ -18,20 +18,20 @@
 
 .formLabel {
   font-weight: 600;
-  color: #333;
+  color: var(--tt-text);
   margin-bottom: 0.5rem;
 }
 
 .formControl {
   width: 100%;
   padding: 0.75rem;
-  border: 1px solid #ddd;
+  border: 1px solid var(--tt-border);
   border-radius: 4px;
   transition: border-color 0.2s ease;
 }
 
 .formControl:focus {
-  border-color: #007bff;
+  border-color: var(--tt-primary);
   box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
 }
 
@@ -47,10 +47,10 @@
   flex-shrink: 0;
   width: 40px;
   height: 40px;
-  border: 1px solid #ddd;
+  border: 1px solid var(--tt-border);
   border-radius: 4px;
-  background-color: #f8f9fa;
-  color: #666;
+  background-color: var(--tt-background);
+  color: var(--tt-text-muted);
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -60,9 +60,9 @@
 }
 
 .dateHelperButton:hover {
-  background-color: #e9ecef;
-  border-color: #007bff;
-  color: #007bff;
+  background-color: var(--tt-border);
+  border-color: var(--tt-primary);
+  color: var(--tt-primary);
   transform: scale(1.05);
 }
 
@@ -73,14 +73,14 @@
 .formSelect {
   width: 100%;
   padding: 0.75rem;
-  border: 1px solid #ddd;
+  border: 1px solid var(--tt-border);
   border-radius: 4px;
   background-color: #fff;
   transition: border-color 0.2s ease;
 }
 
 .formSelect:focus {
-  border-color: #007bff;
+  border-color: var(--tt-primary);
   box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
 }
 
@@ -104,7 +104,7 @@
   align-items: center;
   justify-content: center;
   padding: 1.5rem 1rem;
-  border: 2px solid #e9ecef;
+  border: 2px solid var(--tt-border);
   border-radius: 12px;
   background-color: #fff;
   cursor: pointer;
@@ -113,15 +113,15 @@
 }
 
 .typeButton:hover {
-  border-color: #007bff;
-  background-color: #f8f9fa;
+  border-color: var(--tt-primary);
+  background-color: var(--tt-background);
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(0, 123, 255, 0.15);
 }
 
 .typeButton.active {
-  border-color: #007bff;
-  background-color: #e3f2fd;
+  border-color: var(--tt-primary);
+  background-color: color-mix(in srgb, var(--tt-accent) 10%, #FFFFFF);
   box-shadow: 0 4px 12px rgba(0, 123, 255, 0.2);
 }
 
@@ -133,24 +133,24 @@
 .typeText {
   font-size: 1.1rem;
   font-weight: 600;
-  color: #333;
+  color: var(--tt-text);
   margin-bottom: 0.25rem;
 }
 
 .typeDescription {
   font-size: 0.85rem;
-  color: #6c757d;
+  color: var(--tt-text-muted);
   text-align: center;
 }
 
 .typeInfo {
   font-size: 0.9rem;
-  color: #6c757d;
+  color: var(--tt-text-muted);
   font-style: italic;
   padding: 0.5rem;
-  background-color: #f8f9fa;
+  background-color: var(--tt-background);
   border-radius: 6px;
-  border-left: 3px solid #007bff;
+  border-left: 3px solid var(--tt-primary);
 }
 
 /* Stili per i pulsanti di selezione della visibilità */
@@ -167,7 +167,7 @@
   align-items: center;
   justify-content: center;
   padding: 1.2rem 1rem;
-  border: 2px solid #e9ecef;
+  border: 2px solid var(--tt-border);
   border-radius: 12px;
   background-color: #fff;
   cursor: pointer;
@@ -177,7 +177,7 @@
 
 .visibilityButton:hover {
   border-color: #28a745;
-  background-color: #f8f9fa;
+  background-color: var(--tt-background);
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(40, 167, 69, 0.15);
 }
@@ -196,23 +196,23 @@
 .visibilityText {
   font-size: 1rem;
   font-weight: 600;
-  color: #333;
+  color: var(--tt-text);
   margin-bottom: 0.2rem;
 }
 
 .visibilityDescription {
   font-size: 0.8rem;
-  color: #666;
+  color: var(--tt-text-muted);
   text-align: center;
 }
 
 .visibilityInfo {
   font-size: 0.9rem;
-  color: #666;
+  color: var(--tt-text-muted);
   text-align: center;
   margin-top: 0.5rem;
   padding: 0.5rem;
-  background-color: #f8f9fa;
+  background-color: var(--tt-background);
   border-radius: 6px;
   border-left: 3px solid #28a745;
 }
@@ -221,7 +221,7 @@
 .mapContainer {
   width: 100%;
   height: 300px;
-  border: 2px solid #e9ecef;
+  border: 2px solid var(--tt-border);
   border-radius: 8px;
   overflow: hidden;
   margin-bottom: 1rem;
@@ -244,7 +244,7 @@
 .submitButton {
   width: 100%;
   padding: 0.85rem;
-  background-color: #007bff;
+  background-color: var(--tt-primary);
   color: #fff;
   border: none;
   border-radius: 4px;
@@ -273,7 +273,7 @@
   padding: 10px 0;
   background: linear-gradient(180deg, rgba(255,255,255,0.6), #ffffff 55%);
   backdrop-filter: blur(6px);
-  border-top: 1px solid #eee;
+  border-top: 1px solid var(--tt-border);
   z-index: 5;
 }
 

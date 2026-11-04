@@ -7,7 +7,7 @@
   height: 100vh;       /* Fallback */
   height: 100dvh;      /* Dynamic Viewport Height: ignora la barra indirizzi mobile */
   overflow: hidden;    /* Evita lo scroll della pagina intera */
-  background-color: #f5f7fb;
+  background-color: var(--tt-background);
   position: relative;
 }
 
@@ -19,7 +19,7 @@
   justify-content: space-between;
   padding: 10px 15px;
   background: white;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid var(--tt-border);
   z-index: 10;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
@@ -75,7 +75,7 @@
   font-weight: bold;
   font-size: 0.8rem;
   margin-bottom: 0.25rem;
-  color: #333;
+  color: var(--tt-text);
 }
 
 .messageText {
@@ -127,7 +127,7 @@
   flex-shrink: 0; /* Il form non deve sparire */
   background: white;
   padding: 10px;
-  border-top: 1px solid #eee;
+  border-top: 1px solid var(--tt-border);
   display: flex;
   align-items: center;
   gap: 10px; /* IMPORTANTE: Rimuovi position: fixed/absolute se presenti. Ora è un elemento statico alla fine del flex container */
@@ -139,7 +139,7 @@
   flex: 1; /* I tuoi stili input */
   border-radius: 20px;
   padding: 10px 15px;
-  border: 1px solid #ddd;
+  border: 1px solid var(--tt-border);
   outline: none;
   transition: border-color 0.2s;
 }

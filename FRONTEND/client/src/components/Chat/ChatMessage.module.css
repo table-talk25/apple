@@ -14,7 +14,7 @@
 
 .ownMessage {
   align-self: flex-end;
-  background-color: #007bff;
+  background-color: var(--tt-primary);
   color: white;
   border-bottom-right-radius: 4px;
 }
@@ -22,7 +22,7 @@
 .otherMessage {
   align-self: flex-start;
   background-color: #f1f3f4;
-  color: #333;
+  color: var(--tt-text);
   border-bottom-left-radius: 4px;
 }
 
@@ -43,7 +43,7 @@
 .senderName {
   font-size: 0.8em;
   font-weight: 500;
-  color: #666;
+  color: var(--tt-text-muted);
 }
 
 .messageContent {

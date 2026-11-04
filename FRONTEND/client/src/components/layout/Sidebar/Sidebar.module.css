@@ -19,7 +19,7 @@
 }
 
 .sidebar a {
-  color: #333;
+  color: var(--tt-text);
   text-decoration: none;
   font-weight: 500;
   transition: color 0.2s;
