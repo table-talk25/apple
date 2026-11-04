@@ -1,6 +1,8 @@
 .pageContainer {
+  composes: palette from '../../../styles/common/palette.module.css';
+
   min-height: 100vh;
-  background-color: #f5f7fb;
+  background-color: var(--tt-background);
   padding-bottom: 40px;
 }
 
@@ -103,7 +105,7 @@
 }
 
 .card {
-  background: white;
+  background: var(--tt-surface);
   border-radius: 15px;
   padding: 25px;
   box-shadow: 0 4px 20px rgba(0,0,0,0.05);
@@ -121,7 +123,7 @@
   gap: 15px;
   margin-bottom: 25px;
   padding-bottom: 15px;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid var(--tt-border);
 }
 
 .hostAvatar {
@@ -145,14 +147,14 @@
 }
 
 .icon {
-  color: #ff6b6b;
+  color: var(--tt-accent);
   font-size: 1.2rem;
   margin-top: 3px;
 }
 
 .infoItem label {
   font-size: 0.85rem;
-  color: #888;
+  color: var(--tt-text-muted);
   margin-bottom: 2px;
   display: block;
 }
@@ -160,12 +162,12 @@
 .infoItem p {
   font-weight: 600;
   margin: 0;
-  color: #333;
+  color: var(--tt-text);
 }
 
 .description {
   line-height: 1.6;
-  color: #555;
+  color: var(--tt-text-muted);
   white-space: pre-line;
 }
 

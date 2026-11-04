@@ -5,6 +5,8 @@
    ======================================== */
 
    .createMealPage {
+  composes: palette from '../../../styles/common/palette.module.css';
+
     width: 100%;
   }
   
@@ -29,7 +31,7 @@
   }
   
   .createMealTitle {
-    color: #2d3748;
+    color: var(--tt-text);
     font-size: clamp(2rem, 5vw, 2.8rem); /* Più grande */
     font-weight: 700;
     margin-bottom: 1rem;
@@ -40,15 +42,15 @@
     max-width: 650px;
     margin: 0 auto;
     line-height: 1.6;
-    color: #555;
+    color: var(--tt-text-muted);
   }
   
   .createMealContent {
-    background: white;
+    background: var(--tt-surface);
     border-radius: 20px; /* Bordi più arrotondati */
     padding: clamp(2rem, 5vw, 3rem); /* Più padding interno */
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
-    border: 1px solid #e9ecef;
+    border: 1px solid var(--tt-border);
     width: 100%;
   }
   
@@ -59,7 +61,7 @@
   .formSection {
     margin-bottom: 2.5rem;
     padding-bottom: 2rem;
-    border-bottom: 1px solid #e9ecef;
+    border-bottom: 1px solid var(--tt-border);
   }
   .formSection:last-of-type {
     margin-bottom: 0;
@@ -70,7 +72,7 @@
   .formSection h2 {
     font-size: clamp(1.4rem, 3vw, 1.6rem); /* Titoli sezione più grandi */
     font-weight: 600;
-    color: #333;
+    color: var(--tt-text);
     margin-bottom: 2rem;
     display: flex;
     align-items: center;
@@ -92,7 +94,7 @@
     display: block;
     font-size: 1rem;
     font-weight: 600;
-    color: #4a5568;
+    color: var(--tt-text);
     margin-bottom: 0.75rem; /* Più spazio tra etichetta e input */
   }
   
@@ -104,8 +106,8 @@
     font-size: 1.1rem;
     padding: 1rem 1.2rem;
     border-radius: 12px;
-    border: 1px solid #ced4da;
-    background-color: #f8f9fa;
+    border: 1px solid var(--tt-border);
+    background-color: var(--tt-background);
     transition: all 0.2s ease;
     font-family: inherit;
   }
@@ -113,9 +115,9 @@
   .formGroup input:focus,
   .formGroup select:focus,
   .formGroup textarea:focus {
-    background-color: white;
-    border-color: var(--primary-color);
-    box-shadow: 0 0 0 3px rgba(255, 107, 107, 0.15);
+    background-color: var(--tt-surface);
+    border-color: var(--tt-accent);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--tt-accent) 15%, transparent);
     outline: none;
   }
   
@@ -127,7 +129,7 @@
     display: block;
     margin-top: 0.75rem;
     font-size: 0.9rem;
-    color: #6c757d;
+    color: var(--tt-text-muted);
   }
   
   /* Stile per i pulsanti di azione */
@@ -137,7 +139,7 @@
     justify-content: flex-end; 
     margin-top: 2rem; 
     padding-top: 2rem;
-    border-top: 1px solid #e9ecef;
+    border-top: 1px solid var(--tt-border);
     flex-wrap: wrap; 
   }
   .btn { 
@@ -149,9 +151,9 @@
     transition: all 0.2s ease; 
     border: none; 
   }
-  .btnPrimary { background-color: var(--primary-color); color: white; }
-  .btnPrimary:hover:not(:disabled) { background-color: var(--primary-dark); transform: translateY(-2px); }
-  .btnPrimary:disabled { background: #fcc2c2; cursor: not-allowed; }
+  .btnPrimary { background-color: var(--tt-primary); color: var(--tt-on-primary); }
+  .btnPrimary:hover:not(:disabled) { background-color: var(--tt-primary-hover); transform: translateY(-2px); }
+  .btnPrimary:disabled { background: color-mix(in srgb, var(--tt-primary) 30%, var(--tt-surface)); cursor: not-allowed; }
   
   /* ========================================
      MEDIA QUERIES

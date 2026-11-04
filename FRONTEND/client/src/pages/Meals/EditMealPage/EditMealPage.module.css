@@ -1,6 +1,8 @@
 /* File: src/pages/Meals/EditMealPage/EditMealPage.module.css (Versione Ottimizzata) */
 
 .editPage {
+  composes: palette from '../../../styles/common/palette.module.css';
+
   /* --- REGOLE RIMOSSE --- */
   /* padding: 4rem 1rem; (ora gestito dal Layout) */
   /* padding-top: 100px; (ora gestito dal Layout) */
@@ -34,7 +36,7 @@
 .card {
   width: 100%;
   max-width: 700px; /* Larghezza massima del form */
-  background: white;
+  background: var(--tt-surface);
   border: none;
   border-radius: 16px; /* Leggermente più arrotondato per un look moderno */
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
@@ -42,7 +44,7 @@
 
 .title {
   font-weight: 700; /* Più deciso per il titolo */
-  color: #2d3748;
+  color: var(--tt-text);
   font-size: clamp(1.1rem, 4.5vw, 1.6rem);
   margin-bottom: 1rem;
 }

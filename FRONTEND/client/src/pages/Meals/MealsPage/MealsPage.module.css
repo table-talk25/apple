@@ -1,6 +1,8 @@
 .mealsPage {
+  composes: palette from '../../../styles/common/palette.module.css';
+
   min-height: 100vh;
-  background-color: #f5f7fb;
+  background-color: var(--tt-background);
   padding: 0;
   padding-bottom: 80px; /* Spazio per navbar inferiore */
 }
@@ -10,7 +12,7 @@
   align-items: center;
   justify-content: space-between;
   padding: 15px 20px;
-  background: white;
+  background: var(--tt-surface);
   position: sticky;
   top: 0;
   z-index: 100;
@@ -20,13 +22,13 @@
   font-size: 1.2rem;
   font-weight: 700;
   margin: 0;
-  color: #2c3e50;
+  color: var(--tt-text);
 }
 
 .searchWrapper {
   padding: 10px 20px;
-  background: white;
-  border-bottom: 1px solid #f0f0f0;
+  background: var(--tt-surface);
+  border-bottom: 1px solid var(--tt-border);
   position: sticky;
   top: 60px; /* Subito sotto la topbar */
   z-index: 99;
@@ -35,13 +37,13 @@
 .searchContainer {
   display: flex;
   align-items: center;
-  background-color: #f0f2f5;
+  background-color: var(--tt-background);
   border-radius: 25px;
   padding: 10px 15px;
 }
 
 .searchIcon {
-  color: #adb5bd;
+  color: var(--tt-text-muted);
   margin-right: 10px;
 }
 
@@ -51,7 +53,7 @@
   width: 100%;
   outline: none;
   font-size: 0.95rem;
-  color: #495057;
+  color: var(--tt-text);
 }
 
 .content {
@@ -72,13 +74,13 @@
 .sectionTitle {
   font-size: 1.3rem;
   font-weight: 700;
-  color: #343a40;
+  color: var(--tt-text);
   margin: 0;
 }
 
 .sectionCount {
-  background: #e9ecef;
-  color: #6c757d;
+  background: var(--tt-border);
+  color: var(--tt-text-muted);
   font-size: 0.8rem;
   padding: 2px 8px;
   border-radius: 10px;
@@ -94,7 +96,7 @@
 }
 
 .heroCard {
-  background: white;
+  background: var(--tt-surface);
   border-radius: 20px;
   padding: 40px 20px;
   text-align: center;
@@ -107,12 +109,12 @@
   display: inline-block;
   margin-top: 20px;
   padding: 12px 30px;
-  background-color: #ff6b6b;
-  color: white;
+  background-color: var(--tt-primary);
+  color: var(--tt-on-primary);
   border-radius: 30px;
   text-decoration: none;
   font-weight: 600;
-  box-shadow: 0 4px 10px rgba(255, 107, 107, 0.3);
+  box-shadow: 0 4px 10px color-mix(in srgb, var(--tt-primary) 30%, transparent);
   transition: all 0.2s;
 }
 
@@ -123,12 +125,12 @@
   width: 56px;
   height: 56px;
   border-radius: 50%;
-  background-color: #ff6b6b;
-  color: white;
+  background-color: var(--tt-primary);
+  color: var(--tt-on-primary);
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 15px rgba(255, 107, 107, 0.4);
+  box-shadow: 0 4px 15px color-mix(in srgb, var(--tt-primary) 40%, transparent);
   text-decoration: none;
   z-index: 1000;
   transition: transform 0.2s;
@@ -146,10 +148,10 @@
 
 /* Sezione Raccomandata */
 .recommendedSection {
-  background: linear-gradient(to bottom, #fff9f9, #ffffff);
+  background: linear-gradient(to bottom, color-mix(in srgb, var(--tt-primary) 3%, var(--tt-background)), var(--tt-surface));
   padding-top: 15px;
   padding-bottom: 10px;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid var(--tt-border);
   margin-bottom: 20px !important;
 }
 
@@ -158,7 +160,7 @@
   margin-top: -10px;
   margin-bottom: 15px;
   font-size: 0.85rem;
-  color: #888;
+  color: var(--tt-text-muted);
 }
 
 /* Animazione sottile per l'icona magica */
