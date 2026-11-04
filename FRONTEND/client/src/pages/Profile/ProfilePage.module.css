@@ -5,6 +5,8 @@
    ======================================== */
 
 .profilePage {
+  composes: palette from '../../styles/common/palette.module.css';
+
   padding: 12px 16px;
 }
 
@@ -38,7 +40,7 @@
 
 /* Messaggio di benvenuto (Alert) */
 .alertInfo {
-    background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+    background: linear-gradient(135deg, color-mix(in srgb, var(--tt-accent) 10%, #FFFFFF) 0%, color-mix(in srgb, var(--tt-accent) 22%, #FFFFFF) 100%);
     border-radius: 12px;
     padding: 1.5rem; /* Aumentato un po' per dare più aria */
     margin-bottom: 1.5rem;
@@ -57,12 +59,12 @@
 .welcomeMessage strong {
     font-size: 1.3rem; /* Leggermente più grande */
     font-weight: 600;
-    color: #0d47a1;
+    color: var(--tt-accent);
 }
 
 .welcomeMessage p {
     font-size: 1rem;
-    color: #1565c0;
+    color: var(--tt-accent);
     margin: 0; /* Rimuoviamo il margine di default del tag <p> */
     line-height: 1.5; /* Miglioriamo la leggibilità */
 }
@@ -81,7 +83,7 @@
 .profileInterestsCard,
 .profileLanguagesCard,
 .profileSettingsCard {
-  background: #fff;
+  background: var(--tt-surface);
   border-radius: 12px;
   padding: clamp(12px, 2.4vw, 16px);
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.07);
@@ -174,9 +176,10 @@
    ======================================== */
 
 .welcomePage {
+  composes: palette from '../../styles/common/palette.module.css';
   padding: 0;
   min-height: 100vh;
-  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  background: linear-gradient(135deg, var(--tt-background) 0%, color-mix(in srgb, var(--tt-border) 55%, var(--tt-background)) 100%);
   display: flex;
   flex-direction: column;
 }
@@ -185,22 +188,21 @@
   text-align: center;
   margin-bottom: 2rem;
   padding: 2rem 1.5rem 1rem;
-  background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+  background: linear-gradient(135deg, var(--tt-surface) 0%, var(--tt-background) 100%);
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
 }
 
 .welcomePage .title {
   font-size: clamp(1.8rem, 5vw, 2.5rem);
   font-weight: 700;
-  color: #0d47a1;
+  color: var(--tt-accent);
   margin-bottom: 0.75rem;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  line-height: 1.2;
+    line-height: 1.2;
 }
 
 .welcomePage .subtitle {
   font-size: clamp(1rem, 3vw, 1.2rem);
-  color: #1565c0;
+  color: var(--tt-accent);
   line-height: 1.6;
   max-width: 600px;
   margin: 0 auto;
@@ -218,7 +220,7 @@
 }
 
 .benefitCard {
-  background: white;
+  background: var(--tt-surface);
   border-radius: 16px;
   padding: clamp(1.5rem, 4vw, 2rem);
   text-align: center;
@@ -237,7 +239,7 @@
 }
 
 .benefitCard .icon {
-  color: #0d47a1;
+  color: var(--tt-accent);
   margin-bottom: 1rem;
   opacity: 0.9;
 }
@@ -245,14 +247,14 @@
 .benefitCard .cardTitle {
   font-size: clamp(1.2rem, 3.5vw, 1.4rem);
   font-weight: 600;
-  color: #0d47a1;
+  color: var(--tt-accent);
   margin-bottom: 0.75rem;
   line-height: 1.3;
 }
 
 .benefitCard .cardText {
   font-size: clamp(0.9rem, 2.5vw, 1rem);
-  color: #424242;
+  color: var(--tt-text-muted);
   line-height: 1.6;
   margin: 0;
   max-width: 100%;
@@ -269,7 +271,7 @@
   max-width: 1000px;
   margin: 0 auto;
   width: 100%;
-  background: white;
+  background: var(--tt-surface);
   border-radius: 20px;
   padding: 2rem;
   box-shadow: 0 4px 25px rgba(0, 0, 0, 0.08);
