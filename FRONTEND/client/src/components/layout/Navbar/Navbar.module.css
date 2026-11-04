@@ -1,6 +1,8 @@
 /* File: src/components/layout/Navbar/Navbar.module.css */
+/* FE-03: opt-in Convivialita palette tokens on the navbar chrome. */
 
 .navbar {
+  composes: palette from '../../../styles/common/palette.module.css';
   background: rgba(255, 255, 255, 0.85);
   height: 80px;
   display: flex;
@@ -13,8 +15,8 @@
   width: 100%;
   z-index: 1000;
   transition: all 0.3s ease;
-  border-bottom: 1px solid #e2e8f0;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  border-bottom: 1px solid var(--tt-border);
+  box-shadow: 0 2px 4px rgba(36, 40, 36, 0.06);
   -webkit-backdrop-filter: saturate(180%) blur(10px);
   backdrop-filter: saturate(180%) blur(10px);
   padding-top: env(safe-area-inset-top);
@@ -22,7 +24,7 @@
 }
 .navbar.scrolled {
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.12);
-  border-bottom: 2px solid var(--primary-color);
+  border-bottom: 2px solid var(--tt-primary);
 }
 
 .navContainer {
@@ -41,7 +43,7 @@
   gap: 0.5rem;
   font-weight: 700;
   font-size: 1.3rem;
-  color: #333;
+  color: var(--tt-text);
   text-decoration: none;
 }
 
@@ -56,22 +58,26 @@
 }
 
 .navLink {
-  color: #4a5568;
+  color: var(--tt-text-muted);
   text-decoration: none;
   font-weight: 500;
   position: relative;
   padding: 0.5rem 0;
+  transition: color 0.2s ease;
+}
+.navLink:hover {
+  color: var(--tt-primary);
 }
 .navLink::after {
   content: ''; position: absolute; bottom: 0; left: 0;
-  width: 0; height: 2px; background-color: var(--primary-color);
+  width: 0; height: 2px; background-color: var(--tt-primary);
   transition: width 0.3s ease;
 }
 .navLink:hover::after, .navLinkActive::after {
   width: 100%;
 }
 .navLinkActive {
-  color: var(--primary-color);
+  color: var(--tt-primary);
 }
 
 /* Sezione destra con azioni utente e login/register */
@@ -95,11 +101,11 @@
 }
 .profileAvatar {
   width: 42px; height: 42px; border-radius: 50%;
-  object-fit: cover; cursor: pointer; border: 2px solid #eee;
+  object-fit: cover; cursor: pointer; border: 2px solid var(--tt-border);
   transition: border-color 0.2s ease;
 }
 .profileAvatar:hover {
-  border-color: var(--primary-color);
+  border-color: var(--tt-accent);
 }
 
 /* ===================================
@@ -115,14 +121,14 @@
   width: 38px;
   height: 38px;
   border-radius: 50%;
-  color: #4a5568;
+  color: var(--tt-text-muted);
   font-size: 1.4rem;
   transition: background 0.2s ease, color 0.2s ease, transform 0.15s ease;
   position: relative;
 }
 .chatIconButton:hover {
-  background: rgba(102, 126, 234, 0.12);
-  color: #667eea;
+  background: color-mix(in srgb, var(--tt-accent) 12%, transparent);
+  color: var(--tt-accent);
   transform: scale(1.08);
 }
 .chatIconButton:active {
@@ -135,10 +141,10 @@
 }
 
 .kebabButton {
-  background: #f8f9fa;
-  border: 1px solid #e2e8f0;
+  background: var(--tt-background);
+  border: 1px solid var(--tt-border);
   font-size: 1.2rem;
-  color: #4a5568;
+  color: var(--tt-text-muted);
   cursor: pointer;
   padding: 0.5rem;
   border-radius: 50%;
@@ -146,17 +152,17 @@
 }
 
 .kebabButton:hover {
-  background-color: #f7fafc;
+  background: color-mix(in srgb, var(--tt-accent) 8%, var(--tt-background));
 }
 
 .kebabDropdown {
   position: absolute;
   top: 100%;
   right: 0;
-  background: white;
-  border: 1px solid #e2e8f0;
+  background: var(--tt-surface);
+  border: 1px solid var(--tt-border);
   border-radius: 8px;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--tt-shadow);
   min-width: 200px;
   z-index: 1001;
   margin-top: 0.5rem;
@@ -164,7 +170,7 @@
 
 .kebabItem {
   padding: 0.75rem 1rem;
-  border-bottom: 1px solid #f1f5f9;
+  border-bottom: 1px solid var(--tt-border);
 }
 
 .kebabItem:last-child {
@@ -190,7 +196,7 @@
 .kebabButtonMobile {
   background: none;
   border: none;
-  color: #4a5568;
+  color: var(--tt-text-muted);
   cursor: pointer;
   font-size: 1rem;
   padding: 0.75rem 1rem;
@@ -202,11 +208,11 @@
 }
 
 .kebabButtonMobile:hover {
-  background-color: #f7fafc;
+  background: color-mix(in srgb, var(--tt-accent) 8%, transparent);
 }
 
 .kebabDropdownMobile {
-  background: #f8f9fa;
+  background: var(--tt-background);
   border-radius: 8px;
   margin: 0.5rem 0;
   overflow: hidden;
@@ -214,7 +220,7 @@
 
 .kebabDropdownMobile .kebabItem {
   padding: 0.5rem 1rem;
-  border-bottom: 1px solid #e9ecef;
+  border-bottom: 1px solid var(--tt-border);
 }
 
 .kebabDropdownMobile .kebabItem:last-child {
@@ -227,22 +233,22 @@
   gap: 0.75rem;
 }
 .loginButton {
-  background: none; border: 1px solid #667eea;
+  background: none; border: 1px solid var(--tt-accent);
   padding: 0.5rem 1rem; border-radius: 8px; cursor: pointer;
-  text-decoration: none; color: #667eea;
+  text-decoration: none; color: var(--tt-accent);
   transition: all 0.3s ease;
 }
 .loginButton:hover {
-  background-color: #667eea;
-  color: white;
+  background-color: var(--tt-accent);
+  color: var(--tt-on-accent);
 }
 .registerButton {
-  background-color: #667eea; color: white;
+  background-color: var(--tt-primary); color: var(--tt-on-primary);
   padding: 0.5rem 1rem; border-radius: 8px; text-decoration: none;
   transition: all 0.3s ease;
 }
 .registerButton:hover {
-  background-color: #5a67d8;
+  background-color: var(--tt-primary-hover);
   transform: translateY(-1px);
 }
 
@@ -263,9 +269,9 @@
   position: absolute;
   top: calc(80px + env(safe-area-inset-top));
   left: 0;
-  background: #fff; list-style: none; padding: 1rem 0;
-  box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-  border-top: 1px solid #f0f0f0;
+  background: var(--tt-surface); list-style: none; padding: 1rem 0;
+  box-shadow: 0 5px 15px rgba(36, 40, 36, 0.08);
+  border-top: 1px solid var(--tt-border);
   max-height: calc(100vh - calc(80px + env(safe-area-inset-top)));
   overflow-y: auto;
   padding-bottom: calc(1rem + env(safe-area-inset-bottom));
@@ -274,7 +280,7 @@
   padding: 1rem 2rem; width: 100%; text-align: center;
 }
 .logoutButtonMobile {
-  background: var(--primary-color); color: white; border: none;
+  background: var(--tt-primary); color: var(--tt-on-primary); border: none;
   width: 80%; padding: 0.8rem; border-radius: 8px; font-size: 1rem;
   margin-top: 1rem;
 }
@@ -295,4 +301,14 @@
   .rightSection {
     gap: 0.5rem;
   }
+}
+
+/* FE-03: keyboard focus aligned with home focus tokens. */
+.navLink:focus-visible,
+.chatIconButton:focus-visible,
+.kebabButton:focus-visible,
+.loginButton:focus-visible,
+.registerButton:focus-visible {
+  outline: 3px solid var(--tt-focus);
+  outline-offset: 2px;
 }
