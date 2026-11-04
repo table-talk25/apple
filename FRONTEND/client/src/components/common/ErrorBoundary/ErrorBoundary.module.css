@@ -7,7 +7,7 @@
   align-items: center;
   min-height: 100vh;
   padding: 2rem;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, var(--tt-accent) 0%, color-mix(in srgb, var(--tt-accent) 80%, var(--tt-text)) 100%);
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
@@ -51,32 +51,32 @@
 .errorTitle {
   font-size: 2rem;
   font-weight: 700;
-  color: #2d3748;
+  color: var(--tt-text);
   margin-bottom: 1rem;
   line-height: 1.2;
 }
 
 .errorMessage {
   font-size: 1.1rem;
-  color: #4a5568;
+  color: var(--tt-text-muted);
   margin-bottom: 2rem;
   line-height: 1.6;
 }
 
 .errorId {
-  background: #f7fafc;
-  border: 1px solid #e2e8f0;
+  background: var(--tt-background);
+  border: 1px solid var(--tt-border);
   border-radius: 8px;
   padding: 1rem;
   margin-bottom: 2rem;
   font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
   font-size: 0.9rem;
-  color: #4a5568;
+  color: var(--tt-text-muted);
 }
 
 .errorDetails {
-  background: #f7fafc;
-  border: 1px solid #e2e8f0;
+  background: var(--tt-background);
+  border: 1px solid var(--tt-border);
   border-radius: 8px;
   margin-bottom: 2rem;
   text-align: left;
@@ -86,32 +86,32 @@
   padding: 1rem;
   cursor: pointer;
   font-weight: 600;
-  color: #4a5568;
-  border-bottom: 1px solid #e2e8f0;
+  color: var(--tt-text-muted);
+  border-bottom: 1px solid var(--tt-border);
 }
 
 .errorDetails summary:hover {
-  background: #edf2f7;
+  background: var(--tt-border);
 }
 
 .errorStack {
   padding: 1rem;
   font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
   font-size: 0.8rem;
-  color: #2d3748;
+  color: var(--tt-text);
   max-height: 300px;
   overflow-y: auto;
 }
 
 .errorStack h4 {
   margin: 1rem 0 0.5rem 0;
-  color: #4a5568;
+  color: var(--tt-text-muted);
   font-size: 0.9rem;
 }
 
 .errorStack pre {
-  background: #2d3748;
-  color: #e2e8f0;
+  background: var(--tt-text);
+  color: var(--tt-border);
   padding: 0.75rem;
   border-radius: 6px;
   margin: 0.5rem 0 1rem 0;
@@ -145,12 +145,12 @@
 }
 
 .retryButton {
-  background: #4299e1;
+  background: var(--tt-accent);
   color: white;
 }
 
 .retryButton:hover {
-  background: #3182ce;
+  background: var(--tt-accent);
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(66, 153, 225, 0.3);
 }
@@ -178,14 +178,14 @@
 }
 
 .errorFooter {
-  border-top: 1px solid #e2e8f0;
+  border-top: 1px solid var(--tt-border);
   padding-top: 1.5rem;
-  color: #718096;
+  color: var(--tt-text-muted);
   font-size: 0.9rem;
 }
 
 .errorFooter a {
-  color: #4299e1;
+  color: var(--tt-accent);
   text-decoration: none;
   font-weight: 600;
 }

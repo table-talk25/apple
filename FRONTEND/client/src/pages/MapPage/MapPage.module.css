@@ -8,7 +8,7 @@
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  background: #e5e5e5;
+  background: var(--tt-border);
 }
 
 .mapContainer {
@@ -47,7 +47,7 @@
   align-items: center;
   justify-content: center;
   border: none;
-  color: #333;
+  color: var(--tt-text);
 }
 
 /* Contenitore Barra Ricerca (Pillola Bianca) */
@@ -69,7 +69,7 @@
 }
 
 .searchIcon {
-  color: #666;
+  color: var(--tt-text-muted);
   margin-right: 8px;
   font-size: 1.1rem;
 }
@@ -80,18 +80,18 @@
   background: transparent;
   flex: 1;
   font-size: 1rem;
-  color: #333;
+  color: var(--tt-text);
   width: 100%;
 }
 
 .searchInput::placeholder {
-  color: #999;
+  color: var(--tt-text-muted);
   font-size: 0.9rem;
 }
 
 /* Bottone VAI */
 .searchButton {
-  background: #007bff;
+  background: var(--tt-primary);
   color: white;
   border: none;
   border-radius: 20px;
@@ -104,8 +104,8 @@
 }
 
 .searchButton:disabled {
-  background: #e0e0e0;
-  color: #999;
+  background: var(--tt-border);
+  color: var(--tt-text-muted);
 }
 
 .searchButton:active {
@@ -132,7 +132,7 @@
   box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
   border: none !important;
   background: white !important;
-  color: #007bff !important;
+  color: var(--tt-primary) !important;
   font-weight: 600;
   display: flex;
   align-items: center;
@@ -157,7 +157,7 @@
   left: 50%;
   transform: translateX(-50%);
   z-index: 100;
-  background: #333 !important;
+  background: var(--tt-text) !important;
   color: white !important;
   border-radius: 30px !important;
   padding: 10px 24px !important;
@@ -195,7 +195,7 @@
   top: -10px;
   right: -10px;
   background: white;
-  color: #333;
+  color: var(--tt-text);
   border: none;
   width: 30px;
   height: 30px;

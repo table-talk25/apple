@@ -21,7 +21,7 @@
 .toggleBtn {
   background: #f8fafc;
   color: #334155;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--tt-border);
   border-radius: 999px;
   padding: 5px 8px;
   font-weight: 600;
@@ -35,7 +35,7 @@
   grid-template-columns: 1fr;
   row-gap: 6px;
   background: #f8fafc;
-  border: 1px dashed #e2e8f0;
+  border: 1px dashed var(--tt-border);
   padding: 8px 10px;
   border-radius: 10px;
   margin-bottom: 8px;
@@ -89,7 +89,7 @@
 .resetButton {
   display: inline-block;
   background: transparent;
-  color: #64748b;
+  color: var(--tt-text-muted);
   border: none;
   padding: 5px 8px;
   border-radius: 8px;
@@ -97,7 +97,7 @@
   font-size: 0.8rem;
   white-space: nowrap;
 }
-.resetButton:hover { color: #334155; background: #f1f5f9; }
+.resetButton:hover { color: #334155; background: var(--tt-border); }
 
 /* Mobile: impila i controlli header e mostra bene il toggle */
 @media (max-width: 480px) {

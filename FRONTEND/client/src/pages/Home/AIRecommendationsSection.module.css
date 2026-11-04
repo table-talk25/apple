@@ -9,11 +9,11 @@
   border-radius: 16px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
   overflow: hidden;
-  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  background: linear-gradient(135deg, var(--tt-background) 0%, var(--tt-border) 100%);
 }
 
 .header {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, var(--tt-accent) 0%, color-mix(in srgb, var(--tt-accent) 80%, var(--tt-text)) 100%);
   color: white;
   border: none;
   padding: 30px;
@@ -52,7 +52,7 @@
   align-items: center;
   justify-content: center;
   padding: 40px;
-  color: #6c757d;
+  color: var(--tt-text-muted);
   font-size: 1.1rem;
 }
 
@@ -65,13 +65,13 @@
 }
 
 .previewSection h5 {
-  color: #2c3e50;
+  color: var(--tt-text);
   font-weight: 600;
   margin-bottom: 15px;
 }
 
 .previewSection p {
-  color: #6c757d;
+  color: var(--tt-text-muted);
   font-size: 1.1rem;
   margin-bottom: 30px;
   line-height: 1.6;
@@ -127,19 +127,19 @@
 }
 
 .generateButton {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, var(--tt-accent) 0%, color-mix(in srgb, var(--tt-accent) 80%, var(--tt-text)) 100%);
   border: none;
   padding: 15px 30px;
   font-size: 1.1rem;
   font-weight: 600;
   border-radius: 12px;
-  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.3);
+  box-shadow: 0 6px 20px color-mix(in srgb, var(--tt-accent) 30%, transparent);
   transition: all 0.3s ease;
 }
 
 .generateButton:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+  box-shadow: 0 8px 25px color-mix(in srgb, var(--tt-accent) 40%, transparent);
   background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
 }
 
@@ -148,13 +148,13 @@
   font-size: 1.1rem;
   font-weight: 600;
   border-radius: 12px;
-  border: 2px solid #6c757d;
+  border: 2px solid var(--tt-text-muted);
   transition: all 0.3s ease;
 }
 
 .prefsButton:hover {
-  background: #6c757d;
-  border-color: #6c757d;
+  background: var(--tt-text-muted);
+  border-color: var(--tt-text-muted);
   transform: translateY(-2px);
 }
 
@@ -187,7 +187,7 @@
 }
 
 .sectionHeader h5 {
-  color: #2c3e50;
+  color: var(--tt-text);
   font-weight: 600;
   margin: 0;
 }

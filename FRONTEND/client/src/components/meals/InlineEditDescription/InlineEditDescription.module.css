@@ -11,30 +11,30 @@
 
 .descriptionHeader h4 {
   margin: 0;
-  color: #333;
+  color: var(--tt-text);
 }
 
 .editButton {
   padding: 4px 8px;
-  color: #6c757d;
+  color: var(--tt-text-muted);
   transition: color 0.2s ease;
 }
 
 .editButton:hover {
-  color: #007bff;
+  color: var(--tt-primary);
   text-decoration: none;
 }
 
 .description {
   margin: 0;
   line-height: 1.6;
-  color: #555;
+  color: var(--tt-text-muted);
   white-space: pre-wrap;
 }
 
 .noDescription {
   margin: 0;
-  color: #999;
+  color: var(--tt-text-muted);
   font-style: italic;
 }
 
@@ -44,7 +44,7 @@
 
 .editTextarea {
   width: 100%;
-  border: 2px solid #007bff;
+  border: 2px solid var(--tt-primary);
   border-radius: 8px;
   padding: 12px;
   font-size: 1rem;
@@ -80,7 +80,7 @@
 .helpText {
   display: block;
   margin-top: 8px;
-  color: #6c757d;
+  color: var(--tt-text-muted);
   font-size: 0.875rem;
   text-align: center;
 }

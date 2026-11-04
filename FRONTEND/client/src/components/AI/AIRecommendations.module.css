@@ -2,7 +2,7 @@
 
 .container {
   padding: 20px;
-  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  background: linear-gradient(135deg, var(--tt-background) 0%, var(--tt-border) 100%);
   border-radius: 12px;
   margin: 20px 0;
 }
@@ -16,7 +16,7 @@
 
 .header h4 {
   margin: 0;
-  color: #2c3e50;
+  color: var(--tt-text);
   font-weight: 600;
 }
 
@@ -29,7 +29,7 @@
 .loadingContainer {
   text-align: center;
   padding: 40px;
-  color: #6c757d;
+  color: var(--tt-text-muted);
 }
 
 .errorAlert {
@@ -39,11 +39,11 @@
 .emptyState {
   text-align: center;
   padding: 40px;
-  color: #6c757d;
+  color: var(--tt-text-muted);
 }
 
 .emptyState h5 {
-  color: #495057;
+  color: var(--tt-text-muted);
   margin-bottom: 15px;
 }
 
@@ -69,7 +69,7 @@
 }
 
 .cardHeader {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, var(--tt-accent) 0%, color-mix(in srgb, var(--tt-accent) 80%, var(--tt-text)) 100%);
   color: white;
   border: none;
   padding: 12px 16px;
@@ -102,7 +102,7 @@
 }
 
 .mealTitle {
-  color: #2c3e50;
+  color: var(--tt-text);
   font-weight: 600;
   margin-bottom: 15px;
   font-size: 1.1rem;
@@ -117,7 +117,7 @@
   align-items: center;
   margin-bottom: 8px;
   font-size: 0.9rem;
-  color: #495057;
+  color: var(--tt-text-muted);
 }
 
 .icon {
@@ -128,21 +128,21 @@
 }
 
 .aiReason {
-  background: #f8f9fa;
+  background: var(--tt-background);
   padding: 12px;
   border-radius: 8px;
   margin-bottom: 15px;
-  border-left: 4px solid #667eea;
+  border-left: 4px solid var(--tt-accent);
 }
 
 .aiReason strong {
-  color: #2c3e50;
+  color: var(--tt-text);
   font-size: 0.9rem;
 }
 
 .aiReason p {
   margin: 8px 0 0 0;
-  color: #495057;
+  color: var(--tt-text-muted);
   font-size: 0.9rem;
   line-height: 1.4;
 }
@@ -150,11 +150,11 @@
 .aiFactors {
   margin-top: 10px;
   padding-top: 10px;
-  border-top: 1px solid #e9ecef;
+  border-top: 1px solid var(--tt-border);
 }
 
 .cardFooter {
-  background: #f8f9fa;
+  background: var(--tt-background);
   border: none;
   padding: 12px 16px;
   display: flex;
@@ -170,13 +170,13 @@
 .preferencesInfo {
   text-align: center;
   padding: 15px;
-  background: rgba(102, 126, 234, 0.1);
+  background: color-mix(in srgb, var(--tt-accent) 10%, transparent);
   border-radius: 8px;
-  border: 1px solid rgba(102, 126, 234, 0.2);
+  border: 1px solid color-mix(in srgb, var(--tt-accent) 20%, transparent);
 }
 
 .preferencesInfo .btn-link {
-  color: #667eea;
+  color: var(--tt-accent);
   text-decoration: none;
   font-weight: 500;
 }

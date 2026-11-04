@@ -9,37 +9,37 @@
   gap: 0.4rem;
   padding: 0.5rem 0.75rem;
   background: transparent;
-  border: 1px solid #e0e0e0;
+  border: 1px solid var(--tt-border);
   border-radius: 20px;
   cursor: pointer;
   transition: all 0.2s ease;
   font-size: 0.85rem;
-  color: #333;
+  color: var(--tt-text);
   min-width: 80px;
   justify-content: center;
 }
 
 .languageButton:hover {
-  background: #f8f9fa;
-  border-color: #007bff;
+  background: var(--tt-background);
+  border-color: var(--tt-primary);
   transform: translateY(-1px);
   box-shadow: 0 2px 4px rgba(0, 123, 255, 0.1);
 }
 
 .globeIcon {
   font-size: 0.9rem;
-  color: #007bff;
+  color: var(--tt-primary);
 }
 
 .languageCode {
   font-weight: 600;
-  color: #007bff;
+  color: var(--tt-primary);
   font-size: 0.8rem;
 }
 
 .arrow {
   font-size: 0.6rem;
-  color: #6c757d;
+  color: var(--tt-text-muted);
   transition: transform 0.2s ease;
   margin-left: 0.2rem;
 }
@@ -53,7 +53,7 @@
   top: 100%;
   right: 0;
   background: #fff;
-  border: 1px solid #e0e0e0;
+  border: 1px solid var(--tt-border);
   border-radius: 8px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   z-index: 1000;
@@ -76,7 +76,7 @@
   transition: background-color 0.2s ease;
   text-align: left;
   font-size: 0.9rem;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid var(--tt-border);
 }
 
 .languageOption:last-child {
@@ -84,12 +84,12 @@
 }
 
 .languageOption:hover {
-  background: #f8f9fa;
+  background: var(--tt-background);
 }
 
 .languageOption.active {
-  background: #e3f2fd;
-  color: #007bff;
+  background: color-mix(in srgb, var(--tt-accent) 10%, #FFFFFF);
+  color: var(--tt-primary);
   cursor: default;
 }
 
@@ -99,7 +99,7 @@
 
 .languageOption .languageCode {
   font-weight: 600;
-  color: #007bff;
+  color: var(--tt-primary);
   font-size: 0.8rem;
   min-width: 25px;
 }
@@ -186,5 +186,5 @@
 
 .navbarScrolled .languageButton:hover {
   background: rgba(255, 255, 255, 1);
-  border-color: #007bff;
+  border-color: var(--tt-primary);
 } 

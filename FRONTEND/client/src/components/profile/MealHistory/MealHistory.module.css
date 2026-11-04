@@ -12,7 +12,7 @@
     gap: 1rem;
     margin-bottom: 1.5rem;
     padding-bottom: 1rem;
-    border-bottom: 1px solid #e0e0e0;
+    border-bottom: 1px solid var(--tt-border);
   }
   
   .mainTitle {
@@ -22,8 +22,8 @@
   }
   
   .myMealsButton {
-    background-color: #f0f0f0;
-    color: #333;
+    background-color: var(--tt-border);
+    color: var(--tt-text);
     padding: 0.5rem 1rem;
     border-radius: 8px;
     text-decoration: none;
@@ -32,7 +32,7 @@
   }
   
   .myMealsButton:hover {
-    background-color: #e0e0e0;
+    background-color: var(--tt-border);
   }
   
   .mealsSectionsWrapper {
@@ -48,7 +48,7 @@
   }
   
   .noMeals {
-      color: #888;
+      color: var(--tt-text-muted);
       font-style: italic;
       padding: 1rem;
       background-color: #f9f9f9;

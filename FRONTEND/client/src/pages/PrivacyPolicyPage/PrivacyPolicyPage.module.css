@@ -8,7 +8,7 @@
     border-radius: 8px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
     line-height: 1.7;
-    color: #333;
+    color: var(--tt-text);
 }
 
 .topBar {
@@ -18,7 +18,7 @@
 
 .mainTitle {
     text-align: center;
-    color: #2c3e50;
+    color: var(--tt-text);
     margin-bottom: 10px;
     font-size: 1.75rem; /* ridotto */
 }
@@ -32,7 +32,7 @@
 
 .sectionTitle {
     color: #34495e;
-    border-bottom: 2px solid #e0e0e0;
+    border-bottom: 2px solid var(--tt-border);
     padding-bottom: 5px;
     margin-top: 30px;
     margin-bottom: 15px;
@@ -48,25 +48,25 @@
 .disclaimer {
     margin-top: 40px;
     padding: 15px;
-    background-color: #f8f9fa;
+    background-color: var(--tt-background);
     border-left: 4px solid #f39c12;
     font-size: 0.9em;
-    color: #555;
+    color: var(--tt-text-muted);
 }
 
 .backButton {
-    background-color: #f8f9fa;
-    border: 1px solid #dee2e6;
+    background-color: var(--tt-background);
+    border: 1px solid var(--tt-border);
     border-radius: 5px;
     padding: 8px 16px;
     font-size: 0.9em;
     font-weight: bold;
-    color: #495057;
+    color: var(--tt-text-muted);
     cursor: pointer;
     transition: background-color 0.2s;
     margin-bottom: 20px;
 }
 
 .backButton:hover {
-    background-color: #e9ecef;
+    background-color: var(--tt-border);
 }

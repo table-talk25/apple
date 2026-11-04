@@ -51,14 +51,14 @@
 .message {
   flex: 1;
   font-size: 0.9rem;
-  color: #2d3748;
+  color: var(--tt-text);
   line-height: 1.4;
 }
 
 .closeButton {
   background: none;
   border: none;
-  color: #a0aec0;
+  color: var(--tt-text-muted);
   cursor: pointer;
   padding: 0.25rem;
   border-radius: 4px;
@@ -67,7 +67,7 @@
 }
 
 .closeButton:hover {
-  color: #4a5568;
+  color: var(--tt-text-muted);
 }
 
 /* Responsive */

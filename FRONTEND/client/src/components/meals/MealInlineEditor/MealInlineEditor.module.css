@@ -48,13 +48,13 @@
   width: 40px;
   height: 40px;
   border: 4px solid #f3f3f3;
-  border-top: 4px solid #007bff;
+  border-top: 4px solid var(--tt-primary);
   border-radius: 50%;
   animation: spin 1s linear infinite;
 }
 
 .updatingSpinner span {
-  color: #333;
+  color: var(--tt-text);
   font-weight: 500;
   text-align: center;
 }

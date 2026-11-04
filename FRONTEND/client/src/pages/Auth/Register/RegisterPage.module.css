@@ -8,7 +8,7 @@
   align-items: center;
   justify-content: center; /* Centra la card verticalmente */
   padding: 2rem 1rem;
-  background-color: #f8f9fa;
+  background-color: var(--tt-background);
   overflow-x: hidden; /* Evita overflow orizzontale su mobile */
 }
 
@@ -19,7 +19,7 @@
   width: 100%;
   max-width: 500px;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
-  border: 1px solid #e9ecef;
+  border: 1px solid var(--tt-border);
 }
 
 .logoContainer {
@@ -38,7 +38,7 @@
 }
 
 .title {
-  color: #2d3748;
+  color: var(--tt-text);
   font-size: clamp(1.8rem, 5vw, 2.2rem);
   font-weight: 700;
   margin-bottom: 2.5rem;
@@ -49,7 +49,7 @@
   display: block; /* Assicura che l'etichetta stia sopra il campo */
   font-size: 0.9rem;
   font-weight: 600;
-  color: #4a5568;
+  color: var(--tt-text-muted);
   margin-bottom: 0.5rem; /* Spazio tra etichetta e campo */
 }
 
@@ -57,8 +57,8 @@
   font-size: 1rem;
   padding: 0.8rem 1rem;
   border-radius: 10px;
-  border: 1px solid #ced4da;
-  background-color: #f8f9fa;
+  border: 1px solid var(--tt-border);
+  background-color: var(--tt-background);
   transition: all 0.2s ease;
   width: 100%;
   min-width: 0; /* permette di restringersi in container flessibili */
@@ -68,19 +68,19 @@
 .formInput:focus {
   background-color: white;
   border-color: var(--primary-color);
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--tt-accent) 20%, transparent);
   outline: none;
 }
 
 .passwordToggle {
   cursor: pointer;
-  background-color: #f8f9fa;
-  border: 1px solid #ced4da;
+  background-color: var(--tt-background);
+  border: 1px solid var(--tt-border);
   border-left: none;
   padding: 0 1rem;
   display: grid;
   place-items: center;
-  color: #6c757d;
+  color: var(--tt-text-muted);
   flex: 0 0 auto; /* evita che l'icona allarghi il gruppo */
 }
 
@@ -101,10 +101,10 @@
   margin-top: -0.75rem;
   margin-bottom: 1.5rem;
   padding: 0.75rem;
-  background-color: #f8f9fa;
+  background-color: var(--tt-background);
   border-radius: 8px;
   font-size: 0.8rem;
-  color: #6c757d;
+  color: var(--tt-text-muted);
 }
 .passwordRequirements ul { list-style-type: none; padding: 0; margin: 0; }
 
@@ -117,7 +117,7 @@
 
 .termsLabel {
   font-size: 0.9rem;
-  color: #4a5568;
+  color: var(--tt-text-muted);
   line-height: 1.5;
   margin-bottom: 0;
 }
@@ -156,7 +156,7 @@
   text-align: center;
   margin-top: 2rem;
   font-size: 1rem;
-  color: #6c757d;
+  color: var(--tt-text-muted);
 }
 
 .bottomLink a {

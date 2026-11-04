@@ -6,7 +6,7 @@
   /* --- REGOLE RIMOSSE --- */
   /* padding: 4rem 1rem; (ora gestito dal Layout) */
   /* padding-top: 100px; (ora gestito dal Layout) */
-  /* background-color: #f8f9fa; (ora gestito dal Layout) */
+  /* background-color: var(--tt-background); (ora gestito dal Layout) */
   /* min-height: 100vh; (ora gestito dal Layout) */
 
   /* --- REGOLE MANTENUTE E MIGLIORATE --- */

@@ -10,7 +10,7 @@
   }
   
   .meal-item.selected {
-    border-left-color: #007bff;
+    border-left-color: var(--tt-primary);
     background-color: rgba(0, 123, 255, 0.05);
   }
   
@@ -51,6 +51,6 @@
   
   .participants-count {
     font-size: 0.9rem;
-    color: #6c757d;
+    color: var(--tt-text-muted);
     margin-bottom: 5px;
   }

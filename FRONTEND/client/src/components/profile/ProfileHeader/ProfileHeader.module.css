@@ -23,7 +23,7 @@
   border: 4px solid white;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
   /* Colore di sfondo che funge da placeholder durante il caricamento */
-  background-color: #e9ecef; 
+  background-color: var(--tt-border); 
 }
 
 /* Placeholder per l'icona utente di default */
@@ -31,7 +31,7 @@
   width: 120px;
   height: 120px;
   border-radius: 50%;
-  background-color: #f0f0f0;
+  background-color: var(--tt-border);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -45,8 +45,8 @@
   bottom: 5px;
   right: 5px;
   background: white;
-  color: var(--primary-color, #FF6B6B);
-  border: 1px solid #e2e8f0;
+  color: var(--primary-color, var(--tt-primary));
+  border: 1px solid var(--tt-border);
   border-radius: 50%;
   width: 32px;
   height: 32px;
@@ -69,14 +69,14 @@
 .nickname {
   font-size: 1.5rem;
   font-weight: 600;
-  color: #333;
+  color: var(--tt-text);
   margin-top: 0;
   margin-bottom: 0.25rem;
 }
 
 .userEmail {
   font-size: 0.9rem;
-  color: #777;
+  color: var(--tt-text-muted);
   margin-bottom: 1.5rem;
 }
 
@@ -85,7 +85,7 @@
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  background-color: var(--primary-color, #FF6B6B);
+  background-color: var(--primary-color, var(--tt-primary));
   color: white;
   padding: 0.75rem 1.5rem;
   border: none;

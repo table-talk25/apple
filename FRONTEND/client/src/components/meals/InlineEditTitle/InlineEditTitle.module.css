@@ -13,13 +13,13 @@
 
 .editButton {
   padding: 4px 8px;
-  color: #6c757d;
+  color: var(--tt-text-muted);
   transition: color 0.2s ease;
   flex-shrink: 0;
 }
 
 .editButton:hover {
-  color: #007bff;
+  color: var(--tt-primary);
   text-decoration: none;
 }
 
@@ -34,7 +34,7 @@
   flex: 1;
   font-size: 1.5rem;
   font-weight: 500;
-  border: 2px solid #007bff;
+  border: 2px solid var(--tt-primary);
   border-radius: 8px;
   padding: 8px 12px;
   transition: border-color 0.2s ease;

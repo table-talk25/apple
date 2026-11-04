@@ -10,7 +10,7 @@
   align-items: center;
   gap: 8px;
   font-size: 0.9em;
-  color: #666;
+  color: var(--tt-text-muted);
 }
 
 .typingDots {
@@ -21,7 +21,7 @@
 .dot {
   width: 6px;
   height: 6px;
-  background-color: #999;
+  background-color: var(--tt-text-muted);
   border-radius: 50%;
   animation: typingDot 1.4s infinite ease-in-out;
 }
