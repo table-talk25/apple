@@ -6,6 +6,16 @@ const path = require('path');
 // Carica le variabili d'ambiente
 dotenv.config({ path: path.join(__dirname, '../..', '.env') });
 
+// Credenziali admin solo da variabili d'ambiente (ADMIN_EMAIL, ADMIN_PASSWORD >= 12 caratteri)
+const { readAdminCredentials } = require('../scripts/lib/safety');
+let adminCredentials;
+try {
+  adminCredentials = readAdminCredentials(process.env);
+} catch (error) {
+  console.error(`Errore: ${error.message}`);
+  process.exit(1);
+}
+
 // Connessione al database
 mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log('MongoDB connesso per i seed'))
@@ -16,8 +26,8 @@ mongoose.connect(process.env.MONGO_URI)
 
 // Dati dell'admin
 const adminData = {
-  email: 'admin@tabletalk.com',
-  password: 'Admin123!',
+  email: adminCredentials.email,
+  password: adminCredentials.password,
   name: 'Admin',
   surname: 'TableTalk',
   nickname: 'admin',

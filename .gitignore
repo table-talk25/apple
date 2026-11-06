@@ -34,3 +34,7 @@ _ARCHIVE_DELETE_AFTER_REVIEW/
 .idea/
 .vscode/
 FRONTEND/client/build/
+
+# Dump di dati utente (SEC-03): non va mai committato
+FRONTEND/client/users.json
+users.json

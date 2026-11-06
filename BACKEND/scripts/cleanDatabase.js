@@ -14,7 +14,10 @@ const Report = require('../models/Report');
 // const VideoCall = require('../models/VideoCall'); // Modello non esistente
 
 // Configurazione connessione MongoDB
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/TableTalk';
+const { assertDestructiveAllowed, resolveMongoUri, maskMongoUri } = require('./lib/safety');
+
+// Un solo nome di variabile (MONGO_URI); fallisce se MONGO_URI e MONGODB_URI sono diverse
+const MONGODB_URI = resolveMongoUri(process.env);
 
 class DatabaseCleaner {
   constructor() {
@@ -34,6 +37,7 @@ class DatabaseCleaner {
    * 🔌 Connette al database
    */
   async connect() {
+    assertDestructiveAllowed('cleanDatabase');
     try {
       console.log('🔌 [DatabaseCleaner] Connessione al database...');
       
@@ -42,7 +46,7 @@ class DatabaseCleaner {
         useUnifiedTopology: true
       });
       
-      console.log('✅ [DatabaseCleaner] Connesso al database:', MONGODB_URI);
+      console.log('✅ [DatabaseCleaner] Connesso al database:', maskMongoUri(MONGODB_URI));
       return true;
     } catch (error) {
       console.error('❌ [DatabaseCleaner] Errore connessione:', error);
@@ -68,6 +72,7 @@ class DatabaseCleaner {
    * 🧹 Pulisce tutti i dati di test sporchi
    */
   async cleanAllData() {
+    assertDestructiveAllowed('cleanDatabase');
     try {
       console.log('🧹 [DatabaseCleaner] Inizio pulizia completa del database...');
       

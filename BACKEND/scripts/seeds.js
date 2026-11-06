@@ -12,7 +12,10 @@ const Chat = require('../models/Chat');
 // const Message = require('../models/Message'); // Modello non esistente
 
 // Configurazione connessione MongoDB
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/TableTalk';
+const { assertDestructiveAllowed, readSeedPassword, resolveMongoUri, maskMongoUri } = require('./lib/safety');
+
+// Un solo nome di variabile (MONGO_URI); fallisce se MONGO_URI e MONGODB_URI sono diverse
+const MONGODB_URI = resolveMongoUri(process.env);
 
 // Dati realistici per il seeding
 const REALISTIC_DATA = {
@@ -22,7 +25,6 @@ const REALISTIC_DATA = {
       surname: 'Rossi',
       nickname: 'MarcoFood',
       email: 'marco.rossi@example.com',
-      password: 'Password123!',
       bio: 'Appassionato di cucina italiana e di conoscere nuove persone. Amo organizzare cene a tema e scoprire nuovi ristoranti.',
       interests: ['cucina italiana', 'vino', 'cultura', 'viaggi'],
       location: {
@@ -86,7 +88,6 @@ const REALISTIC_DATA = {
       surname: 'Bianchi',
       nickname: 'SofiaChef',
       email: 'sofia.bianchi@example.com',
-      password: 'Password123!',
       bio: 'Chef professionista con passione per la pasticceria. Mi piace insegnare e condividere la mia esperienza culinaria.',
       interests: ['pasticceria', 'cucina francese', 'insegnamento', 'arte'],
       location: {
@@ -150,7 +151,6 @@ const REALISTIC_DATA = {
       surname: 'Verdi',
       nickname: 'LucaTravel',
       email: 'luca.verdi@example.com',
-      password: 'Password123!',
       bio: 'Viaggiatore e food blogger. Amo esplorare culture diverse attraverso il cibo e condividere le mie esperienze.',
       interests: ['viaggi', 'cucina internazionale', 'fotografia', 'scrittura'],
       location: {
@@ -214,7 +214,6 @@ const REALISTIC_DATA = {
       surname: 'Neri',
       nickname: 'ElenaWine',
       email: 'elena.neri@example.com',
-      password: 'Password123!',
       bio: 'Sommelier e appassionata di enogastronomia. Organizzo degustazioni e cene di abbinamento vino-cibo.',
       interests: ['vino', 'enogastronomia', 'degustazioni', 'cultura del cibo'],
       location: {
@@ -278,7 +277,6 @@ const REALISTIC_DATA = {
       surname: 'Esposito',
       nickname: 'GiuseppePizza',
       email: 'giuseppe.esposito@example.com',
-      password: 'Password123!',
       bio: 'Pizzaiolo napoletano DOC. La mia passione è tramandare l\'arte della vera pizza napoletana.',
       interests: ['pizza napoletana', 'tradizioni', 'cucina mediterranea', 'famiglia'],
       location: {
@@ -474,6 +472,7 @@ class DatabaseSeeder {
    * 🔌 Connette al database
    */
   async connect() {
+    assertDestructiveAllowed('seeds');
     try {
       console.log('🔌 [DatabaseSeeder] Connessione al database...');
       
@@ -482,7 +481,7 @@ class DatabaseSeeder {
         useUnifiedTopology: true
       });
       
-      console.log('✅ [DatabaseSeeder] Connesso al database:', MONGODB_URI);
+      console.log('✅ [DatabaseSeeder] Connesso al database:', maskMongoUri(MONGODB_URI));
       return true;
     } catch (error) {
       console.error('❌ [DatabaseSeeder] Errore connessione:', error);
@@ -508,6 +507,8 @@ class DatabaseSeeder {
    * 🌱 Popola il database con dati realistici
    */
   async seedDatabase() {
+    assertDestructiveAllowed('seeds');
+    readSeedPassword(process.env); // fallisce subito se manca SEED_USER_PASSWORD
     try {
       console.log('🌱 [DatabaseSeeder] Inizio popolamento database con dati realistici...');
       
@@ -549,7 +550,7 @@ class DatabaseSeeder {
         }
         
         // Hash della password
-        const hashedPassword = await bcrypt.hash(userData.password, 12);
+        const hashedPassword = await bcrypt.hash(readSeedPassword(process.env), 12);
         
         // Crea l'utente
         const user = new User({
