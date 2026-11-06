@@ -4,12 +4,15 @@ require('dotenv').config({ path: path.join(__dirname, '..', '.env'), override: f
 const startBackend = require('./bootstrap/startBackend');
 const connectDB = require('./config/db');
 const { validateEnvironmentVariables } = require('./config/validateEnv');
+const { registerProcessHandlers } = require('./bootstrap/processHandlers');
 
 async function start() {
   let server;
   let corsMeta;
   const PORT = process.env.PORT || 5001;
   const HOST = '0.0.0.0';
+
+  registerProcessHandlers({ getServer: () => server });
 
   try {
     validateEnvironmentVariables();
