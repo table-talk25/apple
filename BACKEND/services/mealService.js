@@ -92,6 +92,25 @@ const getMealsForMap = async (coordinates, radiusKm, filters = {}) => {
       'location.coordinates': { $exists: true, $ne: null }
     };
 
+    // PRIV-05: solo pasti pubblici oppure dove l'utente è host/partecipante;
+    // esclusi gli utenti bloccati (in entrambe le direzioni). Senza userId: solo pubblici.
+    if (filters.userId) {
+      const currentUser = await User.findById(filters.userId).select('blockedUsers');
+      const usersWhoBlockedMe = await User.find({ blockedUsers: filters.userId }).select('_id');
+      const excludedIds = [
+        ...((currentUser && currentUser.blockedUsers) || []),
+        ...usersWhoBlockedMe.map(u => u._id)
+      ];
+      if (excludedIds.length > 0) baseQuery.host = { $nin: excludedIds };
+      baseQuery.$or = [
+        { isPublic: true },
+        { host: filters.userId },
+        { participants: filters.userId }
+      ];
+    } else {
+      baseQuery.isPublic = true;
+    }
+
     const geoQuery = {
       ...baseQuery,
       'location.coordinates': {

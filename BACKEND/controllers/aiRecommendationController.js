@@ -27,7 +27,8 @@ exports.getPersonalizedRecommendations = asyncHandler(async (req, res) => {
       parseInt(radius),
       {
         mealType: 'physical',
-        status: 'upcoming,ongoing'
+        status: 'upcoming,ongoing',
+        userId: req.user.id // PRIV-05: filtro di visibilità e blocchi
       }
     );
     
