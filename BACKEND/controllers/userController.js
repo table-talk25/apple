@@ -8,6 +8,7 @@ const ErrorResponse = require('../utils/errorResponse');
 const mongoose = require('mongoose');
 const axios = require('axios');
 const { safeUnlinkInside } = require('../utils/safeFile');
+const { STATUSES } = require('../utils/accountStatus');
 
 const PROFILE_IMAGES_DIR = path.join(__dirname, '..', 'uploads', 'profile-images');
 const LEGACY_PROFILES_DIR = path.join(__dirname, '..', 'uploads', 'profiles');
@@ -355,11 +356,15 @@ exports.unblockUser = async (req, res) => {
  */
 exports.changeUserRole = async (req, res) => {
   try {
-    const { role } = req.body;
+    const { role } = req.body || {};
+    // Il router dichiara i controlli ma non li valuta: validazione esplicita (valori dello schema)
+    if (!['user', 'admin'].includes(role)) {
+      return res.status(400).json({ success: false, msg: 'Ruolo non valido' });
+    }
     const user = await User.findByIdAndUpdate(
       req.params.id,
       { role },
-      { new: true }
+      { new: true, runValidators: true }
     ).select('-password');
 
     if (!user) {
@@ -377,25 +382,44 @@ exports.changeUserRole = async (req, res) => {
 };
 
 /**
- * @desc    Cambia lo stato di un utente
+ * @desc    Cambia lo stato di un utente (active | suspended | banned)
  * @route   PUT /api/users/:id/status
  * @access  Private/Admin
  */
 exports.changeUserStatus = async (req, res) => {
   try {
-    const { status, reason } = req.body;
+    const { status, reason } = req.body || {};
+    if (!STATUSES.includes(status)) {
+      return res.status(400).json({ success: false, msg: 'Stato non valido' });
+    }
+    if (reason !== undefined && reason !== null && (typeof reason !== 'string' || reason.length > 500)) {
+      return res.status(400).json({ success: false, msg: 'Motivo non valido (testo, massimo 500 caratteri)' });
+    }
     const user = await User.findByIdAndUpdate(
       req.params.id,
       {
         status,
-        statusReason: reason,
-        statusChangedAt: Date.now()
+        statusReason: status === 'active' ? '' : (reason || ''),
+        statusChangedAt: new Date(),
+        // isActive resta coerente con lo stato: solo un account 'active' è attivo
+        isActive: status === 'active',
       },
-      { new: true }
+      { new: true, runValidators: true }
     ).select('-password');
 
     if (!user) {
       return res.status(404).json({ msg: 'Utente non trovato' });
+    }
+
+    // Un account non attivo perde subito l'eventuale connessione in tempo reale
+    if (status !== 'active') {
+      try {
+        const { getIO, connectedUsers } = require('../socket');
+        const io = getIO();
+        const socketId = connectedUsers.get(user.id);
+        const liveSocket = io && socketId ? io.sockets.sockets.get(socketId) : null;
+        if (liveSocket) liveSocket.disconnect(true);
+      } catch (_) { /* nessuna connessione da chiudere */ }
     }
 
     res.json(user);

@@ -100,7 +100,7 @@ router.put('/:id/role', [
   protect,
   authorize('admin'),
   check('id', 'ID utente non valido').isMongoId(),
-  check('role', 'Ruolo non valido').isIn(['user', 'admin', 'moderator'])
+  check('role', 'Ruolo non valido').isIn(['user', 'admin'])
 ], userController.changeUserRole);
 
 /**

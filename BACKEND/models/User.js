@@ -89,6 +89,10 @@ const UserSchema = new mongoose.Schema(
     // --- CAMPI DI STATO E RELAZIONI ---
     profileCompleted: { type: Boolean, default: false },
     isActive: { type: Boolean, default: true },
+    // FUN-02: stato di moderazione (un documento senza il campo è considerato 'active')
+    status: { type: String, enum: ['active', 'suspended', 'banned'], default: 'active' },
+    statusReason: { type: String, trim: true, maxlength: 500 },
+    statusChangedAt: { type: Date },
     isVerified: { type: Boolean, default: false },
     createdMeals: [{ type: mongoose.Schema.ObjectId, ref: 'Meal' }],
     joinedMeals: [{ type: mongoose.Schema.ObjectId, ref: 'Meal' }],

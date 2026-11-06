@@ -4,6 +4,7 @@ const jwt = require('jsonwebtoken');
 const asyncHandler = require('express-async-handler');
 const ErrorResponse = require('../utils/errorResponse');
 const User = require('../models/User');
+const { accountStatusDenial, isStatusActive } = require('../utils/accountStatus');
 
 /**
  * @desc    Middleware per proteggere le rotte. Verifica il token e attacca l'utente a req.user
@@ -26,6 +27,12 @@ exports.protect = asyncHandler(async (req, res, next) => {
     
     if (!req.user) {
       return next(new ErrorResponse('Utente associato a questo token non più esistente.', 401));
+    }
+
+    // FUN-02: account sospeso o bannito -> 403 con messaggio chiaro
+    const denial = accountStatusDenial(req.user);
+    if (denial) {
+      return next(new ErrorResponse(denial.message, 403, denial.code));
     }
 
     // Verifica se l'utente è attivo
@@ -55,7 +62,7 @@ exports.optionalAuth = async (req, res, next) => {
       if (token) {
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
         const user = await User.findById(decoded.id).select('-password');
-        if (user && user.isActive) {
+        if (user && user.isActive && isStatusActive(user)) {
           req.user = user;
         }
       }

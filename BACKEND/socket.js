@@ -5,6 +5,7 @@ const cron = require('node-cron');
 const User = require('./models/User');
 const Meal = require('./models/Meal');
 const Chat = require('./models/Chat');
+const { accountStatusDenial } = require('./utils/accountStatus');
 
 // Mappa per tenere traccia degli utenti connessi: { userId: socketId }
 const connectedUsers = new Map();
@@ -109,8 +110,10 @@ async function initializeSocket(server) {
       const token = socket.handshake.auth.token;
       if (!token) return next(new Error('Autenticazione richiesta'));
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
-      const user = await User.findById(decoded.id).select('nickname profileImage');
+      const user = await User.findById(decoded.id).select('nickname profileImage isActive status');
       if (!user) return next(new Error('Utente non trovato'));
+      // FUN-02: account disattivato, sospeso o bannito -> connessione rifiutata
+      if (!user.isActive || accountStatusDenial(user)) return next(new Error('Account non attivo'));
       socket.user = user;
       next();
     } catch (error) {

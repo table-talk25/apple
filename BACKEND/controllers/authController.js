@@ -8,6 +8,7 @@ const User = require('../models/User');
 const sendEmail = require('../utils/sendEmail');
 const emailVerificationService = require('../services/emailVerificationService');
 const passwordResetService = require('../services/passwordResetService');
+const { accountStatusDenial } = require('../utils/accountStatus');
 
 /** Risposte JSON pubbliche utente — mai Mongoose grezzo (verificationToken, resetPassword*, loginAttempts...). */
 function toSafeUserPayload(user) {
@@ -119,6 +120,12 @@ exports.login = asyncHandler(async (req, res, next) => {
     if (!(await user.comparePassword(password))) {
         await user.incrementLoginAttempts();
         return next(new ErrorResponse('Credenziali non valide', 401));
+    }
+
+    // FUN-02: account sospeso/bannito (controllo dopo la password per non rivelarne lo stato a chi non la conosce)
+    const denial = accountStatusDenial(user);
+    if (denial) {
+        return next(new ErrorResponse(denial.message, 403, denial.code));
     }
 
     await user.resetLoginAttempts();
