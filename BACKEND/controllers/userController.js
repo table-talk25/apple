@@ -207,11 +207,35 @@ exports.getUsers = async (req, res, next) => {
  */
 exports.getUserById = async (req, res) => {
   try {
-    const user = await User.findById(req.params.id).select('-password');
-  if (!user) {
+    const user = await User.findById(req.params.id);
+    if (!user) {
       return res.status(404).json({ msg: 'Utente non trovato' });
     }
-    res.json(user);
+
+    // Se stesso o admin: vista completa (comunque senza password, hash dei token,
+    // fcmTokens e registrationIp, rimossi dal transform di toJSON in models/User.js).
+    const isSelf = user.id === req.user.id;
+    const isAdmin = req.user.role === 'admin';
+    if (isSelf || isAdmin) {
+      return res.json(user);
+    }
+
+    // Altrimenti solo la proiezione pubblica.
+    const showAge = user.settings?.privacy?.showAge !== false;
+    res.json({
+      _id: user._id,
+      id: user.id,
+      nickname: user.nickname,
+      profileImage: user.profileImage,
+      bio: user.bio,
+      gender: user.gender,
+      interests: user.interests,
+      languages: user.languages,
+      preferredCuisine: user.preferredCuisine,
+      age: showAge ? user.age : null,
+      mealsCount: user.mealsCount,
+      createdAt: user.createdAt,
+    });
   } catch (err) {
     console.error(err.message);
     if (err.kind === 'ObjectId') {

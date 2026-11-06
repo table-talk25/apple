@@ -8,6 +8,26 @@ const Meal = require('./Meal');
 const Chat = require('./Chat');
 const Invitation = require('./Invitation');
 
+// SEC-02: campi che non devono MAI uscire da toJSON/toObject (risposte API, log, ecc.).
+// I servizi interni leggono questi campi direttamente dal documento (user.fcmTokens, ...),
+// quindi la rimozione riguarda solo la serializzazione.
+const SENSITIVE_FIELDS = [
+  'password',
+  'verificationToken',
+  'verificationTokenExpires',
+  'resetPasswordToken',
+  'resetPasswordExpires',
+  'fcmTokens',
+  'registrationIp',
+];
+
+function removeSensitiveFields(doc, ret) {
+  for (const field of SENSITIVE_FIELDS) {
+    delete ret[field];
+  }
+  return ret;
+}
+
 const UserSchema = new mongoose.Schema(
   {
     // --- CAMPI DI REGISTRAZIONE E IDENTITÀ ---
@@ -158,8 +178,8 @@ const UserSchema = new mongoose.Schema(
   {
     // --- CORRETTO: le opzioni sono in un oggetto separato ---
     timestamps: true,
-    toJSON: { virtuals: true },
-    toObject: { virtuals: true }
+    toJSON: { virtuals: true, transform: removeSensitiveFields },
+    toObject: { virtuals: true, transform: removeSensitiveFields }
   }
 );
 
@@ -489,3 +509,4 @@ UserSchema.methods.clearPasswordResetToken = function() {
 
 const User = mongoose.model('User', UserSchema);
 module.exports = User;
+module.exports.SENSITIVE_FIELDS = SENSITIVE_FIELDS;
