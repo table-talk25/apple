@@ -157,7 +157,7 @@ router.get('/status', protect, async (req, res) => {
  * POST /api/notifications/send-chat
  * Invia notifica per nuovo messaggio in chat
  */
-router.post('/send-chat', protect, async (req, res) => {
+router.post('/send-chat', [protect, authorize('admin')], async (req, res) => {
   try {
     const { tokens, senderName, message, chatId } = req.body;
 
@@ -189,7 +189,7 @@ router.post('/send-chat', protect, async (req, res) => {
  * POST /api/notifications/send-invitation
  * Invia notifica per nuovo invito
  */
-router.post('/send-invitation', protect, async (req, res) => {
+router.post('/send-invitation', [protect, authorize('admin')], async (req, res) => {
   try {
     const { tokens, inviterName, mealTitle } = req.body;
 
@@ -221,7 +221,7 @@ router.post('/send-invitation', protect, async (req, res) => {
  * POST /api/notifications/send-meal-reminder
  * Invia notifica promemoria pasto
  */
-router.post('/send-meal-reminder', protect, async (req, res) => {
+router.post('/send-meal-reminder', [protect, authorize('admin')], async (req, res) => {
   try {
     const { tokens, mealTitle, mealTime } = req.body;
 
