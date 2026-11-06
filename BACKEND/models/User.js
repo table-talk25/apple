@@ -299,7 +299,8 @@ UserSchema.methods.updateProfile = async function(updates) {
   console.log('Dati ricevuti da aggiornare:', JSON.stringify(updates, null, 2));
 
   const allowedUpdates = [
-    'nickname', 'bio', 'gender', 'dateOfBirth', 'location', 'residence', 'phone', 'profileImage',
+    'nickname', 'bio', 'gender', 'dateOfBirth', 'location', 'residence', 'phone',
+    // SEC-04: 'profileImage' NON è modificabile dal client; lo scrive solo il server dopo un upload riuscito
     'interests', 'languages', 'preferredCuisine', 'settings'
   ];
   Object.keys(updates).forEach(key => {

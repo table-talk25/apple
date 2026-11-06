@@ -7,6 +7,10 @@ const asyncHandler = require('express-async-handler');
 const ErrorResponse = require('../utils/errorResponse');
 const mongoose = require('mongoose');
 const axios = require('axios');
+const { safeUnlinkInside } = require('../utils/safeFile');
+
+const PROFILE_IMAGES_DIR = path.join(__dirname, '..', 'uploads', 'profile-images');
+const LEGACY_PROFILES_DIR = path.join(__dirname, '..', 'uploads', 'profiles');
 
 // Helper function per ottenere gli ID degli utenti da escludere (blocchi bidirezionali)
 const getExcludedUserIds = async (currentUserId) => {
@@ -86,10 +90,8 @@ exports.uploadProfileImage = (req, res, next) => {
 
       // Elimina la vecchia immagine se non è quella di default
       if (user.profileImage !== 'default-profile.jpg') {
-        const oldImagePath = path.join(__dirname, '..', 'uploads', 'profiles', user.profileImage);
-        if (fs.existsSync(oldImagePath)) {
-          fs.unlinkSync(oldImagePath);
-        }
+        // SEC-04: elimina solo file dentro la cartella uploads (mai percorsi forniti dal client)
+        safeUnlinkInside(LEGACY_PROFILES_DIR, user.profileImage);
       }
 
       // Aggiorna l'immagine del profilo
@@ -127,10 +129,8 @@ exports.updateAvatar = asyncHandler(async (req, res, next) => {
   // Elimina la vecchia immagine dal disco se non è quella di default
   const defaultImages = ['default-profile.jpg', 'default.jpg', null, undefined, ''];
   if (!defaultImages.includes(user.profileImage)) {
-    const oldImagePath = path.join(__dirname, '..', 'uploads', 'profile-images', user.profileImage);
-    if (fs.existsSync(oldImagePath)) {
-      fs.unlinkSync(oldImagePath);
-    }
+    // SEC-04: path.basename + verifica che il percorso resti dentro uploads/profile-images
+    safeUnlinkInside(PROFILE_IMAGES_DIR, user.profileImage);
   }
 
   // Salva il nuovo filename
