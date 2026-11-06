@@ -136,6 +136,16 @@ const normalizeMealLocation = (mealDoc) => {
   return meal;
 };
 
+// Id degli utenti da escludere dalle liste per l'utente: bloccati da lui e che lo hanno bloccato
+const getBlockedExclusionIds = async (userId) => {
+  const currentUser = await User.findById(userId).select('blockedUsers');
+  const usersWhoBlockedMe = await User.find({ blockedUsers: userId }).select('_id');
+  return [
+    ...((currentUser && currentUser.blockedUsers) || []),
+    ...usersWhoBlockedMe.map(u => u._id),
+  ];
+};
+
 // @desc    Get meals within a certain radius for the map
 // @route   GET /api/meals/map
 // @access  Public
@@ -167,6 +177,19 @@ exports.getMealsForMap = asyncHandler(async (req, res, next) => {
       'location.coordinates': { $exists: true, $ne: null },
       isPublic: true
     }; 
+
+    // Utente autenticato: vede anche i propri pasti privati (host/partecipante)
+    // ed è escluso chi è bloccato in una delle due direzioni.
+    if (req.user) {
+      const excludedIds = await getBlockedExclusionIds(req.user.id);
+      if (excludedIds.length > 0) baseQuery.host = { $nin: excludedIds };
+      delete baseQuery.isPublic;
+      baseQuery.$or = [
+        { isPublic: true },
+        { host: req.user.id },
+        { participants: req.user.id }
+      ];
+    }
 
     const geoQuery = {
       ...baseQuery,

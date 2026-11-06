@@ -2,7 +2,7 @@
 
 const express = require('express');
 const router = express.Router();
-const { protect, authorize } = require('../middleware/auth');
+const { protect, authorize, optionalAuth } = require('../middleware/auth');
 const upload = require('../middleware/upload');
 const { mealUpload } = require('../middleware/upload'); // ✅ NUOVO: memoryStorage per Firebase 
 
@@ -29,19 +29,19 @@ const {
 
 // --- Rotte per la collezione di pasti (/api/meals) ---
 router.route('/')
-  .get(getMeals) // Ottiene la lista dei pasti (già funzionava)
+  .get(optionalAuth, getMeals) // Ottiene la lista dei pasti (già funzionava)
   .post(protect, mealUpload.single('image'), createMeal); // ✅ USA mealUpload con memoryStorage
 
 // --- Rotte per la ricerca e le statistiche ---
-router.get('/map', getMealsForMap);
+router.get('/map', optionalAuth, getMealsForMap);
 router.get('/geostats', getMealsGeoStats);
-router.get('/search/advanced', advancedGeospatialSearch);
-router.get('/search', searchMeals);
+router.get('/search/advanced', optionalAuth, advancedGeospatialSearch);
+router.get('/search', optionalAuth, searchMeals);
 router.get('/status/stats', getMealStatusStats);
 
 // --- Rotte per un pasto specifico (/api/meals/:id) ---
 router.route('/:id')
-  .get(getMeal) // Ottiene i dettagli di un singolo pasto
+  .get(optionalAuth, getMeal) // Ottiene i dettagli di un singolo pasto
   .patch(protect, mealUpload.single('image'), updateMeal) // ✅ USA mealUpload con memoryStorage
   .delete(protect, deleteMeal); // CANCELLAZIONE (adesso è attivo!)
 

@@ -42,6 +42,32 @@ exports.protect = asyncHandler(async (req, res, next) => {
 });
 
 /**
+ * @desc    Autenticazione opzionale per le rotte pubbliche (es. GET dei pasti).
+ *          Con un Bearer token valido e utente attivo popola req.user; in ogni altro
+ *          caso (nessun token, token non valido/scaduto, utente inesistente o disattivato,
+ *          errore del database) prosegue come anonimo, senza errore.
+ */
+exports.optionalAuth = async (req, res, next) => {
+  try {
+    const header = req.headers.authorization;
+    if (header && header.startsWith('Bearer')) {
+      const token = header.split(' ')[1];
+      if (token) {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        const user = await User.findById(decoded.id).select('-password');
+        if (user && user.isActive) {
+          req.user = user;
+        }
+      }
+    }
+  } catch (err) {
+    // Token non valido o errore di lettura: richiesta anonima
+    req.user = undefined;
+  }
+  next();
+};
+
+/**
  * @desc    Middleware per autorizzare solo specifici ruoli
  */
 exports.authorize = (...roles) => {
