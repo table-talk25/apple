@@ -77,16 +77,32 @@ const getChatById = asyncHandler(async (req, res, next) => {
 // @route   POST /api/chats/:id/messages
 const sendMessage = asyncHandler(async (req, res, next) => {
     const chatId = req.params.id;
-    const { content, type = 'text', replyTo } = req.body;
+    const { type = 'text', replyTo } = req.body || {};
     const userId = req.user.id;
 
-    if (!content) {
-        return next(new ErrorResponse('Il messaggio non può essere vuoto', 400));
+    if (!chatId || !/^[0-9a-fA-F]{24}$/.test(chatId)) {
+        return next(new ErrorResponse('ID chat non valido', 400));
+    }
+
+    // SEC-06: contenuto = stringa, trim, 1-500 caratteri (come il limite dello schema Chat)
+    const rawContent = req.body ? req.body.content : undefined;
+    if (typeof rawContent !== 'string') {
+        return next(new ErrorResponse('Il messaggio deve essere un testo', 400));
+    }
+    const content = rawContent.trim();
+    if (content.length < 1 || content.length > 500) {
+        return next(new ErrorResponse('Il messaggio deve contenere da 1 a 500 caratteri', 400));
     }
 
     const chat = await Chat.findById(chatId);
     if (!chat) {
         return next(new ErrorResponse('Chat non trovata', 404));
+    }
+
+    // SEC-06: solo i partecipanti possono scrivere (stesso controllo di getChatById e del socket)
+    const isParticipant = chat.participants.some(p => (p._id || p).toString() === userId);
+    if (!isParticipant) {
+        return next(new ErrorResponse('Non autorizzato a scrivere in questa chat', 403));
     }
 
     // Sanitizza replyTo: accetta solo campi attesi

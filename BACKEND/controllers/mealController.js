@@ -321,22 +321,26 @@ exports.getMeal = asyncHandler(async (req, res, next) => {
     .populate('chatId', 'name participants');
   if (!meal) return next(new ErrorResponse(`Pasto non trovato`, 404));
 
-  if (meal.isPublic === false) {
-    const userId = req.user ? req.user.id : null;
-    const hostId = (meal.host && meal.host._id) ? meal.host._id.toString() : (meal.host ? meal.host.toString() : null);
-    const isHost = userId && hostId && hostId === userId;
-    const isParticipant = userId && meal.participants.some(p => {
-      const pid = (p && p._id) ? p._id.toString() : p.toString();
-      return pid === userId;
-    });
-    if (!isHost && !isParticipant) {
-      return next(new ErrorResponse(`Pasto non trovato`, 404));
-    }
+  const userId = req.user ? req.user.id : null;
+  const hostId = (meal.host && meal.host._id) ? meal.host._id.toString() : (meal.host ? meal.host.toString() : null);
+  const isHost = Boolean(userId && hostId && hostId === userId);
+  const isParticipant = Boolean(userId && meal.participants.some(p => {
+    const pid = (p && p._id) ? p._id.toString() : p.toString();
+    return pid === userId;
+  }));
+
+  if (meal.isPublic === false && !isHost && !isParticipant) {
+    return next(new ErrorResponse(`Pasto non trovato`, 404));
   }
 
   const normalizedMeal = normalizeMealLocation(meal);
-  if (normalizedMeal.chatId && typeof normalizedMeal.chatId === 'object' && normalizedMeal.chatId !== null) {
-    normalizedMeal.chatId = normalizedMeal.chatId._id ? normalizedMeal.chatId._id.toString() : String(normalizedMeal.chatId);
+  if (isHost || isParticipant) {
+    if (normalizedMeal.chatId && typeof normalizedMeal.chatId === 'object' && normalizedMeal.chatId !== null) {
+      normalizedMeal.chatId = normalizedMeal.chatId._id ? normalizedMeal.chatId._id.toString() : String(normalizedMeal.chatId);
+    }
+  } else {
+    // SEC-06: l'id della chat del pasto è visibile solo a host e partecipanti
+    delete normalizedMeal.chatId;
   }
   res.status(200).json({ success: true, data: normalizedMeal });
 });
