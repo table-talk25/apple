@@ -5,6 +5,7 @@ const Chat = require('../models/Chat');
 const User = require('../models/User');
 const twilio = require('twilio');
 const geolocationNotificationService = require('./geolocationNotificationService');
+const { pickAllowedMealFields } = require('../utils/mealInput');
 
 // Inizializziamo il client di Twilio
 const twilioClient = twilio(
@@ -25,7 +26,8 @@ async function createFullMeal(mealData, user, file) {
     console.log('🏗️ [MealCreationService] Inizio creazione pasto per:', user.nickname);
     
     // ✅ GESTIONE IMMAGINE CON FIREBASE
-    const finalMealData = { ...mealData, host: user.id };
+    // SEC-08: difesa in profondità, solo i campi consentiti (lista bianca); host dall'utente autenticato
+    const finalMealData = { ...pickAllowedMealFields(mealData), host: user.id };
 
     if (file && file.buffer) {
       // ✅ NUOVO: Upload a Firebase Storage

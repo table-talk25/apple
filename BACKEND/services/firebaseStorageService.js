@@ -71,21 +71,54 @@ const uploadImage = async (fileBuffer, fileName, folder = 'profile-images') => {
   }
 };
 
-const deleteImage = async (imageUrl) => {
+// SEC-07: il server crea solo oggetti "<cartella>/<timestamp>_<nome sanificato>" (vedi uploadImage)
+// nelle cartelle sotto. Solo questi percorsi possono essere eliminati, mai URL arbitrari.
+const MANAGED_FOLDERS = ['profile-images', 'meal-images'];
+const STORAGE_HOST = 'storage.googleapis.com';
+
+/**
+ * Ricava il percorso dell'oggetto dal suo URL pubblico solo se corrisponde a quello che
+ * uploadImage genera per questo bucket; altrimenti null.
+ */
+const extractManagedObjectPath = (imageUrl, bucketName) => {
+  if (typeof imageUrl !== 'string' || !imageUrl || !bucketName) return null;
+  let url;
   try {
-    if (!imageUrl || !imageUrl.includes(bucket.name)) {
-      return;
+    url = new URL(imageUrl);
+  } catch (_) {
+    return null;
+  }
+  if (url.protocol !== 'https:' || url.hostname !== STORAGE_HOST || url.username || url.password) return null;
+  if (url.search || url.hash) return null;
+  const prefix = `/${bucketName}/`;
+  if (!url.pathname.startsWith(prefix)) return null;
+  const objectPath = url.pathname.slice(prefix.length);
+  const match = /^([A-Za-z0-9-]+)\/(\d{10,}_[A-Za-z0-9._-]+)$/.exec(objectPath);
+  if (!match || !MANAGED_FOLDERS.includes(match[1])) return null;
+  return objectPath;
+};
+
+/**
+ * Elimina un'immagine caricata dal server. Rifiuta (senza eliminare e con un avviso) qualsiasi URL
+ * che non corrisponda ai percorsi gestiti: altro bucket, altra cartella, avatar di default, ecc.
+ * @returns {Promise<boolean>} true se l'oggetto è stato eliminato
+ */
+const deleteImage = async (imageUrl) => {
+  const filePath = extractManagedObjectPath(imageUrl, bucket.name);
+  if (!filePath) {
+    if (imageUrl) {
+      console.warn('⚠️ [Firebase Storage] Eliminazione rifiutata: URL non corrispondente ai percorsi gestiti dal server');
     }
-
-    const filePath = imageUrl.split(`${bucket.name}/`)[1];
-    if (!filePath) return;
-
-    const file = bucket.file(filePath);
-    await file.delete();
+    return false;
+  }
+  try {
+    await bucket.file(filePath).delete();
     console.log(`✅ [Firebase Storage] Immagine eliminata: ${filePath}`);
+    return true;
   } catch (error) {
     console.error('❌ [Firebase Storage] Errore eliminazione:', error);
+    return false;
   }
 };
 
-module.exports = { uploadImage, deleteImage };
+module.exports = { uploadImage, deleteImage, extractManagedObjectPath };

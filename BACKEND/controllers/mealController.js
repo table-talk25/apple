@@ -9,7 +9,7 @@ const { v4: uuidv4 } = require('uuid');
 
 // Servizi importati per delegare la logica complessa
 const mealCreationService = require('../services/mealCreationService');
-const { sanitizeMealData } = require('../services/sanitizationService');
+const { parseMealInput } = require('../utils/mealInput');
 const mealStatusService = require('../services/mealStatusService');
 const notificationService = require('../services/notificationService');
 const sendEmail = require('../utils/sendEmail');
@@ -369,23 +369,11 @@ exports.getMeal = asyncHandler(async (req, res, next) => {
 });
 
 exports.createMeal = asyncHandler(async (req, res, next) => {
-  const sanitizedBody = sanitizeMealData(req.body);
-  const mealData = { ...sanitizedBody };
-  if (typeof mealData.duration === 'string') mealData.duration = parseInt(mealData.duration, 10);
-  if (typeof mealData.maxParticipants === 'string') mealData.maxParticipants = parseInt(mealData.maxParticipants, 10);
-  if (typeof mealData.isPublic === 'string') mealData.isPublic = mealData.isPublic === 'true';
-  if (typeof mealData.date === 'string') { try { mealData.date = new Date(mealData.date); } catch (_) {} }
-  
-  if (req.body.location) {
-    try {
-      const parsedLocation = JSON.parse(req.body.location);
-      if (parsedLocation && typeof parsedLocation === 'object') {
-        mealData.location = {
-          address: parsedLocation.address || parsedLocation.formattedAddress || '',
-          coordinates: parsedLocation.coordinates || undefined
-        };
-      } else { mealData.location = { address: String(req.body.location) }; }
-    } catch (error) { mealData.location = { address: String(req.body.location) }; }
+  // SEC-08: lista bianca dei campi + validazione dei tipi (status, imageUrl, participantsCount,
+  // twilioRoomSid, ratings, notifications, ... non sono mai impostabili dal client)
+  const { data: mealData, errors: inputErrors } = parseMealInput(req.body);
+  if (inputErrors.length > 0) {
+    return next(new ErrorResponse(inputErrors.join(' | '), 400));
   }
 
   try {
@@ -403,28 +391,24 @@ exports.createMeal = asyncHandler(async (req, res, next) => {
   }
 });
 
-// Campi che non devono mai essere modificati tramite updateMeal
-const IMMUTABLE_FIELDS = ['_id', '__v', 'host', 'participants', 'chatId', 'videoCallLink', 'createdAt', 'updatedAt'];
-
 exports.updateMeal = asyncHandler(async (req, res, next) => {
   let meal = await Meal.findById(req.params.id);
   if (!meal) return next(new ErrorResponse(`Pasto non trovato`, 404));
   if (meal.host.toString() !== req.user.id) return next(new ErrorResponse(`Non autorizzato`, 401));
 
-  // ✅ FIX: rimuovi _id e tutti i campi immutabili prima di passare a Mongoose
-  const rawUpdates = sanitizeMealData(req.body);
-  const updates = {};
-  for (const key of Object.keys(rawUpdates)) {
-    if (!IMMUTABLE_FIELDS.includes(key)) {
-      updates[key] = rawUpdates[key];
-    }
+  // SEC-08: lista bianca (stessi campi della creazione). status, imageUrl, participants,
+  // participantsCount, twilioRoomSid, ratings, notifications, reminderSent, videoCallStatus,
+  // host, chatId, ... non sono mai modificabili dal client.
+  const { data: updates, errors: inputErrors } = parseMealInput(req.body);
+  if (inputErrors.length > 0) {
+    return next(new ErrorResponse(inputErrors.join(' | '), 400));
   }
 
-  // Converti tipi stringa → corretti
-  if (typeof updates.duration === 'string') updates.duration = parseInt(updates.duration, 10);
-  if (typeof updates.maxParticipants === 'string') updates.maxParticipants = parseInt(updates.maxParticipants, 10);
-  if (typeof updates.isPublic === 'string') updates.isPublic = updates.isPublic === 'true';
-  if (typeof updates.date === 'string') { try { updates.date = new Date(updates.date); } catch (_) {} }
+  // Il numero massimo di partecipanti non può scendere sotto gli iscritti attuali
+  if (updates.maxParticipants !== undefined && updates.maxParticipants < meal.participants.length) {
+    return next(new ErrorResponse(
+      `maxParticipants non può essere inferiore al numero di iscritti (${meal.participants.length})`, 400));
+  }
 
   // Gestione immagine con Firebase
   if (req.file && req.file.buffer) {
@@ -452,29 +436,8 @@ exports.updateMeal = asyncHandler(async (req, res, next) => {
     }
   }
 
-  // Gestione location
-  if (updates.location) {
-    try {
-      const parsedLocation = typeof updates.location === 'string'
-        ? JSON.parse(updates.location)
-        : updates.location;
-      if (parsedLocation && typeof parsedLocation === 'object') {
-        updates.location = {
-          address: parsedLocation.address || parsedLocation.formattedAddress || '',
-          coordinates: parsedLocation.coordinates || undefined
-        };
-      } else {
-        updates.location = String(updates.location);
-      }
-    } catch (error) {
-      updates.location = String(updates.location);
-    }
-  }
-
   meal = await Meal.findByIdAndUpdate(req.params.id, updates, { new: true, runValidators: true })
     .populate('host', 'nickname profileImage');
-
-  if (updates.status === 'cancelled') await sendMealNotifications(meal, 'meal_cancelled');
 
   res.status(200).json({ success: true, data: normalizeMealLocation(meal) });
 });
