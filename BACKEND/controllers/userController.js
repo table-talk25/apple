@@ -357,6 +357,10 @@ exports.unblockUser = async (req, res) => {
 exports.changeUserRole = async (req, res) => {
   try {
     const { role } = req.body || {};
+    // Un admin non può modificare il proprio ruolo (evita di restare senza admin per errore)
+    if (req.user && String(req.params.id) === String(req.user.id)) {
+      return res.status(400).json({ success: false, msg: 'Non puoi modificare il tuo ruolo' });
+    }
     // Il router dichiara i controlli ma non li valuta: validazione esplicita (valori dello schema)
     if (!['user', 'admin'].includes(role)) {
       return res.status(400).json({ success: false, msg: 'Ruolo non valido' });
@@ -389,6 +393,10 @@ exports.changeUserRole = async (req, res) => {
 exports.changeUserStatus = async (req, res) => {
   try {
     const { status, reason } = req.body || {};
+    // Un admin non può sospendere/bannare (o modificare lo stato di) se stesso
+    if (req.user && String(req.params.id) === String(req.user.id)) {
+      return res.status(400).json({ success: false, msg: 'Non puoi modificare il tuo stato' });
+    }
     if (!STATUSES.includes(status)) {
       return res.status(400).json({ success: false, msg: 'Stato non valido' });
     }

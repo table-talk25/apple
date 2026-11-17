@@ -146,6 +146,19 @@ const getBlockedExclusionIds = async (userId) => {
   ];
 };
 
+// Residuo SEC-06: nelle liste l'id della chat è visibile solo a host e partecipanti (anonimi esclusi).
+// Lavora su oggetti semplici; costo lineare nel numero di partecipanti del pasto.
+const idOf = (value) => (value && value._id ? value._id.toString() : (value ? value.toString() : null));
+const stripChatIdForNonMembers = (meal, userId) => {
+  if (!meal || meal.chatId === undefined) return meal;
+  const isMember = Boolean(userId) && (
+    idOf(meal.host) === userId ||
+    (Array.isArray(meal.participants) && meal.participants.some((p) => idOf(p) === userId))
+  );
+  if (!isMember) delete meal.chatId;
+  return meal;
+};
+
 // @desc    Get meals within a certain radius for the map
 // @route   GET /api/meals/map
 // @access  Public
@@ -313,7 +326,7 @@ exports.getMeals = asyncHandler(async (req, res) => {
       else if (now >= startTime && now < endTime) virtualStatus = 'ongoing';
       else virtualStatus = 'completed';
     }
-   return { ...normalizeMealLocation(meal), virtualStatus };
+   return stripChatIdForNonMembers({ ...normalizeMealLocation(meal), virtualStatus }, req.user ? req.user.id : null);
   });
 
   res.status(200).json({
@@ -628,7 +641,7 @@ exports.searchMeals = asyncHandler(async (req, res, next) => {
       matchedHosts: matchedHostIds.length,
       geo: hasGeo ? { lat, lng, radiusKm } : null,
     },
-    data: meals,
+    data: meals.map((m) => stripChatIdForNonMembers(typeof m.toJSON === 'function' ? m.toJSON() : { ...m }, req.user ? req.user.id : null)),
   });
 });
 
