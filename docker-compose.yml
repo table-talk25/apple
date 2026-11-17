@@ -1,0 +1,40 @@
+# Avvio locale SOLO per sviluppo e test (vedi docs/AVVIO_LOCALE.md).
+# Non usare in produzione: MongoDB è senza autenticazione ed è esposto solo su 127.0.0.1.
+#
+#   cp .env.docker.example .env.docker   # poi modifica JWT_SECRET
+#   docker compose up -d --build
+#
+# MONGO_URI e PORT sono fissati qui sotto e prevalgono su .env.docker.
+
+services:
+  mongo:
+    image: mongo:7
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:27017:27017"
+    volumes:
+      - mongo-data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    env_file:
+      - .env.docker
+    environment:
+      MONGO_URI: mongodb://mongo:27017/tabletalk-test
+      PORT: "5001"
+    ports:
+      - "127.0.0.1:5001:5001"
+    depends_on:
+      mongo:
+        condition: service_healthy
+
+volumes:
+  mongo-data:

@@ -1,0 +1,10 @@
+# Contesto di build del Dockerfile (che copia solo BACKEND/).
+# Evita di inviare al builder dipendenze installate in locale e file con segreti.
+.git
+**/node_modules
+**/.env
+**/.env.*
+.env.docker
+FRONTEND/
+ios/
+docs/
