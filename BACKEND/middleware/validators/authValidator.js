@@ -80,15 +80,25 @@ exports.loginValidation = [
  * Validazioni per il reset della password
  */
 exports.resetPasswordValidation = [
-    check('password')
+    // Body: { token, newPassword } (confirmPassword facoltativo: se presente deve coincidere)
+    check('token')
+        .isString().withMessage('Token di reset mancante o non valido')
+        .bail()
+        .matches(/^[a-f0-9]{64}$/i).withMessage('Token di reset mancante o non valido'),
+
+    // Stessa policy della registrazione (registerValidation, campo password)
+    check('newPassword')
+        .isString().withMessage('La nuova password è obbligatoria')
+        .bail()
         .isLength({ min: 8 }).withMessage('La password deve avere almeno 8 caratteri')
         .matches(/[a-z]/).withMessage('La password deve contenere almeno una lettera minuscola')
         .matches(/[A-Z]/).withMessage('La password deve contenere almeno una lettera maiuscola')
         .matches(/\d/).withMessage('La password deve contenere almeno un numero'),
 
     check('confirmPassword')
+        .optional()
         .custom((value, { req }) => {
-            if (value !== req.body.password) {
+            if (value !== req.body.newPassword) {
                 throw new Error('Le password non coincidono');
             }
             return true;

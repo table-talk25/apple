@@ -7,8 +7,13 @@
 // - Validazione token
 // - Gestione scadenze e sicurezza
 
+const crypto = require('crypto');
 const User = require('../models/User');
 const sendEmail = require('../utils/sendEmail');
+
+// Stesso messaggio per utente inesistente e per invio non riuscito: non rivela se l'email è registrata
+const GENERIC_RESET_MESSAGE = 'Se l\'email è registrata, riceverai un link per il reset della password.';
+const RESET_TOKEN_RE = /^[a-f0-9]{64}$/i;
 // path/fs non più necessari: il template è compilato dal modulo sendEmail
 // (Handlebars + cache template in EmailService).
 
@@ -26,18 +31,17 @@ class PasswordResetService {
    * @returns {Object} Risultato dell'operazione
    */
   async sendPasswordResetEmail(email) {
+    // Dichiarato fuori dal try: il catch deve poter ripulire il token salvato
+    let user = null;
     try {
-      console.log(`🔑 [PasswordReset] Richiesta reset password per: ${email}`);
-
       // Trova l'utente
-      const user = await User.findOne({ email: email.toLowerCase() });
+      user = await User.findOne({ email: String(email).toLowerCase() });
       
       if (!user) {
         // Per sicurezza, non riveliamo se l'utente esiste
-        console.log(`🔒 [PasswordReset] Email non trovata: ${email} (non rivelato all'utente)`);
         return {
           success: true,
-          message: 'Se l\'email è registrata, riceverai un link per il reset della password.',
+          message: GENERIC_RESET_MESSAGE,
           email: email
         };
       }
@@ -49,7 +53,6 @@ class PasswordResetService {
         
         if (timeSinceLastReset < cooldownMs) {
           const remainingMinutes = Math.ceil((cooldownMs - timeSinceLastReset) / (60 * 1000));
-          console.log(`⏳ [PasswordReset] Cooldown attivo per ${email}: ${remainingMinutes} minuti rimanenti`);
           
           return {
             success: false,
@@ -83,8 +86,6 @@ class PasswordResetService {
       const emailResult = await this.sendPasswordResetEmailTemplate(user.email, emailData);
       
       if (emailResult.success) {
-        console.log(`✅ [PasswordReset] Email reset inviata con successo a: ${email}`);
-        
         return {
           success: true,
           message: 'Email di reset inviata. Controlla la tua casella di posta.',
@@ -97,18 +98,25 @@ class PasswordResetService {
       }
 
     } catch (error) {
-      console.error(`❌ [PasswordReset] Errore nell'invio email reset:`, error);
+      // Nessun dato personale nel log: solo il tipo di errore
+      console.error('❌ [PasswordReset] Invio email di reset non riuscito:', (error && (error.code || error.name)) || 'errore');
       
-      // Rimuovi il token in caso di errore
+      // Rimuovi il token in caso di errore (non deve restare un token mai inviato)
       if (user && user.resetPasswordToken) {
-        user.clearPasswordResetToken();
-        await user.save();
+        try {
+          user.clearPasswordResetToken();
+          await user.save();
+        } catch (cleanupError) {
+          console.error('❌ [PasswordReset] Pulizia del token non riuscita:', (cleanupError && cleanupError.name) || 'errore');
+        }
       }
       
+      // Stessa risposta del caso "utente inesistente"
       return {
-        success: false,
-        message: 'Errore nell\'invio email di reset. Riprova più tardi.',
-        error: error.message
+        success: true,
+        message: GENERIC_RESET_MESSAGE,
+        email: email,
+        delivered: false
       };
     }
   }
@@ -155,11 +163,18 @@ class PasswordResetService {
    */
   async verifyResetToken(token) {
     try {
-      console.log(`🔍 [PasswordReset] Verifica token: ${token.substring(0, 8)}...`);
+      if (typeof token !== 'string' || !RESET_TOKEN_RE.test(token)) {
+        return {
+          success: false,
+          message: 'Token di reset non valido o scaduto',
+          code: 'INVALID_TOKEN'
+        };
+      }
 
-      // Trova l'utente con questo token
+      // Il token è salvato come hash SHA-256 (User.generatePasswordResetToken): si cerca per hash e scadenza
+      const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
       const user = await User.findOne({
-        resetPasswordToken: { $exists: true },
+        resetPasswordToken: hashedToken,
         resetPasswordExpires: { $gt: new Date() }
       });
 
@@ -216,8 +231,6 @@ class PasswordResetService {
    */
   async resetPassword(token, newPassword) {
     try {
-      console.log(`🔄 [PasswordReset] Reset password richiesto per token: ${token.substring(0, 8)}...`);
-
       // Verifica il token
       const tokenVerification = await this.verifyResetToken(token);
       
@@ -393,5 +406,7 @@ if (!configValidation.valid) {
 } else {
   console.log(`✅ [PasswordReset] Servizio configurato correttamente:`, configValidation.config);
 }
+
+passwordResetService.GENERIC_RESET_MESSAGE = GENERIC_RESET_MESSAGE;
 
 module.exports = passwordResetService;

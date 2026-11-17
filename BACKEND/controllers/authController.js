@@ -166,61 +166,50 @@ exports.logout = asyncHandler(async (req, res, next) => {
 exports.forgotPassword = asyncHandler(async (req, res, next) => {
     const { email } = req.body;
     
-    if (!email) {
+    if (!email || typeof email !== 'string') {
         return next(new ErrorResponse('Email richiesta', 400));
     }
-    
-    console.log('[AuthController] Richiesta reset password per:', email);
     
     try {
         const result = await passwordResetService.sendPasswordResetEmail(email);
         
         if (result.success) {
-            console.log('[AuthController] Email reset inviata a:', email);
             res.status(200).json({ success: true, message: result.message, email });
+        } else if (result.code === 'COOLDOWN_ACTIVE') {
+            return next(new ErrorResponse(result.message, 429, 'COOLDOWN_ACTIVE'));
         } else {
-            console.log('[AuthController] Reset password fallito:', result.message);
-            if (result.code === 'COOLDOWN_ACTIVE') {
-                return next(new ErrorResponse(result.message, 429, null, 'COOLDOWN_ACTIVE'));
-            } else {
-                return next(new ErrorResponse(result.message, 500));
-            }
+            // Non dovrebbe accadere (il servizio risponde con il messaggio generico): stessa risposta
+            res.status(200).json({ success: true, message: passwordResetService.GENERIC_RESET_MESSAGE, email });
         }
     } catch (error) {
-        console.error('[AuthController] Errore nel reset password:', error);
-        return next(new ErrorResponse('Errore nell\'invio email di reset', 500));
+        console.error('[AuthController] Errore nella richiesta di reset password:', error && error.name);
+        res.status(200).json({ success: true, message: passwordResetService.GENERIC_RESET_MESSAGE, email });
     }
 });
 
 /**
  * @desc    Resetta la password usando un token
  * @route   POST /api/auth/reset-password
+ * @body    { token, newPassword }
  */
 exports.resetPassword = asyncHandler(async (req, res, next) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return next(new ErrorResponse('Uno o più campi non sono validi', 400, errors.array()));
+    }
+
     const { token, newPassword } = req.body;
-    
-    if (!token || !newPassword) {
-        return next(new ErrorResponse('Token e nuova password richiesti', 400));
-    }
-    
-    if (newPassword.length < 8) {
-        return next(new ErrorResponse('La password deve essere di almeno 8 caratteri', 400));
-    }
-    
-    console.log('[AuthController] Reset password richiesto per token:', token.substring(0, 8) + '...');
     
     try {
         const result = await passwordResetService.resetPassword(token, newPassword);
         
         if (result.success) {
-            console.log('[AuthController] Password resettata con successo per utente:', result.userId);
             res.status(200).json({ success: true, message: result.message, userId: result.userId, email: result.email });
         } else {
-            console.log('[AuthController] Reset password fallito:', result.message);
-            return next(new ErrorResponse(result.message, 400, null, result.code));
+            return next(new ErrorResponse(result.message, 400, result.code || 'INVALID_TOKEN'));
         }
     } catch (error) {
-        console.error('[AuthController] Errore nel reset password:', error);
+        console.error('[AuthController] Errore nel reset password:', error && error.name);
         return next(new ErrorResponse('Errore nel reset della password', 500));
     }
 });
@@ -371,7 +360,7 @@ exports.verifyResetToken = asyncHandler(async (req, res, next) => {
  */
 exports.getPasswordResetStats = asyncHandler(async (req, res, next) => {
     try {
-        const stats = await passwordResetService.getPasswordResetStats();
+        const stats = await passwordResetService.getResetStats();
         if (stats.success) {
             res.status(200).json({ success: true, message: 'Statistiche reset password recuperate con successo', stats: stats.stats });
         } else {
@@ -389,7 +378,7 @@ exports.getPasswordResetStats = asyncHandler(async (req, res, next) => {
  */
 exports.cleanupExpiredResetTokens = asyncHandler(async (req, res, next) => {
     try {
-        const result = await passwordResetService.cleanupExpiredResetTokens();
+        const result = await passwordResetService.cleanupExpiredTokens();
         if (result.success) {
             res.status(200).json({ success: true, message: result.message, cleanedCount: result.cleanedCount });
         } else {
