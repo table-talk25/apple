@@ -12,6 +12,7 @@ import Logo from '../../../components/common/Logo';
 import styles from './LoginPage.module.css';
 import BackButton from '../../../components/common/BackButton';
 import { useRedirectAfterAuth } from '../../../hooks/useRedirectAfterAuth';
+import { ACCOUNT_NOTICE_KEY } from '../../../services/apiService';
 
 const LoginPage = () => {
   console.log('🔥🔥🔥 LOGIN PAGE LOADED 🔥🔥🔥');
@@ -23,6 +24,19 @@ const LoginPage = () => {
   const searchParams = new URLSearchParams(location.search);
   const reason = searchParams.get('reason');
   const nextUrl = searchParams.get('next');
+  // FE-01: account sospeso o bannato -> messaggio del server salvato dall'interceptor di apiService
+  const isAccountBlockedReason = reason === 'account_banned' || reason === 'account_suspended';
+  const [accountNotice] = useState(() => {
+    if (!isAccountBlockedReason) return '';
+    try {
+      const saved = window.sessionStorage.getItem(ACCOUNT_NOTICE_KEY);
+      window.sessionStorage.removeItem(ACCOUNT_NOTICE_KEY);
+      if (saved) return saved;
+    } catch (_) {}
+    return reason === 'account_banned'
+      ? 'Il tuo account è stato bannito. Contatta il supporto per maggiori informazioni.'
+      : 'Il tuo account è sospeso. Contatta il supporto per maggiori informazioni.';
+  });
   const [formData, setFormData] = useState({
     email: '',
     password: ''
@@ -159,6 +173,9 @@ const LoginPage = () => {
             )}
             
             {/* Messaggio sessione scaduta */}
+            {accountNotice && (
+              <Alert variant="danger" className="mb-3">{accountNotice}</Alert>
+            )}
             {reason === 'session_expired' && (
               <Alert variant="warning" className="mb-3">
                 <strong>{t('auth.sessionExpired') || 'Sessione scaduta'}</strong>

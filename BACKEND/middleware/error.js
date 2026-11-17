@@ -56,6 +56,8 @@ const errorHandler = (err, req, res, next) => {
     success: false,
     message: error.message || 'Errore Interno del Server',
     errors: err.details || [], 
+    // Codice applicativo (es. ACCOUNT_BANNED, ACCOUNT_SUSPENDED, INVALID_TOKEN) letto dal client
+    code: error.code,
   });
 };
 

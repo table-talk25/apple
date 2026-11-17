@@ -5,6 +5,7 @@ import { API_URL } from '../config/capacitorConfig';
 import { Dialog } from '@capacitor/dialog';
 import { Capacitor, CapacitorHttp } from '@capacitor/core';
 import { authPreferences } from '../utils/preferences';
+import { toast } from 'react-toastify';
 
 // Anti-spam per gli alert e regole di filtro
 let lastAlertTimestampMs = 0;
@@ -14,6 +15,10 @@ const STARTUP_GRACE_MS = 5000;   // nei primi 5s sopprimiamo alert non critici
 const appStartTimestampMs = Date.now();
 const CRITICAL_PATHS = ['/auth/login', '/auth/register', '/auth/forgot-password', '/auth/reset-password'];
 const NOISY_PATH_KEYWORDS = ['analytics', 'notification', 'notifications', 'push'];
+// FE-01: codici con cui il server segnala un account non utilizzabile (vedi BACKEND/utils/accountStatus.js)
+const ACCOUNT_BLOCKED_CODES = ['ACCOUNT_BANNED', 'ACCOUNT_SUSPENDED'];
+// Messaggio del server mostrato nella pagina di login dopo la disconnessione
+export const ACCOUNT_NOTICE_KEY = 'tt_account_notice';
 
 function shouldSuppressForNoise(url = '') {
   const lowerUrl = url.toLowerCase();
@@ -219,10 +224,16 @@ apiClient.interceptors.response.use(
     }
 
     // Gestione sessione scaduta / non autorizzato
-    if (status === 401 || status === 403) {
+    // FE-01: 401 = sessione non valida -> logout. 403 = operazione non consentita -> NON si esce,
+    // tranne quando il server indica un account sospeso o bannato (code nella risposta).
+    const serverCode = error?.response?.data?.code;
+    const isAccountBlocked = status === 403 && ACCOUNT_BLOCKED_CODES.includes(serverCode);
+
+    if (status === 401 || isAccountBlocked) {
       // Se la richiesta ha suppressErrorAlert, potrebbe essere gestita dal componente
       // Non fare redirect immediato se la richiesta è stata marcata per gestione manuale
-      const suppressRedirect = Boolean(error?.config?.suppressErrorAlert);
+      // (non vale per un account bloccato: la sessione va sempre chiusa)
+      const suppressRedirect = Boolean(error?.config?.suppressErrorAlert) && !isAccountBlocked;
 
       // ⚠️ HashRouter: la route vera vive in window.location.hash (es. "#/login"),
       // NON in window.location.pathname (che è quasi sempre "/" o "/index.html").
@@ -242,6 +253,25 @@ apiClient.interceptors.response.use(
         return Promise.reject(error);
       }
 
+      if (isAccountBlocked) {
+        try { await authPreferences.clearAuth(); } catch (_) {}
+        try {
+          if (hasWindow && window.sessionStorage) {
+            window.sessionStorage.setItem(ACCOUNT_NOTICE_KEY, serverMessage || '');
+          }
+        } catch (_) {}
+        if (!isLoginPage) {
+          try {
+            if (hasWindow) {
+              const base = `${window.location.origin}${window.location.pathname}${window.location.search}`;
+              const reason = serverCode === 'ACCOUNT_BANNED' ? 'account_banned' : 'account_suspended';
+              window.location.replace(`${base}#/login?reason=${reason}`);
+            }
+          } catch (_) {}
+        }
+        return Promise.reject(error);
+      }
+
       if (!suppressRedirect && !isLoginPage && !isAuthCheck && !isLogout) {
         try {
           // Pulisci le credenziali
@@ -256,17 +286,24 @@ apiClient.interceptors.response.use(
             // dall'hosting statico) e cambia solo l'hash → compatibile con HashRouter.
             const base = `${window.location.origin}${window.location.pathname}${window.location.search}`;
             const target = `${base}#/login?reason=session_expired&next=${encodeURIComponent(next)}`;
-            console.log('[API] Redirect al login per errore 401/403:', target);
+            console.log('[API] Redirect al login per errore 401:', target);
             window.location.replace(target);
           }
         } catch (_) {}
       } else {
         if (isAuthCheck) {
-          console.log('[API] Errore 401/403 durante verifica auth, gestito da AuthContext');
+          console.log('[API] Errore 401 durante verifica auth, gestito da AuthContext');
         } else if (suppressRedirect) {
-          console.log('[API] Errore 401/403 con suppressErrorAlert, gestione lasciata al componente');
+          console.log('[API] Errore 401 con suppressErrorAlert, gestione lasciata al componente');
         }
       }
+    } else if (status === 403) {
+      // 403 normale: la sessione resta valida; si mostra il messaggio del server
+      if (!error?.config?.suppressErrorAlert) {
+        const msg = serverMessage || 'Non hai i permessi per questa operazione.';
+        try { toast.error(msg, { toastId: `forbidden:${msg}` }); } catch (_) {}
+      }
+      return Promise.reject(error);
     }
 
     // Mostra alert solo se la regola lo consente (evita spam e falsi positivi)
