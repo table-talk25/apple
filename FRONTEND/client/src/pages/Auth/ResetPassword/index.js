@@ -11,6 +11,9 @@ import Logo from '../../../components/common/Logo';
 import styles from './ResetPassword.module.css';
 import BackButton from '../../../components/common/BackButton';
 
+// Almeno 8 caratteri, una minuscola, una maiuscola e un numero (come la registrazione)
+const PASSWORD_POLICY = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
+
 const ResetPasswordPage = () => {
     const { t } = useTranslation();
     const [password, setPassword] = useState('');
@@ -27,10 +30,22 @@ const ResetPasswordPage = () => {
             toast.error(t('auth.passwordsDoNotMatch'));
             return;
         }
+        // Stessa policy della registrazione (backend: almeno 8 caratteri, minuscola, maiuscola, numero)
+        if (!PASSWORD_POLICY.test(password)) {
+            const msg = t('auth.passwordRequirements');
+            setErrors({ newPassword: msg });
+            toast.error(msg, { autoClose: 7000 });
+            return;
+        }
+        if (!token) {
+            const msg = 'Link di reset scaduto o non valido. Richiedi un nuovo reset.';
+            setErrors({ _form: msg });
+            toast.error(msg, { autoClose: 8000 });
+            return;
+        }
         setLoading(true);
         try {
-            // Dobbiamo aggiungere la funzione al service, per ora simuliamo
-            // await authService.resetPassword(token, password);
+            await authService.resetPassword(token, password);
             toast.success(t('auth.resetPasswordSuccess'));
             navigate('/login');
         } catch (err) {

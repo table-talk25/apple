@@ -163,6 +163,15 @@ export const forgotPassword = async (data) => {
 };
 
 /**
+ * Imposta una nuova password usando il token ricevuto via email.
+ * Backend: POST /auth/reset-password con { token, newPassword }.
+ */
+export const resetPassword = async (token, newPassword) => {
+  const response = await apiClient.post('/auth/reset-password', { token, newPassword }, { timeout: 75000 });
+  return response.data;
+};
+
+/**
  * Reinvia l'email di verifica per un account non verificato.
  * @param {object} data - Oggetto con { email }
  *
@@ -203,6 +212,7 @@ const authService = {
   logout,
   verifyToken,
   forgotPassword,
+  resetPassword,
   changePassword,
   resendVerification,
   verifyEmail,
