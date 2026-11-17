@@ -38,3 +38,6 @@ FRONTEND/client/build/
 # Dump di dati utente (SEC-03): non va mai committato
 FRONTEND/client/users.json
 users.json
+
+# Variabili per docker-compose (avvio locale): mai committare
+.env.docker
