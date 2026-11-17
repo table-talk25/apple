@@ -36,7 +36,10 @@ const createAdmin = async () => {
       nickname: 'admin_tabletalk',
       role: 'admin',
       profileCompleted: true,
-      isVerified: true
+      isVerified: true,
+      // Campo obbligatorio nello schema User (età >= 18): senza, il salvataggio fallisce.
+      // Data convenzionale per l'account amministrativo.
+      dateOfBirth: new Date('1970-01-01')
     });
 
     await admin.save();
