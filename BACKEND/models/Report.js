@@ -1,9 +1,25 @@
 const mongoose = require('mongoose');
 
+// MOD-01: codici stabili inviati dal frontend (ReportModal) + vecchi valori italiani,
+// mantenuti per non invalidare i documenti esistenti.
+const REPORT_REASON_CODES = ['inappropriate', 'spam', 'fakeProfile', 'other'];
+const LEGACY_REPORT_REASONS = ['Comportamento Inappropriato', 'Spam', 'Profilo Falso', 'Altro'];
+const REPORT_REASON_LABELS = {
+    inappropriate: 'Comportamento Inappropriato',
+    spam: 'Spam',
+    fakeProfile: 'Profilo Falso',
+    other: 'Altro',
+};
+
+/** Etichetta leggibile per email e pannelli admin (i valori legacy sono già leggibili). */
+function reportReasonLabel(reason) {
+    return REPORT_REASON_LABELS[reason] || reason || 'Non specificato';
+}
+
 const reportSchema = new mongoose.Schema({
     reporter: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true }, // Chi segnala
     reportedUser: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true }, // Chi è stato segnalato
-    reason: { type: String, required: true, enum: ['Comportamento Inappropriato', 'Spam', 'Profilo Falso', 'Altro'] },
+    reason: { type: String, required: true, enum: [...REPORT_REASON_CODES, ...LEGACY_REPORT_REASONS] },
     details: { type: String }, // Testo libero
     context: { type: String, enum: ['chat', 'profile', 'meal', 'video_call', 'general'], default: 'general' }, // Contesto della segnalazione
     meal: { type: mongoose.Schema.Types.ObjectId, ref: 'Meal' }, // Riferimento al pasto (opzionale)
@@ -71,4 +87,8 @@ reportSchema.methods.markAsDismissed = function(adminId, notes) {
     return this.save();
 };
 
-module.exports = mongoose.model('Report', reportSchema); 
+const Report = mongoose.model('Report', reportSchema);
+module.exports = Report;
+module.exports.REPORT_REASON_CODES = REPORT_REASON_CODES;
+module.exports.LEGACY_REPORT_REASONS = LEGACY_REPORT_REASONS;
+module.exports.reportReasonLabel = reportReasonLabel;

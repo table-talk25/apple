@@ -2,10 +2,18 @@
 
 const emailService = require('../utils/sendEmail');
 const User = require('../models/User');
+const { reportReasonLabel } = require('../models/Report');
 
 /**
  * Servizio per l'invio di notifiche email per le segnalazioni
  */
+// Handlebars non legge le proprietà dei documenti Mongoose (getter sul prototipo):
+// si passa un oggetto semplice con il motivo in forma leggibile.
+function toTemplateReport(report) {
+    const plain = report && typeof report.toObject === 'function' ? report.toObject() : { ...report };
+    return { ...plain, reason: reportReasonLabel(plain.reason) };
+}
+
 class ReportNotificationService {
     constructor() {
         this.emailService = emailService;
@@ -96,7 +104,7 @@ class ReportNotificationService {
                 createdAt: this.formatDate(report.createdAt),
                 reporterNickname: report.reporter.nickname || 'Utente Sconosciuto',
                 reportedUserNickname: report.reportedUser.nickname || 'Utente Sconosciuto',
-                reason: report.reason,
+                reason: reportReasonLabel(report.reason),
                 details: report.details || 'Nessun dettaglio fornito',
                 context: this.getContextDisplayName(report.context),
                 priority: priority,
@@ -111,7 +119,7 @@ class ReportNotificationService {
             // Invia l'email
             const result = await this.emailService.sendEmail({
                 to: this.adminEmail,
-                subject: `🚨 Nuova Segnalazione TableTalk - Priorità ${priorityText} - ${report.reason}`,
+                subject: `🚨 Nuova Segnalazione TableTalk - Priorità ${priorityText} - ${reportReasonLabel(report.reason)}`,
                 template: 'new-report-notification',
                 context: emailContext
             });
@@ -154,7 +162,7 @@ class ReportNotificationService {
                 newStatus: statusDisplayNames[newStatus] || newStatus,
                 reporterNickname: report.reporter.nickname || 'Utente Sconosciuto',
                 reportedUserNickname: report.reportedUser.nickname || 'Utente Sconosciuto',
-                reason: report.reason,
+                reason: reportReasonLabel(report.reason),
                 adminDashboardUrl: this.adminDashboardUrl,
                 updatedAt: this.formatDate(new Date())
             };
@@ -188,7 +196,7 @@ class ReportNotificationService {
                 reportedUserNickname: reportedUser.nickname || 'Utente Sconosciuto',
                 reportedUserId: reportedUser._id,
                 reportCount: recentReports.length,
-                recentReports: recentReports.slice(0, 5), // Ultime 5 segnalazioni
+                recentReports: recentReports.slice(0, 5).map(toTemplateReport), // Ultime 5 segnalazioni
                 adminDashboardUrl: this.adminDashboardUrl,
                 createdAt: this.formatDate(new Date())
             };
@@ -217,6 +225,7 @@ class ReportNotificationService {
     getContextDisplayName(context) {
         const contextNames = {
             'general': 'Generale',
+            'profile': 'Profilo Utente',
             'harassment': 'Molestie',
             'inappropriate': 'Contenuto Inappropriato',
             'spam': 'Spam',
@@ -276,7 +285,7 @@ class ReportNotificationService {
                 pendingReports,
                 resolvedReports,
                 dismissedReports,
-                recentReports,
+                recentReports: recentReports.map(toTemplateReport),
                 adminDashboardUrl: this.adminDashboardUrl
             };
 
