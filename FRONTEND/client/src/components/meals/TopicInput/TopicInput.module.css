@@ -1,87 +1,74 @@
-/* Stile per il nostro nuovo componente di input per tag */
-.topicInputContainer {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 8px;
-    padding: 10px;
-    border-radius: 12px;
-    border: 1px solid var(--tt-border);
-    background-color: var(--tt-background);
-    transition: all 0.2s ease;
-    cursor: text;
+.tagbox {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  border: 1.5px solid var(--tt-border);
+  border-radius: var(--tt-radius-md);
+  padding: 0.5rem;
+  background-color: var(--tt-surface);
+  transition: border-color 0.2s ease;
 }
 
-.topicInputContainer:focus-within {
-    background-color: white;
-    border-color: var(--primary-color);
-    box-shadow: 0 0 0 3px color-mix(in srgb, var(--tt-primary) 15%, transparent);
+.tagbox:focus-within {
+  border-color: var(--tt-accent);
 }
 
-.topicTag {
-    display: flex;
-    align-items: center;
-    background-color: var(--primary-color);
-    color: white;
-    padding: 6px 12px;
-    border-radius: 20px;
-    font-size: 0.9rem;
-    font-weight: 500;
+.hasError {
+  border-color: var(--tt-primary-hover);
 }
 
-.removeTagButton {
-    background: none;
-    border: none;
-    color: white;
-    font-size: 1.2rem;
-    margin-left: 8px;
-    cursor: pointer;
-    padding: 0;
-    line-height: 1;
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background-color: var(--tt-background);
+  border: 1px solid var(--tt-border);
+  border-radius: 999px;
+  padding: 0.2rem 0.65rem;
+  font-size: 0.8rem;
+  color: var(--tt-text);
+  font-weight: 500;
 }
 
-.topicInput {
-    flex-grow: 1;
-    border: none;
-    background: transparent;
-    padding: 6px;
-    font-size: 1rem;
-    min-width: 150px;
+.removeBtn {
+  border: none;
+  background: transparent;
+  color: var(--tt-primary);
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 0 2px;
+  line-height: 1;
 }
 
-.topicInput:focus {
-    outline: none;
+.removeBtn:hover {
+  color: var(--tt-primary-hover);
 }
 
-/* 🔒 STATI ERRORE: Stili per input e messaggi di errore */
-.topicInput.inputError {
-    border: 1px solid #dc3545;
-    background-color: var(--tt-background);
+.input {
+  border: none;
+  outline: none;
+  flex: 1;
+  min-width: 140px;
+  font-family: var(--tt-font-body);
+  font-size: 0.92rem;
+  padding: 0.25rem 0.3rem;
+  background: transparent;
+  color: var(--tt-text);
 }
 
-.topicInputContainer.hasError {
-    border-color: #dc3545;
-    background-color: var(--tt-background);
+.input::placeholder {
+  color: var(--tt-text-muted);
 }
 
-.errorMessage {
-    color: #dc3545;
-    font-size: 0.85rem;
-    margin-top: 4px;
-    padding: 4px 8px;
-    background-color: var(--tt-background);
-    border-radius: 4px;
-    border-left: 3px solid #dc3545;
-    animation: fadeIn 0.3s ease-in;
+.input:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
 }
 
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(-5px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+.errorText {
+  color: var(--tt-primary-hover);
+  font-size: 0.8rem;
+  margin-top: 5px;
 }

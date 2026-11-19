@@ -1,50 +1,76 @@
-// File: /src/components/meals/MealForm.js (Versione Corretta e Aggiornata)
-
 import React, { useState, useEffect } from 'react';
-import { Form, Button, Row, Col, Spinner } from 'react-bootstrap';
 import { useTranslation } from 'react-i18next';
-import { mealTypeOptions } from '../../../constants/mealConstants';
-import styles from './MealForm.module.css'; 
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
 import { Capacitor } from '@capacitor/core';
+import { mealTypeOptions } from '../../../constants/mealConstants';
+import { useMealTranslations } from '../../../hooks/useMealTranslations';
 import TopicInput from '../TopicInput';
 import OpenStreetMapComponent from '../../maps/OpenStreetMapComponent';
-import { sanitizeMealData, containsDangerousContent } from '../../../services/sanitizationService';
+import {
+  sanitizeMealData,
+  containsDangerousContent,
+} from '../../../services/sanitizationService';
 import mealService from '../../../services/mealService';
+import { Button } from '../../ui';
+import styles from './MealForm.module.css';
 
-const languageOptions = ['Italiano', 'English', 'Español', 'Français', 'Deutsch', '中文', 'العربية'];
+const LANGUAGE_OPTIONS = [
+  'Italiano',
+  'English',
+  'Español',
+  'Français',
+  'Deutsch',
+  '中文',
+  'العربية',
+];
 
-const MealForm = ({ initialData, onSubmit, onCancel, isLoading, isSubmitting, submitButtonText }) => {
-  const { t } = useTranslation();
-  
+const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
+const MIN_PARTICIPANTS = 2;
+const MAX_PARTICIPANTS_STEPPER = 8;
+
+const formatLocalDateTime = (date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  return `${year}-${month}-${day}T${hours}:${minutes}`;
+};
+
+const MealForm = ({
+  initialData,
+  onSubmit,
+  isLoading = false,
+  isSubmitting = false,
+  submitButtonText = '',
+}) => {
+  const { t, i18n } = useTranslation();
+  const { getMealTypeText } = useMealTranslations();
+
   const durationOptions = [
-    { value: 30, label: t('meals.form.durationOptions.30min') },
-    { value: 60, label: t('meals.form.durationOptions.1hour') },
-    { value: 90, label: t('meals.form.durationOptions.1hour30') },
-    { value: 120, label: t('meals.form.durationOptions.2hours') },
-    { value: 150, label: t('meals.form.durationOptions.2hours30') },
-    { value: 180, label: t('meals.form.durationOptions.3hours') },
+    { value: 30, label: t('meals.form.durationOptions.30min', '30 min') },
+    { value: 60, label: t('meals.form.durationOptions.1hour', '1 ora') },
+    { value: 90, label: t('meals.form.durationOptions.1hour30', '1 ora e ½') },
+    { value: 120, label: t('meals.form.durationOptions.2hours', '2 ore') },
+    { value: 150, label: t('meals.form.durationOptions.2hours30', '2 ore e ½') },
+    { value: 180, label: t('meals.form.durationOptions.3hours', '3 ore') },
   ];
 
   const getInitialState = () => {
-    const now = new Date();
-    const suggestedDate = new Date(now.getTime() + 60 * 60 * 1000);
-    
-    const year = suggestedDate.getFullYear();
-    const month = String(suggestedDate.getMonth() + 1).padStart(2, '0');
-    const day = String(suggestedDate.getDate()).padStart(2, '0');
-    const hours = String(suggestedDate.getHours()).padStart(2, '0');
-    const minutes = String(suggestedDate.getMinutes()).padStart(2, '0');
-    
+    const suggestedDate = new Date(Date.now() + 60 * 60 * 1000);
+    const defaultLang = (i18n.language || 'it').toLowerCase().startsWith('en')
+      ? 'English'
+      : 'Italiano';
+
     return {
       title: '',
       description: '',
       mealType: 'virtual',
       type: 'lunch',
-      date: `${year}-${month}-${day}T${hours}:${minutes}`,
+      date: formatLocalDateTime(suggestedDate),
       duration: 60,
-      maxParticipants: 2,
-      language: 'English',
+      maxParticipants: 4,
+      language: defaultLang,
       topics: [],
       location: null,
       isPublic: true,
@@ -52,166 +78,158 @@ const MealForm = ({ initialData, onSubmit, onCancel, isLoading, isSubmitting, su
     };
   };
 
-  const [formData, setFormData] = useState(getInitialState());
+  const [formData, setFormData] = useState(getInitialState);
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
   const [imageBase64, setImageBase64] = useState('');
+  const [imageError, setImageError] = useState('');
+  const [isDragging, setIsDragging] = useState(false);
   const [errors, setErrors] = useState({});
   const [selectedLocation, setSelectedLocation] = useState(null);
 
   useEffect(() => {
-    if (initialData) {
-      const sanitizedData = { ...getInitialState(), ...initialData };
-      
-      if (sanitizedData.location) {
-        if (typeof sanitizedData.location === 'object' && sanitizedData.location.address) {
-          sanitizedData.location = {
-            ...sanitizedData.location,
-            address: typeof sanitizedData.location.address === 'string' 
-              ? sanitizedData.location.address 
-              : ''
-          };
-        } else {
-          sanitizedData.location = null;
-        }
-      } else {
-        sanitizedData.location = null;
-      }
+    if (!initialData) return;
+    const merged = { ...getInitialState(), ...initialData };
 
-      // Converti la data ISO dal DB al formato datetime-local per l'input HTML
-      if (sanitizedData.date) {
-        try {
-          const d = new Date(sanitizedData.date);
-          if (!isNaN(d.getTime())) {
-            const year = d.getFullYear();
-            const month = String(d.getMonth() + 1).padStart(2, '0');
-            const day = String(d.getDate()).padStart(2, '0');
-            const hours = String(d.getHours()).padStart(2, '0');
-            const minutes = String(d.getMinutes()).padStart(2, '0');
-            sanitizedData.date = `${year}-${month}-${day}T${hours}:${minutes}`;
-          }
-        } catch (_) {}
-      }
-      
-      setFormData(sanitizedData);
+    if (merged.location && typeof merged.location === 'object' && merged.location.address) {
+      merged.location = {
+        ...merged.location,
+        address: typeof merged.location.address === 'string' ? merged.location.address : '',
+      };
+    } else {
+      merged.location = null;
+    }
 
-      // Pre-carica l'anteprima dell'immagine esistente in modalità edit
-      const existingImage = initialData.imageUrl || initialData.coverImage;
-      if (existingImage) {
-        const existingUrl = mealService.getFullMealImageUrl(existingImage);
-        if (existingUrl) {
-          setImagePreview(existingUrl);
-        }
+    if (merged.date) {
+      const d = new Date(merged.date);
+      if (!Number.isNaN(d.getTime())) {
+        merged.date = formatLocalDateTime(d);
       }
     }
+
+    setFormData(merged);
+
+    const existingImage = initialData.imageUrl || initialData.coverImage;
+    if (existingImage) {
+      const existingUrl = mealService.getFullMealImageUrl(existingImage);
+      if (existingUrl) setImagePreview(existingUrl);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialData]);
 
   useEffect(() => {
-    if (formData.location && typeof formData.location === 'object' && formData.location.coordinates) {
+    if (
+      formData.location &&
+      typeof formData.location === 'object' &&
+      formData.location.coordinates
+    ) {
       setSelectedLocation({
         lat: formData.location.coordinates[1],
         lng: formData.location.coordinates[0],
-        address: formData.location.address || ''
+        address: formData.location.address || '',
       });
     } else {
       setSelectedLocation(null);
     }
   }, [formData.location]);
 
-  const getMinValidDateTime = () => {
-    const now = new Date();
-    const toleranceMs = 5 * 60 * 1000;
-    const minValidDate = new Date(now.getTime() - toleranceMs);
-    
-    const year = minValidDate.getFullYear();
-    const month = String(minValidDate.getMonth() + 1).padStart(2, '0');
-    const day = String(minValidDate.getDate()).padStart(2, '0');
-    const hours = String(minValidDate.getHours()).padStart(2, '0');
-    const minutes = String(minValidDate.getMinutes()).padStart(2, '0');
-    
-    return `${year}-${month}-${day}T${hours}:${minutes}`;
-  };
+  const getMinValidDateTime = () => formatLocalDateTime(new Date());
 
-  const validateField = (name, value) => {
+  const validateField = (name, value, currentMealType = formData.mealType) => {
     switch (name) {
-      case 'title':
-        if (!value.trim()) return t('meals.form.titleRequired');
-        if (value.trim().length < 5) return t('meals.form.titleMinLength');
-        if (value.trim().length > 50) return t('meals.form.titleMaxLength');
-        if (containsDangerousContent(value)) {
-          return 'Il titolo contiene contenuto non permesso (HTML/JavaScript)';
+      case 'title': {
+        const str = String(value || '').trim();
+        if (!str) return t('create.titleError', 'Dai un titolo al tuo tavolo (almeno 5 caratteri).');
+        if (str.length < 5) return t('meals.form.titleMinLength', 'Il titolo deve avere almeno 5 caratteri.');
+        if (str.length > 50) return t('meals.form.titleMaxLength', 'Il titolo non può superare i 50 caratteri.');
+        if (containsDangerousContent(str)) {
+          return 'Il titolo contiene contenuto non permesso (HTML/JavaScript).';
         }
-        break;
-      case 'description':
-        if (!value.trim()) return t('meals.form.descriptionRequired');
-        if (value.trim().length < 10) return t('meals.form.descriptionMinLength');
-        if (value.trim().length > 1000) return t('meals.form.descriptionMaxLength');
-        if (containsDangerousContent(value)) {
-          return 'La descrizione contiene contenuto non permesso (HTML/JavaScript)';
+        return '';
+      }
+      case 'description': {
+        const str = String(value || '').trim();
+        if (!str) return t('create.descError', 'Aggiungi una breve descrizione (almeno 10 caratteri).');
+        if (str.length < 10) return t('meals.form.descriptionMinLength', 'La descrizione deve avere almeno 10 caratteri.');
+        if (str.length > 1000) return t('meals.form.descriptionMaxLength', 'La descrizione non può superare i 1000 caratteri.');
+        if (containsDangerousContent(str)) {
+          return 'La descrizione contiene contenuto non permesso (HTML/JavaScript).';
         }
-        break;
-      case 'date':
-        if (!value) return t('meals.form.dateRequired');
+        return '';
+      }
+      case 'date': {
+        if (!value) return t('create.whenError', 'Scegli una data e ora nel futuro.');
         const selectedDate = new Date(value);
         const now = new Date();
-        const toleranceMs = 5 * 60 * 1000;
-        const minValidDate = new Date(now.getTime() - toleranceMs);
-        if (selectedDate < minValidDate) {
-          return t('meals.form.datePast') || 'La data deve essere nel futuro';
+        if (Number.isNaN(selectedDate.getTime()) || selectedDate <= now) {
+          return t('create.whenError', 'Scegli una data e ora nel futuro.');
         }
-        const maxFutureDate = new Date(now.getFullYear() + 1, now.getMonth(), now.getDate());
+        const maxFutureDate = new Date(
+          now.getFullYear() + 1,
+          now.getMonth(),
+          now.getDate()
+        );
         if (selectedDate > maxFutureDate) {
-          return t('meals.form.dateTooFar') || 'La data non può essere più di un anno nel futuro';
+          return t(
+            'meals.form.dateTooFar',
+            'La data non può essere più di un anno nel futuro.'
+          );
         }
-        break;
-      case 'maxParticipants':
-        if (!value || value < 2) return t('meals.form.maxParticipantsMin');
-        if (value > 10) return t('meals.form.maxParticipantsMax');
-        break;
-      case 'topics':
         return '';
-      case 'location':
-        if (formData.mealType === 'physical' && !value) return t('meals.form.locationRequired');
-        break;
+      }
+      case 'maxParticipants': {
+        const n = Number(value);
+        const upperLimit = initialData ? 10 : MAX_PARTICIPANTS_STEPPER;
+        if (!n || n < MIN_PARTICIPANTS) {
+          return t('meals.form.maxParticipantsMin', 'Minimo 2 partecipanti.');
+        }
+        if (n > upperLimit) {
+          return t('meals.form.maxParticipantsMax', `Massimo ${upperLimit} partecipanti.`);
+        }
+        return '';
+      }
+      case 'location': {
+        if (
+          currentMealType === 'physical' &&
+          (!value || (typeof value === 'object' && !value.address?.trim()))
+        ) {
+          return t('meals.form.locationRequired', 'La posizione è obbligatoria per un t2t in presenza.');
+        }
+        return '';
+      }
       default:
         return '';
     }
-    return '';
   };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    
-    if (name === 'date' && value) {
-      const selectedDate = new Date(value);
-      const now = new Date();
-      const toleranceMs = 5 * 60 * 1000;
-      const minValidDate = new Date(now.getTime() - toleranceMs);
-      if (selectedDate < minValidDate) {
-        setFormData(prev => ({ ...prev, date: '' }));
-        setErrors(prev => ({
-          ...prev,
-          date: t('meals.form.datePast') || 'La data deve essere nel futuro'
-        }));
-        return;
-      }
-    }
-    
-    setFormData(prev => ({ ...prev, [name]: value }));
-    const error = validateField(name, value);
-    setErrors(prev => ({ ...prev, [name]: error }));
+    const nextValue = name === 'duration' ? Number(value) : value;
+    setFormData((prev) => ({ ...prev, [name]: nextValue }));
+    const err = validateField(name, nextValue);
+    setErrors((prev) => ({ ...prev, [name]: err }));
   };
 
   const handleBlur = (e) => {
     const { name, value } = e.target;
-    const error = validateField(name, value);
-    setErrors(prev => ({ ...prev, [name]: error }));
+    const err = validateField(name, value);
+    setErrors((prev) => ({ ...prev, [name]: err }));
+  };
+
+  const handleStepParticipants = (delta) => {
+    setFormData((prev) => {
+      const current = Number(prev.maxParticipants) || MIN_PARTICIPANTS;
+      const next = Math.min(
+        MAX_PARTICIPANTS_STEPPER,
+        Math.max(MIN_PARTICIPANTS, current + delta)
+      );
+      setErrors((e) => ({ ...e, maxParticipants: '' }));
+      return { ...prev, maxParticipants: next };
+    });
   };
 
   const handleTopicsChange = (newTopics) => {
-    setFormData(prev => ({ ...prev, topics: newTopics }));
-    const error = validateField('topics', newTopics);
-    setErrors(prev => ({ ...prev, topics: error }));
+    setFormData((prev) => ({ ...prev, topics: newTopics }));
   };
 
   const geocodeAddress = async (address) => {
@@ -221,17 +239,21 @@ const MealForm = ({ initialData, onSubmit, onCancel, isLoading, isSubmitting, su
       const timeoutId = setTimeout(() => controller.abort(), 10000);
       const response = await fetch(
         `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=1&addressdetails=1`,
-        { headers: { 'User-Agent': 'TableTalk App' }, signal: controller.signal }
+        { headers: { 'User-Agent': 'table2Talk App' }, signal: controller.signal }
       );
       clearTimeout(timeoutId);
       if (!response.ok) return null;
       const data = await response.json();
       if (data && data.length > 0) {
         const result = data[0];
-        return { lat: parseFloat(result.lat), lng: parseFloat(result.lon), address: result.display_name || address };
+        return {
+          lat: parseFloat(result.lat),
+          lng: parseFloat(result.lon),
+          address: result.display_name || address,
+        };
       }
       return null;
-    } catch (error) {
+    } catch (_) {
       return null;
     }
   };
@@ -244,121 +266,58 @@ const MealForm = ({ initialData, onSubmit, onCancel, isLoading, isSubmitting, su
         const timeoutId = setTimeout(() => controller.abort(), 10000);
         const response = await fetch(
           `https://nominatim.openstreetmap.org/reverse?format=json&lat=${location.lat}&lon=${location.lng}&addressdetails=1`,
-          { headers: { 'User-Agent': 'TableTalk App' }, signal: controller.signal }
+          { headers: { 'User-Agent': 'table2Talk App' }, signal: controller.signal }
         );
         clearTimeout(timeoutId);
         if (response.ok) {
           const data = await response.json();
           if (data && data.display_name) address = data.display_name;
         }
-      } catch (error) {}
+      } catch (_) {}
     }
-    const finalAddress = address || `${location.lat.toFixed(4)}, ${location.lng.toFixed(4)}`;
+    const finalAddress =
+      address || `${location.lat.toFixed(4)}, ${location.lng.toFixed(4)}`;
     setSelectedLocation({ ...location, address: finalAddress });
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      location: { address: finalAddress, coordinates: [location.lng, location.lat] }
+      location: { address: finalAddress, coordinates: [location.lng, location.lat] },
     }));
-    setErrors(prev => ({ ...prev, location: null }));
+    setErrors((prev) => ({ ...prev, location: '' }));
   };
 
-  const handleAddressChange = async (e) => {
+  const handleAddressChange = (e) => {
     const address = e.target.value;
-    setFormData(prev => ({
-      ...prev,
-      location: prev.location ? { ...prev.location, address } : { address, coordinates: null }
-    }));
     if (!address || address.trim().length === 0) {
       setSelectedLocation(null);
-      setFormData(prev => ({ ...prev, location: null }));
+      setFormData((prev) => ({ ...prev, location: null }));
+      return;
     }
+    setFormData((prev) => ({
+      ...prev,
+      location: prev.location
+        ? { ...prev.location, address }
+        : { address, coordinates: null },
+    }));
   };
 
   const handleAddressBlur = async (e) => {
     const address = e.target.value.trim();
     if (!address || address.length < 3) return;
-    setErrors(prev => ({ ...prev, location: 'Ricerca indirizzo...' }));
+    setErrors((prev) => ({ ...prev, location: 'Ricerca indirizzo…' }));
     const location = await geocodeAddress(address);
     if (location) {
       setSelectedLocation(location);
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
-        location: { address: location.address, coordinates: [location.lng, location.lat] }
+        location: { address: location.address, coordinates: [location.lng, location.lat] },
       }));
-      setErrors(prev => ({ ...prev, location: null }));
+      setErrors((prev) => ({ ...prev, location: '' }));
     } else {
-      setErrors(prev => ({ ...prev, location: 'Indirizzo non trovato. Prova a selezionarlo dalla mappa.' }));
+      setErrors((prev) => ({
+        ...prev,
+        location: 'Indirizzo non trovato. Prova a selezionarlo dalla mappa.',
+      }));
     }
-  };
-
-  const processImageFile = async (file, fileName = 'image.jpg') => {
-    if (!file || !file.type || !file.type.startsWith('image/')) {
-      alert('Seleziona solo file immagine');
-      return;
-    }
-    if (file.size > 10 * 1024 * 1024) {
-      alert('Il file è troppo grande. Massimo 10MB.');
-      return;
-    }
-    try {
-      const reader = new FileReader();
-      reader.onload = (e) => setImagePreview(e.target.result);
-      reader.readAsDataURL(file);
-
-      let processedFile = file;
-      if (file.size > 4 * 1024 * 1024) {
-        try {
-          const blob = await compressImageBlob(file, { maxWidth: 1600, quality: 0.7 });
-          processedFile = new File([blob], fileName, { type: 'image/jpeg' });
-        } catch (compressError) {
-          processedFile = file;
-        }
-      }
-      setImageFile(processedFile);
-      try {
-        const base64 = await blobToBase64(processedFile);
-        if (typeof base64 === 'string') setImageBase64(base64);
-      } catch (base64Error) {}
-    } catch (error) {
-      console.error('Errore elaborazione file:', error);
-      throw error;
-    }
-  };
-
-  const handleCameraSelect = async (source = CameraSource.Photos) => {
-    try {
-      const permissionStatus = await Camera.checkPermissions();
-      const neededPermission = source === CameraSource.Camera ? 'camera' : 'photos';
-      if (permissionStatus[neededPermission] === 'denied' || permissionStatus[neededPermission] === 'prompt') {
-        const requestResult = await Camera.requestPermissions({ permissions: [neededPermission] });
-        if (requestResult[neededPermission] === 'denied') {
-          alert(`Permessi necessari per la ${source === CameraSource.Camera ? 'fotocamera' : 'libreria foto'}.`);
-          return;
-        }
-      }
-      const image = await Camera.getPhoto({
-        quality: 90,
-        allowEditing: false,
-        resultType: CameraResultType.DataUrl,
-        source,
-        width: 1600,
-        height: 1600
-      });
-      if (!image || !image.dataUrl) return;
-      const response = await fetch(image.dataUrl);
-      const blob = await response.blob();
-      const file = new File([blob], `photo_${Date.now()}.jpg`, { type: 'image/jpeg' });
-      await processImageFile(file, file.name);
-    } catch (error) {
-      console.error('Errore selezione foto:', error);
-      alert(`Errore durante la selezione della foto: ${error.message}`);
-    }
-  };
-
-  const handleFileSelect = async (event) => {
-    const file = event.target.files[0];
-    if (!file) return;
-    await processImageFile(file);
   };
 
   const compressImageBlob = async (blob, { maxWidth = 1600, quality = 0.7 } = {}) => {
@@ -371,36 +330,125 @@ const MealForm = ({ initialData, onSubmit, onCancel, isLoading, isSubmitting, su
       canvas.getContext('2d').drawImage(imageBitmap, 0, 0, canvas.width, canvas.height);
       const dataUrl = canvas.toDataURL('image/jpeg', quality);
       return await (await fetch(dataUrl)).blob();
-    } catch (e) {
+    } catch (_) {
       return blob;
     }
   };
 
-  const blobToBase64 = (blob) => new Promise((resolve, reject) => {
+  const blobToBase64 = (blob) =>
+    new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result);
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+
+  const processImageFile = async (file, fileName = 'image.jpg') => {
+    setImageError('');
+    if (!file || !file.type || !file.type.startsWith('image/')) {
+      setImageError(
+        t('create.coverInvalidType', 'Seleziona solo file immagine (JPG, PNG, WebP).')
+      );
+      return;
+    }
+    if (file.size > MAX_IMAGE_BYTES) {
+      setImageError(t('create.coverTooLarge', 'Immagine troppo grande (massimo 10MB).'));
+      return;
+    }
+
     const reader = new FileReader();
-    reader.onloadend = () => resolve(reader.result);
-    reader.onerror = reject;
-    reader.readAsDataURL(blob);
-  });
+    reader.onload = (ev) => setImagePreview(ev.target.result);
+    reader.readAsDataURL(file);
+
+    let processedFile = file;
+    if (file.size > 4 * 1024 * 1024) {
+      try {
+        const blob = await compressImageBlob(file, { maxWidth: 1600, quality: 0.7 });
+        processedFile = new File([blob], file.name || fileName, { type: 'image/jpeg' });
+      } catch (_) {
+        processedFile = file;
+      }
+    }
+    setImageFile(processedFile);
+
+    try {
+      const base64 = await blobToBase64(processedFile);
+      if (typeof base64 === 'string') setImageBase64(base64);
+    } catch (_) {}
+  };
+
+  const handleFileSelect = async (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    await processImageFile(file, file.name);
+    event.target.value = '';
+  };
+
+  const handleDrop = async (e) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const file = e.dataTransfer?.files?.[0];
+    if (file) {
+      await processImageFile(file, file.name);
+    }
+  };
+
+  const handleCameraSelect = async (source = CameraSource.Photos) => {
+    setImageError('');
+    try {
+      const permissionStatus = await Camera.checkPermissions();
+      const neededPermission = source === CameraSource.Camera ? 'camera' : 'photos';
+      if (
+        permissionStatus[neededPermission] === 'denied' ||
+        permissionStatus[neededPermission] === 'prompt'
+      ) {
+        const requestResult = await Camera.requestPermissions({
+          permissions: [neededPermission],
+        });
+        if (requestResult[neededPermission] === 'denied') {
+          setImageError(
+            `Permessi necessari per la ${source === CameraSource.Camera ? 'fotocamera' : 'libreria foto'}.`
+          );
+          return;
+        }
+      }
+      const image = await Camera.getPhoto({
+        quality: 90,
+        allowEditing: false,
+        resultType: CameraResultType.DataUrl,
+        source,
+        width: 1600,
+        height: 1600,
+      });
+      if (!image || !image.dataUrl) return;
+      const response = await fetch(image.dataUrl);
+      const blob = await response.blob();
+      const file = new File([blob], `photo_${Date.now()}.jpg`, { type: 'image/jpeg' });
+      await processImageFile(file, file.name);
+    } catch (error) {
+      console.error('Errore selezione foto:', error);
+      setImageError('Errore durante la selezione della foto.');
+    }
+  };
+
+  const handleRemoveImage = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setImageFile(null);
+    setImagePreview(null);
+    setImageBase64('');
+    setImageError('');
+  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    
-    if (formData.date) {
-      const selectedDate = new Date(formData.date);
-      const now = new Date();
-      const minValidDate = new Date(now.getTime() - 5 * 60 * 1000);
-      if (selectedDate < minValidDate) {
-        setErrors(prev => ({ ...prev, date: t('meals.form.datePast') || 'La data deve essere nel futuro' }));
-        return;
-      }
-    }
-    
+
     const newErrors = {};
-    Object.keys(formData).forEach(key => {
-      const error = validateField(key, formData[key]);
-      if (error) newErrors[key] = error;
+    ['title', 'description', 'date', 'maxParticipants', 'location'].forEach((key) => {
+      const err = validateField(key, formData[key], formData.mealType);
+      if (err) newErrors[key] = err;
     });
+
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
       return;
@@ -409,27 +457,33 @@ const MealForm = ({ initialData, onSubmit, onCancel, isLoading, isSubmitting, su
     const sanitizedData = sanitizeMealData(formData);
     const formDataToSend = new FormData();
 
-    // ✅ FIX: lista esplicita dei campi scalari da inviare (evita null/undefined/oggetti grezzi)
-    const SCALAR_FIELDS = ['title', 'description', 'mealType', 'type', 'language', 'isPublic', 'estimatedCost', 'maxParticipants', 'duration'];
+    // Contratto API invariato — stessi nomi dei campi
+    const SCALAR_FIELDS = [
+      'title',
+      'description',
+      'mealType',
+      'type',
+      'language',
+      'isPublic',
+      'estimatedCost',
+      'maxParticipants',
+      'duration',
+    ];
 
     for (const key of SCALAR_FIELDS) {
       const value = sanitizedData[key];
-      // Salta valori null/undefined, ma manda stringhe vuote e numeri/booleani
       if (value === null || value === undefined) continue;
       formDataToSend.append(key, value);
     }
 
-    // ✅ FIX: data convertita a ISO con timezone corretto
     if (sanitizedData.date) {
       formDataToSend.append('date', new Date(sanitizedData.date).toISOString());
     }
 
-    // ✅ FIX: topics come array (append multiplo, stesso key)
     if (Array.isArray(sanitizedData.topics)) {
-      sanitizedData.topics.forEach(topic => formDataToSend.append('topics', topic));
+      sanitizedData.topics.forEach((topic) => formDataToSend.append('topics', topic));
     }
 
-    // ✅ FIX: location solo se è un oggetto valido con address, altrimenti non appendere nulla
     if (
       sanitizedData.mealType === 'physical' &&
       sanitizedData.location &&
@@ -439,7 +493,6 @@ const MealForm = ({ initialData, onSubmit, onCancel, isLoading, isSubmitting, su
       formDataToSend.append('location', JSON.stringify(sanitizedData.location));
     }
 
-    // Immagine: nuova o preserva URL esistente
     if (imageFile) {
       formDataToSend.append('image', imageFile);
       if (imageBase64) formDataToSend.append('imageBase64', imageBase64);
@@ -450,273 +503,485 @@ const MealForm = ({ initialData, onSubmit, onCancel, isLoading, isSubmitting, su
         formDataToSend.append('existingImageUrl', existingImageUrl);
       }
     }
-    
+
     onSubmit(formDataToSend);
   };
 
+  const busy = Boolean(isLoading || isSubmitting);
+
   return (
-    <Form onSubmit={handleSubmit} className={styles.form}>
-      <div className={styles.formGroup}>
-        <label className={styles.formLabel}>{t('meals.form.typeLabel')}</label>
-        <div className={styles.typeSelector}>
+    <form onSubmit={handleSubmit} className={styles.form} noValidate>
+      {/* 1. Segmented Tipo: Virtuale / In presenza */}
+      <div className={styles.field}>
+        <label className={styles.label}>
+          {t('create.typeLabel', 'Tipo di t2t')}
+        </label>
+        <div className={styles.seg} role="radiogroup" aria-label={t('create.typeLabel', 'Tipo di t2t')}>
           <button
             type="button"
-            className={`${styles.typeButton} ${formData.mealType === 'virtual' ? styles.active : ''}`}
-            onClick={() => setFormData({ ...formData, mealType: 'virtual', location: null })}
+            role="radio"
+            aria-checked={formData.mealType === 'virtual'}
+            className={`${styles.segBtn} ${formData.mealType === 'virtual' ? styles.segActive : ''}`}
+            onClick={() => {
+              setFormData((prev) => ({ ...prev, mealType: 'virtual', location: null }));
+              setErrors((prev) => ({ ...prev, location: '' }));
+            }}
+            data-testid="seg-virtual"
           >
-            <span className={styles.typeIcon}>🎥</span>
-            <span className={styles.typeText}>{t('meals.form.virtualType')}</span>
-            <small className={styles.typeDescription}>{t('meals.form.virtualDescription')}</small>
+            <span className={styles.segTitle}>💻 {t('create.virtualLabel', 'Virtuale')}</span>
+            <small className={styles.segSub}>{t('create.virtualSub', 'Videochiamata')}</small>
           </button>
+
           <button
             type="button"
-            className={`${styles.typeButton} ${formData.mealType === 'physical' ? styles.active : ''}`}
-            onClick={() => setFormData({ ...formData, mealType: 'physical', location: formData.location || null })}
+            role="radio"
+            aria-checked={formData.mealType === 'physical'}
+            className={`${styles.segBtn} ${formData.mealType === 'physical' ? styles.segActive : ''}`}
+            onClick={() =>
+              setFormData((prev) => ({
+                ...prev,
+                mealType: 'physical',
+                location: prev.location || null,
+              }))
+            }
+            data-testid="seg-physical"
           >
-            <span className={styles.typeIcon}>📍</span>
-            <span className={styles.typeText}>{t('meals.form.physicalType')}</span>
-            <small className={styles.typeDescription}>{t('meals.form.physicalDescription')}</small>
+            <span className={styles.segTitle}>📍 {t('create.physicalLabel', 'In presenza')}</span>
+            <small className={styles.segSub}>{t('create.physicalSub', 'Dal vivo')}</small>
           </button>
-        </div>
-        <div className={styles.typeInfo}>
-          {formData.mealType === 'virtual' ? t('meals.form.virtualInfo') : t('meals.form.physicalInfo')}
         </div>
       </div>
 
+      {/* Visibilità (solo in presenza) */}
       {formData.mealType === 'physical' && (
-        <div className={styles.formGroup}>
-          <label className={styles.formLabel}>{t('meals.form.visibilityLabel')}</label>
-          <div className={styles.visibilitySelector}>
-            <button type="button" className={`${styles.visibilityButton} ${formData.isPublic ? styles.active : ''}`} onClick={() => setFormData({ ...formData, isPublic: true })}>
-              <span className={styles.visibilityIcon}>🌍</span>
-              <span className={styles.visibilityText}>{t('meals.form.publicVisibility')}</span>
-              <small className={styles.visibilityDescription}>{t('meals.form.publicDescription')}</small>
+        <div className={styles.field}>
+          <label className={styles.label}>{t('meals.form.visibilityLabel', 'Visibilità')}</label>
+          <div className={styles.seg}>
+            <button
+              type="button"
+              className={`${styles.segBtn} ${formData.isPublic ? styles.segActive : ''}`}
+              onClick={() => setFormData((prev) => ({ ...prev, isPublic: true }))}
+            >
+              <span className={styles.segTitle}>🌍 {t('meals.form.publicVisibility', 'Pubblico')}</span>
+              <small className={styles.segSub}>{t('meals.form.publicDescription', 'Visibile sulla mappa')}</small>
             </button>
-            <button type="button" className={`${styles.visibilityButton} ${!formData.isPublic ? styles.active : ''}`} onClick={() => setFormData({ ...formData, isPublic: false })}>
-              <span className={styles.visibilityIcon}>🔒</span>
-              <span className={styles.visibilityText}>{t('meals.form.privateVisibility')}</span>
-              <small className={styles.visibilityDescription}>{t('meals.form.privateDescription')}</small>
+            <button
+              type="button"
+              className={`${styles.segBtn} ${!formData.isPublic ? styles.segActive : ''}`}
+              onClick={() => setFormData((prev) => ({ ...prev, isPublic: false }))}
+            >
+              <span className={styles.segTitle}>🔒 {t('meals.form.privateVisibility', 'Privato')}</span>
+              <small className={styles.segSub}>{t('meals.form.privateDescription', 'Solo su invito')}</small>
             </button>
-          </div>
-          <div className={styles.visibilityInfo}>
-            {formData.isPublic ? t('meals.form.publicInfo') : t('meals.form.privateInfo')}
           </div>
         </div>
       )}
 
-      <Form.Group className="mb-3">
-        <Form.Label className={styles.formLabel}>{t('meals.form.titleLabel')}</Form.Label>
-        <Form.Control className={`${styles.formControl} ${errors.title ? 'is-invalid' : ''}`} type="text" name="title" value={formData.title} onChange={handleChange} onBlur={handleBlur} required />
-        {errors.title && <div className="invalid-feedback">{errors.title}</div>}
-      </Form.Group>
-      
-      <Form.Group className="mb-3">
-        <Form.Label className={styles.formLabel}>{t('meals.form.descriptionLabel')}</Form.Label>
-        <Form.Control className={`${styles.formControl} ${errors.description ? 'is-invalid' : ''}`} as="textarea" rows={3} name="description" value={formData.description} onChange={handleChange} onBlur={handleBlur} required />
-        {errors.description && <div className="invalid-feedback">{errors.description}</div>}
-      </Form.Group>
+      {/* 2. Titolo */}
+      <div className={styles.field}>
+        <label htmlFor="mealTitle" className={styles.label}>
+          {t('create.titleLabel', 'Titolo')}
+        </label>
+        <input
+          id="mealTitle"
+          type="text"
+          name="title"
+          value={formData.title}
+          onChange={handleChange}
+          onBlur={handleBlur}
+          placeholder={t('create.titlePlaceholder', 'Es. Aperitivo in spagnolo')}
+          className={`${styles.control} ${errors.title ? styles.controlErr : ''}`}
+          required
+          data-testid="create-title"
+        />
+        {errors.title && (
+          <div className={styles.err} role="alert">
+            {errors.title}
+          </div>
+        )}
+      </div>
 
-      <Row className="mb-3">
-        <Col md={6}>
-          <Form.Group>
-            <Form.Label className={styles.formLabel}>{t('meals.form.categoryLabel')}</Form.Label>
-            <Form.Select className={styles.formSelect} name="type" value={formData.type} onChange={handleChange} required>
-              <option value="" disabled>{t('meals.form.selectCategory')}</option>
-              {mealTypeOptions.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
-            </Form.Select>
-          </Form.Group>
-        </Col>
-        <Col md={6}>
-          <Form.Group>
-            <Form.Label className={styles.formLabel}>{t('meals.form.maxParticipantsLabel')}</Form.Label>
-            <Form.Control className={`${styles.formControl} ${errors.maxParticipants ? 'is-invalid' : ''}`} type="number" name="maxParticipants" value={formData.maxParticipants} onChange={handleChange} onBlur={handleBlur} required min="2" max="10" />
-            {errors.maxParticipants && <div className="invalid-feedback">{errors.maxParticipants}</div>}
-          </Form.Group>
-        </Col>
-      </Row>
+      {/* 3. Descrizione */}
+      <div className={styles.field}>
+        <label htmlFor="mealDesc" className={styles.label}>
+          {t('create.descLabel', 'Descrizione')}
+        </label>
+        <textarea
+          id="mealDesc"
+          name="description"
+          rows={3}
+          value={formData.description}
+          onChange={handleChange}
+          onBlur={handleBlur}
+          placeholder={t(
+            'create.descPlaceholder',
+            'Racconta il mood del tavolo: cosa si mangia, di che si parla.'
+          )}
+          className={`${styles.control} ${errors.description ? styles.controlErr : ''}`}
+          required
+          data-testid="create-desc"
+        />
+        {errors.description && (
+          <div className={styles.err} role="alert">
+            {errors.description}
+          </div>
+        )}
+      </div>
 
-      <Row className="mb-3">
-        <Col xs={12} md={6}>
-          <Form.Group>
-            <Form.Label className={styles.formLabel}>{t('meals.form.languageLabel')}</Form.Label>
-            <Form.Select className={styles.formSelect} name="language" value={formData.language} onChange={handleChange} required>
-              {languageOptions.map(lang => <option key={lang} value={lang}>{lang}</option>)}
-            </Form.Select>
-          </Form.Group>
-        </Col>
-        <Col xs={12} md={6}>
-          <Form.Group>
-            <Form.Label className={styles.formLabel}>{t('meals.form.durationLabel')}</Form.Label>
-            <Form.Select className={styles.formSelect} name="duration" value={formData.duration} onChange={handleChange} required>
-              {durationOptions.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
-            </Form.Select>
-          </Form.Group>
-        </Col>
-      </Row>
+      {/* 4. Categoria + Lingua */}
+      <div className={styles.row2}>
+        <div className={styles.field}>
+          <label htmlFor="mealCategory" className={styles.label}>
+            {t('create.categoryLabel', 'Categoria')}
+          </label>
+          <select
+            id="mealCategory"
+            name="type"
+            value={formData.type}
+            onChange={handleChange}
+            className={styles.control}
+            data-testid="create-category"
+          >
+            {mealTypeOptions.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {getMealTypeText(opt.value) || opt.label}
+              </option>
+            ))}
+          </select>
+        </div>
 
-      {formData.mealType === 'physical' && (
-        <Row className="mb-3">
-          <Col md={6}>
-            <Form.Group>
-              <Form.Label className={styles.formLabel}>{t('meals.form.priceLabel') || 'Prezzo Stimato (€)'}</Form.Label>
-              <div className="input-group">
-                <span className="input-group-text">€</span>
-                <Form.Control className={styles.formControl} type="number" name="estimatedCost" value={formData.estimatedCost} onChange={handleChange} placeholder="Es. 25" min="0" />
-              </div>
-              <Form.Text className="text-muted">Costo medio a persona (solo indicativo)</Form.Text>
-            </Form.Group>
-          </Col>
-        </Row>
-      )}
+        <div className={styles.field}>
+          <label htmlFor="mealLang" className={styles.label}>
+            {t('create.languageLabel', 'Lingua')}
+          </label>
+          <select
+            id="mealLang"
+            name="language"
+            value={formData.language}
+            onChange={handleChange}
+            className={styles.control}
+            data-testid="create-language"
+          >
+            {LANGUAGE_OPTIONS.map((lang) => (
+              <option key={lang} value={lang}>
+                {lang}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
 
-      <Row className="mb-3">
-        <Col xs={12} md={6}>
-          <Form.Group>
-            <Form.Label className={styles.formLabel}>{t('meals.form.dateLabel')}</Form.Label>
-            <div className={styles.dateInputContainer}>
-              <Form.Control
-                className={`${styles.formControl} ${errors.date ? 'is-invalid' : ''}`}
-                type="datetime-local"
-                name="date"
-                value={formData.date}
-                min={getMinValidDateTime()}
-                onChange={handleChange}
-                onBlur={handleBlur}
-                required
-              />
-              <button
-                type="button"
-                className={styles.dateHelperButton}
-                onClick={() => {
-                  const now = new Date();
-                  const d = new Date(now.getTime() + 60 * 60 * 1000);
-                  const fmt = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}T${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
-                  setFormData(prev => ({ ...prev, date: fmt }));
-                  setErrors(prev => ({ ...prev, date: '' }));
-                }}
-                title="Suggerisci data valida (1 ora da ora)"
-              >
-                🕐
-              </button>
+      {/* 5. Max partecipanti (stepper 2–8) + Durata */}
+      <div className={styles.row2}>
+        <div className={styles.field}>
+          <label className={styles.label}>
+            {t('create.maxParticipantsLabel', 'Max partecipanti')}
+          </label>
+          <div className={styles.stepper}>
+            <button
+              type="button"
+              className={styles.stepBtn}
+              onClick={() => handleStepParticipants(-1)}
+              disabled={Number(formData.maxParticipants) <= MIN_PARTICIPANTS}
+              aria-label={t('create.decreaseParticipants', 'Riduci partecipanti')}
+              data-testid="stepper-minus"
+            >
+              −
+            </button>
+            <span className={styles.stepVal} data-testid="stepper-value">
+              {formData.maxParticipants}
+            </span>
+            <button
+              type="button"
+              className={styles.stepBtn}
+              onClick={() => handleStepParticipants(1)}
+              disabled={Number(formData.maxParticipants) >= MAX_PARTICIPANTS_STEPPER}
+              aria-label={t('create.increaseParticipants', 'Aumenta partecipanti')}
+              data-testid="stepper-plus"
+            >
+              ＋
+            </button>
+          </div>
+          {errors.maxParticipants && (
+            <div className={styles.err} role="alert">
+              {errors.maxParticipants}
             </div>
-            {errors.date && <div className="invalid-feedback">{errors.date}</div>}
-            <Form.Text className="text-muted">📅 Seleziona una data e ora nel futuro</Form.Text>
-          </Form.Group>
-        </Col>
-        <Col xs={12} md={6}>
-          {formData.mealType === 'physical' && (
-            <Form.Group>
-              <Form.Label className={styles.formLabel}>{t('meals.form.addressLabel')}</Form.Label>
-              <Form.Control
-                className={`${styles.formControl} ${errors.location && errors.location !== 'Ricerca indirizzo...' ? 'is-invalid' : ''}`}
+          )}
+        </div>
+
+        <div className={styles.field}>
+          <label htmlFor="mealDuration" className={styles.label}>
+            {t('create.durationLabel', 'Durata')}
+          </label>
+          <select
+            id="mealDuration"
+            name="duration"
+            value={formData.duration}
+            onChange={handleChange}
+            className={styles.control}
+            data-testid="create-duration"
+          >
+            {durationOptions.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      {/* 6. Data e ora (validazione futuro) */}
+      <div className={styles.field}>
+        <label htmlFor="mealWhen" className={styles.label}>
+          {t('create.whenLabel', 'Data e ora')}
+        </label>
+        <div className={styles.dateRow}>
+          <input
+            id="mealWhen"
+            type="datetime-local"
+            name="date"
+            value={formData.date}
+            min={getMinValidDateTime()}
+            onChange={handleChange}
+            onBlur={handleBlur}
+            className={`${styles.control} ${errors.date ? styles.controlErr : ''}`}
+            required
+            data-testid="create-when"
+          />
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              const next = formatLocalDateTime(new Date(Date.now() + 60 * 60 * 1000));
+              setFormData((prev) => ({ ...prev, date: next }));
+              setErrors((prev) => ({ ...prev, date: '' }));
+            }}
+          >
+            {t('create.whenSuggest', '+1 ora')}
+          </Button>
+        </div>
+        <div className={styles.hint}>
+          {t('create.whenHint', 'Scegli un momento nel futuro ⏳')}
+        </div>
+        {errors.date && (
+          <div className={styles.err} role="alert" data-testid="create-when-error">
+            {errors.date}
+          </div>
+        )}
+      </div>
+
+      {/* Posizione & Costo stimato (solo In presenza) */}
+      {formData.mealType === 'physical' && (
+        <>
+          <div className={styles.row2}>
+            <div className={styles.field}>
+              <label htmlFor="mealAddress" className={styles.label}>
+                {t('create.locationLabel', 'Posizione')}
+              </label>
+              <input
+                id="mealAddress"
                 type="text"
                 name="address"
                 value={
-                  formData.location && typeof formData.location === 'object' && typeof formData.location.address === 'string'
+                  formData.location &&
+                  typeof formData.location === 'object' &&
+                  typeof formData.location.address === 'string'
                     ? formData.location.address
                     : ''
                 }
                 onChange={handleAddressChange}
                 onBlur={handleAddressBlur}
-                onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddressBlur(e); } }}
-                placeholder={t('meals.form.addressPlaceholder')}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    handleAddressBlur(e);
+                  }
+                }}
+                placeholder={t('meals.form.addressPlaceholder', 'Es. Via Torino 10, Milano')}
+                className={`${styles.control} ${errors.location && errors.location !== 'Ricerca indirizzo…' ? styles.controlErr : ''}`}
               />
+              <div className={styles.hint}>
+                {t('create.locationHint', "Inserisci l'indirizzo o seleziona il punto sulla mappa.")}
+              </div>
               {errors.location && (
-                <div className={errors.location === 'Ricerca indirizzo...' ? 'text-info' : 'invalid-feedback'}>
+                <div className={styles.err} role="alert">
                   {errors.location}
                 </div>
               )}
-              <Form.Text className="text-muted">📍 Inserisci l'indirizzo manualmente o selezionalo dalla mappa</Form.Text>
-            </Form.Group>
-          )}
-        </Col>
-      </Row>
-
-      {formData.mealType === 'physical' && (
-        <div className={styles.formGroup}>
-          <label>📍 Seleziona posizione del pasto:</label>
-          <OpenStreetMapComponent
-            selectedLocation={selectedLocation}
-            onLocationSelect={handleLocationSelect}
-            height="300px"
-            center={
-              selectedLocation
-                ? [selectedLocation.lat, selectedLocation.lng]
-                : formData.location && formData.location.coordinates
-                  ? [formData.location.coordinates[1], formData.location.coordinates[0]]
-                  : [45.4642, 9.1900]
-            }
-          />
-          {selectedLocation && (
-            <div style={{ marginTop: '10px', padding: '10px', backgroundColor: '#f8f9fa', borderRadius: '8px', border: '1px solid #dee2e6' }}>
-              ✅ <strong>Posizione selezionata:</strong><br />
-              <span style={{ fontSize: '14px', color: '#666' }}>
-                {selectedLocation.address || `Lat: ${selectedLocation.lat.toFixed(4)}, Lng: ${selectedLocation.lng.toFixed(4)}`}
-              </span>
             </div>
-          )}
-        </div>
-      )}
-      
-      <Form.Group className="mb-3">
-        <Form.Label className={styles.formLabel}>{t('meals.form.topicsLabel')}</Form.Label>
-        <TopicInput topics={formData.topics} setTopics={handleTopicsChange} />
-        {errors.topics && <div className="invalid-feedback d-block">{errors.topics}</div>}
-        <Form.Text>{t('meals.form.topicsHelp')}</Form.Text>
-      </Form.Group>
-      
-      <Form.Group className="mb-3">
-        <Form.Label>{t('meals.form.coverImageLabel')}</Form.Label>
 
-        {imagePreview && (
-          <div style={{ marginBottom: '8px' }}>
-            <img
-              src={imagePreview}
-              alt={t('meals.form.coverImageAlt')}
-              className={styles.imagePreview}
-              style={{ maxHeight: '180px', borderRadius: '8px', objectFit: 'cover' }}
-            />
-            {!imageFile && (initialData?.imageUrl || initialData?.coverImage) && (
-              <Form.Text className="text-muted d-block">Immagine attuale — seleziona una nuova per cambiarla</Form.Text>
+            <div className={styles.field}>
+              <label htmlFor="mealCost" className={styles.label}>
+                {t('create.estimatedCostLabel', 'Costo stimato (€)')}
+              </label>
+              <input
+                id="mealCost"
+                type="number"
+                name="estimatedCost"
+                min="0"
+                value={formData.estimatedCost}
+                onChange={handleChange}
+                placeholder="Es. 20"
+                className={styles.control}
+              />
+              <div className={styles.hint}>
+                {t('create.estimatedCostHint', 'Costo medio a persona (facoltativo)')}
+              </div>
+            </div>
+          </div>
+
+          <div className={styles.field}>
+            <div className={styles.mapFrame}>
+              <OpenStreetMapComponent
+                selectedLocation={selectedLocation}
+                onLocationSelect={handleLocationSelect}
+                height="260px"
+                center={
+                  selectedLocation
+                    ? [selectedLocation.lat, selectedLocation.lng]
+                    : formData.location?.coordinates
+                    ? [formData.location.coordinates[1], formData.location.coordinates[0]]
+                    : [45.4642, 9.19]
+                }
+              />
+            </div>
+            {selectedLocation && (
+              <div className={styles.locationPill}>
+                <strong>{t('create.locationSelected', 'Posizione selezionata')}:</strong>{' '}
+                <span>{selectedLocation.address}</span>
+              </div>
             )}
           </div>
-        )}
-        
+        </>
+      )}
+
+      {/* 7. Argomenti (chip input max 5 + contatore n/5) */}
+      <div className={styles.field}>
+        <label className={styles.label}>
+          {t('create.topicsLabel', 'Argomenti')}{' '}
+          <span className={styles.counter} data-testid="topics-counter">
+            ({formData.topics.length}/5)
+          </span>
+        </label>
+        <TopicInput topics={formData.topics} setTopics={handleTopicsChange} />
+      </div>
+
+      {/* 8. Copertina (dropzone con preview FileReader, solo immagini, max 10MB) */}
+      <div className={styles.field}>
+        <label htmlFor="mealCoverInput" className={styles.label}>
+          {t('create.coverLabel', 'Immagine di copertina')}
+        </label>
+
         {Capacitor.isNativePlatform() ? (
-          <div className="mt-2">
-            <div className="d-flex gap-2 flex-wrap">
-              <Button variant="outline-primary" onClick={() => handleCameraSelect(CameraSource.Camera)} style={{ fontSize: '0.9em' }}>📷 Fotocamera</Button>
-              <Button variant="outline-primary" onClick={() => handleCameraSelect(CameraSource.Photos)} style={{ fontSize: '0.9em' }}>🖼️ Libreria Foto</Button>
+          <div className={styles.nativeCoverBox}>
+            {imagePreview && (
+              <img
+                src={imagePreview}
+                alt={t('meals.form.coverImageAlt', 'Anteprima copertina')}
+                className={styles.dzPreview}
+              />
+            )}
+            <div className={styles.nativeBtns}>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => handleCameraSelect(CameraSource.Camera)}
+              >
+                📷 Fotocamera
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => handleCameraSelect(CameraSource.Photos)}
+              >
+                🖼️ Libreria foto
+              </Button>
+              {imagePreview && (
+                <Button variant="danger" size="sm" onClick={handleRemoveImage}>
+                  {t('create.coverRemove', 'Rimuovi immagine')}
+                </Button>
+              )}
             </div>
-            <Form.Text className="text-muted d-block mt-2">Seleziona una foto dalla fotocamera o dalla libreria (max 10MB)</Form.Text>
+            <div className={styles.hint}>JPG/PNG · max 10MB</div>
           </div>
         ) : (
-          <>
-            <Form.Control type="file" accept="image/*" onChange={handleFileSelect} className="mt-2" style={{ fontSize: '0.9em' }} />
-            <Form.Text className="text-muted">Seleziona un'immagine dal tuo dispositivo (max 10MB)</Form.Text>
-          </>
+          <label
+            htmlFor="mealCoverInput"
+            className={`${styles.dropzone} ${isDragging ? styles.dropzoneActive : ''} ${imageError ? styles.controlErr : ''}`}
+            onDragOver={(e) => {
+              e.preventDefault();
+              setIsDragging(true);
+            }}
+            onDragLeave={() => setIsDragging(false)}
+            onDrop={handleDrop}
+            data-testid="cover-dropzone"
+          >
+            <span className={styles.dzText}>
+              {imageFile
+                ? `${t('create.coverReady', '✓ Immagine pronta')} · ${imageFile.name} (${(imageFile.size / 1024 / 1024).toFixed(2)} MB)`
+                : imagePreview
+                ? t('create.coverExisting', 'Immagine attuale — trascina o clicca per cambiarla')
+                : t(
+                    'create.coverDropzone',
+                    "📷 Trascina o scegli un'immagine · JPG/PNG · max 10MB"
+                  )}
+            </span>
+
+            {imagePreview && (
+              <div className={styles.previewWrap}>
+                <img
+                  src={imagePreview}
+                  alt={t('meals.form.coverImageAlt', 'Anteprima copertina')}
+                  className={styles.dzPreview}
+                />
+                {imageFile && (
+                  <button
+                    type="button"
+                    className={styles.removeCoverBtn}
+                    onClick={handleRemoveImage}
+                  >
+                    {t('create.coverRemove', 'Rimuovi immagine')}
+                  </button>
+                )}
+              </div>
+            )}
+
+            <input
+              id="mealCoverInput"
+              type="file"
+              accept="image/*"
+              onChange={handleFileSelect}
+              className={styles.hiddenInput}
+              data-testid="cover-input"
+            />
+          </label>
         )}
-        
-        {imageFile && (
-          <div className="mt-2 p-2 bg-light rounded" style={{ fontSize: '0.9em' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <span>📷 Nuova immagine selezionata</span>
-              <small className="text-muted">{imageFile.name} ({(imageFile.size / 1024 / 1024).toFixed(2)} MB)</small>
-            </div>
+
+        {imageError && (
+          <div className={styles.err} role="alert" data-testid="cover-error">
+            {imageError}
           </div>
         )}
-      </Form.Group>
-      
-      <div className={styles.stickyActions}>
-        <Button variant="primary" type="submit" className={styles.submitButton} disabled={isLoading || isSubmitting}>
-          {isLoading || isSubmitting ? (
-            <><Spinner as="span" animation="border" size="sm" /><span> {isSubmitting ? t('meals.form.saving') : t('meals.form.loading')}</span></>
-          ) : (
-            submitButtonText || t('forms.save')
-          )}
-        </Button>
       </div>
-    </Form>
+
+      {/* 9. CTA sticky */}
+      <div className={styles.formCta}>
+        <Button
+          variant="primary"
+          type="submit"
+          disabled={busy}
+          className={styles.submitBtn}
+          data-testid="create-submit"
+        >
+          {busy
+            ? t('create.savingCta', 'Creazione in corso…')
+            : submitButtonText || t('create.submitCta', 'Crea il t2t')}
+        </Button>
+        <span className={styles.ctaHint}>
+          {t('create.stickyHint', 'Gratis · modificabile quando vuoi')}
+        </span>
+      </div>
+    </form>
   );
 };
 

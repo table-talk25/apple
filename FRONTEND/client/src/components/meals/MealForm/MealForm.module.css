@@ -1,397 +1,301 @@
-/* File: /src/styles/MealForm.module.css */
-
 .form {
   width: 100%;
-  margin: 0;
-  padding: 0 0 70px; /* spazio per barra sticky quando tastiera è aperta */
-  background-color: transparent;
-  border-radius: 0;
-  box-shadow: none;
+  max-width: 640px;
 }
 
-.formGroup {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  margin-bottom: 1.5rem;
+.field {
+  margin-bottom: 18px;
 }
 
-.formLabel {
+.label {
+  display: block;
+  font-family: var(--tt-font-body);
   font-weight: 600;
+  font-size: 0.88rem;
   color: var(--tt-text);
-  margin-bottom: 0.5rem;
+  margin-bottom: 6px;
 }
 
-.formControl {
-  width: 100%;
-  padding: 0.75rem;
-  border: 1px solid var(--tt-border);
-  border-radius: 4px;
-  transition: border-color 0.2s ease;
-}
-
-.formControl:focus {
-  border-color: var(--tt-primary);
-  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
-}
-
-/* 🔒 VALIDAZIONE DATA: Stili per il pulsante di aiuto */
-.dateInputContainer {
-  position: relative;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.dateHelperButton {
-  flex-shrink: 0;
-  width: 40px;
-  height: 40px;
-  border: 1px solid var(--tt-border);
-  border-radius: 4px;
-  background-color: var(--tt-background);
-  color: var(--tt-text-muted);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.2rem;
-  transition: all 0.2s ease;
-}
-
-.dateHelperButton:hover {
-  background-color: var(--tt-border);
-  border-color: var(--tt-primary);
-  color: var(--tt-primary);
-  transform: scale(1.05);
-}
-
-.dateHelperButton:active {
-  transform: scale(0.95);
-}
-
-.formSelect {
-  width: 100%;
-  padding: 0.75rem;
-  border: 1px solid var(--tt-border);
-  border-radius: 4px;
-  background-color: #fff;
-  transition: border-color 0.2s ease;
-}
-
-.formSelect:focus {
-  border-color: var(--tt-primary);
-  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
-}
-
-.formCheck {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-/* Stili per i pulsanti di selezione del tipo di TableTalk® */
-.typeSelector {
-  display: flex;
-  gap: 1rem;
-  margin-bottom: 0.5rem;
-}
-
-.typeButton {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 1.5rem 1rem;
-  border: 2px solid var(--tt-border);
-  border-radius: 12px;
-  background-color: #fff;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  min-height: 100px;
-}
-
-.typeButton:hover {
-  border-color: var(--tt-primary);
-  background-color: var(--tt-background);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 123, 255, 0.15);
-}
-
-.typeButton.active {
-  border-color: var(--tt-primary);
-  background-color: color-mix(in srgb, var(--tt-accent) 10%, #FFFFFF);
-  box-shadow: 0 4px 12px rgba(0, 123, 255, 0.2);
-}
-
-.typeIcon {
-  font-size: 2rem;
-  margin-bottom: 0.5rem;
-}
-
-.typeText {
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: var(--tt-text);
-  margin-bottom: 0.25rem;
-}
-
-.typeDescription {
-  font-size: 0.85rem;
-  color: var(--tt-text-muted);
-  text-align: center;
-}
-
-.typeInfo {
-  font-size: 0.9rem;
-  color: var(--tt-text-muted);
-  font-style: italic;
-  padding: 0.5rem;
-  background-color: var(--tt-background);
-  border-radius: 6px;
-  border-left: 3px solid var(--tt-primary);
-}
-
-/* Stili per i pulsanti di selezione della visibilità */
-.visibilitySelector {
-  display: flex;
-  gap: 1rem;
-  margin-bottom: 0.5rem;
-}
-
-.visibilityButton {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 1.2rem 1rem;
-  border: 2px solid var(--tt-border);
-  border-radius: 12px;
-  background-color: #fff;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  min-height: 80px;
-}
-
-.visibilityButton:hover {
-  border-color: #28a745;
-  background-color: var(--tt-background);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(40, 167, 69, 0.15);
-}
-
-.visibilityButton.active {
-  border-color: #28a745;
-  background-color: #d4edda;
-  box-shadow: 0 4px 12px rgba(40, 167, 69, 0.2);
-}
-
-.visibilityIcon {
-  font-size: 1.5rem;
-  margin-bottom: 0.3rem;
-}
-
-.visibilityText {
-  font-size: 1rem;
-  font-weight: 600;
-  color: var(--tt-text);
-  margin-bottom: 0.2rem;
-}
-
-.visibilityDescription {
+.counter {
+  font-weight: 500;
   font-size: 0.8rem;
   color: var(--tt-text-muted);
-  text-align: center;
 }
 
-.visibilityInfo {
-  font-size: 0.9rem;
+.hint {
+  font-size: 0.78rem;
   color: var(--tt-text-muted);
-  text-align: center;
-  margin-top: 0.5rem;
-  padding: 0.5rem;
-  background-color: var(--tt-background);
-  border-radius: 6px;
-  border-left: 3px solid #28a745;
+  margin-top: 5px;
 }
 
-/* Stili per la mappa */
-.mapContainer {
-  width: 100%;
-  height: 300px;
-  border: 2px solid var(--tt-border);
-  border-radius: 8px;
-  overflow: hidden;
-  margin-bottom: 1rem;
-}
-
-.locationInfo {
-  padding: 0.75rem;
-  background-color: #e8f5e8;
-  border: 1px solid #28a745;
-  border-radius: 6px;
-  margin-top: 0.5rem;
-}
-
-.locationInfo p {
-  margin: 0;
-  color: #155724;
+.err {
+  color: var(--tt-primary-hover);
+  font-size: 0.82rem;
   font-weight: 500;
+  margin-top: 5px;
 }
 
-.submitButton {
+.control {
   width: 100%;
-  padding: 0.85rem;
-  background-color: var(--tt-primary);
-  color: #fff;
-  border: none;
-  border-radius: 4px;
-  font-weight: 600;
+  border: 1.5px solid var(--tt-border);
+  border-radius: var(--tt-radius-md);
+  padding: 0.65rem 0.8rem;
+  font-family: var(--tt-font-body);
+  font-size: 0.95rem;
+  background-color: var(--tt-surface);
+  color: var(--tt-text);
+  transition: border-color 0.2s ease;
+}
+
+.control:focus {
+  border-color: var(--tt-accent);
+  outline: none;
+}
+
+.control::placeholder {
+  color: var(--tt-text-muted);
+}
+
+.controlErr {
+  border-color: var(--tt-primary-hover);
+}
+
+/* Segmented controls */
+.seg {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.segBtn {
+  border: 1.5px solid var(--tt-border);
+  background-color: var(--tt-surface);
+  border-radius: var(--tt-radius-md);
+  padding: 0.75rem 0.9rem;
+  text-align: left;
   cursor: pointer;
-  transition: background-color 0.2s ease;
+  color: var(--tt-text-muted);
+  transition: border-color 0.15s ease, background-color 0.15s ease, color 0.15s ease;
 }
 
-.submitButton:hover {
-  background-color: #0056b3;
+.segBtn:hover {
+  border-color: var(--tt-accent);
 }
 
-.submitButton:disabled {
-  background-color: #ccc;
+.segActive {
+  border-color: var(--tt-accent);
+  background-color: color-mix(in srgb, var(--tt-accent) 7%, var(--tt-surface));
+  color: var(--tt-accent);
+}
+
+.segTitle {
+  display: block;
+  font-weight: 600;
+  font-size: 0.92rem;
+  color: inherit;
+}
+
+.segSub {
+  display: block;
+  font-weight: 400;
+  font-size: 0.76rem;
+  color: var(--tt-text-muted);
+  margin-top: 2px;
+}
+
+.segActive .segSub {
+  color: var(--tt-accent);
+}
+
+/* 2-col row */
+.row2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+/* Stepper 2-8 */
+.stepper {
+  display: inline-flex;
+  align-items: center;
+  border: 1.5px solid var(--tt-border);
+  border-radius: var(--tt-radius-md);
+  background-color: var(--tt-surface);
+  height: 44px;
+}
+
+.stepBtn {
+  width: 40px;
+  height: 100%;
+  border: none;
+  background: transparent;
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--tt-primary);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.15s ease, opacity 0.15s ease;
+}
+
+.stepBtn:hover:not(:disabled) {
+  background-color: var(--tt-background);
+}
+
+.stepBtn:disabled {
+  opacity: 0.4;
   cursor: not-allowed;
 }
 
-/* Barra azioni sticky in basso su mobile */
-.stickyActions {
-  position: sticky;
-  bottom: 0;
-  left: 0;
-  right: 0;
+.stepVal {
+  min-width: 44px;
+  text-align: center;
+  font-weight: 600;
+  font-size: 0.96rem;
+  color: var(--tt-text);
+}
+
+/* Date row */
+.dateRow {
   display: flex;
   gap: 10px;
-  padding: 10px 0;
-  background: linear-gradient(180deg, rgba(255,255,255,0.6), #ffffff 55%);
-  backdrop-filter: blur(6px);
-  border-top: 1px solid var(--tt-border);
-  z-index: 5;
-}
-
-/* Layout a due pulsanti nella barra sticky */
-.stickyActions .cancelButton { flex: 1 1 40%; }
-.stickyActions .submitButton { flex: 1 1 60%; width: auto; }
-
-@media (min-width: 769px) {
-  .stickyActions {
-    position: static;
-    padding: 0;
-    background: transparent;
-    border: none;
-  }
-}
-
-.error {
-  color: #dc3545;
-  font-size: 0.875rem;
-  margin-top: 0.25rem;
-}
-
-.success {
-  color: #28a745;
-  font-size: 0.875rem;
-  margin-top: 0.25rem;
-}
-
-.loading {
-  display: flex;
-  justify-content: center;
   align-items: center;
-  min-height: 200px;
 }
 
-/* Responsive Design */
-@media (max-width: 768px) {
-  .form { padding: 0; }
-  
-  .typeSelector {
-    flex-direction: column;
-    gap: 0.75rem;
-  }
-  
-  .typeButton {
-    min-height: 80px;
-    padding: 1rem 0.75rem;
-  }
-  
-  .typeIcon {
-    font-size: 1.5rem;
-  }
-  
-  .typeText {
-    font-size: 1rem;
-  }
-  
-  .visibilitySelector {
-    flex-direction: column;
-    gap: 0.75rem;
-  }
-  
-  .visibilityButton {
-    min-height: 70px;
-    padding: 0.75rem;
-  }
-  
-  .visibilityIcon {
-    font-size: 1.2rem;
-  }
-  
-  .visibilityText {
-    font-size: 0.9rem;
-  }
-  
-  .mapContainer {
-    height: 250px;
-  }
+.dateRow > input {
+  flex: 1;
+  min-width: 0;
 }
 
-@media (max-width: 480px) {
-  .form { padding: 0; }
-  
-  .typeButton {
-    min-height: 70px;
-    padding: 0.75rem 0.5rem;
+/* Map box */
+.mapFrame {
+  border-radius: var(--tt-radius-md);
+  overflow: hidden;
+  border: 1px solid var(--tt-border);
+}
+
+.locationPill {
+  margin-top: 8px;
+  padding: 10px 12px;
+  border-radius: var(--tt-radius-md);
+  border: 1px solid var(--tt-border);
+  background-color: var(--tt-surface);
+  font-size: 0.85rem;
+  color: var(--tt-text-muted);
+}
+
+.locationPill strong {
+  color: var(--tt-accent);
+}
+
+/* Dropzone */
+.dropzone {
+  display: block;
+  border: 2px dashed var(--tt-border);
+  border-radius: var(--tt-radius-md);
+  padding: 20px 16px;
+  text-align: center;
+  color: var(--tt-text-muted);
+  background-color: var(--tt-surface);
+  font-size: 0.88rem;
+  cursor: pointer;
+  transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.dropzone:hover,
+.dropzoneActive {
+  border-color: var(--tt-accent);
+  background-color: color-mix(in srgb, var(--tt-accent) 4%, var(--tt-surface));
+}
+
+.dzText {
+  display: block;
+  font-weight: 500;
+}
+
+.previewWrap {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.dzPreview {
+  max-height: 150px;
+  max-width: 100%;
+  border-radius: var(--tt-radius-md);
+  object-fit: cover;
+}
+
+.removeCoverBtn {
+  border: none;
+  background: transparent;
+  color: var(--tt-primary-hover);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.hiddenInput {
+  display: none;
+}
+
+.nativeCoverBox {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px;
+  border-radius: var(--tt-radius-md);
+  border: 1.5px solid var(--tt-border);
+  background-color: var(--tt-surface);
+}
+
+.nativeBtns {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* Sticky CTA */
+.formCta {
+  position: sticky;
+  bottom: 0;
+  z-index: 20;
+  background: linear-gradient(transparent, var(--tt-background) 28%);
+  padding: 16px 0 10px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 10px;
+}
+
+.submitBtn {
+  flex: 1;
+}
+
+.ctaHint {
+  font-size: 0.8rem;
+  color: var(--tt-text-muted);
+  white-space: nowrap;
+}
+
+@media (max-width: 720px) {
+  .row2 {
+    grid-template-columns: 1fr;
   }
-  
-  .typeIcon {
-    font-size: 1.25rem;
+
+  .formCta {
+    bottom: calc(var(--tt-bottom-nav-height, 62px) + env(safe-area-inset-bottom));
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+    padding: 14px 0 8px;
   }
-  
-  .typeText {
-    font-size: 0.9rem;
-  }
-  
-  .typeDescription {
-    font-size: 0.75rem;
-  }
-  
-  .visibilityButton {
-    min-height: 60px;
-    padding: 0.5rem;
-  }
-  
-  .visibilityIcon {
-    font-size: 1rem;
-  }
-  
-  .visibilityText {
-    font-size: 0.8rem;
-  }
-  
-  .visibilityDescription {
-    font-size: 0.6rem;
-  }
-  
-  .mapContainer {
-    height: 200px;
+
+  .ctaHint {
+    text-align: center;
   }
 }
