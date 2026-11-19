@@ -34,3 +34,5 @@ _ARCHIVE_DELETE_AFTER_REVIEW/
 .idea/
 .vscode/
 FRONTEND/client/build/
+FRONTEND/client/users.json
+FRONTEND/client/.env.backup
