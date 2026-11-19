@@ -1,334 +1,71 @@
-/* File: frontend/client/src/pages/Profile/ProfilePage.module.css (Versione Ottimizzata + Mobile) */
-
-/* ========================================
-   STILI DI BASE (Mobile-First)
-   ======================================== */
-
-.profilePage {
-  composes: palette from '../../styles/common/palette.module.css';
-
-  padding: 12px 16px;
-}
-
-.header {
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  margin-bottom: 12px;
-  position: relative;
-  padding-right: 96px; /* spazio per il bottone in alto a destra */
-  min-height: 32px; /* per dare spazio al back piccolo anche senza titolo */
-}
-
-/* titolo rimosso su richiesta: classe lasciata vuota per compatibilità */
-.pageTitle { display: none; }
-
-/* Back button piccolo in alto a destra */
-.smallBackButton {
-  position: absolute;
-  top: 0;
-  right: 0;
-  padding: 6px 10px !important;
-  font-size: 0.8rem !important;
-}
-
-.content {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-/* Messaggio di benvenuto (Alert) */
-.alertInfo {
-    background: linear-gradient(135deg, color-mix(in srgb, var(--tt-accent) 10%, #FFFFFF) 0%, color-mix(in srgb, var(--tt-accent) 22%, #FFFFFF) 100%);
-    border-radius: 12px;
-    padding: 1.5rem; /* Aumentato un po' per dare più aria */
-    margin-bottom: 1.5rem;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-    width: 100%;
-}
-
-.welcomeMessage {
-    display: flex; /* Attiviamo flexbox */
-    flex-direction: column; /* Mettiamo gli elementi uno sopra l'altro */
-    align-items: center; /* Li centriamo orizzontalmente */
-    text-align: center; /* Centriamo anche il testo per sicurezza */
-    gap: 0.5rem; /* Aggiungiamo un po' di spazio tra titolo e sottotitolo */
-}
-
-.welcomeMessage strong {
-    font-size: 1.3rem; /* Leggermente più grande */
-    font-weight: 600;
-    color: var(--tt-accent);
-}
-
-.welcomeMessage p {
-    font-size: 1rem;
-    color: var(--tt-accent);
-    margin: 0; /* Rimuoviamo il margine di default del tag <p> */
-    line-height: 1.5; /* Miglioriamo la leggibilità */
-}
-
-/* La nostra griglia principale: per default è a UNA COLONNA */
-.profileGrid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 12px;
+.page {
   width: 100%;
-}
-
-/* Stile base per tutte le card */
-.profileHeaderCard,
-.profilePersonalInfoCard,
-.profileInterestsCard,
-.profileLanguagesCard,
-.profileSettingsCard {
-  background: var(--tt-surface);
-  border-radius: 12px;
-  padding: clamp(12px, 2.4vw, 16px);
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.07);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-  text-align: left;
-}
-
-.profileHeaderCard:hover,
-.profilePersonalInfoCard:hover,
-.profileInterestsCard:hover,
-.profileLanguagesCard:hover,
-.profileSettingsCard:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.09);
-}
-
-/* ========================================
-   MEDIA QUERIES (Layout per schermi più grandi)
-   ======================================== */
-
-/* --- Tablet (es. iPad in verticale) --- */
-@media (min-width: 768px) {
-    .profileContainer {
-        padding: 0 1.5rem;
-    }
-
-    .profileGrid {
-        /* OTTIMIZZAZIONE: Passiamo a 2 colonne su tablet! */
-        grid-template-columns: repeat(2, 1fr);
-        gap: 1.5rem;
-    }
-
-    .profileHeaderCard {
-        grid-column: span 2; /* L'header occupa tutta la larghezza */
-        text-align: center;  /* Ma centriamo il suo contenuto */
-    }
-
-    .profilePersonalInfoCard {
-        grid-column: span 2; /* Anche le info personali */
-    }
-
-    .profileInterestsCard,
-    .profileLanguagesCard,
-    .profileSettingsCard {
-        grid-column: span 1; /* Interessi, Lingue e Impostazioni stanno sulla stessa riga */
-    }
-    
-    .profileHeaderCard,
-    .profilePersonalInfoCard,
-    .profileInterestsCard,
-    .profileLanguagesCard,
-    .profileSettingsCard {
-        padding: 24px;
-    }
-}
-
-/* --- Desktop e Tablet grandi (es. iPad in orizzontale) --- */
-@media (min-width: 992px) {
-    .profileGrid {
-        /* OTTIMIZZAZIONE: Layout a L rovesciata, più dinamico */
-        grid-template-columns: repeat(12, 1fr);
-        gap: 2rem;
-    }
-
-    .profileHeaderCard {
-        grid-column: 1 / 5;   /* Occupa le prime 4 colonne */
-        grid-row: 1 / 3;      /* Si estende su due righe per stare a sinistra */
-        text-align: center;
-    }
-
-    .profilePersonalInfoCard {
-        grid-column: 5 / 13;  /* Occupa le 8 colonne a destra dell'header */
-    }
-
-    .profileInterestsCard {
-        grid-column: 5 / 9;   /* Occupa 4 colonne a destra */
-    }
-    
-    .profileLanguagesCard {
-        grid-column: 9 / 13;  /* Occupa le altre 4 colonne a destra */
-    }
-    
-    .profileSettingsCard {
-        grid-column: 1 / 5;   /* Occupa lo spazio sotto l'header */
-    }
-}
-
-/* ========================================
-   SCHERMATA DI BENVENUTO
-   ======================================== */
-
-.welcomePage {
-  composes: palette from '../../styles/common/palette.module.css';
-  padding: 0;
-  min-height: 100vh;
-  background: linear-gradient(135deg, var(--tt-background) 0%, color-mix(in srgb, var(--tt-border) 55%, var(--tt-background)) 100%);
-  display: flex;
-  flex-direction: column;
-}
-
-.welcomePage .header {
-  text-align: center;
-  margin-bottom: 2rem;
-  padding: 2rem 1.5rem 1rem;
-  background: linear-gradient(135deg, var(--tt-surface) 0%, var(--tt-background) 100%);
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-}
-
-.welcomePage .title {
-  font-size: clamp(1.8rem, 5vw, 2.5rem);
-  font-weight: 700;
-  color: var(--tt-accent);
-  margin-bottom: 0.75rem;
-    line-height: 1.2;
-}
-
-.welcomePage .subtitle {
-  font-size: clamp(1rem, 3vw, 1.2rem);
-  color: var(--tt-accent);
-  line-height: 1.6;
-  max-width: 600px;
+  max-width: 780px;
   margin: 0 auto;
-  font-weight: 400;
+  padding: 26px 0 40px;
+  color: var(--tt-text);
 }
 
-.benefitsGrid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 1.25rem;
-  margin: 2rem 1.5rem 2.5rem;
-  max-width: 1000px;
-  margin-left: auto;
-  margin-right: auto;
+.welcomeBanner {
+  background-color: color-mix(in srgb, var(--tt-accent) 10%, var(--tt-surface));
+  border: 1px solid color-mix(in srgb, var(--tt-accent) 28%, var(--tt-border));
+  border-radius: var(--tt-radius-lg);
+  padding: 16px 20px;
+  margin-bottom: 14px;
 }
 
-.benefitCard {
-  background: var(--tt-surface);
-  border-radius: 16px;
-  padding: clamp(1.5rem, 4vw, 2rem);
-  text-align: center;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-  border: 1px solid rgba(0, 0, 0, 0.05);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-}
-
-.benefitCard:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
-}
-
-.benefitCard .icon {
-  color: var(--tt-accent);
-  margin-bottom: 1rem;
-  opacity: 0.9;
-}
-
-.benefitCard .cardTitle {
-  font-size: clamp(1.2rem, 3.5vw, 1.4rem);
+.welcomeBanner h2 {
+  font-family: var(--tt-font-heading);
+  font-size: 1.08rem;
   font-weight: 600;
   color: var(--tt-accent);
-  margin-bottom: 0.75rem;
-  line-height: 1.3;
+  margin: 0 0 4px;
 }
 
-.benefitCard .cardText {
-  font-size: clamp(0.9rem, 2.5vw, 1rem);
+.welcomeBanner p {
+  font-size: 0.9rem;
   color: var(--tt-text-muted);
-  line-height: 1.6;
   margin: 0;
-  max-width: 100%;
 }
 
-/* Stile per il form quando è dentro welcomePage */
-.welcomePage .profilePage {
-  background: transparent;
-  padding: 0 1.5rem 2rem;
-  flex: 1;
+.alertBanner {
+  background-color: color-mix(in srgb, var(--tt-primary) 10%, var(--tt-surface));
+  border: 1px solid color-mix(in srgb, var(--tt-primary) 35%, var(--tt-border));
+  border-radius: var(--tt-radius-md);
+  color: var(--tt-primary-hover);
+  padding: 12px 14px;
+  font-size: 0.9rem;
+  margin-bottom: 14px;
 }
 
-.welcomePage .content {
-  max-width: 1000px;
-  margin: 0 auto;
-  width: 100%;
-  background: var(--tt-surface);
-  border-radius: 20px;
-  padding: 2rem;
-  box-shadow: 0 4px 25px rgba(0, 0, 0, 0.08);
-  border: 1px solid rgba(0, 0, 0, 0.05);
+.skeletonCard {
+  background-color: var(--tt-surface);
+  border: 1px solid var(--tt-border);
+  border-radius: var(--tt-radius-lg);
+  padding: 20px;
+  margin-bottom: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
-/* Responsive per tablet e desktop */
-@media (min-width: 768px) {
-  .welcomePage .header {
-    padding: 3rem 2rem 2rem;
-  }
-  
-  .benefitsGrid {
-    grid-template-columns: repeat(3, 1fr);
-    gap: 2rem;
-    margin: 3rem 2rem 3rem;
-  }
-  
-  .welcomePage .title {
-    font-size: 3rem;
-  }
-  
-  .welcomePage .subtitle {
-    font-size: 1.3rem;
-  }
-  
-  .welcomePage .profilePage {
-    padding: 0 2rem 3rem;
-  }
-  
-  .welcomePage .content {
-    padding: 2.5rem;
-    border-radius: 24px;
-  }
+.skeletonLineWide,
+.skeletonLineMid {
+  height: 14px;
+  border-radius: 999px;
+  background-color: color-mix(in srgb, var(--tt-border) 60%, var(--tt-background));
 }
 
-/* Mobile ottimizzazioni */
-@media (max-width: 767px) {
-  .welcomePage .header {
-    padding: 1.5rem 1rem 1rem;
-  }
-  
-  .benefitsGrid {
-    margin: 1.5rem 1rem 2rem;
-    gap: 1rem;
-  }
-  
-  .benefitCard {
-    padding: 1.5rem 1.25rem;
-  }
-  
-  .welcomePage .profilePage {
-    padding: 0 1rem 1.5rem;
-  }
-  
-  .welcomePage .content {
-    padding: 1.5rem;
-    border-radius: 16px;
+.skeletonLineWide {
+  width: 68%;
+}
+
+.skeletonLineMid {
+  width: 44%;
+}
+
+@media (max-width: 720px) {
+  .page {
+    padding: 20px 0 32px;
   }
 }

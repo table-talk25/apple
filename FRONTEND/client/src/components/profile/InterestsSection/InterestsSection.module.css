@@ -1,169 +1,147 @@
-/* File: frontend/client/src/components/profile/InterestsSection.module.css (Nomi corretti) */
-
-.interestsContainer {
-    background: #fff;
-    border-radius: 12px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    /* Rimosso padding e margin-bottom per essere controllati dalla griglia genitore */
+.pCard {
+  background-color: var(--tt-surface);
+  border: 1px solid var(--tt-border);
+  border-radius: var(--tt-radius-lg);
+  padding: 20px;
+  margin-bottom: 14px;
 }
 
-.sectionHeader {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 8px;
-    flex-wrap: wrap;
-    margin-bottom: 20px;
+.pCard h3 {
+  font-family: var(--tt-font-heading);
+  font-size: 1.02rem;
+  font-weight: 600;
+  color: var(--tt-text);
+  margin: 0 0 10px;
 }
 
-.sectionHeader h2 {
-    font-size: clamp(1.1rem, 3.5vw, 1.4rem);
-    color: var(--tt-text);
-    margin: 0;
-    flex: 1 1 auto;
-    min-width: 0;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
 }
 
-.editButton, .saveButton, .cancelButton {
-    border: none;
-    cursor: pointer;
-    padding: 0.5rem 1rem;
-    border-radius: 8px;
-    font-weight: 600;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background-color: var(--tt-background);
+  border: 1px solid var(--tt-border);
+  border-radius: 999px;
+  padding: 0.25rem 0.72rem;
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: var(--tt-text);
 }
 
-.editButton { background-color: var(--tt-border); color: var(--tt-text); }
-.editButton:hover { background: var(--tt-border); }
-.saveButton { background-color: #e8f5e9; color: #2e7d32; }
-.saveButton:hover { background: #d9f0db; }
-.cancelButton { background-color: #ffebee; color: #c62828; }
-.cancelButton:hover { background: #ffd9de; }
-.editButtons { display: flex; gap: 8px; }
-
-/* Sezioni Interessi e Lingue */
-.interestsSection, .languagesSection, .cuisineSection {
-    margin-bottom: 24px;
+.removeChip {
+  border: none;
+  background: transparent;
+  color: var(--tt-primary);
+  font-size: 0.78rem;
+  font-weight: 700;
+  line-height: 1;
+  padding: 0 2px;
+  cursor: pointer;
 }
 
-.interestsSection h3, .languagesSection h3, .cuisineSection h3 {
-    font-size: 1.1rem;
-    color: var(--tt-text-muted);
-    margin-bottom: 12px;
+.removeChip:hover {
+  color: var(--tt-primary-hover);
 }
 
-.inputGroup { display: flex; gap: 8px; margin-bottom: 12px; }
-.inputGroup input { flex: 1; padding: 8px 12px; border: 1px solid var(--tt-border); border-radius: 6px; font-size: 0.9rem; }
-.inputGroup button { background: #4CAF50; color: white; border: none; border-radius: 6px; padding: 8px 12px; cursor: pointer; transition: background 0.2s ease; }
-.inputGroup button:hover { background: #45a049; }
-.inputGroup button:disabled { background: #ccc; cursor: not-allowed; }
-
-/* 🔄 COMPONENTI RIUTILIZZABILI: Stili per modalità pubblica */
-.disabledButton {
-  opacity: 0.6;
-  cursor: not-allowed !important;
-  background: #f5f5f5 !important;
-  color: var(--tt-text-muted) !important;
+.linklike {
+  color: var(--tt-accent);
+  font-weight: 600;
+  background: none;
+  border: none;
+  padding: 0.15rem 0.25rem;
+  font-family: inherit;
+  font-size: 0.88rem;
+  cursor: pointer;
 }
 
-.disabledButton:hover {
-  background: #f5f5f5 !important;
-  transform: none !important;
+.linklike:hover {
+  color: var(--tt-primary);
 }
 
-/* Autocomplete Styles */
-.autocompleteContainer {
-    position: relative;
-    flex: 1;
+.linklike:focus-visible {
+  outline: 2px solid var(--tt-focus);
+  outline-offset: 2px;
+  border-radius: 4px;
 }
 
-.autocompleteInput {
-    width: 100%;
-    padding: 8px 12px;
-    border: 1px solid var(--tt-border);
-    border-radius: 6px;
-    font-size: 0.9rem;
-    background-color: white;
+.emptyHint {
+  font-size: 0.84rem;
+  color: var(--tt-text-muted);
 }
 
-.autocompleteInput:focus {
-    outline: none;
-    border-color: #4CAF50;
-    box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2);
+.editorBox {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--tt-background);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
-.suggestionsList {
-    position: absolute;
-    top: 100%;
-    left: 0;
-    right: 0;
-    background: white;
-    border: 1px solid var(--tt-border);
-    border-top: none;
-    border-radius: 0 0 6px 6px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    z-index: 1000;
-    max-height: 200px;
-    overflow-y: auto;
+.inputRow {
+  display: flex;
+  gap: 8px;
+  align-items: center;
 }
 
-.suggestionItem {
-    padding: 8px 12px;
-    cursor: pointer;
-    transition: background-color 0.2s ease;
-    border-bottom: 1px solid var(--tt-border);
+.input,
+.select {
+  width: 100%;
+  border: 1.5px solid var(--tt-border);
+  border-radius: var(--tt-radius-md);
+  padding: 0.56rem 0.8rem;
+  font-family: var(--tt-font-body);
+  font-size: 0.9rem;
+  background-color: var(--tt-surface);
+  color: var(--tt-text);
 }
 
-.suggestionItem:last-child {
-    border-bottom: none;
+.input:focus,
+.select:focus {
+  border-color: var(--tt-accent);
+  outline: none;
 }
 
-.suggestionItem:hover {
-    background-color: #f5f5f5;
+.suggestions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
 }
 
-.suggestionItem:active {
-    background-color: var(--tt-border);
+.optionChip {
+  display: inline-flex;
+  align-items: center;
+  background-color: var(--tt-surface);
+  border: 1.5px solid var(--tt-border);
+  border-radius: 999px;
+  padding: 0.24rem 0.7rem;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--tt-text);
+  cursor: pointer;
+  transition: border-color 0.15s ease, background-color 0.15s ease, color 0.15s ease;
 }
 
-/* Tags List */
-.tagsList { display: flex; flex-wrap: wrap; gap: 8px; }
-
-.interestTag, .languageTag, .cuisineTag {
-    display: inline-flex;
-    align-items: center;
-    background: var(--tt-border);
-    padding: 4px 10px;
-    border-radius: 16px;
-    font-size: 0.85rem;
-    color: var(--tt-text-muted);
-    gap: 6px;
+.optionChip:hover {
+  border-color: var(--tt-accent);
+  color: var(--tt-accent);
+  background-color: color-mix(in srgb, var(--tt-accent) 6%, var(--tt-surface));
 }
 
-.interestTag button, .languageTag button { background: none; border: none; color: var(--tt-text-muted); cursor: pointer; padding: 2px; font-size: 0.8rem; display: flex; align-items: center; justify-content: center; border-radius: 50%; transition: all 0.2s ease; }
-.interestTag button:hover, .languageTag button:hover { background: var(--tt-border); color: #f44336; }
+.cuisineRow {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
 
-/* Altri stili... (rimangono invariati) */
-.cuisineSelect { width: 100%; padding: 8px 12px; border: 1px solid var(--tt-border); border-radius: 6px; font-size: 0.9rem; color: var(--tt-text-muted); background-color: white; }
-.cuisineSelect:focus { outline: none; border-color: #4CAF50; }
-.noItems { color: var(--tt-text-muted); font-size: 0.9rem; font-style: italic; margin: 8px 0; }
-.suggestedInterests { margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--tt-border); }
-.suggestedTitle { font-size: 0.9rem; font-weight: 600; color: var(--tt-text-muted); margin-bottom: 0.75rem; }
-.suggestedTags { display: flex; flex-wrap: wrap; gap: 0.5rem; }
-.suggestedTag { background-color: var(--tt-border); color: var(--tt-text-muted); border: 1px solid transparent; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.85rem; cursor: pointer; transition: all 0.2s ease; }
-.suggestedTag:hover:not(:disabled) { background-color: var(--tt-border); transform: translateY(-1px); }
-.suggestedTag:disabled { background-color: var(--primary-color); color: white; cursor: not-allowed; opacity: 0.7; }
-
-/* Responsive */
-@media (max-width: 768px) {
-    .interestsContainer { padding: 16px; }
-    .sectionHeader h2 { font-size: 1.3rem; }
-    .interestTag, .languageTag, .cuisineTag { font-size: 0.8rem; padding: 3px 8px; }
-    .suggestionsList { max-height: 150px; }
-    .suggestionItem { padding: 6px 10px; font-size: 0.85rem; }
+.cuisineRow label {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--tt-text-muted);
 }

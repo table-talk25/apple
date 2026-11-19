@@ -1,137 +1,150 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { FaGlobe, FaCheck, FaTimes, FaPencilAlt } from 'react-icons/fa';
 import { availableLanguages } from '../../../constants/profileConstants';
 import styles from './LanguagesSection.module.css';
 
-const LanguagesSection = ({ profileData, onUpdate }) => {
-  const { t } = useTranslation();
-  const [selectedLanguages, setSelectedLanguages] = useState([]);
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  
-  // STATO LOCALE: Gestisce la modifica solo di questa sezione
-  const [isEditing, setIsEditing] = useState(false);
+const LANG_FLAGS = {
+  it: '🇮🇹',
+  en: '🇬🇧',
+  fr: '🇫🇷',
+  es: '🇪🇸',
+  de: '🇩🇪',
+  pt: '🇵🇹',
+  ru: '🇷🇺',
+  zh: '🇨🇳',
+  ja: '🇯🇵',
+  ar: '🇸🇦',
+};
 
-  // Inizializza le lingue dal profilo quando cambiano i dati
+const formatLanguageDisplay = (val) => {
+  const raw = String(val || '').trim();
+  const byCode = availableLanguages.find((l) => l.code.toLowerCase() === raw.toLowerCase());
+  if (byCode) {
+    return {
+      code: byCode.code,
+      flag: LANG_FLAGS[byCode.code] || '🌍',
+      name: byCode.name,
+    };
+  }
+  const byName = availableLanguages.find((l) => l.name.toLowerCase() === raw.toLowerCase());
+  if (byName) {
+    return {
+      code: byName.code,
+      flag: LANG_FLAGS[byName.code] || '🌍',
+      name: byName.name,
+    };
+  }
+  return {
+    code: raw,
+    flag: '🌍',
+    name: raw,
+  };
+};
+
+const LanguagesSection = ({ profileData, onUpdate, isPublicView = false }) => {
+  const { t } = useTranslation();
+  const [selectedLanguages, setSelectedLanguages] = useState(
+    Array.isArray(profileData?.languages) ? profileData.languages : []
+  );
+  const [isAdding, setIsAdding] = useState(false);
+
   useEffect(() => {
-    if (profileData?.languages) {
-      setSelectedLanguages(profileData.languages);
-    }
+    setSelectedLanguages(
+      Array.isArray(profileData?.languages) ? profileData.languages : []
+    );
   }, [profileData?.languages]);
 
-  // Gestione selezione/deselezione lingua (per il dropdown)
-  const handleLanguageToggle = (languageCode) => {
-    if (!selectedLanguages.includes(languageCode)) {
-      const newLanguages = [...selectedLanguages, languageCode];
-      setSelectedLanguages(newLanguages);
-      onUpdate({ languages: newLanguages });
-      setIsDropdownOpen(false);
-    }
+  if (!profileData) return null;
+
+  const isSelected = (langObj) =>
+    selectedLanguages.some(
+      (entry) =>
+        String(entry).toLowerCase() === langObj.code.toLowerCase() ||
+        String(entry).toLowerCase() === langObj.name.toLowerCase()
+    );
+
+  const remainingLanguages = availableLanguages.filter((l) => !isSelected(l));
+
+  const handleAddLanguage = (code) => {
+    if (isPublicView || !onUpdate) return;
+    if (selectedLanguages.includes(code)) return;
+    const next = [...selectedLanguages, code];
+    setSelectedLanguages(next);
+    onUpdate({ languages: next });
   };
 
-  // Rimozione lingua (dalla lista con le X)
-  const removeLanguage = (languageCode) => {
-    const newLanguages = selectedLanguages.filter(lang => lang !== languageCode);
-    setSelectedLanguages(newLanguages);
-    onUpdate({ languages: newLanguages });
-  };
-
-  const getLanguageName = (code) => {
-    const language = availableLanguages.find(lang => lang.code === code);
-    return language ? language.name : code;
-  };
-
-  const getAvailableLanguagesForSelection = () => {
-    return availableLanguages.filter(lang => !selectedLanguages.includes(lang.code));
-  };
-
-  // Attiva/Disattiva modalità modifica
-  const toggleEditMode = () => {
-    setIsEditing(!isEditing);
-    if (isEditing) setIsDropdownOpen(false); 
+  const handleRemoveLanguage = (valueToRemove) => {
+    if (isPublicView || !onUpdate) return;
+    const next = selectedLanguages.filter((item) => item !== valueToRemove);
+    setSelectedLanguages(next);
+    onUpdate({ languages: next });
   };
 
   return (
-    <div className={styles.container}>
-      {/* HEADER: Titolo + Matitina sulla stessa riga */}
-      <div className={styles.headerRow}>
-        <h3 className={styles.sectionTitle} style={{ marginBottom: 0 }}>
-          <FaGlobe /> {t('publicProfile.languagesSection.title') || 'Lingue'}
-        </h3>
-        
-        {/* Tasto Matita / Spunta per attivare la modifica locale */}
-        <button 
-          className={styles.editIconBtn} 
-          onClick={toggleEditMode}
-          title={isEditing ? "Salva" : "Modifica lingue"}
-        >
-          {isEditing ? <FaCheck size={16} /> : <FaPencilAlt size={14} />}
-        </button>
+    <section className={styles.pCard} data-testid="languages-card">
+      <h3>{t('profileUi.languagesTitle', 'Lingue')}</h3>
+
+      <div className={styles.tags}>
+        {selectedLanguages.length > 0 ? (
+          selectedLanguages.map((langValue) => {
+            const info = formatLanguageDisplay(langValue);
+            return (
+              <span key={langValue} className={styles.tag}>
+                <span aria-hidden="true">{info.flag}</span>
+                <span>{info.name}</span>
+                {isAdding && !isPublicView && (
+                  <button
+                    type="button"
+                    className={styles.removeChip}
+                    onClick={() => handleRemoveLanguage(langValue)}
+                    aria-label={t('profileUi.removeItem', {
+                      item: info.name,
+                      defaultValue: `Rimuovi ${info.name}`,
+                    })}
+                  >
+                    ✕
+                  </button>
+                )}
+              </span>
+            );
+          })
+        ) : (
+          <span className={styles.emptyHint}>
+            {t('profileUi.noLanguagesYet', 'Nessuna lingua aggiunta')}
+          </span>
+        )}
+
+        {!isPublicView && (
+          <button
+            type="button"
+            className={styles.linklike}
+            onClick={() => setIsAdding((prev) => !prev)}
+            data-testid="add-language-btn"
+          >
+            {isAdding
+              ? t('profileUi.done', 'Fatto')
+              : t('profileUi.addChip', '＋ Aggiungi')}
+          </button>
+        )}
       </div>
 
-      {/* CONTENUTO: Cambia in base a isEditing */}
-      {!isEditing ? (
-        /* --- VISTA LETTURA --- */
-        selectedLanguages.length > 0 ? (
-          <div className={styles.languagesList}>
-            {selectedLanguages.map((langCode) => (
-              <div key={langCode} className={styles.languageTag}>
-                <span className={styles.languageCode}>{langCode.toUpperCase()}</span>
-                <span className={styles.languageName}>{getLanguageName(langCode)}</span>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <p className={styles.noLanguages}>
-            {t('publicProfile.languagesSection.noLanguagesConfigured') || 'Nessuna lingua configurata'}
-          </p>
-        )
-      ) : (
-        /* --- VISTA MODIFICA --- */
-        <div className={styles.editContainer}>
-          <div className={styles.selectedLanguages}>
-            {selectedLanguages.map((langCode) => (
-              <div key={langCode} className={styles.languageTag}>
-                <span className={styles.languageCode}>{langCode.toUpperCase()}</span>
-                <span className={styles.languageName}>{getLanguageName(langCode)}</span>
-                <button
-                  className={styles.removeButton}
-                  onClick={() => removeLanguage(langCode)}
-                >
-                  <FaTimes />
-                </button>
-              </div>
-            ))}
-          </div>
-
-          <div className={styles.addLanguageSection}>
+      {isAdding && !isPublicView && remainingLanguages.length > 0 && (
+        <div className={styles.pickerTray} data-testid="languages-picker">
+          {remainingLanguages.map((lang) => (
             <button
-              className={styles.addButton}
-              onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-              disabled={getAvailableLanguagesForSelection().length === 0}
+              key={lang.code}
+              type="button"
+              className={styles.optionChip}
+              onClick={() => handleAddLanguage(lang.code)}
+              data-testid={`lang-option-${lang.code}`}
             >
-              {t('publicProfile.languagesSection.addLanguage') || 'Aggiungi lingua'}
+              <span aria-hidden="true">{LANG_FLAGS[lang.code] || '🌍'}</span>
+              <span>＋ {lang.name}</span>
             </button>
-
-            {isDropdownOpen && (
-              <div className={styles.dropdown}>
-                {getAvailableLanguagesForSelection().map((language) => (
-                  <button
-                    key={language.code}
-                    className={styles.languageOption}
-                    onClick={() => handleLanguageToggle(language.code)}
-                  >
-                    <span className={styles.languageCode}>{language.code.toUpperCase()}</span>
-                    <span className={styles.languageName}>{language.name}</span>
-                    <FaCheck className={styles.addIcon} />
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
+          ))}
         </div>
       )}
-    </div>
+    </section>
   );
 };
 

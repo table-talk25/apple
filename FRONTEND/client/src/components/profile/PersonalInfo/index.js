@@ -1,160 +1,367 @@
-// File: frontend/client/src/components/profile/PersonalInfo.js (Integrato con PlacesAutocomplete)
-
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { FaEye, FaEyeSlash, FaMapMarkerAlt } from 'react-icons/fa';
-import ProfileSectionWrapper from '../ProfileSectionWrapper';
-import { sanitizeProfileData, containsDangerousContent } from '../../../services/sanitizationService';
+import { getProfileAge, getProfileCity } from '../../../utils/profileCompleteness';
+import { Button } from '../../ui';
 import styles from './PersonalInfo.module.css';
 
-const PersonalInfo = ({ profileData, onUpdate, onUpdateLocation, isUpdating, isPublicView = false }) => {
+const buildInitialForm = (profileData) => ({
+  nickname: profileData?.nickname || '',
+  city: getProfileCity(profileData),
+  bio: profileData?.bio || '',
+  dateOfBirth: profileData?.dateOfBirth
+    ? new Date(profileData.dateOfBirth).toISOString().split('T')[0]
+    : '',
+  gender: profileData?.gender || '',
+  phone: profileData?.phone || '',
+  showAge: profileData?.settings?.privacy?.showAge ?? true,
+});
+
+const PersonalInfo = ({
+  profileData,
+  onUpdate,
+  isUpdating = false,
+  isEditingExternal = false,
+  focusField = null,
+  onRequestEdit,
+  onCloseEdit,
+  isPublicView = false,
+}) => {
   const { t } = useTranslation();
-  const [isEditing, setIsEditing] = useState(false);
-  const [error, setError] = useState('');
-  const [formData, setFormData] = useState({
-    nickname: '', bio: '', dateOfBirth: '', 
-    gender: '', phone: '',
-    privacy: { showAge: true, showLocation: true }
-  });
+  const [internalEditing, setInternalEditing] = useState(false);
+  const [formData, setFormData] = useState(() => buildInitialForm(profileData));
+
+  const cityRef = useRef(null);
+  const dobRef = useRef(null);
+  const genderRef = useRef(null);
+  const bioRef = useRef(null);
+
+  const isControlled = typeof onRequestEdit === 'function';
+  const isEditing = !isPublicView && (isControlled ? isEditingExternal : internalEditing);
 
   useEffect(() => {
     if (profileData) {
-      setFormData({
-        nickname: profileData.nickname || '',
-        bio: profileData.bio || '',
-        dateOfBirth: profileData.dateOfBirth ? new Date(profileData.dateOfBirth).toISOString().split('T')[0] : '',
-        phone: profileData.phone || '',
-        gender: profileData.gender || '',
-        privacy: {
-          showAge: profileData.settings?.privacy?.showAge ?? true,
-          showLocation: profileData.settings?.privacy?.showLocation ?? true,
-        }
-      });
+      setFormData(buildInitialForm(profileData));
     }
   }, [profileData]);
 
-  if (!profileData) {
-    return null;
-  }
+  useEffect(() => {
+    if (!isEditing || !focusField) return;
+    const refs = {
+      city: cityRef,
+      dateOfBirth: dobRef,
+      gender: genderRef,
+      bio: bioRef,
+    };
+    const targetRef = refs[focusField];
+    const timer = setTimeout(() => {
+      if (targetRef?.current && typeof targetRef.current.focus === 'function') {
+        targetRef.current.focus();
+      }
+    }, 30);
+    return () => clearTimeout(timer);
+  }, [isEditing, focusField]);
+
+  if (!profileData) return null;
+
+  const cityValue = getProfileCity(profileData);
+  const ageValue = getProfileAge(profileData);
+
+  const getGenderLabel = (gender) => {
+    if (!gender) return '';
+    const map = {
+      male: t('profile.personalInfo.male', 'Maschio'),
+      female: t('profile.personalInfo.female', 'Femmina'),
+      'non-binary': t('profile.personalInfo.nonBinary', 'Non binario'),
+      other: t('profile.personalInfo.other', 'Altro'),
+    };
+    return map[gender] || gender;
+  };
+
+  const openEdit = (field = null) => {
+    if (isPublicView) return;
+    if (onRequestEdit) {
+      onRequestEdit(field);
+    } else {
+      setInternalEditing(true);
+    }
+  };
+
+  const closeEdit = () => {
+    if (onCloseEdit) {
+      onCloseEdit();
+    } else {
+      setInternalEditing(false);
+    }
+  };
 
   const handleChange = (e) => {
-    if (isPublicView) return; // Non permettere modifiche in modalità pubblica
-    
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
-  
-  const handlePrivacyToggle = (field) => {
-    if (isPublicView) return; // Non permettere modifiche privacy in modalità pubblica
-    
-    setFormData(prev => ({
-      ...prev,
-      privacy: { ...prev.privacy, [field]: !prev.privacy[field] }
-    }));
-  };
-
-
-  const handleSave = async () => {
-    if (isPublicView || !onUpdate) return; // Non permettere il salvataggio in modalità pubblica
-    
-    setError(''); // Pulisci eventuali errori precedenti
-    
-      const dataToUpdate = {
-        nickname: formData.nickname,
-        bio: formData.bio,
-        dateOfBirth: formData.dateOfBirth,
-        gender: formData.gender,
-        phone: formData.phone,
-        settings: { ...profileData.settings, privacy: formData.privacy }
-      };
-      
-       onUpdate(dataToUpdate);
-      setIsEditing(false);
-    };
 
   const handleCancel = () => {
-    if (isPublicView) return; // Non permettere l'annullamento in modalità pubblica
-    
-    setError(''); // Pulisci errori quando si annulla
-    if (profileData) {
-        setFormData({
-            nickname: profileData.nickname || '',
-            bio: profileData.bio || '',
-            dateOfBirth: profileData.dateOfBirth ? new Date(profileData.dateOfBirth).toISOString().split('T')[0] : '',
-            phone: profileData.phone || '',
-            gender: profileData.gender || '',
-            privacy: {
-                showAge: profileData.settings?.privacy?.showAge ?? true,
-                showLocation: profileData.settings?.privacy?.showLocation ?? true,
-                showPhone: false
-            }
-        });
-    }
-    setIsEditing(false);
+    setFormData(buildInitialForm(profileData));
+    closeEdit();
   };
-  
-  const renderInfoField = (label, value, defaultValue = t('profile.personalInfo.notSpecified')) => (
-    <div className={styles.infoRow}>
-      <span className={styles.infoLabel}>{label}:</span>
-      <span className={styles.infoValue}>{value || defaultValue}</span>
-    </div>
-  );
+
+  const handleSave = async (e) => {
+    e.preventDefault();
+    if (isPublicView || !onUpdate) return;
+
+    const trimmedCity = String(formData.city || '').trim();
+    const existingCoords = profileData.location?.coordinates;
+    const hasCoords = Array.isArray(existingCoords) && existingCoords.length === 2;
+
+    const locationPayload = hasCoords
+      ? {
+          type: 'Point',
+          coordinates: existingCoords,
+          address: trimmedCity,
+        }
+      : {
+          address: trimmedCity,
+        };
+
+    const existingSettings = profileData.settings || {};
+    const existingPrivacy = existingSettings.privacy || {};
+
+    const dataToUpdate = {
+      nickname: String(formData.nickname || '').trim(),
+      bio: String(formData.bio || '').trim(),
+      gender: formData.gender || '',
+      phone: String(formData.phone || '').trim(),
+      location: locationPayload,
+      residence: trimmedCity,
+      settings: {
+        ...existingSettings,
+        privacy: {
+          ...existingPrivacy,
+          showAge: formData.showAge,
+        },
+      },
+    };
+
+    if (formData.dateOfBirth) {
+      dataToUpdate.dateOfBirth = formData.dateOfBirth;
+    }
+
+    await onUpdate(dataToUpdate);
+    closeEdit();
+  };
+
+  const genderLabel = getGenderLabel(profileData.gender);
+  const bioValue = String(profileData.bio || '').trim();
 
   return (
-    <ProfileSectionWrapper
-      title={t('profile.personalInfo.title')}
-      isPublicView={isPublicView}
-      showEditButton={!isEditing}
-      isEditing={isEditing}
-      onEdit={() => setIsEditing(true)}
-      onSave={handleSave}
-      onCancel={handleCancel}
-      showSaveCancel={isEditing}
-    >
+    <section className={styles.pCard} data-testid="personal-info-card">
+      <div className={styles.headingRow}>
+        <h3>{t('profileUi.personalInfoTitle', 'Informazioni personali')}</h3>
+      </div>
 
-{!isEditing ? (
-        <div className={styles.infoDisplay}>
-          {renderInfoField(t('profile.personalInfo.nickname'), formData.nickname)}
-          {renderInfoField(t('profile.personalInfo.location'), profileData.location?.address)}
-          {renderInfoField(t('profile.personalInfo.age'), profileData?.age, t('profile.personalInfo.notSpecifiedAge'))}
-          {renderInfoField(t('profile.personalInfo.gender'), formData.gender)}
-          <div className={styles.infoRow}>
-            <span className={styles.infoLabel}>{t('profile.personalInfo.bio')}:</span>
-            <p className={styles.infoValueBio}>{formData.bio || t('profile.personalInfo.noBio')}</p>
+      {!isEditing ? (
+        <div className={styles.rows}>
+          <div className={styles.pRow}>
+            <span className={styles.rowKey}>{t('profile.personalInfo.location', 'Posizione')}</span>
+            {cityValue ? (
+              <span className={styles.rowVal}>{cityValue}</span>
+            ) : !isPublicView ? (
+              <button
+                type="button"
+                className={styles.linklike}
+                onClick={() => openEdit('city')}
+                data-testid="prompt-add-city"
+              >
+                {t('profileUi.addCityPrompt', '＋ Aggiungi la tua città')}
+              </button>
+            ) : (
+              <span className={styles.rowVal}>—</span>
+            )}
+          </div>
+
+          <div className={styles.pRow}>
+            <span className={styles.rowKey}>{t('profile.personalInfo.age', 'Età')}</span>
+            {ageValue !== null ? (
+              <span className={styles.rowVal}>{ageValue}</span>
+            ) : !isPublicView ? (
+              <button
+                type="button"
+                className={styles.linklike}
+                onClick={() => openEdit('dateOfBirth')}
+                data-testid="prompt-add-age"
+              >
+                {t('profileUi.addBirthDatePrompt', '＋ Aggiungi data di nascita')}
+              </button>
+            ) : (
+              <span className={styles.rowVal}>—</span>
+            )}
+          </div>
+
+          <div className={styles.pRow}>
+            <span className={styles.rowKey}>{t('profile.personalInfo.gender', 'Genere')}</span>
+            {genderLabel ? (
+              <span className={styles.rowVal}>{genderLabel}</span>
+            ) : !isPublicView ? (
+              <button
+                type="button"
+                className={styles.linklike}
+                onClick={() => openEdit('gender')}
+                data-testid="prompt-add-gender"
+              >
+                {t('profileUi.specifyPrompt', '＋ Specifica')}
+              </button>
+            ) : (
+              <span className={styles.rowVal}>—</span>
+            )}
+          </div>
+
+          <div className={styles.pRow}>
+            <span className={styles.rowKey}>{t('profile.personalInfo.bio', 'Bio')}</span>
+            {bioValue ? (
+              <span className={styles.rowVal}>{bioValue}</span>
+            ) : !isPublicView ? (
+              <button
+                type="button"
+                className={styles.linklike}
+                onClick={() => openEdit('bio')}
+                data-testid="prompt-add-bio"
+              >
+                {t('profileUi.addBioPrompt', '＋ Raccontati in due righe')}
+              </button>
+            ) : (
+              <span className={styles.rowVal}>—</span>
+            )}
           </div>
         </div>
       ) : (
-        <div className={styles.form}>
-          <input name="nickname" value={formData.nickname} onChange={handleChange} placeholder={t('profile.personalInfo.nickname')} className={styles.input} />
-          <textarea name="bio" value={formData.bio} onChange={handleChange} placeholder={t('profile.personalInfo.bioPlaceholder')} className={styles.textarea} />
-          
-          <div className={styles.fieldWithButton}>
-            <p className={styles.locationText}>
-              {profileData.location?.address || t('profile.personalInfo.noLocationSet')}
-            </p>
-            <button onClick={onUpdateLocation} className={styles.updateLocationBtn} disabled={isUpdating}>
-              <FaMapMarkerAlt /> {t('profile.personalInfo.updateLocation')}
-            </button>
-          </div>
-          
-          <select name="gender" value={formData.gender} onChange={handleChange} className={styles.input}>
-            <option value="">{t('profile.personalInfo.selectGender')}</option>
-            <option value="male">{t('profile.personalInfo.male')}</option>
-            <option value="female">{t('profile.personalInfo.female')}</option>
-            <option value="non-binary">{t('profile.personalInfo.nonBinary')}</option>
-            <option value="other">{t('profile.personalInfo.other')}</option>
-          </select>
+        <form className={styles.form} onSubmit={handleSave}>
+          <div className={styles.fieldRow}>
+            <div className={styles.field}>
+              <label htmlFor="p-nickname">{t('profile.personalInfo.nickname', 'Nickname')}</label>
+              <input
+                id="p-nickname"
+                name="nickname"
+                type="text"
+                value={formData.nickname}
+                onChange={handleChange}
+                className={styles.input}
+                placeholder={t('profile.personalInfo.nickname', 'Nickname')}
+              />
+            </div>
 
-          <div className={styles.fieldWithPrivacy}>
-            <input type="date" name="dateOfBirth" value={formData.dateOfBirth} onChange={handleChange} className={styles.input} />
-            <button onClick={() => handlePrivacyToggle('showAge')} className={styles.privacyBtn} title={t('profile.personalInfo.ageVisibility')}>
-                {formData.privacy.showAge ? <FaEye /> : <FaEyeSlash />}
-            </button>
+            <div className={styles.field}>
+              <label htmlFor="p-city">{t('profileUi.cityLabel', 'Città / Posizione')}</label>
+              <input
+                ref={cityRef}
+                id="p-city"
+                name="city"
+                type="text"
+                value={formData.city}
+                onChange={handleChange}
+                className={styles.input}
+                placeholder={t('profileUi.cityPlaceholder', 'Es. Milano, Italia')}
+                data-testid="input-city"
+              />
+            </div>
           </div>
-          <input type="tel" name="phone" value={formData.phone} onChange={handleChange} placeholder={t('profile.personalInfo.phonePlaceholder')} className={styles.input} />
-        </div>
+
+          <div className={styles.fieldRow}>
+            <div className={styles.field}>
+              <label htmlFor="p-dob">{t('profileUi.dateOfBirthLabel', 'Data di nascita')}</label>
+              <input
+                ref={dobRef}
+                id="p-dob"
+                name="dateOfBirth"
+                type="date"
+                value={formData.dateOfBirth}
+                onChange={handleChange}
+                className={styles.input}
+                data-testid="input-dob"
+              />
+              <label className={styles.checkboxRow}>
+                <input
+                  type="checkbox"
+                  checked={formData.showAge}
+                  onChange={() =>
+                    setFormData((prev) => ({ ...prev, showAge: !prev.showAge }))
+                  }
+                />
+                <span>{t('profileUi.showAgeLabel', 'Mostra l’età sul profilo pubblico')}</span>
+              </label>
+            </div>
+
+            <div className={styles.field}>
+              <label htmlFor="p-gender">{t('profile.personalInfo.gender', 'Genere')}</label>
+              <select
+                ref={genderRef}
+                id="p-gender"
+                name="gender"
+                value={formData.gender}
+                onChange={handleChange}
+                className={styles.select}
+                data-testid="input-gender"
+              >
+                <option value="">{t('profile.personalInfo.selectGender', 'Seleziona genere...')}</option>
+                <option value="male">{t('profile.personalInfo.male', 'Maschio')}</option>
+                <option value="female">{t('profile.personalInfo.female', 'Femmina')}</option>
+                <option value="non-binary">{t('profile.personalInfo.nonBinary', 'Non binario')}</option>
+                <option value="other">{t('profile.personalInfo.other', 'Altro')}</option>
+              </select>
+            </div>
+          </div>
+
+          <div className={styles.field}>
+            <label htmlFor="p-bio">{t('profile.personalInfo.bio', 'Bio')}</label>
+            <textarea
+              ref={bioRef}
+              id="p-bio"
+              name="bio"
+              rows={3}
+              maxLength={500}
+              value={formData.bio}
+              onChange={handleChange}
+              className={styles.textarea}
+              placeholder={t('profile.personalInfo.bioPlaceholder', 'La tua bio...')}
+              data-testid="input-bio"
+            />
+          </div>
+
+          <div className={styles.field}>
+            <label htmlFor="p-phone">{t('profileUi.phoneLabel', 'Telefono (privato)')}</label>
+            <input
+              id="p-phone"
+              name="phone"
+              type="tel"
+              value={formData.phone}
+              onChange={handleChange}
+              className={styles.input}
+              placeholder={t('profile.personalInfo.phonePlaceholder', 'Numero di telefono (privato)')}
+            />
+          </div>
+
+          <div className={styles.formActions}>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleCancel}
+              disabled={isUpdating}
+            >
+              {t('profile.personalInfo.cancel', 'Annulla')}
+            </Button>
+            <Button
+              type="submit"
+              variant="primary"
+              size="sm"
+              disabled={isUpdating}
+              data-testid="personal-save-btn"
+            >
+              {isUpdating
+                ? t('forms.saving', 'Salvataggio...')
+                : t('profile.personalInfo.save', 'Salva')}
+            </Button>
+          </div>
+        </form>
       )}
-    </ProfileSectionWrapper>
+    </section>
   );
 };
 
