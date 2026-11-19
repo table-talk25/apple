@@ -1,0 +1,56 @@
+.bar {
+  width: 100%;
+  background-color: color-mix(in srgb, var(--tt-primary) 10%, var(--tt-surface));
+  color: var(--tt-text);
+  border-bottom: 1px solid var(--tt-border);
+  padding: 10px 16px;
+}
+
+.inner {
+  max-width: 1120px;
+  margin: 0 auto;
+  font-size: 0.88rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.text {
+  flex: 1 1 auto;
+  min-width: 0;
+  color: var(--tt-text);
+}
+
+.smallHint {
+  color: var(--tt-text-muted);
+  font-size: 0.84rem;
+  white-space: nowrap;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+}
+
+.closeBtn {
+  background: transparent;
+  border: none;
+  color: var(--tt-text-muted);
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.closeBtn:hover {
+  background-color: color-mix(in srgb, var(--tt-text) 8%, transparent);
+  color: var(--tt-text);
+}

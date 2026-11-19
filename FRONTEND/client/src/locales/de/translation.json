@@ -54,11 +54,11 @@
     "registering": "Registrierung...",
     "alreadyHaveAccount": "Haben Sie bereits ein Konto?",
     "noAccount": "Sie haben noch kein Konto?",
-    "loginToTableTalk": "Bei TableTalk anmelden",
+    "loginToTableTalk": "Bei table2Talk anmelden",
     "emailPlaceholder": "ihre@email.adresse",
     "passwordPlaceholder": "Ihr Passwort",
     "loggingIn": "Anmeldung läuft...",
-    "registerToTableTalk": "Bei TableTalk registrieren",
+    "registerToTableTalk": "Bei table2Talk registrieren",
     "namePlaceholder": "Ihr Vorname",
     "surnamePlaceholder": "Ihr Nachname",
     "confirmPasswordPlaceholder": "Bestätigen Sie Ihr Passwort",
@@ -78,23 +78,23 @@
     "continueWithApple": "Mit Apple fortfahren"
   },
   "meals": {
-    "createMeal": "TableTalk® erstellen",
-    "editMeal": "TableTalk® bearbeiten",
-    "joinMeal": "TableTalk® beitreten",
-    "leaveMeal": "TableTalk® verlassen",
-    "mealDetails": "TableTalk® Details",
-    "myMeals": "Meine TableTalk®",
-    "noMeals": "Keine TableTalk® gefunden",
-    "pageTitle": "TableTalk®",
-    "searchPlaceholder": "TableTalk® suchen...",
-    "createButton": "TableTalk® erstellen",
+    "createMeal": "t2t erstellen",
+    "editMeal": "t2t bearbeiten",
+    "joinMeal": "t2t beitreten",
+    "leaveMeal": "t2t verlassen",
+    "mealDetails": "t2t Details",
+    "myMeals": "Meine t2t",
+    "noMeals": "Keine t2t gefunden",
+    "pageTitle": "t2t",
+    "searchPlaceholder": "t2t suchen...",
+    "createButton": "t2t erstellen",
     "loading": "Laden...",
     "searchError": "Bei der Suche ist ein Fehler aufgetreten.",
-    "noMealsFound": "Keine TableTalk® gefunden für \"{{searchTerm}}\".",
-    "noMealsWithFilters": "Keine TableTalk® mit den angewendeten Filtern gefunden.",
-    "mealCount_one": "{{count}} TableTalk®",
-    "mealCount_other": "{{count}} TableTalk®",
-    "mealCount_zero": "Keine TableTalk®",
+    "noMealsFound": "Keine t2t gefunden für \"{{searchTerm}}\".",
+    "noMealsWithFilters": "Keine t2t mit den angewendeten Filtern gefunden.",
+    "mealCount_one": "{{count}} t2t",
+    "mealCount_other": "{{count}} t2t",
+    "mealCount_zero": "Keine t2t",
     "participant_one": "{{count}} Teilnehmer",
     "participant_other": "{{count}} Teilnehmer",
     "participant_zero": "Keine Teilnehmer",
@@ -154,7 +154,7 @@
     },
     "filters": {
       "title": "Filter",
-      "mealType": "TableTalk® Typ",
+      "mealType": "t2t Typ",
       "mode": "Modus",
       "status": "Status",
       "sortBy": "Sortieren nach",
@@ -168,8 +168,8 @@
       "resetFilters": "Filter zurücksetzen"
     },
     "emptyState": {
-      "title": "Keine TableTalk® gefunden",
-      "description": "Es gibt keine TableTalk®, die den aktuellen Filtern entsprechen. Versuchen Sie, sie zu ändern oder erstellen Sie selbst einen!"
+      "title": "Keine t2t gefunden",
+      "description": "Es gibt keine t2t, die den aktuellen Filtern entsprechen. Versuchen Sie, sie zu ändern oder erstellen Sie selbst einen!"
     },
     "emptyFeed": {
       "title": "Hier ist alles ruhig...",
@@ -183,25 +183,25 @@
       "end": "Ende",
       "participants": "Teilnehmer"
     },
-    "createNewTitle": "Neuen TableTalk® erstellen",
+    "createNewTitle": "Neuen t2t erstellen",
     "createNewSubtitle": "Füllen Sie die Felder aus, um Ihr nächstes virtuelles Treffen zu organisieren.",
-    "createSuccess": "TableTalk® erfolgreich erstellt!",
-    "createError": "Fehler beim Erstellen des TableTalk®.",
+    "createSuccess": "t2t erfolgreich erstellt!",
+    "createError": "Fehler beim Erstellen des t2t.",
     "form": {
-      "typeLabel": "TableTalk® Typ",
+      "typeLabel": "t2t Typ",
       "virtualType": "Virtuell",
       "physicalType": "Physisch",
       "virtualDescription": "(Videoanruf)",
       "physicalDescription": "(Persönlich)",
       "virtualInfo": "Teilnehmer treffen sich über Videoanruf",
       "physicalInfo": "Teilnehmer treffen sich persönlich an einem bestimmten Ort",
-      "visibilityLabel": "TableTalk® Sichtbarkeit",
+      "visibilityLabel": "t2t Sichtbarkeit",
       "publicVisibility": "Öffentlich",
       "privateVisibility": "Privat",
       "publicDescription": "(Jeder kann um Teilnahme bitten)",
       "privateDescription": "(Nur auf Einladung)",
-      "publicInfo": "Der TableTalk® wird auf der Karte sichtbar sein und jeder kann um Teilnahme bitten",
-      "privateInfo": "Der TableTalk® wird nur für Benutzer sichtbar sein, die Sie persönlich einladen",
+      "publicInfo": "Der t2t wird auf der Karte sichtbar sein und jeder kann um Teilnahme bitten",
+      "privateInfo": "Der t2t wird nur für Benutzer sichtbar sein, die Sie persönlich einladen",
       "titleLabel": "Veranstaltungstitel",
       "titleRequired": "Titel ist erforderlich",
       "titleMinLength": "Titel muss mindestens 10 Zeichen haben",
@@ -233,23 +233,23 @@
       "addressLabel": "Adresse",
       "addressPlaceholder": "Geben Sie die Adresse des Restaurants oder Treffpunkts ein",
       "addressExample": "Z.B: \"Restaurant Il Gusto, Via Roma 123, Mailand\"",
-      "locationRequired": "Standort ist für einen physischen TableTalk® erforderlich",
+      "locationRequired": "Standort ist für einen physischen t2t erforderlich",
       "mapLabel": "Standort auf der Karte auswählen",
       "topicsLabel": "Gesprächsthemen",
       "topicsRequired": "Fügen Sie mindestens ein Gesprächsthema hinzu",
       "topicsHelp": "Schreiben Sie ein Thema und drücken Sie Enter oder Komma zum Hinzufügen. Maximum 5.",
       "coverImageLabel": "Titelbild",
-      "coverImageAlt": "TableTalk® Vorschau",
+      "coverImageAlt": "t2t Vorschau",
       "chooseFromGallery": "Aus Galerie auswählen",
       "saving": "Speichern...",
       "loading": "Laden..."
     },
     "detail": {
-      "loadError": "Fehler beim Laden der TableTalk® Details",
-      "joinSuccess": "Sie sind dem TableTalk® beigetreten!",
-      "joinError": "Fehler beim Beitreten zum TableTalk®",
-      "leaveSuccess": "Sie haben den TableTalk® verlassen",
-      "leaveError": "Fehler beim Verlassen des TableTalk®",
+      "loadError": "Fehler beim Laden der t2t Details",
+      "joinSuccess": "Sie sind dem t2t beigetreten!",
+      "joinError": "Fehler beim Beitreten zum t2t",
+      "leaveSuccess": "Sie haben den t2t verlassen",
+      "leaveError": "Fehler beim Verlassen des t2t",
       "chatIdNotFound": "Chat-ID nicht gefunden",
       "confirmLeaveChat": "Sind Sie sicher, dass Sie den Chat verlassen möchten?",
       "chatLeaveSuccess": "Sie haben den Chat verlassen",
@@ -257,7 +257,7 @@
       "chatNotAvailable": "Chat nicht verfügbar",
       "joinChat": "Chat beitreten",
       "leaveChat": "Chat verlassen",
-      "coverImageAlt": "TableTalk® Titelbild",
+      "coverImageAlt": "t2t Titelbild",
       "participants": "{{count}} von {{max}} Teilnehmern",
       "description": "Beschreibung",
       "host": "Veranstalter",
@@ -273,10 +273,10 @@
     }
   },
   "home": {
-    "heroTitle": "Teilen Sie einen TableTalk®.<br />Erstellen Sie eine Verbindung.",
-    "heroSubtitle": "TableTalk ist die globale Community für alle, die Geschichten und Aromen lieben. Organisieren Sie einen virtuellen TableTalk® zu Ihren Lieblingsthemen oder schließen Sie sich einem bereits geplanten Gespräch an.",
-    "createTableTalk": "TableTalk® erstellen",
-    "exploreTableTalk": "TableTalk® erkunden",
+    "heroTitle": "Teilen Sie einen table2Talk.<br />Erstellen Sie eine Verbindung.",
+    "heroSubtitle": "table2Talk ist die globale Community für alle, die Geschichten und Aromen lieben. Organisieren Sie einen virtuellen t2t zu Ihren Lieblingsthemen oder schließen Sie sich einem bereits geplanten Gespräch an.",
+    "createTableTalk": "t2t erstellen",
+    "exploreTableTalk": "t2t erkunden",
     "registerNow": "Jetzt registrieren",
     "login": "Anmelden",
     "howItWorks": {
@@ -291,11 +291,11 @@
       },
       "step3": {
         "title": "3. Treffen",
-        "description": "Treten Sie dem Videoanruf bei und lernen Sie Ihre Tischgenossen kennen. Es ist Zeit zu teilen, zu lernen und einen TableTalk® in bester Gesellschaft zu genießen."
+        "description": "Treten Sie dem Videoanruf bei und lernen Sie Ihre Tischgenossen kennen. Es ist Zeit zu teilen, zu lernen und einen t2t in bester Gesellschaft zu genießen."
       }
     },
     "whyTableTalk": {
-      "title": "Warum TableTalk?",
+      "title": "Warum table2Talk?",
       "feature1": {
         "title": "Ein Gegenmittel zur Einsamkeit",
         "description": "Ob ein schneller Kaffee oder ein aufwendiges Abendessen, es gibt immer jemanden, mit dem man es teilen kann. Einsamkeit steht nicht auf unserer Speisekarte."
@@ -311,15 +311,15 @@
     },
     "cta": {
       "title": "Bereit zu beginnen?",
-      "subtitle": "Schließen Sie sich der TableTalk-Community an und beginnen Sie, unvergessliche Momente zu teilen.",
+      "subtitle": "Schließen Sie sich der table2Talk-Community an und beginnen Sie, unvergessliche Momente zu teilen.",
       "getStarted": "Jetzt beginnen",
       "startNow": "Jetzt beginnen",
-      "organizeTableTalk": "Organisieren Sie Ihr TableTalk®"
+      "organizeTableTalk": "Organisieren Sie Ihr t2t"
     }
   },
   "navigation": {
     "home": "Startseite",
-    "meals": "TableTalk®",
+    "meals": "t2t",
     "map": "Karte",
     "profile": "Profil",
     "chat": "Chat",
@@ -339,7 +339,7 @@
       "avatarAlt": "Benutzer-Avatar",
       "noNickname": "Spitzname",
       "noBio": "Keine Biografie festgelegt.",
-      "myMealsButton": "Meine TableTalk®"
+      "myMealsButton": "Meine t2t"
     },
     "personalInfo": {
       "title": "Persönliche Informationen",
@@ -387,8 +387,8 @@
       "hosting": "Ich organisiere",
       "joining": "Ich nehme teil"
     },
-    "noHostedMeals": "Sie haben noch keine TableTalk organisiert.",
-    "noJoinedMeals": "Sie sind noch keinem TableTalk beigetreten.",
+    "noHostedMeals": "Sie haben noch keine t2t organisiert.",
+    "noJoinedMeals": "Sie sind noch keinem t2t beigetreten.",
     "settings": {
       "title": "Erweiterte Einstellungen",
       "notifications": "Benachrichtigungen",
@@ -414,8 +414,8 @@
     }
   },
   "map": {
-    "title": "Benutzer und Physische TableTalk® in Ihrer Nähe",
-    "subtitle": "Entdecken Sie, wer für einen TableTalk® in der Nähe verfügbar ist, und finden Sie geplante physische TableTalk®!",
+    "title": "Benutzer und Physische t2t in Ihrer Nähe",
+    "subtitle": "Entdecken Sie, wer für einen t2t in der Nähe verfügbar ist, und finden Sie geplante physische t2t!",
     "locationError": "Ihr Standort konnte nicht ermittelt werden",
     "permissionDenied": "Standortberechtigung verweigert. Um die Karte zu verwenden, aktivieren Sie die Standortberechtigung in den Geräteeinstellungen.",
     "errorTitle": "Standortfehler",
@@ -452,7 +452,7 @@
   },
   "report": {
     "reportUser": "Benutzer melden",
-    "reportSuccess": "Meldung erfolgreich gesendet. Danke, dass Sie helfen, TableTalk® zu einer sicheren Umgebung zu machen.",
+    "reportSuccess": "Meldung erfolgreich gesendet. Danke, dass Sie helfen, table2Talk zu einer sicheren Umgebung zu machen.",
     "userToReport": "Zu meldender Benutzer",
     "reportReason": "Grund der Meldung *",
     "selectReason": "Wählen Sie einen Grund",
@@ -484,7 +484,7 @@
     "cancel": "Abbrechen",
     "confirm": "Bestätigen",
     "subjects": {
-      "meal": "das TableTalk®",
+      "meal": "das t2t",
       "video": "den Videoanruf",
       "chat": "den Chat"
     }
@@ -505,7 +505,7 @@
     "errorTitle": "Chat-Fehler",
     "notFoundTitle": "Chat nicht gefunden",
     "notFoundMessage": "Der angeforderte Chat konnte nicht gefunden werden.",
-    "viewMeal": "TableTalk® anzeigen",
+    "viewMeal": "t2t anzeigen",
     "leaveChat": "Chat verlassen",
     "leaveReportTitle": "Chat verlassen",
     "messagePlaceholder": "Nachricht eingeben...",
@@ -528,14 +528,14 @@
     "backToHome": "Zurück zur Startseite"
   },
   "privacy": {
-    "title": "TableTalk Datenschutzerklärung",
+    "title": "table2Talk Datenschutzerklärung",
     "lastUpdated": "Zuletzt aktualisiert: 26. Juli 2025",
-    "introduction": "Willkommen bei TableTalk, einer Anwendung von TableTalk App (\"wir\", \"uns\", \"unser\"). Ihre Privatsphäre ist unsere Priorität. Diese Datenschutzerklärung erklärt, welche personenbezogenen Daten wir sammeln, wie wir sie verwenden und schützen und welche Rechte Sie in Bezug auf Ihre Daten haben, wenn Sie unsere Anwendung (\"Service\") nutzen.",
+    "introduction": "Willkommen bei table2Talk, einer Anwendung von table2Talk App (\"wir\", \"uns\", \"unser\"). Ihre Privatsphäre ist unsere Priorität. Diese Datenschutzerklärung erklärt, welche personenbezogenen Daten wir sammeln, wie wir sie verwenden und schützen und welche Rechte Sie in Bezug auf Ihre Daten haben, wenn Sie unsere Anwendung (\"Service\") nutzen.",
     "legalBasis": {
       "title": "1. Rechtsgrundlage der Verarbeitung",
       "description": "Wir verarbeiten Ihre personenbezogenen Daten in Übereinstimmung mit der EU-Datenschutz-Grundverordnung (DSGVO) und anderen anwendbaren Datenschutzgesetzen. Die Rechtsgrundlage für unsere Verarbeitung umfasst:",
       "contractual": "Vertragliche Notwendigkeit:",
-      "contractualDesc": "Um die Kernfunktionen von TableTalk bereitzustellen, wie in unseren Nutzungsbedingungen festgelegt.",
+      "contractualDesc": "Um die Kernfunktionen von table2Talk bereitzustellen, wie in unseren Nutzungsbedingungen festgelegt.",
       "consent": "Einwilligung:",
       "consentDesc": "Für optionale Funktionen, wie den Zugriff auf Ihren Standort oder Push-Benachrichtigungen. Sie können Ihre Einwilligung jederzeit widerrufen.",
       "legitimate": "Berechtigte Interessen:",
@@ -556,13 +556,13 @@
       "usage": {
         "title": "Während der Nutzung des Services gesammelte Daten:",
         "interaction": "Interaktionsdaten:",
-        "interactionDesc": "Informationen über virtuelle TableTalk®, die Sie erstellen, an denen Sie teilnehmen, Benutzer, die Sie blockieren oder melden.",
+        "interactionDesc": "Informationen über virtuelle t2t, die Sie erstellen, an denen Sie teilnehmen, Benutzer, die Sie blockieren oder melden.",
         "technical": "Technische Daten:",
         "technicalDesc": "IP-Adresse, Gerätetyp, Betriebssystem, eindeutige Geräte-IDs und Absturzdaten."
       },
       "location": {
         "title": "Standortdaten (mit Ihrer Einwilligung):",
-        "description": "Wenn Sie Ihre Einwilligung erteilen, können wir Ihren Standort auf Stadtebene verwenden, um Ihnen nahegelegene TableTalk® vorzuschlagen. Sie können diese Funktion jederzeit in den Einstellungen Ihres Geräts deaktivieren."
+        "description": "Wenn Sie Ihre Einwilligung erteilen, können wir Ihren Standort auf Stadtebene verwenden, um Ihnen nahegelegene t2t vorzuschlagen. Sie können diese Funktion jederzeit in den Einstellungen Ihres Geräts deaktivieren."
       }
     },
     "dataUsage": {
@@ -620,21 +620,21 @@
     }
   },
   "history": {
-    "pageTitle": "Meine TableTalk®",
-    "totalMeals": "Sie haben {{count}} TableTalk® insgesamt in Ihrem Verlauf",
+    "pageTitle": "Meine t2t",
+    "totalMeals": "Sie haben {{count}} t2t insgesamt in Ihrem Verlauf",
     "upcoming": "Anstehend",
-    "past": "Vergangene TableTalk® Historie",
-    "organized": "TableTalk® die Sie organisieren",
-    "participating": "TableTalk® an denen Sie teilnehmen",
-    "organizedPast": "TableTalk® die Sie organisiert haben",
-    "participatedPast": "TableTalk® an denen Sie teilgenommen haben",
-    "noUpcomingCreated": "Sie haben keine anstehenden TableTalk® erstellt.",
+    "past": "Vergangene t2t Historie",
+    "organized": "t2t die Sie organisieren",
+    "participating": "t2t an denen Sie teilnehmen",
+    "organizedPast": "t2t die Sie organisiert haben",
+    "participatedPast": "t2t an denen Sie teilgenommen haben",
+    "noUpcomingCreated": "Sie haben keine anstehenden t2t erstellt.",
     "createOneNow": "Erstellen Sie jetzt einen!",
-    "noUpcomingParticipated": "Sie haben sich noch für keine TableTalk® angemeldet.",
+    "noUpcomingParticipated": "Sie haben sich noch für keine t2t angemeldet.",
     "discoverSome": "Entdecken Sie welche!",
-    "noPastCreated": "Keine Ihrer organisierten TableTalk® sind noch beendet.",
-    "noPastParticipated": "Sie haben noch an keinen TableTalk® teilgenommen.",
-    "loadError": "Fehler beim Laden Ihrer TableTalk®."
+    "noPastCreated": "Keine Ihrer organisierten t2t sind noch beendet.",
+    "noPastParticipated": "Sie haben noch an keinen t2t teilgenommen.",
+    "loadError": "Fehler beim Laden Ihrer t2t."
   },
   "invitations": {
     "pageTitle": "Ihre Einladungen",
@@ -647,16 +647,16 @@
     "accept": "Annehmen"
   },
   "terms": {
-    "title": "TableTalk Allgemeine Geschäftsbedingungen",
+    "title": "table2Talk Allgemeine Geschäftsbedingungen",
     "lastUpdated": "Zuletzt aktualisiert: 26. Juli 2025",
-    "welcome": "Willkommen bei TableTalk. Bitte lesen Sie diese Allgemeinen Geschäftsbedingungen sorgfältig durch, bevor Sie unseren Service nutzen.",
+    "welcome": "Willkommen bei table2Talk. Bitte lesen Sie diese Allgemeinen Geschäftsbedingungen sorgfältig durch, bevor Sie unseren Service nutzen.",
     "acceptance": {
       "title": "1. Annahme der Bedingungen",
-      "description": "Durch den Zugriff und die Nutzung der TableTalk-Plattform (der \"Service\") stimmen Sie zu, an diese Bedingungen gebunden zu sein. Wenn Sie mit einem Teil der Bedingungen nicht einverstanden sind, können Sie nicht auf den Service zugreifen."
+      "description": "Durch den Zugriff und die Nutzung der table2Talk-Plattform (der \"Service\") stimmen Sie zu, an diese Bedingungen gebunden zu sein. Wenn Sie mit einem Teil der Bedingungen nicht einverstanden sind, können Sie nicht auf den Service zugreifen."
     },
     "service": {
       "title": "2. Servicebeschreibung",
-      "description": "TableTalk ist eine Plattform, die virtuelle Treffen zwischen Menschen erleichtert, um TableTalk® und Gespräche über Videoanrufe zu teilen. Benutzer können Ereignisse (\"TableTalk®\") erstellen oder an solchen teilnehmen, die von anderen erstellt wurden."
+      "description": "table2Talk ist eine Plattform, die virtuelle Treffen zwischen Menschen erleichtert, um t2t und Gespräche über Videoanrufe zu teilen. Benutzer können Ereignisse (\"t2t\") erstellen oder an solchen teilnehmen, die von anderen erstellt wurden."
     },
     "conduct": {
       "title": "3. Benutzerverhalten",
@@ -664,7 +664,7 @@
     },
     "liability": {
       "title": "4. Haftungsbeschränkung",
-      "description": "TableTalk stellt nur die technologische Plattform bereit, um Benutzer zu verbinden, und ist nicht verantwortlich für das Verhalten der Benutzer oder den Inhalt der Gespräche während der TableTalk®. Die Nutzung des Services erfolgt auf eigene Gefahr."
+      "description": "table2Talk stellt nur die technologische Plattform bereit, um Benutzer zu verbinden, und ist nicht verantwortlich für das Verhalten der Benutzer oder den Inhalt der Gespräche während der t2t. Die Nutzung des Services erfolgt auf eigene Gefahr."
     },
     "modifications": {
       "title": "5. Änderungen am Service und den Bedingungen",
@@ -698,7 +698,7 @@
     "whatWillHappen": "Was passieren wird:",
     "consequences": {
       "profile": "Ihr Profil und alle Ihre persönlichen Daten werden dauerhaft gelöscht",
-      "meals": "Alle TableTalk®, die Sie organisiert haben, werden abgesagt",
+      "meals": "Alle t2t, die Sie organisiert haben, werden abgesagt",
       "chat": "Alle Chats und Nachrichten werden gelöscht",
       "invitations": "Alle Ihre Einladungen und Teilnahmeanfragen werden entfernt",
       "access": "Sie können nicht mehr auf Ihr Konto zugreifen",
@@ -718,7 +718,7 @@
     "deleting": "Wird gelöscht...",
     "deleteError": "Fehler beim Löschen des Kontos",
     "accountDeleted": "Konto gelöscht",
-    "deletedSuccess": "Ihr Konto wurde erfolgreich gelöscht. Vielen Dank für die Nutzung von TableTalk®.",
+    "deletedSuccess": "Ihr Konto wurde erfolgreich gelöscht. Vielen Dank für die Nutzung von t2t.",
     "redirecting": "Sie werden zur Anmeldeseite weitergeleitet..."
   },
   "changePasswordModal": {
@@ -757,16 +757,16 @@
       "noLanguagesConfigured": "Keine Sprachen konfiguriert",
       "addLanguage": "+ Sprache hinzufügen",
       "removeLanguage": "Entfernen",
-      "helpText": "Wählen Sie die Sprachen aus, die Sie kennen, um Ihre TableTalk®-Erfahrungen zu verbessern"
+      "helpText": "Wählen Sie die Sprachen aus, die Sie kennen, um Ihre table2Talk-Erfahrungen zu verbessern"
     },
     "preferredCuisine": "Bevorzugte Küche",
     "noPreference": "Keine Präferenzen.",
     "whoIAm": "Wer Ich Bin",
     "noBio": "Keine Biografie eingegeben.",
-    "organizedMeals": "Organisierte TableTalk",
-    "noOrganizedMeals": "Dieser Benutzer hat noch keine TableTalk organisiert.",
+    "organizedMeals": "Organisierte t2t",
+    "noOrganizedMeals": "Dieser Benutzer hat noch keine t2t organisiert.",
     "recentParticipations": "Aktuelle Teilnahmen",
-    "noParticipations": "Dieser Benutzer hat an keinem TableTalk teilgenommen."
+    "noParticipations": "Dieser Benutzer hat an keinem t2t teilgenommen."
   },
   "videoCall": {
     "connecting": "Verbinde...",
@@ -774,15 +774,46 @@
     "connectionErrorTitle": "Verbindungsfehler",
     "permissionDenied": "Berechtigungen verweigert. Um am Videoanruf teilzunehmen, müssen Sie Zugriff auf Kamera und Mikrofon gewähren. Laden Sie die Seite neu und versuchen Sie es erneut.",
     "networkIssue": "Netzwerkproblem. Überprüfen Sie Ihre Internetverbindung und versuchen Sie es erneut.",
-    "authError": "Authentifizierungsfehler. Ihre Sitzung ist möglicherweise abgelaufen. Gehen Sie zurück zur TableTalk®-Seite und versuchen Sie es erneut.",
+    "authError": "Authentifizierungsfehler. Ihre Sitzung ist möglicherweise abgelaufen. Gehen Sie zurück zur t2t-Seite und versuchen Sie es erneut.",
     "roomNotFound": "Raum nicht gefunden. Der Videoanruf ist möglicherweise beendet oder existiert nicht mehr.",
     "mediaAccessError": "Kein Zugriff auf Kamera oder Mikrofon möglich. Überprüfen Sie, ob die Geräte angeschlossen sind und Berechtigungen erteilt wurden.",
     "genericError": "Verbindung zum Videoanruf nicht möglich. Überprüfen Sie Ihre Internetverbindung und Browser-Berechtigungen und versuchen Sie es erneut.",
     "retry": "Wiederholen",
     "retrying": "Wiederhole...",
-    "backToTableTalk": "Zurück zu TableTalk®",
+    "backToTableTalk": "Zurück zu t2t",
     "leaveCall": "Anruf Verlassen",
     "endCallForEveryone": "Für Alle Beenden",
     "confirmEndCall": "Sind Sie sicher, dass Sie den Anruf für alle Teilnehmer beenden möchten?"
+  },
+  "nav": {
+    "home": "Home",
+    "explore": "Explore",
+    "map": "Map",
+    "myT2t": "My t2t",
+    "myT2tShort": "Mine",
+    "create": "Create",
+    "chat": "Chat",
+    "notifications": "Notifications",
+    "profile": "Profile",
+    "login": "Log in",
+    "register": "Sign up",
+    "mainNavLabel": "Main navigation",
+    "mobileNavLabel": "Mobile navigation"
+  },
+  "ui": {
+    "card": {
+      "video": "Video",
+      "inPerson": "In person",
+      "join": "Join",
+      "full": "Full",
+      "joined": "Joined ✓",
+      "manage": "Manage",
+      "seatsLabel": "{{filled}} of {{total}} seats taken",
+      "verifiedHost": "Verified host",
+      "minutes": "min"
+    },
+    "modal": {
+      "close": "Close"
+    }
   }
-} 
+}

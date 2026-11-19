@@ -1,314 +1,154 @@
-/* File: src/components/layout/Navbar/Navbar.module.css */
-/* FE-03: opt-in Convivialita palette tokens on the navbar chrome. */
-
-.navbar {
-  composes: palette from '../../../styles/common/palette.module.css';
-  background: rgba(255, 255, 255, 0.85);
-  height: 80px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  font-size: 1.1rem;
-  position: fixed;
+.topbar {
+  position: sticky;
   top: 0;
-  left: 0;
-  width: 100%;
   z-index: 1000;
-  transition: all 0.3s ease;
+  background-color: color-mix(in srgb, var(--tt-surface) 94%, transparent);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
   border-bottom: 1px solid var(--tt-border);
-  box-shadow: 0 2px 4px rgba(36, 40, 36, 0.06);
-  -webkit-backdrop-filter: saturate(180%) blur(10px);
-  backdrop-filter: saturate(180%) blur(10px);
   padding-top: env(safe-area-inset-top);
-  height: calc(80px + env(safe-area-inset-top));
-}
-.navbar.scrolled {
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.12);
-  border-bottom: 2px solid var(--tt-primary);
-}
-
-.navContainer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  height: 100%;
   width: 100%;
-  max-width: 1400px;
-  padding: 0 2rem;
 }
 
-.navLogo {
+.wrap {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 0 20px;
+  height: var(--tt-header-height, 64px);
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  font-weight: 700;
-  font-size: 1.3rem;
-  color: var(--tt-text);
-  text-decoration: none;
+  gap: 22px;
 }
 
-/* Navigazione centrale per DESKTOP */
-.navMenuDesktop {
+.nav {
   display: flex;
   align-items: center;
-  gap: 2rem;
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
+  gap: 18px;
 }
 
 .navLink {
   color: var(--tt-text-muted);
   text-decoration: none;
+  font-family: var(--tt-font-body);
+  font-size: 0.92rem;
   font-weight: 500;
+  padding: 0.35rem 0;
+  white-space: nowrap;
   position: relative;
-  padding: 0.5rem 0;
   transition: color 0.2s ease;
 }
-.navLink:hover {
-  color: var(--tt-primary);
-}
-.navLink::after {
-  content: ''; position: absolute; bottom: 0; left: 0;
-  width: 0; height: 2px; background-color: var(--tt-primary);
-  transition: width 0.3s ease;
-}
-.navLink:hover::after, .navLinkActive::after {
-  width: 100%;
-}
-.navLinkActive {
+
+.navLink:hover,
+.active {
   color: var(--tt-primary);
 }
 
-/* Sezione destra con azioni utente e login/register */
-.rightSection {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
+.active {
+  font-weight: 600;
 }
 
-/* Container per il menu lingua */
-.languageMenuContainer {
+.navLink:focus-visible {
+  outline: 2px solid var(--tt-focus);
+  outline-offset: 4px;
+  border-radius: var(--tt-radius-md);
+}
+
+.topActions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.createBtn {
+  flex-shrink: 0;
+}
+
+.langWrap {
   display: flex;
   align-items: center;
 }
 
-/* Stili per le azioni utente (loggato) su DESKTOP */
-.desktopActions {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-.profileAvatar {
-  width: 42px; height: 42px; border-radius: 50%;
-  object-fit: cover; cursor: pointer; border: 2px solid var(--tt-border);
-  transition: border-color 0.2s ease;
-}
-.profileAvatar:hover {
-  border-color: var(--tt-accent);
-}
-
-/* ===================================
-   Icona Chat stile Messenger
-   =================================== */
-.chatIconButton {
-  background: none;
+.iconBtn {
+  position: relative;
   border: none;
-  cursor: pointer;
-  display: flex;
+  background: transparent;
+  color: var(--tt-text-muted);
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 38px;
-  height: 38px;
-  border-radius: 50%;
-  color: var(--tt-text-muted);
-  font-size: 1.4rem;
-  transition: background 0.2s ease, color 0.2s ease, transform 0.15s ease;
-  position: relative;
-}
-.chatIconButton:hover {
-  background: color-mix(in srgb, var(--tt-accent) 12%, transparent);
-  color: var(--tt-accent);
-  transform: scale(1.08);
-}
-.chatIconButton:active {
-  transform: scale(0.95);
-}
-
-/* Menu Kebab */
-.kebabMenuContainer {
-  position: relative;
-}
-
-.kebabButton {
-  background: var(--tt-background);
-  border: 1px solid var(--tt-border);
-  font-size: 1.2rem;
-  color: var(--tt-text-muted);
   cursor: pointer;
-  padding: 0.5rem;
-  border-radius: 50%;
-  transition: all 0.2s ease;
-}
-
-.kebabButton:hover {
-  background: color-mix(in srgb, var(--tt-accent) 8%, var(--tt-background));
-}
-
-.kebabDropdown {
-  position: absolute;
-  top: 100%;
-  right: 0;
-  background: var(--tt-surface);
-  border: 1px solid var(--tt-border);
-  border-radius: 8px;
-  box-shadow: var(--tt-shadow);
-  min-width: 200px;
-  z-index: 1001;
-  margin-top: 0.5rem;
-}
-
-.kebabItem {
-  padding: 0.75rem 1rem;
-  border-bottom: 1px solid var(--tt-border);
-}
-
-.kebabItem:last-child {
-  border-bottom: none;
-}
-
-.logoutButtonKebab {
-  background: none;
-  border: none;
-  color: #e53e3e;
-  cursor: pointer;
-  font-size: 0.9rem;
-  width: 100%;
-  text-align: left;
   padding: 0;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
-.logoutButtonKebab:hover {
-  color: #c53030;
+.iconBtn:hover {
+  background-color: color-mix(in srgb, var(--tt-accent) 10%, transparent);
+  color: var(--tt-accent);
 }
 
-/* Menu Kebab Mobile */
-.kebabButtonMobile {
-  background: none;
-  border: none;
-  color: var(--tt-text-muted);
-  cursor: pointer;
-  font-size: 1rem;
-  padding: 0.75rem 1rem;
-  width: 100%;
-  text-align: left;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
+.iconBtn:focus-visible {
+  outline: 2px solid var(--tt-focus);
+  outline-offset: 2px;
 }
 
-.kebabButtonMobile:hover {
-  background: color-mix(in srgb, var(--tt-accent) 8%, transparent);
-}
-
-.kebabDropdownMobile {
-  background: var(--tt-background);
-  border-radius: 8px;
-  margin: 0.5rem 0;
-  overflow: hidden;
-}
-
-.kebabDropdownMobile .kebabItem {
-  padding: 0.5rem 1rem;
-  border-bottom: 1px solid var(--tt-border);
-}
-
-.kebabDropdownMobile .kebabItem:last-child {
-  border-bottom: none;
-}
-
-/* Stili per le azioni utente (non loggato) su DESKTOP */
-.guestActions {
-  display: flex;
-  gap: 0.75rem;
-}
-.loginButton {
-  background: none; border: 1px solid var(--tt-accent);
-  padding: 0.5rem 1rem; border-radius: 8px; cursor: pointer;
-  text-decoration: none; color: var(--tt-accent);
-  transition: all 0.3s ease;
-}
-.loginButton:hover {
-  background-color: var(--tt-accent);
-  color: var(--tt-on-accent);
-}
-.registerButton {
-  background-color: var(--tt-primary); color: var(--tt-on-primary);
-  padding: 0.5rem 1rem; border-radius: 8px; text-decoration: none;
-  transition: all 0.3s ease;
-}
-.registerButton:hover {
-  background-color: var(--tt-primary-hover);
-  transform: translateY(-1px);
-}
-
-/* Stili per le azioni utente su MOBILE */
-.mobileActions {
-  display: none;
-  align-items: center;
-  gap: 0.75rem;
-}
-.menuIcon {
-  font-size: 1.8rem;
-  cursor: pointer;
-}
-
-/* Menu a tendina che si apre su MOBILE */
-.navMenuMobile {
-  display: flex; flex-direction: column; width: 100%;
+.dot {
   position: absolute;
-  top: calc(80px + env(safe-area-inset-top));
-  left: 0;
-  background: var(--tt-surface); list-style: none; padding: 1rem 0;
-  box-shadow: 0 5px 15px rgba(36, 40, 36, 0.08);
-  border-top: 1px solid var(--tt-border);
-  max-height: calc(100vh - calc(80px + env(safe-area-inset-top)));
-  overflow-y: auto;
-  padding-bottom: calc(1rem + env(safe-area-inset-bottom));
-}
-.navItem {
-  padding: 1rem 2rem; width: 100%; text-align: center;
-}
-.logoutButtonMobile {
-  background: var(--tt-primary); color: var(--tt-on-primary); border: none;
-  width: 80%; padding: 0.8rem; border-radius: 8px; font-size: 1rem;
-  margin-top: 1rem;
+  top: 1px;
+  right: 1px;
+  background-color: var(--tt-primary);
+  color: var(--tt-on-primary);
+  font-size: 0.62rem;
+  font-weight: 700;
+  line-height: 1.25;
+  border-radius: 999px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1.5px solid var(--tt-surface);
 }
 
-/* ==================================
-   MEDIA QUERY per la responsività
-   ================================== */
-@media screen and (max-width: 960px) {
-  .navMenuDesktop, .desktopActions, .guestActions {
+.avatarLink {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  text-decoration: none;
+  transition: transform 0.15s ease;
+}
+
+.avatarLink:hover {
+  transform: scale(1.04);
+}
+
+.avatarActive {
+  box-shadow: 0 0 0 2px var(--tt-primary);
+}
+
+.avatarLink:focus-visible {
+  outline: 2px solid var(--tt-focus);
+  outline-offset: 2px;
+}
+
+.loginBtn {
+  flex-shrink: 0;
+}
+
+@media (max-width: 720px) {
+  .wrap {
+    padding: 0 16px;
+    gap: 12px;
+  }
+
+  .nav,
+  .createBtn,
+  .langWrap {
     display: none;
   }
-  .mobileActions {
-    display: flex;
-  }
-  .languageMenuContainer {
-    display: flex;
-  }
-  .rightSection {
-    gap: 0.5rem;
-  }
-}
-
-/* FE-03: keyboard focus aligned with home focus tokens. */
-.navLink:focus-visible,
-.chatIconButton:focus-visible,
-.kebabButton:focus-visible,
-.loginButton:focus-visible,
-.registerButton:focus-visible {
-  outline: 3px solid var(--tt-focus);
-  outline-offset: 2px;
 }

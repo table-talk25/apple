@@ -20,7 +20,7 @@ const messaging = firebase.messaging();
 messaging.onBackgroundMessage((payload) => {
   console.log('[firebase-messaging-sw.js] Notifica background ricevuta:', payload);
 
-  const notificationTitle = payload.notification?.title || 'TableTalk';
+  const notificationTitle = payload.notification?.title || 'table2Talk';
   const notificationOptions = {
     body: payload.notification?.body || 'Hai una nuova notifica',
     icon: '/android-chrome-192x192.png',

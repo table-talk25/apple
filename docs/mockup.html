@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>table2Talk · Mockup unificato</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<style>
+:root{--bg:#FAF7F2;--sf:#FFFFFF;--pr:#B54735;--prh:#933829;--ac:#245C4A;--tx:#242824;--mu:#5C625C;--bd:#DDD5CA;--sh:0 8px 25px rgba(36,40,36,.08);--rm:.5rem;--rl:1rem;--fh:'Poppins',sans-serif;--fb:'Inter',sans-serif}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:var(--fb);background:var(--bg);color:var(--tx);line-height:1.6;-webkit-font-smoothing:antialiased}
+h1,h2,h3{font-family:var(--fh);line-height:1.2}
+button{font-family:inherit;cursor:pointer}
+img{display:block}
+:focus-visible{outline:2px solid var(--ac);outline-offset:2px}
+.wrap{max-width:1120px;margin:0 auto;padding:0 20px}
+.btn{border:none;border-radius:var(--rm);font-weight:600;font-size:.95rem;padding:.7rem 1.3rem;transition:background .2s}
+.btn-primary{background:var(--pr);color:#fff}.btn-primary:hover{background:var(--prh)}
+.btn-ghost{background:transparent;color:var(--ac);border:1.5px solid var(--ac)}.btn-ghost:hover{background:rgba(36,92,74,.07)}
+.btn-green{background:var(--ac);color:#fff}
+.btn-danger{background:transparent;color:var(--prh);border:1.5px solid var(--prh)}
+.btn-white{background:#fff;color:var(--pr)}.btn-white:hover{background:#F6EDE8}
+.btn-sm{padding:.45rem .9rem;font-size:.85rem}
+.btn[disabled]{opacity:.5;cursor:not-allowed}
+.topbar{position:sticky;top:0;z-index:50;background:rgba(255,255,255,.94);backdrop-filter:blur(8px);border-bottom:1px solid var(--bd)}
+.topbar .wrap{display:flex;align-items:center;gap:22px;height:64px}
+.logo{font-family:var(--fh);font-weight:700;font-size:1.3rem;display:flex;align-items:center;gap:.5rem;cursor:pointer}
+.logo .two{color:var(--pr)}
+.logo-dot{width:13px;height:13px;border-radius:50%;background:var(--pr);box-shadow:0 0 0 4px rgba(181,71,53,.15)}
+.nav{display:flex;gap:18px}
+.nav a{color:var(--mu);text-decoration:none;font-size:.92rem;font-weight:500;cursor:pointer}
+.nav a.active,.nav a:hover{color:var(--pr)}
+.top-actions{margin-left:auto;display:flex;align-items:center;gap:10px}
+.lang{border:1px solid var(--bd);border-radius:999px;padding:.25rem .7rem;font-size:.8rem;font-weight:600;color:var(--mu)}
+.icon-btn{position:relative;border:none;background:none;font-size:1.1rem;color:var(--mu);padding:4px}
+.icon-btn .dot{position:absolute;top:-2px;right:-4px;background:var(--pr);color:#fff;font-size:.6rem;border-radius:999px;padding:0 4px;font-weight:700}
+.avatar{width:36px;height:36px;border-radius:50%;background:var(--ac);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:.9rem;flex:none;cursor:pointer}
+.view{display:none;padding:26px 0 40px}.view.active{display:block}
+#view-home{padding:0 0 40px}
+.page-head h1{font-size:1.6rem}.page-head p{color:var(--mu);font-size:.95rem;margin-top:2px}
+.hero{padding:60px 0 36px;text-align:center}
+.live-pill{display:inline-flex;align-items:center;gap:.5rem;background:var(--sf);border:1px solid var(--bd);border-radius:999px;padding:.35rem .9rem;font-size:.82rem;color:var(--mu);margin-bottom:22px}
+.live-dot{width:8px;height:8px;border-radius:50%;background:var(--ac);animation:pulse 1.8s infinite}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(36,92,74,.35)}50%{box-shadow:0 0 0 6px rgba(36,92,74,0)}}
+.hero h1{font-size:clamp(2.1rem,5.2vw,3.2rem);font-weight:700;margin-bottom:14px}
+.hero h1 em{font-style:normal;color:var(--pr)}
+.hero p{max-width:600px;margin:0 auto 26px;color:var(--mu);font-size:1.05rem}
+.hero-cta{display:flex;gap:14px;justify-content:center;flex-wrap:wrap}
+.hero-link{display:inline-block;margin-top:18px;font-size:.88rem;color:var(--ac);text-decoration:none;font-weight:500}
+.steps{padding:22px 0 8px}.steps-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.step{background:var(--sf);border:1px solid var(--bd);border-radius:var(--rl);padding:22px}
+.step-num{font-family:var(--fh);font-weight:700;font-size:1.6rem;color:var(--pr)}
+.step h3{font-size:1.05rem;margin:.35rem 0 .3rem}.step p{font-size:.9rem;color:var(--mu)}
+.why{padding:40px 0 6px}.why h2,.discover h2{font-size:1.5rem}
+.why-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:16px}
+.value{background:var(--sf);border:1px solid var(--bd);border-radius:var(--rl);padding:22px}
+.value-ico{width:44px;height:44px;border-radius:12px;background:var(--bg);display:flex;align-items:center;justify-content:center;font-size:22px;margin-bottom:12px}
+.value h3{font-size:1.02rem;margin-bottom:.3rem}.value p{font-size:.9rem;color:var(--mu)}
+.discover{padding:44px 0 20px}
+.sec-head{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:16px}
+.sec-head a{font-size:.88rem;color:var(--ac);text-decoration:none;font-weight:600;cursor:pointer}
+.searchbar{display:flex;align-items:center;gap:10px;background:var(--sf);border:1px solid var(--bd);border-radius:999px;padding:.6rem 1.1rem;margin:16px 0}
+.searchbar input{border:none;outline:none;flex:1;font:inherit;background:transparent}
+.chips{display:flex;gap:10px;overflow-x:auto;padding-bottom:14px;scrollbar-width:none}.chips::-webkit-scrollbar{display:none}
+.chip{white-space:nowrap;border:1.5px solid var(--bd);background:var(--sf);color:var(--mu);border-radius:999px;padding:.4rem 1rem;font-size:.85rem;font-weight:500}
+.chip.active{background:var(--ac);border-color:var(--ac);color:#fff}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:20px}
+.empty{color:var(--mu);text-align:center;padding:30px 0;font-size:.95rem}
+.card{background:var(--sf);border:1px solid var(--bd);border-radius:var(--rl);overflow:hidden;box-shadow:var(--sh);cursor:pointer;transition:transform .2s;display:flex;flex-direction:column}
+.card:hover{transform:translateY(-4px)}
+.cover{position:relative;height:185px;overflow:hidden;background:linear-gradient(135deg,#F3D9C4,#E8B48F)}
+.cover.mini{width:96px;height:96px;border-radius:var(--rm);flex:none}
+.cover-emoji{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:56px}
+.cover.mini .cover-emoji{font-size:34px}
+.cover img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:1}
+.badge{font-size:.68rem;font-weight:700;letter-spacing:.03em;text-transform:uppercase;padding:.25rem .6rem;border-radius:999px}
+.badge-cat{background:rgba(181,71,53,.12);color:var(--pr)}
+.badge-video{background:rgba(36,92,74,.12);color:var(--ac)}
+.badge-fisico{background:rgba(36,40,36,.08);color:var(--tx)}
+.on-img{position:absolute;top:10px;z-index:2;background:rgba(255,255,255,.94);box-shadow:0 2px 8px rgba(36,40,36,.15)}
+.on-img.left{left:10px}.on-img.right{right:10px}
+.card-body{padding:16px;display:flex;flex-direction:column;gap:9px;flex:1}
+.card-title{font-family:var(--fh);font-weight:600;font-size:1.05rem}
+.host{display:flex;align-items:center;gap:.55rem;font-size:.85rem;color:var(--mu)}
+.host .avatar{width:26px;height:26px;font-size:.7rem;background:var(--pr);cursor:default}
+.verified{width:15px;height:15px;flex:none}
+.meta{display:flex;flex-wrap:wrap;gap:.35rem .9rem;font-size:.82rem;color:var(--mu)}
+.tags{display:flex;flex-wrap:wrap;gap:6px}
+.tag{background:var(--bg);border:1px solid var(--bd);border-radius:999px;padding:.15rem .6rem;font-size:.75rem;color:var(--mu)}
+.card-foot{margin-top:auto;display:flex;align-items:center;justify-content:space-between;padding-top:10px;border-top:1px solid var(--bd)}
+.seats{display:flex;align-items:center;gap:5px}
+.seat{width:10px;height:10px;border-radius:50%;border:1.5px solid var(--pr)}
+.seat.full{background:var(--pr)}
+.seats small{font-size:.75rem;color:var(--mu);margin-left:4px}
+.final-cta{margin:40px 0 30px;background:var(--pr);border-radius:var(--rl);padding:44px 28px;text-align:center;color:#fff}
+.final-cta h2{font-size:clamp(1.4rem,3.5vw,1.9rem);margin-bottom:10px}.final-cta p{opacity:.92;margin-bottom:22px}
+.trust{padding:6px 0 10px;display:flex;gap:26px;justify-content:center;flex-wrap:wrap}
+.trust div{display:flex;align-items:center;gap:.5rem;font-size:.88rem;color:var(--mu)}
+.tabs{display:flex;gap:6px;background:var(--sf);border:1px solid var(--bd);border-radius:999px;padding:4px;width:max-content;margin:16px 0}
+.tab{border:none;background:transparent;padding:.45rem 1.1rem;border-radius:999px;font-weight:600;font-size:.9rem;color:var(--mu)}
+.tab.active{background:var(--ac);color:#fff}.tab span{opacity:.75}
+.mine-list{display:flex;flex-direction:column;gap:14px}
+.mine-card{display:flex;gap:14px;background:var(--sf);border:1px solid var(--bd);border-radius:var(--rl);padding:12px;box-shadow:var(--sh);cursor:pointer}
+.mine-body{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px}
+.mine-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px}
+.field{margin-bottom:16px}.field label{font-weight:600;font-size:.88rem;display:block;margin-bottom:6px}
+.hint{font-size:.78rem;color:var(--mu);margin-top:5px}
+input[type=text],textarea,select,input[type=datetime-local]{width:100%;border:1.5px solid var(--bd);border-radius:var(--rm);padding:.65rem .8rem;font:inherit;background:var(--sf);color:var(--tx)}
+input:focus,textarea:focus,select:focus{border-color:var(--ac);outline:none}
+.seg{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.seg button{border:1.5px solid var(--bd);background:var(--sf);border-radius:var(--rm);padding:.7rem;font-weight:600;font-size:.9rem;color:var(--mu);text-align:left}
+.seg button.active{border-color:var(--ac);background:rgba(36,92,74,.07);color:var(--ac)}
+.seg small{display:block;font-weight:400;font-size:.75rem}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.stepper{display:flex;align-items:center;border:1.5px solid var(--bd);border-radius:var(--rm);width:max-content}
+.stepper button{width:38px;height:40px;border:none;background:transparent;font-size:1.1rem;color:var(--pr)}
+.stepper span{min-width:40px;text-align:center;font-weight:600}
+.tagbox{display:flex;flex-wrap:wrap;gap:6px;border:1.5px solid var(--bd);border-radius:var(--rm);padding:.5rem;background:var(--sf)}
+.tagbox input{border:none;outline:none;flex:1;min-width:120px;font:inherit;padding:.2rem}
+.tag .x{cursor:pointer;margin-left:4px;color:var(--pr)}
+.dropzone{border:2px dashed var(--bd);border-radius:var(--rm);padding:18px;text-align:center;color:var(--mu);font-size:.88rem;cursor:pointer;display:block}
+.dropzone:hover{border-color:var(--ac)}
+.dz-preview{max-height:140px;border-radius:var(--rm);margin:10px auto 0}
+.err{color:var(--prh);font-size:.8rem;margin-top:5px;display:none}.err.show{display:block}
+.form-cta{position:sticky;bottom:0;background:linear-gradient(transparent,var(--bg) 30%);padding:14px 0 8px;display:flex;align-items:center;gap:12px}
+.form-cta .btn{flex:1}
+.p-card{background:var(--sf);border:1px solid var(--bd);border-radius:var(--rl);padding:20px;margin-bottom:14px}
+.p-card h3{font-size:1.02rem;margin-bottom:10px}
+.p-head{display:flex;gap:16px;align-items:center}.avatar-lg{width:72px;height:72px;font-size:1.6rem}
+.bar{height:8px;background:var(--bg);border-radius:999px;overflow:hidden;margin-top:10px}.bar i{display:block;height:100%;width:60%;background:var(--ac)}
+.p-row{display:flex;justify-content:space-between;align-items:center;padding:.55rem 0;border-bottom:1px solid var(--bg);font-size:.92rem;gap:10px}
+.p-row:last-child{border:none}.p-row .k{color:var(--mu)}
+.linklike{color:var(--ac);font-weight:600;background:none;border:none;font-size:.88rem}
+.switch{position:relative;width:44px;height:24px;flex:none}.switch input{opacity:0;width:0;height:0}
+.switch i{position:absolute;inset:0;background:var(--bd);border-radius:999px;transition:.2s}
+.switch i::after{content:'';position:absolute;width:18px;height:18px;border-radius:50%;background:#fff;top:3px;left:3px;transition:.2s}
+.switch input:checked+i{background:var(--ac)}.switch input:checked+i::after{left:23px}
+.danger{border-color:rgba(147,56,41,.35)}
+.map-wrap{position:relative;height:calc(100vh - 170px);min-height:420px;border-radius:var(--rl);overflow:hidden;border:1px solid var(--bd)}
+#mapEl{position:absolute;inset:0}
+.map-search{position:absolute;top:12px;left:12px;right:12px;z-index:500;display:flex;gap:8px;background:var(--sf);border-radius:999px;padding:.4rem .5rem .4rem 1rem;box-shadow:var(--sh);align-items:center}
+.map-search input{flex:1;border:none;outline:none;font:inherit;background:transparent}
+.map-here{position:absolute;bottom:14px;left:50%;transform:translateX(-50%);z-index:500;background:var(--sf);border:1px solid var(--bd);border-radius:999px;padding:.5rem 1rem;font-weight:600;font-size:.85rem;box-shadow:var(--sh);color:var(--ac)}
+.map-fallback{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;padding:20px;color:var(--mu);background:var(--bg)}
+.pin{background:var(--pr);width:26px;height:26px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.3)}
+.overlay{position:fixed;inset:0;background:rgba(36,40,36,.5);backdrop-filter:blur(2px);display:none;align-items:center;justify-content:center;z-index:100;padding:16px}
+.overlay.open{display:flex}
+.modal{background:var(--sf);border-radius:var(--rl);max-width:540px;width:100%;max-height:90vh;overflow:auto;position:relative}
+.modal .cover{height:210px}
+.modal-close{position:absolute;top:12px;right:12px;width:34px;height:34px;border-radius:50%;border:none;background:rgba(255,255,255,.94);font-size:1.1rem;z-index:3}
+.modal-body{padding:24px}.modal-body h2{font-size:1.35rem;margin-bottom:8px}
+.modal-desc{color:var(--mu);font-size:.95rem;margin:12px 0 16px}
+.modal-meta{display:grid;grid-template-columns:1fr 1fr;gap:10px;background:var(--bg);border-radius:var(--rm);padding:14px;font-size:.88rem;margin-bottom:14px}
+.modal-meta b{display:block;font-size:.72rem;text-transform:uppercase;letter-spacing:.04em;color:var(--mu)}
+.modal-actions{display:flex;gap:12px;margin-top:16px}.modal-actions .btn{flex:1}
+.share-modal{max-width:420px}.share-modal .modal-body{padding:28px 24px}
+.share-list{display:flex;flex-direction:column;gap:10px;margin-top:16px}
+.share-btn{display:flex;align-items:center;gap:12px;padding:.85rem 1.1rem;border-radius:var(--rm);border:1.5px solid var(--bd);background:var(--sf);font-weight:600;font-size:.95rem;color:var(--tx);text-decoration:none;transition:background .15s}
+.share-btn:hover{background:var(--bg)}
+.share-btn .ico{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.05rem;color:#fff;flex:none}
+.share-btn.wa .ico{background:#25D366}.share-btn.tg .ico{background:#229ED9}.share-btn.mail .ico{background:var(--ac)}.share-btn.copy .ico{background:var(--mu)}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--ac);color:#fff;padding:.8rem 1.4rem;border-radius:var(--rm);font-size:.9rem;opacity:0;pointer-events:none;transition:all .3s;z-index:300;max-width:90vw;text-align:center}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.bn{display:none}
+footer{border-top:1px solid var(--bd);padding:18px 0;text-align:center;font-size:.8rem;color:var(--mu)}
+@media (max-width:720px){
+ .nav,.top-actions .btn,.lang{display:none}
+ .hero{padding:42px 0 28px}.steps-grid,.why-grid,.row2{grid-template-columns:1fr}
+ .modal-meta{grid-template-columns:1fr}
+ body{padding-bottom:70px}
+ .bn{display:flex;position:fixed;bottom:0;left:0;right:0;background:var(--sf);border-top:1px solid var(--bd);z-index:60;height:62px;justify-content:space-around;padding-bottom:env(safe-area-inset-bottom)}
+ .bn button{flex:1;border:none;background:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:.68rem;color:var(--mu);font-weight:600}
+ .bn button.active{color:var(--pr)}.bn .ico{font-size:1.15rem}
+ .bn .plus{width:44px;height:44px;border-radius:50%;background:var(--pr);color:#fff;font-size:1.4rem;margin-top:-14px;box-shadow:var(--sh)}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<header class="topbar"><div class="wrap">
+  <div class="logo" data-view="home"><span class="logo-dot"></span>table<span class="two">2</span>Talk</div>
+  <nav class="nav">
+    <a data-view="home" class="active">Home</a><a data-view="esplora">Esplora</a><a data-view="mappa">Mappa</a><a data-view="miei">I miei t2t</a>
+  </nav>
+  <div class="top-actions">
+    <button class="btn btn-primary btn-sm" data-view="crea">＋ Crea</button>
+    <span class="lang">🌐 IT</span>
+    <button class="icon-btn" data-demo="Chat">💬<span class="dot">2</span></button>
+    <button class="icon-btn" data-demo="Notifiche">🔔<span class="dot">3</span></button>
+    <div class="avatar" data-view="profilo">C</div>
+  </div>
+</div></header>
+
+<main class="wrap">
+ <!-- HOME (v2) -->
+ <section class="view active" id="view-home">
+   <section class="hero">
+     <div class="live-pill"><span class="live-dot"></span>18 persone a tavola adesso</div>
+     <h1>Condividi un <em>table2Talk.</em><br>Crea una connessione.</h1>
+     <p>La community per chi ama condividere storie e sapori. Organizza un tavolo video sui tuoi argomenti preferiti o unisciti a una conversazione già in programma: in qualsiasi lingua, a qualsiasi ora.</p>
+     <div class="hero-cta"><button class="btn btn-primary" data-demo="Registrati">Registrati gratis</button><button class="btn btn-ghost" data-demo="Accedi">Accedi</button></div>
+     <a class="hero-link" href="#home-tavoli">Guarda i tavoli di oggi ↓</a>
+   </section>
+   <section class="steps"><div class="steps-grid">
+     <div class="step"><div class="step-num">01</div><h3>Scopri</h3><p>Filtra per lingua, orario o argomento e trova il tavolo che fa per te. Ce n'è sempre uno apparecchiato.</p></div>
+     <div class="step"><div class="step-num">02</div><h3>Partecipa</h3><p>Un click e sei dentro. Porta la tua curiosità, al resto pensiamo noi. E un po' di fame.</p></div>
+     <div class="step"><div class="step-num">03</div><h3>Incontra</h3><p>Entra in videochiamata, conosci i tuoi commensali e condividi storie, sapori e qualche risata.</p></div>
+   </div></section>
+   <section class="why"><h2>Perché table2Talk?</h2><div class="why-grid">
+     <div class="value"><div class="value-ico">☕</div><h3>Un antidoto alla solitudine</h3><p>Che sia un caffè al volo o una cena elaborata, c'è sempre qualcuno con cui condividerla. La solitudine non è nel nostro menu.</p></div>
+     <div class="value"><div class="value-ico">🌍</div><h3>Amplia i tuoi orizzonti</h3><p>Viaggia restando a tavola: incontra persone e culture da tutto il mondo, un boccone alla volta.</p></div>
+     <div class="value"><div class="value-ico">🛡️</div><h3>Connessioni autentiche e sicure</h3><p>Un ambiente moderato e rispettoso dove puoi essere te stesso. Profili verificati, zero pressione.</p></div>
+   </div></section>
+   <section class="discover" id="home-tavoli">
+     <div class="sec-head"><h2>Tavoli di oggi</h2><a data-view="esplora">Vedi tutti →</a></div>
+     <div class="grid" id="homeGrid"></div>
+   </section>
+   <section class="final-cta"><h2>Che aspetti? Qualcuno sta per sedersi a tavola.</h2><p>La registrazione è gratuita e richiede meno di un minuto.</p><button class="btn btn-white" data-demo="Registrati">Inizia ora</button></section>
+   <section class="trust"><div>✔ Profili verificati</div><div>✔ Chat e video protetti</div><div>✔ Solo maggiorenni</div></section>
+ </section>
+ <!-- ESPLOORA -->
+ <section class="view" id="view-esplora">
+   <div class="page-head"><h1>Esplora i t2t</h1><p>Trova il tuo prossimo tavolo: in video o dal vivo.</p></div>
+   <div class="searchbar">🔍<input id="q" placeholder="Cerca per titolo, argomento o lingua…"></div>
+   <div class="chips"><button class="chip active" data-filter="tutti">Tutti</button><button class="chip" data-filter="pranzo">Pranzo</button><button class="chip" data-filter="cena">Cena</button><button class="chip" data-filter="aperitivo">Aperitivo</button><button class="chip" data-filter="colazione">Colazione</button><button class="chip" data-filter="online">💻 Video</button><button class="chip" data-filter="presenza">📍 Dal vivo</button></div>
+   <div class="grid" id="grid"></div>
+   <p class="empty" id="gridEmpty" hidden>Nessun t2t trovato. Prova a togliere qualche filtro.</p>
+ </section>
+ <!-- MIEI -->
+ <section class="view" id="view-miei">
+   <div class="page-head"><h1>I miei t2t</h1><p>I tavoli che organizzi e quelli a cui partecipi.</p></div>
+   <div class="tabs"><button class="tab active" data-tab="org">Organizzo io <span id="cntOrg"></span></button><button class="tab" data-tab="part">Partecipo <span id="cntPart"></span></button></div>
+   <div class="mine-list" id="mineList"></div>
+   <div class="empty" id="mineEmpty" hidden>Ancora nessun t2t qui. <button class="linklike" data-view="crea">Crea il primo →</button></div>
+ </section>
+ <!-- CREA -->
+ <section class="view" id="view-crea">
+   <div class="page-head"><h1>Crea un t2t</h1><p>Apparecchia il tuo tavolo: bastano un minuto e un'idea.</p></div>
+   <form id="creaForm" style="max-width:640px;margin-top:18px">
+     <div class="field"><label>Tipo di t2t</label><div class="seg" id="tipoSeg"><button type="button" class="active" data-tipo="virtuale">💻 Virtuale<small>Videochiamata</small></button><button type="button" data-tipo="fisico">📍 In presenza<small>Dal vivo</small></button></div></div>
+     <div class="field"><label>Titolo</label><input type="text" id="fTitle" placeholder="Es. Aperitivo in spagnolo"><div class="err" id="fTitleErr">Dai un titolo al tuo tavolo.</div></div>
+     <div class="field"><label>Descrizione</label><textarea id="fDesc" rows="3" placeholder="Racconta il mood del tavolo: cosa si mangia, di che si parla."></textarea></div>
+     <div class="row2"><div class="field"><label>Categoria</label><select id="fCat"><option>Pranzo</option><option>Cena</option><option>Aperitivo</option><option>Colazione</option></select></div><div class="field"><label>Lingua</label><select id="fLang"><option>Italiano</option><option>English</option><option>Español</option><option>Français</option><option>Deutsch</option></select></div></div>
+     <div class="row2"><div class="field"><label>Max partecipanti</label><div class="stepper"><button type="button" id="maxMinus">−</button><span id="maxVal">2</span><button type="button" id="maxPlus">＋</button></div></div><div class="field"><label>Durata</label><select id="fDur"><option value="30">30 min</option><option value="60" selected>1 ora</option><option value="90">1 ora e ½</option><option value="120">2 ore</option></select></div></div>
+     <div class="field"><label>Data e ora</label><input type="datetime-local" id="fWhen"><div class="hint">Scegli un momento nel futuro ⏳</div><div class="err" id="fWhenErr">Scegli una data e ora nel futuro.</div></div>
+     <div class="field"><label>Argomenti <span class="hint" id="tagCount">(0/5)</span></label><div class="tagbox" id="tagBox"><input id="tagInput" placeholder="Scrivi e premi Invio o la virgola…"></div></div>
+     <div class="field"><label>Immagine di copertina</label><label class="dropzone" for="fCover"><span id="dzText">📷 Trascina o scegli un'immagine · JPG/PNG · max 10MB</span><img id="dzPreview" class="dz-preview" hidden alt=""></label><input type="file" id="fCover" accept="image/*" hidden></div>
+     <div class="form-cta"><button type="submit" class="btn btn-primary">Crea il t2t</button><span class="hint">Gratis · modificabile quando vuoi</span></div>
+   </form>
+ </section>
+ <!-- MAPPA -->
+ <section class="view" id="view-mappa">
+   <div class="page-head"><h1>Mappa</h1><p>I tavoli dal vivo vicino a te.</p></div>
+   <div class="map-wrap" style="margin-top:16px"><div id="mapEl"></div>
+     <div class="map-search">🔍<input id="mapQ" placeholder="Cerca città o via (es. Milano)…"><button class="btn btn-primary btn-sm" id="mapGo">Vai</button></div>
+     <button class="map-here" id="mapHere">🔄 Cerca in questa zona</button>
+     <div class="map-fallback" id="mapFallback" hidden>🗺️ La mappa interattiva richiede internet.<br>I tavoli dal vivo sono elencati in Esplora.</div>
+   </div>
+ </section>
+ <!-- PROFILO -->
+ <section class="view" id="view-profilo">
+   <div class="p-card"><div class="p-head"><div class="avatar avatar-lg">C</div><div style="flex:1"><h3 style="margin:0">Cris</h3><div class="hint">cristianlecca@gmail.com</div><div class="bar"><i></i></div><div class="hint">Profilo al 60% · aggiungi città e bio per farti trovare</div></div><button class="btn btn-ghost btn-sm" data-demo="Modifica profilo">Modifica</button></div></div>
+   <div class="p-card"><h3>Informazioni personali</h3>
+     <div class="p-row"><span class="k">Posizione</span><button class="linklike" data-demo="Aggiungi città">＋ Aggiungi la tua città</button></div>
+     <div class="p-row"><span class="k">Età</span><span>41</span></div>
+     <div class="p-row"><span class="k">Genere</span><button class="linklike" data-demo="Genere">＋ Specifica</button></div>
+     <div class="p-row"><span class="k">Bio</span><button class="linklike" data-demo="Bio">＋ Raccontati in due righe</button></div>
+   </div>
+   <div class="p-card"><h3>Lingue</h3><div class="tags"><span class="tag">🇮🇹 Italiano</span><button class="linklike" data-demo="Lingue">＋ Aggiungi</button></div></div>
+   <div class="p-card"><h3>Interessi</h3><div class="tags"><span class="tag">Cinema</span><button class="linklike" data-demo="Interessi">＋ Aggiungi</button></div></div>
+   <div class="p-card"><h3>Impostazioni</h3>
+     <div class="p-row"><span>Notifiche via email</span><label class="switch"><input type="checkbox" checked><i></i></label></div>
+     <div class="p-row"><span>Posizione per matching in tempo reale</span><label class="switch"><input type="checkbox"><i></i></label></div>
+     <div class="p-row"><span class="k">Password</span><button class="linklike" data-demo="Cambia password">Cambia</button></div>
+     <div class="p-row"><span class="k">Privacy</span><button class="linklike" data-demo="Privacy Policy">Privacy Policy</button></div>
+   </div>
+   <div class="p-card danger"><h3 style="color:var(--prh)">Zona account</h3><div class="mine-actions"><button class="btn btn-ghost btn-sm" data-demo="Esci">Esci</button><button class="btn btn-danger btn-sm" data-demo="Elimina account">Elimina account</button></div><div class="hint">L'eliminazione è definitiva e rimuove tutti i tuoi dati.</div></div>
+ </section>
+</main>
+
+<nav class="bn">
+  <button data-view="home" class="active"><span class="ico">🏠</span>Home</button>
+  <button data-view="esplora"><span class="ico">🔍</span>Esplora</button>
+  <button data-view="crea"><span class="ico plus">＋</span></button>
+  <button data-view="mappa"><span class="ico">🗺️</span>Mappa</button>
+  <button data-view="miei"><span class="ico">📋</span>I miei</button>
+</nav>
+
+<footer>table2Talk · mockup unificato · palette Convivialità · foto segnaposto Unsplash · mappa © OpenStreetMap contributors</footer>
+
+<div class="overlay" id="overlay" role="dialog" aria-modal="true"><div class="modal">
+  <div class="cover" id="mCover"></div><button class="modal-close" id="mClose" aria-label="Chiudi">✕</button>
+  <div class="modal-body"><h2 id="mTitle"></h2><div class="host" id="mHost"></div><p class="modal-desc" id="mDesc"></p>
+    <div class="modal-meta"><div><b>Quando</b><span id="mWhen"></span></div><div><b>Dove</b><span id="mWhere"></span></div><div><b>Lingua</b><span id="mLang"></span></div><div><b>Durata</b><span id="mDur"></span></div></div>
+    <div class="tags" id="mTags" style="margin-bottom:12px"></div><div class="seats" id="mSeats"></div><div class="modal-actions" id="mActions"></div>
+  </div>
+</div></div>
+
+<div class="overlay" id="shareOverlay" role="dialog" aria-modal="true"><div class="modal share-modal">
+  <button class="modal-close" id="shareClose" aria-label="Chiudi">✕</button>
+  <div class="modal-body"><h2>Invita commensali</h2><p class="modal-desc" id="shareSub"></p>
+    <div class="share-list">
+      <a class="share-btn wa" id="shareWa" target="_blank" rel="noopener"><span class="ico">✆</span>WhatsApp</a>
+      <a class="share-btn tg" id="shareTg" target="_blank" rel="noopener"><span class="ico">➤</span>Telegram</a>
+      <a class="share-btn mail" id="shareMail"><span class="ico">✉</span>Email</a>
+      <button class="share-btn copy" id="shareCopy"><span class="ico">⧉</span>Copia link</button>
+    </div>
+  </div>
+</div></div>
+<div class="toast" id="toast"></div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const U=p=>'https://images.unsplash.com/'+p+'?auto=format&fit=crop&w=800&q=80';
+const CAT_EMOJI={Pranzo:'🍝',Cena:'🍽️',Aperitivo:'🍷',Colazione:'☕'};
+const VERIF='<svg class="verified" viewBox="0 0 24 24" fill="#245C4A"><path d="M12 2l2.4 2.1 3.1-.4 1.1 3 2.9 1.3-.7 3.1 1.9 2.5-1.9 2.5.7 3.1-2.9 1.3-1.1 3-3.1-.4L12 22l-2.4-2.1-3.1.4-1.1-3-2.9-1.3.7-3.1L1.3 12l1.9-2.5-.7-3.1 2.9-1.3 1.1-3 3.1.4z"/><path d="M10.6 14.6l-2.2-2.2 1.1-1.1 1.1 1.1 3.9-3.9 1.1 1.1z" fill="#fff"/></svg>';
+let items=[
+ {id:1,title:'Riunione con Cristian',cat:'Cena',format:'virtuale',lang:'Italiano',when:'20 nov · 20:00',dur:60,host:'Seaalex',ini:'S',verified:true,seats:2,total:2,img:U('photo-1414235077428-338989a2e8c0'),city:null,tags:['chiacchiere','progetti'],desc:'Approfondimenti e due chiacchiere attorno a un piatto.',mine:null},
+ {id:2,title:'Aperitivo in spagnolo',cat:'Aperitivo',format:'virtuale',lang:'Español',when:'Oggi · 19:30',dur:60,host:'Sara T.',ini:'ST',verified:true,seats:5,total:6,img:U('photo-1551024709-8f23befc6f87'),city:null,tags:['spagnolo','lingue','spritz'],desc:'Un spritz, due chiacchiere in spagnolo e zero imbarazzi.',mine:'part'},
+ {id:3,title:'Carbonara & chiacchiere',cat:'Pranzo',format:'fisico',lang:'Italiano',when:'Oggi · 13:00',dur:90,host:'Giulia M.',ini:'GM',verified:true,seats:4,total:6,img:U('photo-1473093295043-cdd812d0e601'),city:'Bologna',coords:[44.4949,11.3426],tags:['cucina','amici'],desc:'Carbonara come si deve e chiacchiere leggere. Porto io il guanciale.',mine:null},
+ {id:4,title:'Pausa pranzo leggera',cat:'Pranzo',format:'virtuale',lang:'Italiano',when:'Oggi · 13:00',dur:30,host:'Marco R.',ini:'MR',verified:true,seats:2,total:4,img:U('photo-1512621776951-a57141f2eefd'),city:null,tags:['veg','pausa'],desc:'Trenta minuti, una bowl colorata e compagnia vera.',mine:'part'},
+ {id:5,title:'Ramen night: Tokyo da casa',cat:'Cena',format:'virtuale',lang:'IT · EN',when:'Domani · 20:00',dur:60,host:'Luca B.',ini:'LB',verified:false,seats:1,total:4,img:U('photo-1569718212165-3a8278d5f624'),city:null,tags:['giappone','viaggi'],desc:'Cucini il tuo ramen, io il mio, e mangiamo insieme in video.',mine:null},
+ {id:6,title:'Pizza e serie TV',cat:'Cena',format:'fisico',lang:'Italiano',when:'Domani · 19:00',dur:120,host:'Elena C.',ini:'EC',verified:true,seats:3,total:6,img:U('photo-1513104890138-7c749659a591'),city:'Roma',coords:[41.8892,12.4701],tags:['pizza','serietv'],desc:'Impasto fatto in casa, forno caldo, serata senza fretta.',mine:null},
+ {id:7,title:'Aperitivo con Alex e Marianna',cat:'Aperitivo',format:'virtuale',lang:'Italiano',when:'Oggi · 19:47',dur:60,host:'Cris',ini:'C',verified:true,seats:1,total:2,img:U('photo-1551024709-8f23befc6f87'),city:null,tags:['chiacchiere','amici'],desc:'Due chiacchiere in compagnia, senza impegno.',mine:'org'},
+ {id:8,title:'Siamo attivi!',cat:'Aperitivo',format:'virtuale',lang:'Italiano',when:'Sab · 18:30',dur:60,host:'Cris',ini:'C',verified:true,seats:2,total:6,img:null,city:null,tags:['musica','sax'],desc:'Sax e bamba: portiamo musica al tavolo.',mine:'org'},
+ {id:9,title:'Colazione lenta',cat:'Colazione',format:'virtuale',lang:'Italiano',when:'Dom · 09:00',dur:30,host:'Nina P.',ini:'NP',verified:true,seats:3,total:4,img:null,city:null,tags:['caffè','rassegna'],desc:'Caffè, cornetto e i titoli del giorno. Inizia bene.',mine:'part'},
+ {id:10,title:'Pranzo dei lettori',cat:'Pranzo',format:'virtuale',lang:'Italiano',when:'Domani · 13:30',dur:45,host:'Paolo G.',ini:'PG',verified:true,seats:2,total:5,img:U('photo-1512621776951-a57141f2eefd'),city:null,tags:['libri'],desc:'Si mangia e si parla dell\'ultimo libro che ci ha preso.',mine:'part'}
+];
+const state={view:'home',filter:'tutti',q:'',tab:'org'};
+function seatsHTML(t){let h='';for(let i=0;i<t.total;i++)h+='<span class="seat'+(i<t.seats?' full':'')+'"></span>';return h+'<small>'+t.seats+'/'+t.total+'</small>';}
+function coverHTML(t,mini){return '<div class="cover'+(mini?' mini':'')+'"><span class="cover-emoji">'+(CAT_EMOJI[t.cat]||'🍽️')+'</span>'+(t.img?'<img src="'+t.img+'" alt="'+esc(t.title)+'" loading="lazy" onerror="this.remove()">':'')+(mini?'':'<span class="badge badge-cat on-img left">'+t.cat+'</span><span class="badge '+(t.format==='virtuale'?'badge-video':'badge-fisico')+' on-img right">'+(t.format==='virtuale'?'💻 Video':'📍 Dal vivo')+'</span>')+'</div>';}
+function actionBtn(t){if(t.mine==='org')return '<button class="btn btn-ghost btn-sm" data-act="manage">Gestisci</button>';if(t.mine==='part')return '<button class="btn btn-green btn-sm" data-act="open">Partecipi ✓</button>';if(t.seats>=t.total)return '<button class="btn btn-sm" disabled>Completo</button>';return '<button class="btn btn-primary btn-sm" data-act="open">Partecipa</button>';}
+function cardHTML(t){return '<article class="card" data-id="'+t.id+'">'+coverHTML(t,false)+'<div class="card-body"><div class="card-title">'+esc(t.title)+'</div><div class="host"><span class="avatar">'+esc(t.ini)+'</span>'+esc(t.host)+' '+(t.verified?VERIF:'')+'</div><div class="meta"><span>🕒 '+esc(t.when)+'</span><span>⏱ '+t.dur+' min</span><span>🌍 '+esc(t.lang)+'</span>'+(t.city?'<span>📍 '+esc(t.city)+'</span>':'')+'</div><div class="tags">'+t.tags.slice(0,3).map(x=>'<span class="tag">'+esc(x)+'</span>').join('')+(t.tags.length>3?'<span class="tag">+'+(t.tags.length-3)+'</span>':'')+'</div><div class="card-foot"><div class="seats">'+seatsHTML(t)+'</div>'+actionBtn(t)+'</div></div></article>';}
+function renderHome(){$('homeGrid').innerHTML=items.slice(0,6).map(cardHTML).join('');}
+function renderGrid(){const f=state.filter,q=state.q.toLowerCase();const list=items.filter(t=>{const okF=f==='tutti'||(f==='online'?t.format==='virtuale':f==='presenza'?t.format==='fisico':t.cat.toLowerCase()===f);const okQ=!q||(t.title+' '+t.desc+' '+t.tags.join(' ')+' '+t.lang+' '+t.host).toLowerCase().includes(q);return okF&&okQ;});$('grid').innerHTML=list.map(cardHTML).join('');$('gridEmpty').hidden=list.length>0;}
+function mineHTML(t){const acts=t.mine==='org'?'<button class="btn btn-primary btn-sm" data-act="invite">Invita</button><button class="btn btn-ghost btn-sm" data-act="edit">Modifica</button><button class="btn btn-ghost btn-sm" data-act="share">Condividi</button>':'<button class="btn btn-green btn-sm" data-act="chat">Apri chat</button><button class="btn btn-danger btn-sm" data-act="leave">Abbandona</button>';return '<div class="mine-card" data-id="'+t.id+'">'+coverHTML(t,true)+'<div class="mine-body"><div class="card-title">'+esc(t.title)+'</div><div class="meta"><span>🕒 '+esc(t.when)+'</span><span>⏱ '+t.dur+' min</span><span>🌍 '+esc(t.lang)+'</span></div><div class="seats">'+seatsHTML(t)+'</div><div class="mine-actions">'+acts+'</div></div></div>';}
+function renderMine(){const org=items.filter(t=>t.mine==='org'),part=items.filter(t=>t.mine==='part');$('cntOrg').textContent=org.length;$('cntPart').textContent=part.length;const list=state.tab==='org'?org:part;$('mineList').innerHTML=list.map(mineHTML).join('');$('mineEmpty').hidden=list.length>0;document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===state.tab));}
+function renderAll(){renderHome();renderGrid();renderMine();}
+let mapDone=false;
+function initMap(){if(mapDone)return;mapDone=true;if(typeof L==='undefined'){$('mapFallback').hidden=false;return;}const map=L.map('mapEl',{zoomControl:false});L.control.zoom({position:'bottomleft'}).addTo(map);L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap contributors'}).addTo(map);const pts=[];items.filter(t=>t.format==='fisico'&&t.coords).forEach(t=>{pts.push(t.coords);L.marker(t.coords,{icon:L.divIcon({className:'',html:'<div class="pin"></div>',iconSize:[26,26],iconAnchor:[13,26]})}).addTo(map).bindPopup('<b>'+esc(t.title)+'</b><br>'+esc(t.when));});L.circleMarker([44.9856,7.7436],{radius:8,color:'#fff',weight:2,fillColor:'#245C4A',fillOpacity:1}).addTo(map).bindPopup('Tu sei qui');if(pts.length)map.fitBounds(pts,{padding:[60,60]});else map.setView([44.9856,7.7436],12);setTimeout(()=>map.invalidateSize(),200);}
+function setView(v){state.view=v;document.querySelectorAll('.view').forEach(s=>s.classList.toggle('active',s.id==='view-'+v));document.querySelectorAll('.nav a,.bn button').forEach(b=>b.classList.toggle('active',b.dataset.view===v));if(v==='mappa')initMap();window.scrollTo(0,0);}
+const ov=$('overlay');
+function openModal(id){const t=items.find(x=>x.id===id);if(!t)return;ov.dataset.id=id;$('mCover').outerHTML=coverHTML(t,false).replace('class="cover"','class="cover" id="mCover"');$('mTitle').textContent=t.title;$('mHost').innerHTML='<span class="avatar">'+esc(t.ini)+'</span>'+esc(t.host)+' '+(t.verified?VERIF:'');$('mDesc').textContent=t.desc;$('mWhen').textContent=t.when;$('mWhere').textContent=t.city?t.city+' · Dal vivo':'Online · Video';$('mLang').textContent=t.lang;$('mDur').textContent=t.dur+' min';$('mTags').innerHTML=t.tags.map(x=>'<span class="tag">'+esc(x)+'</span>').join('');$('mSeats').innerHTML=seatsHTML(t);let a;if(t.mine==='org')a='<button class="btn btn-primary" data-act="invite">Invita commensali</button><button class="btn btn-ghost" data-act="edit">Modifica</button>';else if(t.mine==='part')a='<button class="btn btn-green" data-act="chat">Apri chat</button><button class="btn btn-danger" data-act="leave">Abbandona</button>';else if(t.seats>=t.total)a='<button class="btn" disabled>Completo</button><button class="btn btn-ghost" data-act="notify">Avvisami</button>';else a='<button class="btn btn-primary" data-act="join">Partecipa</button><button class="btn btn-ghost" data-act="chat">Messaggia</button>';$('mActions').innerHTML=a;ov.classList.add('open');document.body.style.overflow='hidden';}
+function closeModal(){ov.classList.remove('open');if(!$('shareOverlay').classList.contains('open'))document.body.style.overflow='';}
+$('mClose').addEventListener('click',closeModal);
+ov.addEventListener('click',e=>{if(e.target===ov)closeModal();});
+/* SHARE */
+const APP_URL='https://table2talk.app/t2t/'; /* ← sostituisci con l'URL reale dell'app */
+const so=$('shareOverlay');
+function openShare(id){const t=items.find(x=>x.id===id);if(!t)return;so.dataset.id=id;const link=APP_URL+t.id;const msg='🍽️ Ti invito al mio tavolo "'+t.title+'" su table2Talk! '+t.when+' · '+(t.city?t.city+' (dal vivo)':'in video')+'. Prenota il tuo posto: '+link;const enc=encodeURIComponent(msg);$('shareSub').textContent='Condividi "'+t.title+'" e riempi il tavolo.';$('shareWa').href='https://wa.me/?text='+enc;$('shareTg').href='https://t.me/share/url?url='+encodeURIComponent(link)+'&text='+encodeURIComponent('🍽️ Ti invito al mio tavolo "'+t.title+'" su table2Talk! '+t.when+'.');$('shareMail').href='mailto:?subject='+encodeURIComponent('Ti invito a un table2Talk: '+t.title)+'&body='+enc;so.classList.add('open');document.body.style.overflow='hidden';}
+function closeShare(){so.classList.remove('open');if(!ov.classList.contains('open'))document.body.style.overflow='';}
+$('shareClose').addEventListener('click',closeShare);
+so.addEventListener('click',e=>{if(e.target===so)closeShare();});
+$('shareCopy').addEventListener('click',()=>{const link=APP_URL+so.dataset.id;if(navigator.clipboard)navigator.clipboard.writeText(link);toast('🔗 Link copiato negli appunti.');});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeShare();closeModal();}});
+let tt;function toast(m){const t=$('toast');t.textContent=m;t.classList.add('show');clearTimeout(tt);tt=setTimeout(()=>t.classList.remove('show'),2600);}
+function handleAct(a,id){const t=items.find(x=>x.id===id);if(a==='open'){openModal(id);return;}if(a==='manage'){setView('miei');state.tab='org';renderMine();return;}if(a==='join'){t.seats=Math.min(t.total,t.seats+1);t.mine='part';closeModal();renderAll();toast('🎉 Sei dentro! Lo trovi in "I miei t2t".');return;}if(a==='leave'){t.seats=Math.max(0,t.seats-1);t.mine=null;closeModal();renderAll();toast('Hai abbandonato il tavolo. Il posto è tornato libero.');return;}if(a==='invite'||a==='share'){openShare(id);return;}if(a==='edit'){toast('Modifica del t2t (demo)');return;}if(a==='chat'){toast('💬 Chat del tavolo (demo)');return;}if(a==='notify'){toast('🔔 Ti avviseremo se si libera un posto.');return;}}
+document.addEventListener('click',e=>{
+ const act=e.target.closest('[data-act]');if(act){const holder=act.closest('[data-id]');handleAct(act.dataset.act,+(holder?holder.dataset.id:ov.dataset.id));return;}
+ const nav=e.target.closest('[data-view]');if(nav){e.preventDefault();setView(nav.dataset.view);return;}
+ const tab=e.target.closest('[data-tab]');if(tab){state.tab=tab.dataset.tab;renderMine();return;}
+ const chip=e.target.closest('.chip');if(chip){state.filter=chip.dataset.filter;document.querySelectorAll('.chip').forEach(c=>c.classList.toggle('active',c===chip));renderGrid();return;}
+ const demo=e.target.closest('[data-demo]');if(demo){e.preventDefault();toast('Sezione "'+demo.dataset.demo+'" — demo');return;}
+ const card=e.target.closest('.card,.mine-card');if(card){openModal(+card.dataset.id);}
+});
+$('q').addEventListener('input',e=>{state.q=e.target.value;renderGrid();});
+let tipo='virtuale',maxP=2,tags=[],coverData=null;
+$('tipoSeg').addEventListener('click',e=>{const b=e.target.closest('[data-tipo]');if(!b)return;tipo=b.dataset.tipo;document.querySelectorAll('#tipoSeg button').forEach(x=>x.classList.toggle('active',x===b));});
+$('maxMinus').addEventListener('click',()=>{maxP=Math.max(2,maxP-1);$('maxVal').textContent=maxP;});
+$('maxPlus').addEventListener('click',()=>{maxP=Math.min(8,maxP+1);$('maxVal').textContent=maxP;});
+function renderTags(){document.querySelectorAll('#tagBox .tag').forEach(x=>x.remove());const inp=$('tagInput');tags.forEach((tg,i)=>{const s=document.createElement('span');s.className='tag';s.innerHTML=esc(tg)+'<span class="x" data-i="'+i+'">✕</span>';inp.before(s);});$('tagCount').textContent='('+tags.length+'/5)';}
+$('tagBox').addEventListener('click',e=>{const x=e.target.closest('.x');if(x){tags.splice(+x.dataset.i,1);renderTags();}});
+$('tagInput').addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===','){e.preventDefault();const v=e.target.value.trim().replace(/,$/,'');if(v&&tags.length<5&&!tags.includes(v)){tags.push(v);e.target.value='';renderTags();}}});
+$('fCover').addEventListener('change',e=>{const f=e.target.files[0];if(!f)return;if(f.size>10*1024*1024){toast('Immagine troppo grande (max 10MB)');e.target.value='';return;}const r=new FileReader();r.onload=()=>{coverData=r.result;$('dzPreview').src=coverData;$('dzPreview').hidden=false;$('dzText').textContent='✓ Immagine pronta';};r.readAsDataURL(f);});
+$('creaForm').addEventListener('submit',e=>{e.preventDefault();const title=$('fTitle').value.trim();const when=$('fWhen').value;let ok=true;$('fTitleErr').classList.toggle('show',!title);if(!title)ok=false;const fut=when&&new Date(when)>new Date();$('fWhenErr').classList.toggle('show',!fut);if(!fut)ok=false;if(!ok)return;const d=new Date(when);const item={id:Date.now(),title,cat:$('fCat').value,format:tipo,lang:$('fLang').value,when:d.toLocaleString('it-IT',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}),dur:+$('fDur').value,host:'Cris',ini:'C',verified:true,seats:1,total:maxP,img:coverData,city:tipo==='fisico'?'La tua zona':null,tags:tags.slice(),desc:$('fDesc').value.trim()||'Un nuovo tavolo: unisciti e porta la tua curiosità.',mine:'org'};items.unshift(item);renderAll();state.tab='org';setView('miei');renderMine();toast('🎉 Il tuo t2t è online! Invita i primi commensali.');e.target.reset();tags=[];coverData=null;maxP=2;$('maxVal').textContent=2;$('dzPreview').hidden=true;$('dzText').textContent='📷 Trascina o scegli un\'immagine · JPG/PNG · max 10MB';renderTags();});
+$('mapGo').addEventListener('click',()=>toast('Ricerca mappa (demo)'));
+$('mapHere').addEventListener('click',()=>toast('🔄 Cerco i tavoli in questa zona (demo)'));
+renderAll();setView('home');
+</script>
+</body>
+</html>

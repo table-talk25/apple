@@ -4,14 +4,14 @@
     <meta charset="utf-8" />
     <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <meta name="theme-color" content="#000000" />
+    <meta name="theme-color" content="#B54735" />
     <meta
       name="description"
-              content="TableTalk - Trova compagni per TableTalk® virtuali"
+      content="table2Talk — Condividi un tavolo in video o dal vivo e crea nuove connessioni."
     />
     <link rel="apple-touch-icon" href="%PUBLIC_URL%/logo192.png" />
     <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
-    <title>TableTalk</title>
+    <title>table2Talk</title>
     <!-- Retrocompatibilità link senza hash: /meals/123 → /#/meals/123 (HashRouter).
          Solo su web (http/https) e mai per index.html o asset statici. -->
     <script>
@@ -40,7 +40,7 @@
         display: flex; 
         align-items: center; 
         justify-content: center; 
-        background: #fff; 
+        background: #FAF7F2; 
         z-index: 99999; 
         visibility: visible !important;
         opacity: 1 !important;
@@ -48,15 +48,15 @@
       #app-loader .spinner { 
         width: 48px; 
         height: 48px; 
-        border: 6px solid #e0e0e0; 
-        border-top: 6px solid #FF7F7F; 
+        border: 6px solid #DDD5CA; 
+        border-top: 6px solid #B54735; 
         border-radius: 50%; 
         animation: spin 1s linear infinite; 
       }
       #app-loader .label { 
         margin-top: 10px; 
         font-family: system-ui, -apple-system, Segoe UI, Roboto, 'Poppins', sans-serif; 
-        color: #555; 
+        color: #5C625C; 
         font-size: 14px; 
         text-align: center; 
       }
@@ -71,12 +71,12 @@
       }
       #root {
         min-height: 100vh;
-        background: #fff;
+        background: #FAF7F2;
         position: relative;
         z-index: 1;
       }
       body {
-        background: #fff;
+        background: #FAF7F2;
         margin: 0;
         padding: 0;
         padding-top: env(safe-area-inset-top);

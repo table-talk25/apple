@@ -54,11 +54,11 @@
     "registering": "注册中...",
     "alreadyHaveAccount": "已有账户？",
     "noAccount": "还没有账户？",
-    "loginToTableTalk": "登录TableTalk",
+    "loginToTableTalk": "登录table2Talk",
     "emailPlaceholder": "您的@邮箱.地址",
     "passwordPlaceholder": "您的密码",
     "loggingIn": "登录中...",
-    "registerToTableTalk": "注册TableTalk",
+    "registerToTableTalk": "注册table2Talk",
     "namePlaceholder": "您的名字",
     "surnamePlaceholder": "您的姓氏",
     "confirmPasswordPlaceholder": "确认您的密码",
@@ -78,23 +78,23 @@
     "continueWithApple": "使用苹果继续"
   },
   "meals": {
-    "createMeal": "创建TableTalk®",
-    "editMeal": "编辑TableTalk®",
-    "joinMeal": "加入TableTalk®",
-    "leaveMeal": "离开TableTalk®",
-    "mealDetails": "TableTalk®详情",
-    "myMeals": "我的TableTalk®",
-    "noMeals": "未找到TableTalk®",
-    "pageTitle": "TableTalk®",
-    "searchPlaceholder": "搜索TableTalk®...",
-    "createButton": "创建TableTalk®",
+    "createMeal": "创建t2t",
+    "editMeal": "编辑t2t",
+    "joinMeal": "加入t2t",
+    "leaveMeal": "离开t2t",
+    "mealDetails": "t2t详情",
+    "myMeals": "我的t2t",
+    "noMeals": "未找到t2t",
+    "pageTitle": "t2t",
+    "searchPlaceholder": "搜索t2t...",
+    "createButton": "创建t2t",
     "loading": "加载中...",
     "searchError": "搜索时发生错误。",
-    "noMealsFound": "未找到\"{{searchTerm}}\"的TableTalk®。",
-    "noMealsWithFilters": "未找到应用筛选条件的TableTalk®。",
-    "mealCount_one": "{{count}} 个TableTalk®",
-    "mealCount_other": "{{count}} 个TableTalk®",
-    "mealCount_zero": "没有TableTalk®",
+    "noMealsFound": "未找到\"{{searchTerm}}\"的t2t。",
+    "noMealsWithFilters": "未找到应用筛选条件的t2t。",
+    "mealCount_one": "{{count}} 个t2t",
+    "mealCount_other": "{{count}} 个t2t",
+    "mealCount_zero": "没有t2t",
     "participant_one": "{{count}} 个参与者",
     "participant_other": "{{count}} 个参与者",
     "participant_zero": "没有参与者",
@@ -155,7 +155,7 @@
     },
     "filters": {
       "title": "筛选",
-      "mealType": "TableTalk®类型",
+      "mealType": "t2t类型",
       "mode": "模式",
       "status": "状态",
       "sortBy": "排序方式",
@@ -169,8 +169,8 @@
       "resetFilters": "重置筛选"
     },
     "emptyState": {
-      "title": "未找到TableTalk®",
-      "description": "没有符合当前筛选条件的TableTalk®。尝试更改筛选条件或自己创建一个！"
+      "title": "未找到t2t",
+      "description": "没有符合当前筛选条件的t2t。尝试更改筛选条件或自己创建一个！"
     },
     "emptyFeed": {
       "title": "这里很安静...",
@@ -184,25 +184,25 @@
       "end": "结束",
       "participants": "参与者"
     },
-    "createNewTitle": "创建新的TableTalk®",
+    "createNewTitle": "创建新的t2t",
     "createNewSubtitle": "填写字段以组织您的下一次虚拟会议。",
-    "createSuccess": "TableTalk®创建成功！",
-    "createError": "创建TableTalk®时出错。",
+    "createSuccess": "t2t创建成功！",
+    "createError": "创建t2t时出错。",
     "form": {
-      "typeLabel": "TableTalk®类型",
+      "typeLabel": "t2t类型",
       "virtualType": "虚拟",
       "physicalType": "实体",
       "virtualDescription": "(视频通话)",
       "physicalDescription": "(面对面)",
       "virtualInfo": "参与者将通过视频通话见面",
       "physicalInfo": "参与者将在特定地点面对面见面",
-      "visibilityLabel": "TableTalk®可见性",
+      "visibilityLabel": "t2t可见性",
       "publicVisibility": "公开",
       "privateVisibility": "私密",
       "publicDescription": "(任何人都可以申请参加)",
       "privateDescription": "(仅限邀请)",
-      "publicInfo": "TableTalk®将在地图上可见，任何人都可以申请参加",
-      "privateInfo": "TableTalk®仅对您亲自邀请的用户可见",
+      "publicInfo": "t2t将在地图上可见，任何人都可以申请参加",
+      "privateInfo": "t2t仅对您亲自邀请的用户可见",
       "titleLabel": "活动标题",
       "titleRequired": "标题为必填项",
       "titleMinLength": "标题必须至少10个字符",
@@ -234,23 +234,23 @@
       "addressLabel": "地址",
       "addressPlaceholder": "输入餐厅或会议地点的地址",
       "addressExample": "例如：\"Il Gusto餐厅，Via Roma 123，米兰\"",
-      "locationRequired": "实体TableTalk®的位置为必填项",
+      "locationRequired": "实体t2t的位置为必填项",
       "mapLabel": "在地图上选择位置",
       "topicsLabel": "对话话题",
       "topicsRequired": "至少添加一个对话话题",
       "topicsHelp": "写一个话题并按回车或逗号添加。最多5个。",
       "coverImageLabel": "封面图片",
-      "coverImageAlt": "TableTalk®预览",
+      "coverImageAlt": "t2t预览",
       "chooseFromGallery": "从图库选择",
       "saving": "保存中...",
       "loading": "加载中..."
     },
     "detail": {
-      "loadError": "加载TableTalk®详情时出错",
-      "joinSuccess": "您已加入TableTalk®！",
-      "joinError": "加入TableTalk®时出错",
-      "leaveSuccess": "您已离开TableTalk®",
-      "leaveError": "离开TableTalk®时出错",
+      "loadError": "加载t2t详情时出错",
+      "joinSuccess": "您已加入t2t！",
+      "joinError": "加入t2t时出错",
+      "leaveSuccess": "您已离开t2t",
+      "leaveError": "离开t2t时出错",
       "chatIdNotFound": "聊天ID未找到",
       "confirmLeaveChat": "您确定要离开聊天吗？",
       "chatLeaveSuccess": "您已离开聊天",
@@ -258,7 +258,7 @@
       "chatNotAvailable": "聊天不可用",
       "joinChat": "加入聊天",
       "leaveChat": "离开聊天",
-      "coverImageAlt": "TableTalk®封面图片",
+      "coverImageAlt": "t2t封面图片",
       "participants": "{{count}} / {{max}} 参与者",
       "description": "描述",
       "host": "组织者",
@@ -274,10 +274,10 @@
     }
   },
   "home": {
-    "heroTitle": "分享一个TableTalk®。<br />建立连接。",
-    "heroSubtitle": "TableTalk是全球社区，为热爱分享故事和美食的人们而设。围绕您喜爱的话题组织虚拟TableTalk®，或加入已安排的对话。",
-    "createTableTalk": "创建TableTalk®",
-    "exploreTableTalk": "探索TableTalk®",
+    "heroTitle": "分享一个table2Talk。<br />建立连接。",
+    "heroSubtitle": "table2Talk是全球社区，为热爱分享故事和美食的人们而设。围绕您喜爱的话题组织虚拟t2t，或加入已安排的对话。",
+    "createTableTalk": "创建t2t",
+    "exploreTableTalk": "探索t2t",
     "registerNow": "立即注册",
     "login": "登录",
     "howItWorks": {
@@ -292,11 +292,11 @@
       },
       "step3": {
         "title": "3. 相遇",
-        "description": "加入视频通话，认识您的餐桌伙伴。是时候分享、学习和在优秀伙伴陪伴下享受TableTalk®了。"
+        "description": "加入视频通话，认识您的餐桌伙伴。是时候分享、学习和在优秀伙伴陪伴下享受t2t了。"
       }
     },
     "whyTableTalk": {
-      "title": "为什么选择TableTalk？",
+      "title": "为什么选择table2Talk？",
       "feature1": {
         "title": "孤独的解药",
         "description": "无论是快速咖啡还是精致晚餐，总有人可以分享。孤独不在我们的菜单上。"
@@ -312,15 +312,15 @@
     },
     "cta": {
       "title": "准备开始了吗？",
-      "subtitle": "加入TableTalk社区，开始分享难忘时刻。",
+      "subtitle": "加入table2Talk社区，开始分享难忘时刻。",
       "getStarted": "立即开始",
       "startNow": "立即开始",
-      "organizeTableTalk": "组织您的TableTalk®"
+      "organizeTableTalk": "组织您的t2t"
     }
   },
   "navigation": {
     "home": "首页",
-    "meals": "TableTalk®",
+    "meals": "t2t",
     "map": "地图",
     "profile": "个人资料",
     "chat": "聊天",
@@ -340,7 +340,7 @@
       "avatarAlt": "用户头像",
       "noNickname": "昵称",
       "noBio": "未设置个人简介。",
-      "myMealsButton": "我的TableTalk®"
+      "myMealsButton": "我的t2t"
     },
     "personalInfo": {
       "title": "个人信息",
@@ -388,8 +388,8 @@
       "hosting": "我组织的",
       "joining": "我参加的"
     },
-    "noHostedMeals": "您还没有组织任何TableTalk。",
-    "noJoinedMeals": "您还没有参加任何TableTalk。",
+    "noHostedMeals": "您还没有组织任何t2t。",
+    "noJoinedMeals": "您还没有参加任何t2t。",
     "settings": {
       "title": "高级设置",
       "notifications": "通知",
@@ -415,8 +415,8 @@
     }
   },
   "map": {
-    "title": "您附近的用户和实体TableTalk®",
-    "subtitle": "探索附近谁可以参加TableTalk®，发现已安排的实体TableTalk®！",
+    "title": "您附近的用户和实体t2t",
+    "subtitle": "探索附近谁可以参加t2t，发现已安排的实体t2t！",
     "locationError": "无法获取您的位置",
     "permissionDenied": "位置权限被拒绝。要使用地图，请在设备设置中启用位置权限。",
     "errorTitle": "位置错误",
@@ -453,7 +453,7 @@
   },
   "report": {
     "reportUser": "举报用户",
-    "reportSuccess": "举报发送成功。感谢您帮助维护TableTalk®的安全环境。",
+    "reportSuccess": "举报发送成功。感谢您帮助维护table2Talk的安全环境。",
     "userToReport": "要举报的用户",
     "reportReason": "举报原因 *",
     "selectReason": "选择原因",
@@ -485,7 +485,7 @@
     "cancel": "取消",
     "confirm": "确认",
     "subjects": {
-      "meal": "TableTalk®",
+      "meal": "t2t",
       "video": "视频通话",
       "chat": "聊天"
     }
@@ -506,7 +506,7 @@
     "errorTitle": "聊天错误",
     "notFoundTitle": "聊天未找到",
     "notFoundMessage": "无法找到请求的聊天。",
-    "viewMeal": "查看TableTalk®",
+    "viewMeal": "查看t2t",
     "leaveChat": "离开聊天",
     "leaveReportTitle": "离开聊天",
     "messagePlaceholder": "输入消息...",
@@ -529,14 +529,14 @@
     "backToHome": "返回首页"
   },
   "privacy": {
-    "title": "TableTalk隐私政策",
+    "title": "table2Talk隐私政策",
     "lastUpdated": "最后更新：2025年7月26日",
-    "introduction": "欢迎使用TableTalk，这是TableTalk App（\"我们\"、\"我们的\"）的应用程序。您的隐私是我们的首要任务。本隐私政策解释了我们在您使用我们的应用程序（\"服务\"）时收集哪些个人数据、如何使用和保护这些数据，以及您对这些数据的权利。",
+    "introduction": "欢迎使用table2Talk，这是table2Talk App（\"我们\"、\"我们的\"）的应用程序。您的隐私是我们的首要任务。本隐私政策解释了我们在您使用我们的应用程序（\"服务\"）时收集哪些个人数据、如何使用和保护这些数据，以及您对这些数据的权利。",
     "legalBasis": {
       "title": "1. 处理的法律依据",
       "description": "我们根据欧盟通用数据保护条例（GDPR）和其他适用的隐私法律处理您的个人数据。我们处理的法律依据包括：",
       "contractual": "合同必要性：",
-      "contractualDesc": "提供TableTalk的核心功能，如我们的服务条款中所规定。",
+      "contractualDesc": "提供table2Talk的核心功能，如我们的服务条款中所规定。",
       "consent": "同意：",
       "consentDesc": "对于可选功能，如访问您的位置或推送通知。您可以随时撤回同意。",
       "legitimate": "合法利益：",
@@ -557,13 +557,13 @@
       "usage": {
         "title": "服务使用期间收集的数据：",
         "interaction": "互动数据：",
-        "interactionDesc": "关于您创建、参与的虚拟TableTalk®，您屏蔽或举报的用户的信息。",
+        "interactionDesc": "关于您创建、参与的虚拟t2t，您屏蔽或举报的用户的信息。",
         "technical": "技术数据：",
         "technicalDesc": "IP地址、设备类型、操作系统、唯一设备标识符和崩溃数据。"
       },
       "location": {
         "title": "位置数据（在您同意的情况下）：",
-        "description": "如果您提供同意，我们可能会在市级使用您的位置来建议附近的TableTalk®。您可以随时从设备设置中禁用此功能。"
+        "description": "如果您提供同意，我们可能会在市级使用您的位置来建议附近的t2t。您可以随时从设备设置中禁用此功能。"
       }
     },
     "dataUsage": {
@@ -621,21 +621,21 @@
     }
   },
   "history": {
-    "pageTitle": "我的TableTalk®",
-    "totalMeals": "您的历史记录中共有 {{count}} 个TableTalk®",
+    "pageTitle": "我的t2t",
+    "totalMeals": "您的历史记录中共有 {{count}} 个t2t",
     "upcoming": "即将到来",
-    "past": "过去的TableTalk®历史",
-    "organized": "您组织的TableTalk®",
-    "participating": "您参与的TableTalk®",
-    "organizedPast": "您组织的TableTalk®",
-    "participatedPast": "您参与的TableTalk®",
-    "noUpcomingCreated": "您还没有创建任何即将到来的TableTalk®。",
+    "past": "过去的t2t历史",
+    "organized": "您组织的t2t",
+    "participating": "您参与的t2t",
+    "organizedPast": "您组织的t2t",
+    "participatedPast": "您参与的t2t",
+    "noUpcomingCreated": "您还没有创建任何即将到来的t2t。",
     "createOneNow": "现在创建一个！",
-    "noUpcomingParticipated": "您还没有报名参加任何TableTalk®。",
+    "noUpcomingParticipated": "您还没有报名参加任何t2t。",
     "discoverSome": "发现一些！",
-    "noPastCreated": "您组织的TableTalk®还没有结束。",
-    "noPastParticipated": "您还没有参与过任何TableTalk®。",
-    "loadError": "加载您的TableTalk®时出错。"
+    "noPastCreated": "您组织的t2t还没有结束。",
+    "noPastParticipated": "您还没有参与过任何t2t。",
+    "loadError": "加载您的t2t时出错。"
   },
   "invitations": {
     "pageTitle": "您的邀请",
@@ -648,16 +648,16 @@
     "accept": "接受"
   },
   "terms": {
-    "title": "TableTalk 条款和条件",
+    "title": "table2Talk 条款和条件",
     "lastUpdated": "最后更新：2025年7月26日",
-    "welcome": "欢迎使用 TableTalk。在使用我们的服务之前，请仔细阅读这些条款和条件。",
+    "welcome": "欢迎使用 table2Talk。在使用我们的服务之前，请仔细阅读这些条款和条件。",
     "acceptance": {
       "title": "1. 条款接受",
-      "description": "通过访问和使用 TableTalk 平台（服务），您同意受这些条款约束。如果您不同意条款的任何部分，则无法访问服务。"
+      "description": "通过访问和使用 table2Talk 平台（服务），您同意受这些条款约束。如果您不同意条款的任何部分，则无法访问服务。"
     },
     "service": {
       "title": "2. 服务描述",
-      "description": "TableTalk 是一个促进人们之间虚拟会面的平台，通过视频通话分享 TableTalk® 和对话。用户可以创建事件（TableTalk®）或参与其他人创建的事件。"
+      "description": "table2Talk 是一个促进人们之间虚拟会面的平台，通过视频通话分享 t2t 和对话。用户可以创建事件（t2t）或参与其他人创建的事件。"
     },
     "conduct": {
       "title": "3. 用户行为",
@@ -665,7 +665,7 @@
     },
     "liability": {
       "title": "4. 责任限制",
-      "description": "TableTalk 仅提供连接用户的技术平台，不对用户在 TableTalk® 期间的行为或对话内容负责。使用服务需自担风险。"
+      "description": "table2Talk 仅提供连接用户的技术平台，不对用户在 t2t 期间的行为或对话内容负责。使用服务需自担风险。"
     },
     "modifications": {
       "title": "5. 服务和条款修改",
@@ -699,7 +699,7 @@
     "whatWillHappen": "将会发生什么：",
     "consequences": {
       "profile": "您的个人资料和所有个人数据将被永久删除",
-      "meals": "您组织的所有TableTalk®将被取消",
+      "meals": "您组织的所有t2t将被取消",
       "chat": "所有聊天和消息将被删除",
       "invitations": "您的所有邀请和参与请求将被移除",
       "access": "您将无法再访问您的账户",
@@ -719,7 +719,7 @@
     "deleting": "删除中...",
     "deleteError": "删除账户时出错",
     "accountDeleted": "账户已删除",
-    "deletedSuccess": "您的账户已成功删除。感谢您使用TableTalk®。",
+    "deletedSuccess": "您的账户已成功删除。感谢您使用t2t。",
     "redirecting": "您将被重定向到登录页面..."
   },
   "changePasswordModal": {
@@ -758,16 +758,16 @@
       "noLanguagesConfigured": "未配置语言",
       "addLanguage": "+ 添加语言",
       "removeLanguage": "移除",
-      "helpText": "选择您知道的语言以改善您的TableTalk®体验"
+      "helpText": "选择您知道的语言以改善您的table2Talk体验"
     },
     "preferredCuisine": "偏好菜系",
     "noPreference": "无偏好。",
     "whoIAm": "我是谁",
     "noBio": "未输入个人简介。",
-    "organizedMeals": "组织的TableTalk",
-    "noOrganizedMeals": "此用户尚未组织任何TableTalk。",
+    "organizedMeals": "组织的t2t",
+    "noOrganizedMeals": "此用户尚未组织任何t2t。",
     "recentParticipations": "最近参与",
-    "noParticipations": "此用户尚未参与任何TableTalk。"
+    "noParticipations": "此用户尚未参与任何t2t。"
   },
   "videoCall": {
     "connecting": "连接中...",
@@ -775,15 +775,46 @@
     "connectionErrorTitle": "连接错误",
     "permissionDenied": "权限被拒绝。要参与视频通话，您必须授予摄像头和麦克风访问权限。重新加载页面并重试。",
     "networkIssue": "网络问题。检查您的互联网连接并重试。",
-    "authError": "身份验证错误。您的会话可能已过期。返回TableTalk®页面并重试。",
+    "authError": "身份验证错误。您的会话可能已过期。返回t2t页面并重试。",
     "roomNotFound": "找不到房间。视频通话可能已结束或不再存在。",
     "mediaAccessError": "无法访问摄像头或麦克风。检查设备是否已连接并已授予权限。",
     "genericError": "无法连接到视频通话。检查您的互联网连接和浏览器权限并重试。",
     "retry": "重试",
     "retrying": "重试中...",
-    "backToTableTalk": "返回TableTalk®",
+    "backToTableTalk": "返回t2t",
     "leaveCall": "离开通话",
     "endCallForEveryone": "为所有人结束",
     "confirmEndCall": "您确定要为所有参与者结束通话吗？"
+  },
+  "nav": {
+    "home": "Home",
+    "explore": "Explore",
+    "map": "Map",
+    "myT2t": "My t2t",
+    "myT2tShort": "Mine",
+    "create": "Create",
+    "chat": "Chat",
+    "notifications": "Notifications",
+    "profile": "Profile",
+    "login": "Log in",
+    "register": "Sign up",
+    "mainNavLabel": "Main navigation",
+    "mobileNavLabel": "Mobile navigation"
+  },
+  "ui": {
+    "card": {
+      "video": "Video",
+      "inPerson": "In person",
+      "join": "Join",
+      "full": "Full",
+      "joined": "Joined ✓",
+      "manage": "Manage",
+      "seatsLabel": "{{filled}} of {{total}} seats taken",
+      "verifiedHost": "Verified host",
+      "minutes": "min"
+    },
+    "modal": {
+      "close": "Close"
+    }
   }
-} 
+}

@@ -1,7 +1,7 @@
 {
-  "short_name": "TableTalk",
-  "name": "TableTalk - mEat Together",
-  "description": "Trova compagni per pranzi e cene, condividi esperienze culinarie e fai nuove amicizie",
+  "short_name": "table2Talk",
+  "name": "table2Talk",
+  "description": "Condividi un table2Talk in video o dal vivo e crea nuove connessioni.",
   "icons": [
     {
       "src": "assets/icons/icon-48.webp",
@@ -49,8 +49,8 @@
   "start_url": ".",
   "display": "standalone",
   "orientation": "portrait",
-  "theme_color": "#FF6B6B",
-  "background_color": "#ffffff",
+  "theme_color": "#B54735",
+  "background_color": "#FAF7F2",
   "categories": [
     "social",
     "food",
@@ -62,15 +62,15 @@
       "sizes": "1280x720",
       "type": "image/png",
       "platform": "wide",
-      "label": "Homepage di TableTalk"
+      "label": "Homepage di table2Talk"
     }
   ],
   "shortcuts": [
     {
-      "name": "Cerca TableTalk®",
-      "short_name": "Cerca",
-      "description": "Cerca nuovi TableTalk® disponibili",
-      "url": "/search",
+      "name": "Esplora i t2t",
+      "short_name": "Esplora",
+      "description": "Cerca nuovi t2t disponibili",
+      "url": "/meals",
       "icons": [
         {
           "src": "search-icon.png",
@@ -79,9 +79,9 @@
       ]
     },
     {
-      "name": "I Miei TableTalk®",
-      "short_name": "Miei TableTalk®",
-      "description": "Visualizza i tuoi TableTalk®",
+      "name": "I miei t2t",
+      "short_name": "I miei t2t",
+      "description": "Visualizza i tuoi t2t",
       "url": "/my-meals",
       "icons": [
         {

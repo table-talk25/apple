@@ -97,7 +97,7 @@ const AIRecommendationsSection = () => {
               🤖 Raccomandazioni AI Personalizzate
             </h4>
             <p className={styles.subtitle}>
-              Scopri i TableTalk® perfetti per te basati sulle tue preferenze
+              Scopri i t2t perfetti per te basati sulle tue preferenze
             </p>
           </div>
         </Card.Header>
@@ -125,7 +125,7 @@ const AIRecommendationsSection = () => {
                 <div className={styles.previewSection}>
                   <Row>
                     <Col md={8}>
-                      <h5>🎯 Scopri i TableTalk® perfetti per te</h5>
+                      <h5>🎯 Scopri i t2t perfetti per te</h5>
                       <p className="text-muted">
                         La nostra AI analizza le tue preferenze di cucina, orario, prezzo e gruppo sociale 
                         per consigliarti i pasti più adatti a te.

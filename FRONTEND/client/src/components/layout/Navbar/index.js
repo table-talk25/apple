@@ -1,158 +1,134 @@
-// File: src/components/layout/Navbar/index.js
-
-import React, { useState, useEffect, useRef } from 'react';
-import { Link, NavLink, useNavigate } from 'react-router-dom';
-import { FaBars, FaTimes, FaMapMarkerAlt, FaEllipsisV } from 'react-icons/fa';
-import { IoChatbubbleEllipses } from 'react-icons/io5';
+import React, { useMemo } from 'react';
+import { Link, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
+import { MessageCircle } from 'lucide-react';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useChatDrawer } from '../../../contexts/ChatDrawerContext';
-import Logo from '../../common/Logo';
-import styles from './Navbar.module.css';
-import Notifications from '../../../components/notifications/Notifications';
+import { useNotifications } from '../../../contexts/NotificationContext';
 import { getHostAvatarUrl } from '../../../constants/mealConstants';
+import Logo from '../../common/Logo';
 import LanguageMenu from '../../common/LanguageMenu';
+import Notifications from '../../notifications/Notifications';
+import { Avatar, Button } from '../../ui';
+import { isRouteActive } from '../navRoutes';
+import styles from './Navbar.module.css';
 
 const Navbar = () => {
-  const navigate = useNavigate();
-  const { isAuthenticated, user, logout } = useAuth();
+  const { t } = useTranslation();
+  const location = useLocation();
+  const { isAuthenticated, user } = useAuth();
   const { openDrawer } = useChatDrawer();
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [isScrolled, setIsScrolled] = useState(false);
-  const [isKebabMenuOpen, setIsKebabMenuOpen] = useState(false);
-  const kebabMenuRef = useRef(null);
+  const { notifications } = useNotifications();
 
-  useEffect(() => {
-    const handleScroll = () => setIsScrolled(window.scrollY > 10);
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+  const chatUnreadCount = useMemo(() => {
+    if (!Array.isArray(notifications)) return 0;
+    return notifications.filter(
+      (n) => n && n.type === 'new_message' && !(n.read || n.isRead)
+    ).length;
+  }, [notifications]);
 
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (kebabMenuRef.current && !kebabMenuRef.current.contains(event.target)) {
-        setIsKebabMenuOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+  const displayName = useMemo(() => {
+    if (!user) return '';
+    return (
+      user.name ||
+      user.nickname ||
+      [user.firstName, user.lastName].filter(Boolean).join(' ') ||
+      user.email ||
+      ''
+    );
+  }, [user]);
 
-  const closeMobileMenu = () => setIsMobileMenuOpen(false);
+  const avatarSrc = useMemo(() => {
+    if (!user?.profileImage) return '';
+    return getHostAvatarUrl(user.profileImage);
+  }, [user?.profileImage]);
 
-  const handleLogout = () => {
-    logout();
-    closeMobileMenu();
-    navigate('/login');
-  };
+  const navItems = [
+    { key: 'home', to: '/', label: t('nav.home', 'Home') },
+    { key: 'explore', to: '/meals', label: t('nav.explore', 'Esplora') },
+    { key: 'map', to: '/map', label: t('nav.map', 'Mappa') },
+    { key: 'mine', to: '/my-meals', label: t('nav.myT2t', 'I miei t2t') },
+  ];
 
   return (
-    <nav className={`${styles.navbar} ${isScrolled ? styles.scrolled : ''}`}>
-      <div className={styles.navContainer}>
-        {/* Logo a sinistra */}
-        <div className={styles.navLogo} onClick={closeMobileMenu}>
-          <Logo />
-        </div>
+    <header className={styles.topbar}>
+      <div className={styles.wrap}>
+        <Logo to="/" />
 
-        {/* Menu di navigazione centrale per DESKTOP */}
-        <div className={styles.navMenuDesktop}>
-          <NavLink to="/meals" className={({ isActive }) => (isActive ? `${styles.navLink} ${styles.navLinkActive}` : styles.navLink)}>TableTalk®</NavLink>
-          {isAuthenticated && (
-            <>
-              <NavLink to="/my-meals" className={({ isActive }) => (isActive ? `${styles.navLink} ${styles.navLinkActive}` : styles.navLink)}>I Miei TableTalk®</NavLink>
-              <NavLink to="/map" className={({ isActive }) => (isActive ? `${styles.navLink} ${styles.navLinkActive}` : styles.navLink)}>Mappa</NavLink>
-            </>
-          )}
-        </div>
+        <nav
+          className={styles.nav}
+          aria-label={t('nav.mainNavLabel', 'Navigazione principale')}
+        >
+          {navItems.map((item) => {
+            const active = isRouteActive(item.key, location.pathname);
+            return (
+              <Link
+                key={item.key}
+                to={item.to}
+                className={`${styles.navLink} ${active ? styles.active : ''}`}
+                aria-current={active ? 'page' : undefined}
+              >
+                {item.label}
+              </Link>
+            );
+          })}
+        </nav>
 
-        {/* Azioni a destra */}
-        <div className={styles.rightSection}>
-          {/* LanguageMenu sempre visibile */}
-          <div className={styles.languageMenuContainer}>
+        <div className={styles.topActions}>
+          <Button
+            variant="primary"
+            size="sm"
+            to="/meals/create"
+            className={styles.createBtn}
+          >
+            ＋ {t('nav.create', 'Crea')}
+          </Button>
+
+          <div className={styles.langWrap}>
             <LanguageMenu />
           </div>
 
           {isAuthenticated ? (
             <>
-              {/* DESKTOP */}
-              <div className={styles.desktopActions}>
-                {/* Icona Chat → apre il drawer */}
-                <button
-                  className={styles.chatIconButton}
-                  onClick={openDrawer}
-                  aria-label="Chat"
-                >
-                  <IoChatbubbleEllipses />
-                </button>
+              <button
+                type="button"
+                className={styles.iconBtn}
+                onClick={openDrawer}
+                aria-label={t('nav.chat', 'Chat')}
+              >
+                <MessageCircle size={20} strokeWidth={2} />
+                {chatUnreadCount > 0 && (
+                  <span className={styles.dot}>
+                    {chatUnreadCount > 99 ? '99+' : chatUnreadCount}
+                  </span>
+                )}
+              </button>
 
-                <Notifications />
+              <Notifications />
 
-                <Link to="/impostazioni/profilo">
-                  <img src={getHostAvatarUrl(user?.profileImage)} alt="Mio Profilo" className={styles.profileAvatar} />
-                </Link>
-
-                <div className={styles.kebabMenuContainer} ref={kebabMenuRef}>
-                  <button
-                    className={styles.kebabButton}
-                    onClick={() => setIsKebabMenuOpen(!isKebabMenuOpen)}
-                  >
-                    <FaEllipsisV />
-                  </button>
-                  {isKebabMenuOpen && (
-                    <div className={styles.kebabDropdown}>
-                      <div className={styles.kebabItem}>
-                        <button className={styles.logoutButtonKebab} onClick={handleLogout}>
-                          Logout
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* MOBILE */}
-              <div className={styles.mobileActions}>
-                {/* Icona Chat → apre il drawer */}
-                <button
-                  className={styles.chatIconButton}
-                  onClick={openDrawer}
-                  aria-label="Chat"
-                >
-                  <IoChatbubbleEllipses />
-                </button>
-
-                <Notifications />
-
-                <div className={styles.menuIcon} onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>
-                  {isMobileMenuOpen ? <FaTimes /> : <FaBars />}
-                </div>
-              </div>
+              <Link
+                to="/impostazioni/profilo"
+                className={`${styles.avatarLink} ${
+                  isRouteActive('profile', location.pathname) ? styles.avatarActive : ''
+                }`}
+                aria-label={t('nav.profile', 'Profilo')}
+              >
+                <Avatar src={avatarSrc} name={displayName} size="md" tone="accent" />
+              </Link>
             </>
           ) : (
-            <div className={styles.guestActions}>
-              <Link to="/login" className={styles.loginButton}>Accedi</Link>
-              <Link to="/register" className={styles.registerButton}>Registrati</Link>
-            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              to="/login"
+              className={styles.loginBtn}
+            >
+              {t('nav.login', 'Accedi')}
+            </Button>
           )}
         </div>
-
-        {/* Menu a tendina per MOBILE */}
-        {isMobileMenuOpen && (
-          <ul className={styles.navMenuMobile}>
-            <li className={styles.navItem}><NavLink to="/meals" className={({ isActive }) => (isActive ? `${styles.navLink} ${styles.navLinkActive}` : styles.navLink)} onClick={closeMobileMenu}>TableTalk®</NavLink></li>
-            {isAuthenticated ? (
-              <>
-                <li className={styles.navItem}><NavLink to="/my-meals" className={({ isActive }) => (isActive ? `${styles.navLink} ${styles.navLinkActive}` : styles.navLink)} onClick={closeMobileMenu}>I Miei TableTalk®</NavLink></li>
-                <li className={styles.navItem}><NavLink to="/map" className={({ isActive }) => (isActive ? `${styles.navLink} ${styles.navLinkActive}` : styles.navLink)} onClick={closeMobileMenu}><FaMapMarkerAlt /> Mappa</NavLink></li>
-                <li className={styles.navItem}><NavLink to="/impostazioni/profilo" className={({ isActive }) => (isActive ? `${styles.navLink} ${styles.navLinkActive}` : styles.navLink)} onClick={closeMobileMenu}>Il Mio Profilo</NavLink></li>
-                <li className={styles.navItem}>
-                  <button className={styles.logoutButtonKebab} onClick={handleLogout}>Logout</button>
-                </li>
-              </>
-            ) : null}
-          </ul>
-        )}
       </div>
-    </nav>
+    </header>
   );
 };
 

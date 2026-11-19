@@ -1,6 +1,6 @@
 {
-  "name": "TableTalk",
-  "short_name": "TableTalk",
+  "name": "table2Talk",
+  "short_name": "table2Talk",
   "icons": [
     {
       "src": "/android-chrome-192x192.png",
@@ -13,7 +13,7 @@
       "type": "image/png"
     }
   ],
-  "theme_color": "#FF6B6B",
-  "background_color": "#ffffff",
+  "theme_color": "#B54735",
+  "background_color": "#FAF7F2",
   "display": "standalone"
 }

@@ -1,81 +1,111 @@
-/* File: FRONTEND/client/src/components/notifications/Notifications.module.css */
-
 .notificationsContainer {
-    position: relative;
-    display: flex;
-    align-items: center;
-  }
-  
-  .iconButton {
-    background: none;
-    border: none;
-    cursor: pointer;
-    font-size: 1.5rem; /* Dimensione dell'icona */
-    color: var(--tt-text-muted);
-    position: relative;
-    padding: 0.5rem;
-  }
-  
-  .badge {
-    position: absolute;
-    top: 0;
-    right: 0;
-    background-color: var(--primary-color);
-    color: white;
-    border-radius: 50%;
-    width: 18px;
-    height: 18px;
-    font-size: 0.7rem;
-    font-weight: 700;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    border: 2px solid white;
-  }
-  
-  .dropdownMenu {
-    position: absolute;
-    top: 100%;
-    right: 0;
-    margin-top: 0.5rem;
-    background: white;
-    border: 1px solid var(--tt-border);
-    border-radius: 12px;
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-    width: 320px;
-    max-height: 400px;
-    overflow-y: auto;
-    z-index: 1010; /* Sopra la navbar */
-  }
-  
-  .notificationItem {
-    padding: 1rem;
-    border-bottom: 1px solid var(--tt-border);
-    display: flex;
-    flex-direction: column;
-    gap: 0.25rem;
-    font-size: 0.9rem;
-    text-decoration: none;
-    color: var(--tt-text-muted);
-    transition: background-color 0.2s ease;
-  }
-  
-  .notificationItem:last-child {
-    border-bottom: none;
-  }
-  
-  .notificationItem:hover {
-    background-color: var(--tt-background);
-  }
-  
-  .notificationItem.unread {
-    background-color: #fffbe6; /* Sfondo leggermente giallo per le non lette */
-    font-weight: 600;
-  }
-  
-  .notificationDate {
-    font-size: 0.75rem;
-    color: var(--tt-text-muted);
-    font-weight: 400;
-  }
-  
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.iconButton {
+  position: relative;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--tt-text-muted);
+  padding: 0;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.iconButton:hover {
+  background-color: color-mix(in srgb, var(--tt-accent) 10%, transparent);
+  color: var(--tt-accent);
+}
+
+.iconButton:focus-visible {
+  outline: 2px solid var(--tt-focus);
+  outline-offset: 2px;
+}
+
+.badge {
+  position: absolute;
+  top: 1px;
+  right: 1px;
+  background-color: var(--tt-primary);
+  color: var(--tt-on-primary);
+  border-radius: 999px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  font-size: 0.62rem;
+  font-weight: 700;
+  line-height: 1.25;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  border: 1.5px solid var(--tt-surface);
+}
+
+.dropdownMenu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  background-color: var(--tt-surface);
+  border: 1px solid var(--tt-border);
+  border-radius: var(--tt-radius-lg);
+  box-shadow: var(--tt-shadow);
+  width: min(320px, calc(100vw - 32px));
+  max-height: 400px;
+  overflow-y: auto;
+  z-index: 1050;
+}
+
+.notificationItem {
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--tt-border);
+  padding: 0.85rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.88rem;
+  color: var(--tt-text);
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.notificationItem:last-child {
+  border-bottom: none;
+}
+
+.notificationItem:hover {
+  background-color: var(--tt-background);
+}
+
+.notificationItem.unread {
+  background-color: color-mix(in srgb, var(--tt-primary) 7%, var(--tt-surface));
+  font-weight: 600;
+}
+
+.notificationText {
+  color: var(--tt-text);
+  line-height: 1.4;
+}
+
+.notificationDate {
+  font-size: 0.75rem;
+  color: var(--tt-text-muted);
+  font-weight: 400;
+}
+
+.emptyItem {
+  padding: 1rem;
+  font-size: 0.88rem;
+  color: var(--tt-text-muted);
+  text-align: center;
+}

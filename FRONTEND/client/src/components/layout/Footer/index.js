@@ -8,8 +8,8 @@ const Footer = () => {
       <div className={styles.container}>
         <div className={styles.sections}>
           <div className={styles.section}>
-            <h3>TableTalk</h3>
-            <p>Il tuo ristorante preferito</p>
+            <h3>table2Talk</h3>
+            <p>Condividi storie e sapori a tavola</p>
           </div>
           
           <div className={styles.section}>
@@ -36,7 +36,7 @@ const Footer = () => {
         </div>
         
         <div className={styles.bottom}>
-          <p>&copy; {new Date().getFullYear()} TableTalk. Tutti i diritti riservati.</p>
+          <p>&copy; {new Date().getFullYear()} table2Talk. Tutti i diritti riservati.</p>
         </div>
       </div>
     </footer>

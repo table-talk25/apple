@@ -1,12 +1,12 @@
-/* File: src/styles/common/index.css (Versione Unificata e Finale) */
+/* File: src/styles/common/index.css (Versione Unificata — table2Talk) */
 
 /* 1. Import dei Font */
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
 
 /* 2. Definizione di TUTTE le variabili globali */
 :root {
-  /* Palette Convivialita (FE-05): token globali allineati a palette.module.css */
+  /* Palette Convivialita: token globali allineati a palette.module.css */
   --tt-background: #FAF7F2;
   --tt-surface: #FFFFFF;
   --tt-primary: #B54735;
@@ -20,20 +20,35 @@
   --tt-focus: #245C4A;
   --tt-focus-on-dark: #FFFFFF;
   --tt-shadow: 0 8px 25px rgba(36, 40, 36, 0.08);
+  --tt-radius-md: 0.5rem;
+  --tt-radius-lg: 1rem;
+  --tt-font-heading: 'Poppins', sans-serif;
+  --tt-font-body: 'Inter', sans-serif;
+  --tt-header-height: 64px;
+  --tt-bottom-nav-height: 62px;
 
   /* Variabili legacy rimappate sulla palette Convivialita */
-  --primary-color: #B54735;      /* terracotta (era corallo) */
-  --primary-dark: #933829;       /* terracotta scura */
-  --secondary-color: #245C4A;    /* verde profondo (era turchese) */
-  --font-primary: 'Poppins', sans-serif;
-  --font-secondary: 'Inter', sans-serif;
-  --background-primary: #FFFFFF;
-  --background-secondary: #FAF7F2;
-  --text-primary: #242824;
-  --text-secondary: #5C625C;
-  --border-radius-md: 0.5rem;
-  --border-radius-lg: 1rem;
+  --primary-color: var(--tt-primary);
+  --primary-dark: var(--tt-primary-hover);
+  --secondary-color: var(--tt-accent);
+  --font-primary: var(--tt-font-heading);
+  --font-secondary: var(--tt-font-body);
+  --background-primary: var(--tt-surface);
+  --background-secondary: var(--tt-background);
+  --text-primary: var(--tt-text);
+  --text-secondary: var(--tt-text-muted);
+  --border-radius-md: var(--tt-radius-md);
+  --border-radius-lg: var(--tt-radius-lg);
   --box-shadow-sm: 0 2px 4px rgba(36, 40, 36, 0.08);
+
+  /* Override react-toastify sulla palette Convivialita */
+  --toastify-color-light: var(--tt-surface);
+  --toastify-color-info: var(--tt-accent);
+  --toastify-color-success: var(--tt-accent);
+  --toastify-color-warning: var(--tt-primary);
+  --toastify-color-error: var(--tt-primary-hover);
+  --toastify-text-color-light: var(--tt-text);
+  --toastify-font-family: var(--tt-font-body);
 }
 
 /* 3. Reset CSS di base e stili per gli elementi fondamentali */
@@ -43,28 +58,64 @@
   box-sizing: border-box;
 }
 
+html {
+  scroll-padding-top: calc(var(--tt-header-height) + env(safe-area-inset-top) + 12px);
+}
+
 body {
-  font-family: var(--font-secondary);
-  background-color: var(--background-secondary);
-  color: var(--text-primary);
+  font-family: var(--tt-font-body);
+  background-color: var(--tt-background);
+  color: var(--tt-text);
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
+h1,
+h2,
+h3 {
+  font-family: var(--tt-font-heading);
+  line-height: 1.2;
+}
+
+button {
+  font-family: inherit;
+}
+
+:focus-visible {
+  outline: 2px solid var(--tt-focus);
+  outline-offset: 2px;
+}
+
 a {
-  color: var(--primary-color);
+  color: var(--tt-primary);
   text-decoration: none;
   transition: color 0.2s ease;
 }
 a:hover {
-  color: var(--primary-dark);
+  color: var(--tt-primary-hover);
 }
 
 img {
   max-width: 100%;
   height: auto;
   display: block;
+}
+
+@media (max-width: 720px) {
+  body {
+    padding-bottom: calc(var(--tt-bottom-nav-height) + env(safe-area-inset-bottom));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
 }
 
 /* Stili per i controlli zoom di Leaflet nella pagina mappa - evita sovrapposizione con BackButton */

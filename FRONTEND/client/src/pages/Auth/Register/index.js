@@ -101,7 +101,7 @@ const RegisterPage = () => {
             // ?firstTime=1 lascia alla ProfilePage la possibilità di mostrare una
             // header di benvenuto invece dell'header standard di modifica.
             toast.success(
-                'Benvenuto su TableTalk! Completa il tuo profilo per iniziare.',
+                'Benvenuto su table2Talk! Completa il tuo profilo per iniziare.',
                 { autoClose: 6000 }
             );
             navigate('/impostazioni/profilo?firstTime=1', { replace: true });

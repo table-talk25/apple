@@ -1,9 +1,7 @@
-// File: FRONTEND/client/src/components/notifications/Notifications/index.js
-
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { FaBell, FaRegBell } from 'react-icons/fa';
+import { Bell } from 'lucide-react';
 import { useNotifications } from '../../../contexts/NotificationContext';
 import styles from './Notifications.module.css';
 
@@ -14,26 +12,30 @@ const Notifications = () => {
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef(null);
 
-  // Registra navigate nel context così i toast possono navigare senza hook extra
   useEffect(() => {
     setNavigate(navigate);
   }, [navigate, setNavigate]);
 
-  // Chiudi il dropdown cliccando fuori
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (containerRef.current && !containerRef.current.contains(e.target)) {
         setIsOpen(false);
       }
     };
+    const handleEsc = (e) => {
+      if (e.key === 'Escape') setIsOpen(false);
+    };
     document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener('keydown', handleEsc);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleEsc);
+    };
   }, []);
 
   const handleToggle = async () => {
     const opening = !isOpen;
     setIsOpen(opening);
-    // Segna tutto come letto quando apro il pannello
     if (opening && unreadCount > 0) {
       await markAllAsRead();
     }
@@ -51,11 +53,13 @@ const Notifications = () => {
   return (
     <div className={styles.notificationsContainer} ref={containerRef}>
       <button
+        type="button"
         onClick={handleToggle}
         className={styles.iconButton}
-        aria-label="Notifiche"
+        aria-label={t('nav.notifications', 'Notifiche')}
+        aria-expanded={isOpen}
       >
-        {unreadCount > 0 ? <FaBell /> : <FaRegBell />}
+        <Bell size={20} strokeWidth={2} />
         {unreadCount > 0 && (
           <span className={styles.badge}>
             {unreadCount > 99 ? '99+' : unreadCount}
@@ -64,22 +68,23 @@ const Notifications = () => {
       </button>
 
       {isOpen && (
-        <div className={styles.dropdownMenu}>
+        <div className={styles.dropdownMenu} role="menu">
           {loading ? (
             <div className={styles.notificationItem}>
               {t('notifications.loading')}
             </div>
           ) : notifications.length > 0 ? (
             notifications.map((notif, i) => (
-              <div
+              <button
+                type="button"
                 key={notif._id || i}
                 className={`${styles.notificationItem} ${
                   !(notif.read || notif.isRead) ? styles.unread : ''
                 }`}
                 onClick={() => handleNotifClick(notif)}
-                style={{ cursor: 'pointer' }}
+                role="menuitem"
               >
-                <span>{notif.message}</span>
+                <span className={styles.notificationText}>{notif.message}</span>
                 <span className={styles.notificationDate}>
                   {notif.createdAt
                     ? new Date(notif.createdAt).toLocaleTimeString([], {
@@ -88,10 +93,10 @@ const Notifications = () => {
                       })
                     : ''}
                 </span>
-              </div>
+              </button>
             ))
           ) : (
-            <div className={styles.notificationItem}>
+            <div className={styles.emptyItem}>
               {t('notifications.noNotifications')}
             </div>
           )}

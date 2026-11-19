@@ -3,10 +3,9 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { FaSearch, FaTicketAlt, FaVideo, FaUsers, FaLanguage, FaShieldAlt } from 'react-icons/fa';
-import { useAuth } from '../../contexts/AuthContext'; 
-import Navbar from '../../components/layout/Navbar';
+import { useAuth } from '../../contexts/AuthContext';
 import styles from './HomePage.module.css';
-import { useTranslation } from 'react-i18next'
+import { useTranslation } from 'react-i18next';
 
 function HomePage() {
   const { isAuthenticated } = useAuth();
@@ -14,7 +13,6 @@ function HomePage() {
 
   return (
     <div className={styles.homeContainer}>
-      <Navbar />
       {/* --- SEZIONE HERO --- */}
       <section className={styles.heroSection}>
         <h1 dangerouslySetInnerHTML={{ __html: t('home.heroTitle') }} />
