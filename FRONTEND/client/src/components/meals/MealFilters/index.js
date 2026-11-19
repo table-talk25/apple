@@ -26,7 +26,7 @@ const MealFilters = ({ filters, onFilterChange }) => {
   const handleReset = () => {
     onFilterChange(() => ({
       type: '',
-      mealType: '', // Reset anche il tipo di TableTalk®
+      mealType: '', // Reset anche il tipo di t2t
       status: '',
       sortBy: 'date',
     }));

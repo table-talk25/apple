@@ -61,7 +61,7 @@ const SearchMealsPage = () => {
     <Container fluid className={styles.page}>
       <div className={styles.header}>
         <BackButton onClick={() => navigate(-1)} />
-        <h1 className={styles.pageTitle}>{t('meals.searchTitle', 'Cerca TableTalk')}</h1>
+        <h1 className={styles.pageTitle}>{t('meals.searchTitle', 'Cerca t2t')}</h1>
       </div>
 
       <Link to="/meals/create" className={styles.createButton}>{t('meals.createButton')}</Link>

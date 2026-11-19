@@ -109,9 +109,9 @@ const ChatListPage = () => {
         <div className={styles.emptyState}>
           <span className={styles.emptyIcon}>\uD83D\uDCAC</span>
           <p className={styles.emptyTitle}>Nessuna chat attiva</p>
-          <p className={styles.emptySubtitle}>Le tue chat appariranno qui quando parteciperai a un TableTalk\u00AE.</p>
+          <p className={styles.emptySubtitle}>Le tue chat appariranno qui quando parteciperai a un t2t.</p>
           <button className={styles.retryBtn} onClick={() => navigate('/meals')}>
-            Esplora i TableTalk\u00AE
+            Esplora i t2t
           </button>
         </div>
       )}

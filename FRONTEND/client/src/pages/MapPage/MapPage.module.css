@@ -1,225 +1,155 @@
-/* File: MapPage.module.css - Versione UX Migliorata */
-
-.mapPage {
-  position: relative;
+.page {
   width: 100%;
-  height: 100vh;
-  height: 100dvh; /* Fix per mobile browser */
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  background: var(--tt-border);
-}
-
-.mapContainer {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  width: 100%;
-  height: 100%;
-  z-index: 1;
-}
-
-/* --- TOP BAR FLUTTUANTE --- */
-.topBar {
-  position: absolute;
-  top: 15px; /* Spazio dall'alto */
-  left: 10px;
-  right: 10px;
-  z-index: 100;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  pointer-events: none; /* Permette di cliccare la mappa ai lati */
-}
-
-/* Bottone Indietro Piccolo */
-.backButton {
-  pointer-events: auto;
-  background: white !important;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-  border-radius: 50% !important;
-  width: 45px;
-  height: 45px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: none;
+  padding: 24px 0 28px;
   color: var(--tt-text);
 }
 
-/* Contenitore Barra Ricerca (Pillola Bianca) */
-.searchContainer {
-  pointer-events: auto;
-  flex: 1;
-  background: white;
-  border-radius: 25px; /* Forma a pillola */
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-  display: flex;
-  align-items: center;
-  padding: 5px 5px 5px 15px; /* Padding interno */
-  height: 50px;
-  transition: box-shadow 0.2s;
+.pageHead {
+  margin-bottom: 16px;
 }
 
-.searchContainer:focus-within {
-  box-shadow: 0 6px 16px rgba(0,0,0,0.2);
+.pageHead h1 {
+  font-family: var(--tt-font-heading);
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--tt-text);
+  margin: 0;
+}
+
+.pageHead p {
+  color: var(--tt-text-muted);
+  font-size: 0.95rem;
+  margin: 4px 0 0;
+}
+
+.mapWrap {
+  position: relative;
+  width: 100%;
+  height: calc(100vh - 190px);
+  height: calc(100dvh - 190px);
+  min-height: 420px;
+  border-radius: var(--tt-radius-lg);
+  overflow: hidden;
+  border: 1px solid var(--tt-border);
+  background-color: var(--tt-background);
+}
+
+.mapSearch {
+  position: absolute;
+  top: max(12px, env(safe-area-inset-top));
+  left: 12px;
+  right: 12px;
+  z-index: 500;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background-color: var(--tt-surface);
+  border: 1px solid var(--tt-border);
+  border-radius: 999px;
+  padding: 5px 6px 5px 14px;
+  box-shadow: var(--tt-shadow);
 }
 
 .searchIcon {
   color: var(--tt-text-muted);
-  margin-right: 8px;
-  font-size: 1.1rem;
+  flex-shrink: 0;
 }
 
 .searchInput {
+  flex: 1;
+  min-width: 0;
   border: none;
   outline: none;
   background: transparent;
-  flex: 1;
-  font-size: 1rem;
+  font-family: var(--tt-font-body);
+  font-size: 0.94rem;
   color: var(--tt-text);
-  width: 100%;
 }
 
 .searchInput::placeholder {
   color: var(--tt-text-muted);
-  font-size: 0.9rem;
 }
 
-/* Bottone VAI */
-.searchButton {
-  background: var(--tt-primary);
-  color: white;
-  border: none;
-  border-radius: 20px;
-  padding: 8px 16px;
-  font-weight: 600;
-  font-size: 0.9rem;
-  cursor: pointer;
-  transition: background 0.2s;
-  height: 40px;
-}
-
-.searchButton:disabled {
-  background: var(--tt-border);
-  color: var(--tt-text-muted);
-}
-
-.searchButton:active {
-  transform: scale(0.95);
-}
-
-/* --- CONTROLLI IN BASSO --- */
-.floatingControls {
-  position: absolute;
-  bottom: 100px; /* Sopra la navbar */
-  right: 15px;
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
-  z-index: 99;
-  pointer-events: none;
-  align-items: flex-end; /* Allinea a destra */
-}
-
-/* Bottoni rotondi o pillole (Cerca qui, Posizione) */
-.fab {
-  pointer-events: auto;
-  height: 45px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
-  border: none !important;
-  background: white !important;
-  color: var(--tt-primary) !important;
-  font-weight: 600;
-  display: flex;
+.locateBtn {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 1px solid var(--tt-border);
+  background-color: var(--tt-background);
+  color: var(--tt-accent);
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  border-radius: 25px !important; /* Pillola per 'Cerca qui' */
-  padding: 0 20px !important;
+  flex-shrink: 0;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
 }
 
-/* Se il bottone ha solo icona (come location), lo facciamo rotondo */
-.fab:not(:has(span, div)):empty, 
-.fab[title="La mia posizione"] {
-    width: 45px;
-    padding: 0 !important;
-    border-radius: 50% !important;
+.locateBtn:hover:not(:disabled) {
+  border-color: var(--tt-accent);
+  background-color: color-mix(in srgb, var(--tt-accent) 8%, var(--tt-surface));
 }
 
-/* --- TOGGLE LISTA (In basso al centro) --- */
-.listToggle {
+.locateBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.mapHere {
   position: absolute;
-  bottom: 20px;
+  bottom: 14px;
   left: 50%;
   transform: translateX(-50%);
-  z-index: 100;
-  background: var(--tt-text) !important;
-  color: white !important;
-  border-radius: 30px !important;
-  padding: 10px 24px !important;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.3) !important;
-  display: flex;
-  align-items: center;
-  gap: 8px;
+  z-index: 500;
+  background-color: var(--tt-surface);
+  border: 1px solid var(--tt-border);
+  border-radius: 999px;
+  padding: 0.5rem 1.05rem;
+  font-family: var(--tt-font-body);
   font-weight: 600;
-  border: none !important;
-}
-
-/* --- ANTEPRIMA PASTO (Bottom Sheet) --- */
-.mealPreviewContainer {
-  position: absolute;
-  bottom: 80px;
-  left: 0;
-  right: 0;
-  padding: 0 15px;
-  z-index: 101;
-  display: flex;
-  justify-content: center;
-  pointer-events: none; /* Clicca attraverso i lati */
-}
-
-.mealPreviewCard {
-  pointer-events: auto;
-  width: 100%;
-  max-width: 400px;
-  position: relative;
-  animation: slideUp 0.3s ease-out;
-}
-
-.closePreview {
-  position: absolute;
-  top: -10px;
-  right: -10px;
-  background: white;
-  color: var(--tt-text);
-  border: none;
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.2rem;
+  font-size: 0.85rem;
+  color: var(--tt-accent);
+  box-shadow: var(--tt-shadow);
+  white-space: nowrap;
+  max-width: calc(100% - 120px);
   cursor: pointer;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-  z-index: 102;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
 }
 
-@keyframes slideUp {
-  from { transform: translateY(100%); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
+.mapHere:hover:not(:disabled) {
+  border-color: var(--tt-accent);
+  background-color: color-mix(in srgb, var(--tt-accent) 6%, var(--tt-surface));
 }
 
-/* Mobile Adjustments */
-@media (max-width: 380px) {
-    .searchInput::placeholder {
-        font-size: 0.8rem;
-    }
-    .searchButton {
-        padding: 5px 12px;
-    }
+.mapHere:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.mapSearch:focus-within,
+.mapHere:focus-visible,
+.locateBtn:focus-visible {
+  outline: 2px solid var(--tt-focus);
+  outline-offset: 2px;
+}
+
+@media (max-width: 720px) {
+  .page {
+    padding: 16px 0 18px;
+  }
+
+  .pageHead {
+    margin-bottom: 12px;
+  }
+
+  .mapWrap {
+    height: calc(100vh - 220px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+    height: calc(100dvh - 220px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+    min-height: 360px;
+  }
+
+  .mapHere {
+    font-size: 0.8rem;
+    padding: 0.45rem 0.9rem;
+  }
 }

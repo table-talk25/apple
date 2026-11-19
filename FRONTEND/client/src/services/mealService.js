@@ -1,7 +1,7 @@
 // File: frontend/client/src/services/mealService.js (Corretto)
 
 /**
- * 🍽️ SERVIZIO PASTI (TableTalk®)
+ * 🍽️ SERVIZIO PASTI (t2t)
  * 
  * Metodi HTTP utilizzati:
  * - GET: Lettura dati

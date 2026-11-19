@@ -81,7 +81,7 @@ class NotificationService {
    */
   _showWebForegroundNotification(payload) {
     try {
-      const title = payload.notification?.title || payload.data?.title || 'TableTalk';
+      const title = payload.notification?.title || payload.data?.title || 'table2Talk';
       const body = payload.notification?.body || payload.data?.body || 'Hai una nuova notifica';
       const data = payload.data || {};
 
@@ -196,7 +196,7 @@ class NotificationService {
     if (!this.isLocalNotificationsAvailable) return;
     try {
       this.sendLocalNotification({
-        title: pushNotification.title || 'TableTalk',
+        title: pushNotification.title || 'table2Talk',
         body: pushNotification.body || 'Nuova notifica',
         id: Date.now(),
         schedule: { at: new Date(Date.now() + 100) },
@@ -254,7 +254,7 @@ class NotificationService {
       const { LocalNotifications } = await import('@capacitor/local-notifications');
       await LocalNotifications.schedule({
         notifications: [{
-          title: notification.title || 'TableTalk',
+          title: notification.title || 'table2Talk',
           body: notification.body || notification.message || 'Nuova notifica',
           id: notification.id || Date.now(),
           schedule: notification.schedule || { at: new Date(Date.now() + 1000) },

@@ -8,23 +8,23 @@ const MealHistory = ({ createdMeals = [], participatedMeals = [] }) => {
     <div className={styles.mealHistoryContainer}>
       <div className={styles.mealsSectionsWrapper}>
         <div className={styles.createdMeals}>
-          <h3>TableTalk® creati da te</h3>
+          <h3>t2t creati da te</h3>
           <div className={styles.mealsList}>
             {createdMeals.length > 0 ? (
               createdMeals.slice(0, 3).map(meal => <MealCard key={meal._id} meal={meal} />)
             ) : (
-              <p className={styles.noMeals}>Non hai ancora creato nessun TableTalk®.</p>
+              <p className={styles.noMeals}>Non hai ancora creato nessun t2t.</p>
             )}
           </div>
         </div>
 
         <div className={styles.participatedMeals}>
-          <h3>TableTalk® a cui hai partecipato</h3>
+          <h3>t2t a cui hai partecipato</h3>
           <div className={styles.mealsList}>
             {participatedMeals.length > 0 ? (
               participatedMeals.slice(0, 3).map(meal => <MealCard key={meal._id} meal={meal} />)
             ) : (
-              <p className={styles.noMeals}>Non hai ancora partecipato a nessun TableTalk®.</p>
+              <p className={styles.noMeals}>Non hai ancora partecipato a nessun t2t.</p>
             )}
           </div>
         </div>

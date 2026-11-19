@@ -6,7 +6,7 @@ import styles from './JoinMealButton.module.css';
 
 const JoinMealButton = ({ mealId, onSuccess }) => {
   // Loading per-meal: il bottone si disabilita SOLO mentre stiamo joinando
-  // questo specifico TableTalk®. Un refetch generale o un join su un altro
+  // questo specifico t2t. Un refetch generale o un join su un altro
   // meal non lo tocca.
   const { joinMeal, isActionLoading } = useMeals();
   const isJoining = isActionLoading(mealId);
@@ -34,7 +34,7 @@ const JoinMealButton = ({ mealId, onSuccess }) => {
           <Spinner as="span" animation="border" size="sm" role="status" aria-hidden="true" />
           <span> Attendi...</span>
         </>
-              ) : 'Unisciti al TableTalk®'}
+              ) : 'Unisciti al t2t'}
     </Button>
   );
 };

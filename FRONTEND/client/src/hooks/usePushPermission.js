@@ -31,7 +31,7 @@ function usePushPermission() {
           if (status.localNotifications) {
             setTimeout(() => {
               notificationService.sendImmediateNotification(
-                'TableTalk', 
+                'table2Talk', 
                 'Notifiche push configurate correttamente! 🎉'
               );
             }, 3000);
@@ -43,7 +43,7 @@ function usePushPermission() {
           if (status.localNotifications) {
             setTimeout(() => {
               notificationService.sendImmediateNotification(
-                'TableTalk', 
+                'table2Talk', 
                 'App avviata con notifiche locali. Le notifiche push richiedono configurazione Firebase.'
               );
             }, 3000);

@@ -38,7 +38,7 @@ export const MealsProvider = ({ children }) => {
             setMeals(current => Array.isArray(current) ? [created, ...current] : [created]);
             return created;
         } catch (error) {
-            console.error("Errore durante la creazione del TableTalk® nel context:", error);
+            console.error("Errore durante la creazione del t2t nel context:", error);
             throw error;
         } finally {
             setCreating(false);
@@ -64,7 +64,7 @@ export const MealsProvider = ({ children }) => {
             setMeals(merged);
             setError('');
         } catch (err) {
-            setError('Errore nel caricamento dei TableTalk®. Riprova più tardi.');
+            setError('Errore nel caricamento dei t2t. Riprova più tardi.');
             setMeals([]);
         } finally {
             setLoading(false);
@@ -84,12 +84,12 @@ export const MealsProvider = ({ children }) => {
         });
     };
 
-    // 🍽️ Iscrizione a un TableTalk®: callback unica con toast di successo/errore
+    // 🍽️ Iscrizione a un t2t: callback unica con toast di successo/errore
     // e aggiornamento dello state locale (upsert immediato + refetch dopo successo)
     const joinMeal = useCallback(async (mealId) => {
         if (!mealId) {
             const err = new Error('mealId mancante');
-            toast.error('Impossibile unirsi al TableTalk®: ID mancante.');
+            toast.error('Impossibile unirsi al t2t: ID mancante.');
             throw err;
         }
         setActionMealId(mealId);
@@ -105,7 +105,7 @@ export const MealsProvider = ({ children }) => {
                 upsertMeal(updatedMeal);
             }
 
-            toast.success('Ti sei unito al TableTalk® con successo!');
+            toast.success('🎉 Sei dentro! Lo trovi in «I miei t2t».');
 
             // Refetch in background per allineare lo state (partecipanti, conteggi, ecc.)
             // Non blocchiamo il return: il chiamante può già usare updatedMeal.
@@ -115,15 +115,15 @@ export const MealsProvider = ({ children }) => {
         } catch (err) {
             const status = err?.response?.status;
             const serverMessage = err?.response?.data?.message;
-            let userMessage = serverMessage || 'Errore durante l\'iscrizione al TableTalk®. Riprova più tardi.';
+            let userMessage = serverMessage || 'Errore durante l\'iscrizione al t2t. Riprova più tardi.';
             if (status === 401) {
-                userMessage = 'Devi effettuare l\'accesso per unirti a un TableTalk®.';
+                userMessage = 'Devi effettuare l\'accesso per unirti a un t2t.';
             } else if (status === 403) {
-                userMessage = serverMessage || 'Non sei autorizzato a unirti a questo TableTalk®.';
+                userMessage = serverMessage || 'Non sei autorizzato a unirti a questo t2t.';
             } else if (status === 404) {
-                userMessage = 'TableTalk® non trovato. Potrebbe essere stato rimosso.';
+                userMessage = 't2t non trovato. Potrebbe essere stato rimosso.';
             } else if (status === 409) {
-                userMessage = serverMessage || 'Sei già iscritto a questo TableTalk®.';
+                userMessage = serverMessage || 'Sei già iscritto a questo t2t.';
             }
             toast.error(userMessage);
             console.error('Errore durante joinMeal nel context:', err);
@@ -133,12 +133,12 @@ export const MealsProvider = ({ children }) => {
         }
     }, [fetchMeals]);
 
-    // 🚪 Abbandono di un TableTalk®: callback unica con toast di successo/errore
+    // 🚪 Abbandono di un t2t: callback unica con toast di successo/errore
     // e aggiornamento dello state locale (rimozione/upsert + refetch dopo successo)
     const leaveMeal = useCallback(async (mealId) => {
         if (!mealId) {
             const err = new Error('mealId mancante');
-            toast.error('Impossibile abbandonare il TableTalk®: ID mancante.');
+            toast.error('Impossibile abbandonare il t2t: ID mancante.');
             throw err;
         }
         setActionMealId(mealId);
@@ -154,7 +154,7 @@ export const MealsProvider = ({ children }) => {
                 upsertMeal(updatedMeal);
             }
 
-            toast.success('Hai abbandonato il TableTalk®.');
+            toast.success('Hai abbandonato il tavolo. Il posto è tornato libero.');
 
             // Refetch in background per riallineare partecipanti/contatori globali
             fetchMeals().catch(() => { /* errore già gestito da fetchMeals */ });
@@ -163,13 +163,13 @@ export const MealsProvider = ({ children }) => {
         } catch (err) {
             const status = err?.response?.status;
             const serverMessage = err?.response?.data?.message;
-            let userMessage = serverMessage || 'Errore durante l\'abbandono del TableTalk®. Riprova più tardi.';
+            let userMessage = serverMessage || 'Errore durante l\'abbandono del t2t. Riprova più tardi.';
             if (status === 401) {
-                userMessage = 'Devi effettuare l\'accesso per abbandonare un TableTalk®.';
+                userMessage = 'Devi effettuare l\'accesso per abbandonare un t2t.';
             } else if (status === 403) {
-                userMessage = serverMessage || 'Non sei autorizzato a abbandonare questo TableTalk®.';
+                userMessage = serverMessage || 'Non sei autorizzato a abbandonare questo t2t.';
             } else if (status === 404) {
-                userMessage = 'TableTalk® non trovato. Potrebbe essere stato rimosso.';
+                userMessage = 't2t non trovato. Potrebbe essere stato rimosso.';
             }
             toast.error(userMessage);
             console.error('Errore durante leaveMeal nel context:', err);
