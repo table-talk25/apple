@@ -6,7 +6,7 @@ import profileService from '../../services/profileService';
 const PublicProfileDetail = ({ user, onInvite, onBack }) => {
   if (!user) return null;
 
-          // Filtra le partecipazioni recenti (esclude TableTalk® organizzati)
+          // Filtra le partecipazioni recenti (esclude t2t organizzati)
   const participatedMeals = (user.joinedMeals || []).filter(
     joinedMeal => !(user.createdMeals || []).some(createdMeal => createdMeal._id === joinedMeal._id)
   );
@@ -42,10 +42,10 @@ const PublicProfileDetail = ({ user, onInvite, onBack }) => {
           <div>Interessi: {user.interests.map(interest => <Badge key={interest} pill bg="info" style={{ marginRight: 4 }}>{interest}</Badge>)}</div>
         )}
       </div>
-              {/* Accordion per TableTalk® organizzati e partecipazioni */}
+              {/* Accordion per t2t organizzati e partecipazioni */}
       <Accordion>
         <Accordion.Item eventKey="0">
-          <Accordion.Header>TableTalk Organizzati ({user.createdMeals?.length || 0})</Accordion.Header>
+          <Accordion.Header>t2t Organizzati ({user.createdMeals?.length || 0})</Accordion.Header>
           <Accordion.Body>
             {user.createdMeals && user.createdMeals.length > 0 ? (
               <ul>
@@ -56,7 +56,7 @@ const PublicProfileDetail = ({ user, onInvite, onBack }) => {
                   </li>
                 ))}
               </ul>
-            ) : <p className="text-muted small">Nessun TableTalk organizzato.</p>}
+            ) : <p className="text-muted small">Nessun t2t organizzato.</p>}
           </Accordion.Body>
         </Accordion.Item>
         <Accordion.Item eventKey="1">
@@ -76,7 +76,7 @@ const PublicProfileDetail = ({ user, onInvite, onBack }) => {
         </Accordion.Item>
       </Accordion>
       <button onClick={onInvite} style={{ width: '100%', padding: '10px', marginTop: 16 }}>
-        Invita a un TableTalk 🍽️
+        Invita a un t2t 🍽️
       </button>
     </div>
   );

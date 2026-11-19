@@ -1074,5 +1074,31 @@
     "deleteAccount": "Delete account",
     "deleteHint": "Deletion is permanent and removes all of your data.",
     "logoutConfirmShort": "Are you sure you want to log out?"
+  },
+  "mapUi": {
+    "title": "Map",
+    "subtitle": "In-person tables near you.",
+    "searchPlaceholder": "Search city or street (e.g. Milan)…",
+    "go": "Go",
+    "searchThisArea": "Search this area",
+    "searching": "Searching…",
+    "myLocation": "My location",
+    "youAreHere": "You are here",
+    "selectedLocation": "Selected location",
+    "openDetails": "View details →",
+    "joinT2t": "Join t2t",
+    "foundCount": "Found {{count}} t2t in this area.",
+    "noneInArea": "No live t2t in this area. Pan the map and tap «Search this area».",
+    "locationUpdated": "Location updated!",
+    "locationDenied": "Location permission denied. Search your city manually.",
+    "locationUnavailable": "Use the search bar above to find your city.",
+    "placeNotFound": "Place not found. Try «Milan» or «Rome».",
+    "movedTo": "Moved to: {{place}}",
+    "connectionError": "Connection error while searching.",
+    "loadError": "Could not load tables on the map.",
+    "fallbackTitle": "The interactive map is unavailable right now.",
+    "fallbackDesc": "You can still browse all live tables in Explore.",
+    "fallbackCta": "Go to Explore →",
+    "fallbackRetry": "Retry"
   }
 }

@@ -1,4 +1,4 @@
-# TableTalk
+# table2Talk
 
 Applicazione full-stack per organizzare e condividere pasti sociali (online e in presenza), con chat in tempo reale, videochiamate e supporto web/mobile.
 

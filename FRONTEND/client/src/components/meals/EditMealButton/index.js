@@ -7,7 +7,7 @@ import styles from './EditMealButton.module.css';
 const EditMealButton = ({ mealId }) => {
   return (
     <Link to={`/meals/edit/${mealId}`} className={styles.editButton}>
-              Modifica TableTalk®
+              Modifica t2t
     </Link>
   );
 };

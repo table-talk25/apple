@@ -60,7 +60,7 @@ class ErrorMonitoringService {
           // Aggiungi tag per categorizzazione
           event.tags = {
             ...event.tags,
-            app: 'TableTalk',
+            app: 'table2Talk',
             version: process.env.REACT_APP_VERSION || '1.0.0',
             platform: 'web'
           };

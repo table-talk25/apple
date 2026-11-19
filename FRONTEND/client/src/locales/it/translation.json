@@ -1136,5 +1136,31 @@
     "deleteAccount": "Elimina account",
     "deleteHint": "L'eliminazione è definitiva e rimuove tutti i tuoi dati.",
     "logoutConfirmShort": "Vuoi davvero uscire dal tuo account?"
+  },
+  "mapUi": {
+    "title": "Mappa",
+    "subtitle": "I tavoli dal vivo vicino a te.",
+    "searchPlaceholder": "Cerca città o via (es. Milano)…",
+    "go": "Vai",
+    "searchThisArea": "Cerca in questa zona",
+    "searching": "Ricerca…",
+    "myLocation": "La mia posizione",
+    "youAreHere": "Tu sei qui",
+    "selectedLocation": "Posizione selezionata",
+    "openDetails": "Vedi dettagli →",
+    "joinT2t": "Partecipa al t2t",
+    "foundCount": "Trovati {{count}} t2t in questa zona.",
+    "noneInArea": "Nessun t2t dal vivo in questa zona. Sposta la mappa e premi «Cerca in questa zona».",
+    "locationUpdated": "Posizione aggiornata!",
+    "locationDenied": "Permesso posizione negato. Cerca manualmente la tua città.",
+    "locationUnavailable": "Usa la barra in alto per cercare la tua città.",
+    "placeNotFound": "Luogo non trovato. Prova «Milano» o «Roma».",
+    "movedTo": "Spostato su: {{place}}",
+    "connectionError": "Errore di connessione durante la ricerca.",
+    "loadError": "Impossibile caricare i t2t sulla mappa.",
+    "fallbackTitle": "La mappa interattiva non è disponibile al momento.",
+    "fallbackDesc": "I tavoli dal vivo sono comunque elencati in Esplora.",
+    "fallbackCta": "Vai a Esplora →",
+    "fallbackRetry": "Riprova"
   }
 }

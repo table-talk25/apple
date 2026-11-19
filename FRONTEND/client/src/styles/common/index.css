@@ -118,14 +118,92 @@ img {
   }
 }
 
-/* Stili per i controlli zoom di Leaflet nella pagina mappa - evita sovrapposizione con BackButton */
-.leaflet-control-zoom {
-  margin-top: calc(env(safe-area-inset-top) + 10px) !important;
-  margin-left: 10px !important;
-  z-index: 10 !important;
+/* Stili Mappa Leaflet: controlli zoom bottomleft, pin Convivialita e popup */
+.leaflet-container {
+  font-family: var(--tt-font-body);
+  background-color: var(--tt-background);
 }
 
-.leaflet-top.leaflet-left {
-  top: calc(env(safe-area-inset-top) + 10px) !important;
-  left: 10px !important;
+.leaflet-bottom.leaflet-left .leaflet-control-zoom {
+  margin-bottom: 14px !important;
+  margin-left: 12px !important;
+  border: 1px solid var(--tt-border) !important;
+  border-radius: var(--tt-radius-md) !important;
+  overflow: hidden;
+  box-shadow: var(--tt-shadow) !important;
+}
+
+.leaflet-control-zoom a {
+  background-color: var(--tt-surface) !important;
+  color: var(--tt-text) !important;
+  border-bottom-color: var(--tt-border) !important;
+}
+
+.leaflet-control-zoom a:hover {
+  background-color: var(--tt-background) !important;
+  color: var(--tt-primary) !important;
+}
+
+.tt-map-pin {
+  width: 26px;
+  height: 26px;
+  background-color: var(--tt-primary);
+  border-radius: 50% 50% 50% 0;
+  transform: rotate(-45deg);
+  border: 2px solid var(--tt-surface);
+  box-shadow: 0 2px 6px color-mix(in srgb, var(--tt-text) 32%, transparent);
+}
+
+.tt-map-user-pin {
+  width: 16px;
+  height: 16px;
+  background-color: var(--tt-accent);
+  border-radius: 50%;
+  border: 2.5px solid var(--tt-surface);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--tt-accent) 26%, transparent);
+}
+
+.tt-map-popup {
+  min-width: 170px;
+  font-family: var(--tt-font-body);
+  color: var(--tt-text);
+}
+
+.tt-map-popup-title {
+  margin: 0 0 4px;
+  font-family: var(--tt-font-heading);
+  font-size: 0.94rem;
+  font-weight: 600;
+  color: var(--tt-text);
+}
+
+.tt-map-popup-meta {
+  margin: 0;
+  font-size: 0.82rem;
+  color: var(--tt-text-muted);
+}
+
+.tt-map-popup-btn {
+  margin-top: 8px;
+  border: none;
+  background: none;
+  padding: 0;
+  font-family: var(--tt-font-body);
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--tt-accent);
+  cursor: pointer;
+}
+
+.tt-map-popup-btn:hover {
+  color: var(--tt-primary);
+}
+
+@media (max-width: 600px) {
+  .leaflet-bottom.leaflet-right .leaflet-control-attribution {
+    max-width: 140px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
 }

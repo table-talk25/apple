@@ -130,13 +130,13 @@ const ChatList = ({ onSelectChat }) => {
         <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>💬</div>
         <p style={{ fontWeight: 600, color: '#4a5568', marginBottom: '0.4rem' }}>Nessuna chat attiva</p>
         <p style={{ fontSize: '0.875rem', maxWidth: '30ch', margin: '0 auto 1.5rem' }}>
-          Le tue chat appariranno qui quando parteciperai a un TableTalk®.
+          Le tue chat appariranno qui quando parteciperai a un t2t.
         </p>
         <button
           onClick={() => navigate('/meals')}
           style={{ background: '#FF6B35', color: '#fff', border: 'none', borderRadius: '8px', padding: '0.5rem 1.2rem', cursor: 'pointer', fontWeight: 600 }}
         >
-          Esplora i TableTalk®
+          Esplora i t2t
         </button>
       </div>
     );

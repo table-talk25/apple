@@ -53,7 +53,7 @@ const MealCard = ({ meal, onLeaveSuccess, compact = false }) => {
     e.stopPropagation();
 
     const shareData = {
-      title: `TableTalk: ${meal.title}`,
+      title: `table2Talk: ${meal.title}`,
       text: `Unisciti al mio tavolo per ${meal.title}! 🍽️`,
       url: `${window.location.origin}/#/meals/${meal._id}` // Link diretto al pasto (con # per HashRouter)
     };

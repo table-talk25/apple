@@ -24,7 +24,7 @@ export const DEV_SERVER_URL = SERVER_URL;
 
 const config = {
   appId: 'io.tabletalk.app',
-  appName: 'TableTalk - mEat Together',
+  appName: 'table2Talk',
   webDir: 'build',
   server: {
     androidScheme: 'https'

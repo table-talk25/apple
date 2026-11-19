@@ -165,7 +165,7 @@ const AIRecommendations = ({ userLocation, onMealSelect, showTitle = true }) => 
               fontWeight: '400',
               lineHeight: '1.4'
             }}>
-              TableTalk® scelti in base a posizione e preferenze
+              t2t scelti in base a posizione e preferenze
             </p>
           </div>
         </div>

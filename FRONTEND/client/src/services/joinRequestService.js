@@ -1,6 +1,6 @@
 import apiClient from './apiService';
 
-// Richiedi di unirsi a un TableTalk® pubblico
+// Richiedi di unirsi a un t2t pubblico
 const requestToJoin = async (mealId, message = '') => {
   const response = await apiClient.post('/join-requests', {
     mealId,
@@ -17,7 +17,7 @@ const handleJoinRequest = async (requestId, action) => {
   return response.data;
 };
 
-// Ottieni richieste per un TableTalk® (solo per l'host)
+// Ottieni richieste per un t2t (solo per l'host)
 const getJoinRequests = async (mealId) => {
   const response = await apiClient.get(`/join-requests/meal/${mealId}`);
   return response.data;
