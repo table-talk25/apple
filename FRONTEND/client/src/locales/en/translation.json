@@ -280,46 +280,68 @@
   },
   "home": {
     "heroTitle": "Share a table2Talk.<br />Create a connection.",
-    "heroSubtitle": "table2Talk is the global community for those who love sharing stories and flavors. Organize a virtual t2t on your favorite topics or join a conversation already scheduled.",
+    "heroTitlePrefix": "Share a",
+    "heroTitleAccent": "table2Talk.",
+    "heroTitleSecondLine": "Create a connection.",
+    "heroSubtitle": "The community for people who love sharing stories and flavors. Host a video table on your favorite topics or join a conversation already scheduled: in any language, at any hour.",
+    "livePill_one": "1 person at the table right now",
+    "livePill_other": "{{count}} people at the table right now",
     "createTableTalk": "Create a t2t",
     "exploreTableTalk": "Explore t2t",
-    "registerNow": "Register Now",
-    "login": "Login",
+    "registerNow": "Sign up free",
+    "login": "Log in",
+    "seeTodayTables": "See today’s tables ↓",
     "howItWorks": {
-      "title": "Participating is Simple",
+      "title": "How it works",
       "step1": {
-        "title": "1. Discover",
-        "description": "Find the perfect virtual table for you. Filter by language, time or topic and choose the conversation you want to join."
+        "num": "01",
+        "title": "Discover",
+        "description": "Filter by language, time, or topic and find the table that fits you. There’s always one set for you."
       },
       "step2": {
-        "title": "2. Participate",
-        "description": "Choose, click, participate. It's that simple to enter a conversation. You just need curiosity (and a little hunger!)."
+        "num": "02",
+        "title": "Join",
+        "description": "One click and you’re in. Bring your curiosity, we’ll handle the rest. And a little appetite."
       },
       "step3": {
-        "title": "3. Meet",
-        "description": "Access the video call and meet your dining companions. It's time to share, learn and enjoy a t2t in great company."
+        "num": "03",
+        "title": "Meet",
+        "description": "Join the video call, meet your tablemates, and share stories, flavors, and a few laughs."
       }
     },
     "whyTableTalk": {
       "title": "Why table2Talk?",
       "feature1": {
         "title": "An antidote to loneliness",
-        "description": "Whether it's a quick coffee or an elaborate dinner, there's always someone to share it with. Loneliness is not on our menu."
+        "description": "Whether it’s a quick coffee or an elaborate dinner, there’s always someone to share it with. Loneliness isn’t on our menu."
       },
       "feature2": {
-        "title": "Expand your horizons",
-        "description": "Travel from your dining table. Meet people and cultures from around the world and broaden your horizons with every bite."
+        "title": "Broaden your horizons",
+        "description": "Travel without leaving the table: meet people and cultures from around the world, one bite at a time."
       },
       "feature3": {
-        "title": "Authentic and secure connections",
-        "description": "A moderated and respectful environment where you can be yourself. Every profile is a world to discover, in total safety."
+        "title": "Authentic, safe connections",
+        "description": "A moderated, respectful space where you can be yourself. Verified profiles, zero pressure."
       }
+    },
+    "todayTables": {
+      "title": "Today’s tables",
+      "seeAll": "See all →",
+      "emptyTitle": "No tables scheduled right now",
+      "emptyDescription": "Set the first table and invite the community to join.",
+      "emptyCta": "Create a t2t"
     },
     "cta": {
       "title": "What are you waiting for? Someone is about to sit at the table.",
-      "subtitle": "Registration is free and takes less than a minute.",
-      "organizeTableTalk": "Organize Your t2t",
-      "startNow": "Start Now"
+      "subtitle": "Signing up is free and takes less than a minute.",
+      "subtitleAuth": "Set your next table: all it takes is a minute and an idea.",
+      "organizeTableTalk": "Create a t2t",
+      "startNow": "Get started"
+    },
+    "trust": {
+      "verifiedProfiles": "Verified profiles",
+      "protectedChatVideo": "Protected chat & video",
+      "adultsOnly": "Adults only (18+)"
     }
   },
   "navigation": {

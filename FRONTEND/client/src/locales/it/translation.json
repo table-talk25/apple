@@ -329,46 +329,68 @@
   },
   "home": {
     "heroTitle": "Condividi un table2Talk.<br />Crea una connessione.",
-    "heroSubtitle": "table2Talk è la community globale per chi ama condividere storie e sapori. Organizza un t2t virtuale sui tuoi argomenti preferiti o unisciti a una conversazione già in programma.",
+    "heroTitlePrefix": "Condividi un",
+    "heroTitleAccent": "table2Talk.",
+    "heroTitleSecondLine": "Crea una connessione.",
+    "heroSubtitle": "La community per chi ama condividere storie e sapori. Organizza un tavolo video sui tuoi argomenti preferiti o unisciti a una conversazione già in programma: in qualsiasi lingua, a qualsiasi ora.",
+    "livePill_one": "1 persona a tavola adesso",
+    "livePill_other": "{{count}} persone a tavola adesso",
     "createTableTalk": "Crea un t2t",
     "exploreTableTalk": "Esplora i t2t",
-    "registerNow": "Registrati Ora",
+    "registerNow": "Registrati gratis",
     "login": "Accedi",
+    "seeTodayTables": "Guarda i tavoli di oggi ↓",
     "howItWorks": {
-      "title": "Partecipare è Semplice",
+      "title": "Come funziona",
       "step1": {
-        "title": "1. Scopri",
-        "description": "Trova il tavolo virtuale perfetto per te. Filtra per lingua, orario o argomento e scegli la conversazione a cui vuoi unirti."
+        "num": "01",
+        "title": "Scopri",
+        "description": "Filtra per lingua, orario o argomento e trova il tavolo che fa per te. Ce n’è sempre uno apparecchiato."
       },
       "step2": {
-        "title": "2. Partecipa",
-        "description": "Scegli, clicca, partecipa. È così semplice entrare in una conversazione. Ti basta solo la curiosità (e un po' di fame!)."
+        "num": "02",
+        "title": "Partecipa",
+        "description": "Un click e sei dentro. Porta la tua curiosità, al resto pensiamo noi. E un po’ di fame."
       },
       "step3": {
-        "title": "3. Incontra",
-        "description": "Accedi alla videochiamata e conosci i tuoi commensali. È il momento di condividere, imparare e gustare un t2t in ottima compagnia."
+        "num": "03",
+        "title": "Incontra",
+        "description": "Entra in videochiamata, conosci i tuoi commensali e condividi storie, sapori e qualche risata."
       }
     },
     "whyTableTalk": {
       "title": "Perché table2Talk?",
       "feature1": {
         "title": "Un antidoto alla solitudine",
-        "description": "Che sia un caffè al volo o una cena elaborata, c'è sempre qualcuno con cui condividerla. La solitudine non è nel nostro menu."
+        "description": "Che sia un caffè al volo o una cena elaborata, c’è sempre qualcuno con cui condividerla. La solitudine non è nel nostro menu."
       },
       "feature2": {
         "title": "Amplia i tuoi orizzonti",
-        "description": "Viaggia dal tuo tavolo da pranzo. Incontra persone e culture da tutto il mondo e allarga i tuoi orizzonti a ogni boccone."
+        "description": "Viaggia restando a tavola: incontra persone e culture da tutto il mondo, un boccone alla volta."
       },
       "feature3": {
         "title": "Connessioni autentiche e sicure",
-        "description": "Un ambiente moderato e rispettoso dove puoi essere te stesso. Ogni profilo è un mondo da scoprire, in totale sicurezza."
+        "description": "Un ambiente moderato e rispettoso dove puoi essere te stesso. Profili verificati, zero pressione."
       }
+    },
+    "todayTables": {
+      "title": "Tavoli di oggi",
+      "seeAll": "Vedi tutti →",
+      "emptyTitle": "Nessun tavolo in programma adesso",
+      "emptyDescription": "Apparecchia tu il primo tavolo e invita la community.",
+      "emptyCta": "Crea un t2t"
     },
     "cta": {
       "title": "Che aspetti? Qualcuno sta per sedersi a tavola.",
       "subtitle": "La registrazione è gratuita e richiede meno di un minuto.",
-      "organizeTableTalk": "Organizza il Tuo t2t",
-      "startNow": "Inizia Ora"
+      "subtitleAuth": "Apparecchia il tuo prossimo tavolo: bastano un minuto e un’idea.",
+      "organizeTableTalk": "Crea un t2t",
+      "startNow": "Inizia ora"
+    },
+    "trust": {
+      "verifiedProfiles": "Profili verificati",
+      "protectedChatVideo": "Chat e video protetti",
+      "adultsOnly": "Solo maggiorenni"
     }
   },
   "navigation": {
