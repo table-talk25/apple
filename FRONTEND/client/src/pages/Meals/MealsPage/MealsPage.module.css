@@ -1,175 +1,175 @@
-.mealsPage {
-  composes: palette from '../../../styles/common/palette.module.css';
-
-  min-height: 100vh;
-  background-color: var(--tt-background);
-  padding: 0;
-  padding-bottom: 80px; /* Spazio per navbar inferiore */
-}
-
-.topBar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 15px 20px;
-  background: var(--tt-surface);
-  position: sticky;
-  top: 0;
-  z-index: 100;
-}
-
-.pageTitle {
-  font-size: 1.2rem;
-  font-weight: 700;
-  margin: 0;
+.page {
+  width: 100%;
+  padding: 26px 0 40px;
   color: var(--tt-text);
 }
 
-.searchWrapper {
-  padding: 10px 20px;
-  background: var(--tt-surface);
-  border-bottom: 1px solid var(--tt-border);
-  position: sticky;
-  top: 60px; /* Subito sotto la topbar */
-  z-index: 99;
+.pageHead h1 {
+  font-family: var(--tt-font-heading);
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--tt-text);
+  margin: 0;
 }
 
-.searchContainer {
+.pageHead p {
+  color: var(--tt-text-muted);
+  font-size: 0.95rem;
+  margin: 4px 0 0;
+}
+
+.searchbar {
   display: flex;
   align-items: center;
-  background-color: var(--tt-background);
-  border-radius: 25px;
-  padding: 10px 15px;
+  gap: 10px;
+  background-color: var(--tt-surface);
+  border: 1px solid var(--tt-border);
+  border-radius: 999px;
+  padding: 0.6rem 1.1rem;
+  margin: 16px 0;
+  transition: border-color 0.2s ease;
+}
+
+.searchbar:focus-within {
+  border-color: var(--tt-accent);
 }
 
 .searchIcon {
   color: var(--tt-text-muted);
-  margin-right: 10px;
+  flex-shrink: 0;
 }
 
 .searchInput {
   border: none;
-  background: transparent;
-  width: 100%;
   outline: none;
+  flex: 1;
+  min-width: 0;
+  font-family: var(--tt-font-body);
   font-size: 0.95rem;
+  background: transparent;
   color: var(--tt-text);
 }
 
-.content {
-  padding: 20px 0; /* Rimosso padding laterale perché i caroselli devono toccare i bordi */
-}
-
-.sectionWrapper {
-  margin-bottom: 30px;
-}
-
-.sectionHeader {
-  display: flex;
-  align-items: center;
-  padding: 0 20px;
-  margin-bottom: 15px;
-}
-
-.sectionTitle {
-  font-size: 1.3rem;
-  font-weight: 700;
-  color: var(--tt-text);
-  margin: 0;
-}
-
-.sectionCount {
-  background: var(--tt-border);
+.searchInput::placeholder {
   color: var(--tt-text-muted);
-  font-size: 0.8rem;
-  padding: 2px 8px;
-  border-radius: 10px;
-  margin-left: 10px;
-  font-weight: 600;
 }
 
-/* Empty State */
-.emptyFeed {
-  padding: 20px;
-  display: flex;
-  justify-content: center;
-}
-
-.heroCard {
-  background: var(--tt-surface);
-  border-radius: 20px;
-  padding: 40px 20px;
-  text-align: center;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-  max-width: 400px;
-  width: 100%;
-}
-
-.ctaPrimary {
-  display: inline-block;
-  margin-top: 20px;
-  padding: 12px 30px;
-  background-color: var(--tt-primary);
-  color: var(--tt-on-primary);
-  border-radius: 30px;
-  text-decoration: none;
-  font-weight: 600;
-  box-shadow: 0 4px 10px color-mix(in srgb, var(--tt-primary) 30%, transparent);
-  transition: all 0.2s;
-}
-
-.fabButton {
-  position: fixed;
-  bottom: 90px; /* Sopra la navbar */
-  right: 20px;
-  width: 56px;
-  height: 56px;
+.clearBtn {
+  border: none;
+  background: transparent;
+  color: var(--tt-text-muted);
+  width: 26px;
+  height: 26px;
   border-radius: 50%;
-  background-color: var(--tt-primary);
-  color: var(--tt-on-primary);
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 15px color-mix(in srgb, var(--tt-primary) 40%, transparent);
-  text-decoration: none;
-  z-index: 1000;
-  transition: transform 0.2s;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background-color 0.15s ease, color 0.15s ease;
 }
 
-.fabButton:active {
-  transform: scale(0.95);
+.clearBtn:hover {
+  background-color: var(--tt-background);
+  color: var(--tt-text);
 }
 
-.fabIcon {
-  font-size: 30px;
-  font-weight: 300;
-  margin-top: -4px; /* Correzione ottica */
+.chips {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding-bottom: 14px;
+  margin-bottom: 6px;
+  scrollbar-width: none;
 }
 
-/* Sezione Raccomandata */
-.recommendedSection {
-  background: linear-gradient(to bottom, color-mix(in srgb, var(--tt-primary) 3%, var(--tt-background)), var(--tt-surface));
-  padding-top: 15px;
-  padding-bottom: 10px;
-  border-bottom: 1px solid var(--tt-border);
-  margin-bottom: 20px !important;
+.chips::-webkit-scrollbar {
+  display: none;
 }
 
-.sectionSubtitle {
-  padding: 0 20px;
-  margin-top: -10px;
-  margin-bottom: 15px;
-  font-size: 0.85rem;
+.chip {
+  white-space: nowrap;
+  border: 1.5px solid var(--tt-border);
+  background-color: var(--tt-surface);
   color: var(--tt-text-muted);
+  border-radius: 999px;
+  padding: 0.4rem 1rem;
+  font-family: var(--tt-font-body);
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }
 
-/* Animazione sottile per l'icona magica */
-.recommendedSection h3 svg {
-  animation: pulse 2s infinite;
+.chip:hover {
+  border-color: var(--tt-accent);
+  color: var(--tt-text);
 }
 
-@keyframes pulse {
-  0% { transform: scale(1); opacity: 1; }
-  50% { transform: scale(1.2); opacity: 0.8; }
-  100% { transform: scale(1); opacity: 1; }
+.chipActive {
+  background-color: var(--tt-accent);
+  border-color: var(--tt-accent);
+  color: var(--tt-on-accent);
+}
+
+.chipActive:hover {
+  background-color: var(--tt-accent);
+  border-color: var(--tt-accent);
+  color: var(--tt-on-accent);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
+}
+
+.skeletonCard {
+  background-color: var(--tt-surface);
+  border: 1px solid var(--tt-border);
+  border-radius: var(--tt-radius-lg);
+  overflow: hidden;
+  box-shadow: var(--tt-shadow);
+}
+
+.skeletonCover {
+  height: 185px;
+  background-color: color-mix(in srgb, var(--tt-border) 55%, var(--tt-background));
+}
+
+.skeletonBody {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.skeletonWide,
+.skeletonMid,
+.skeletonShort {
+  height: 14px;
+  border-radius: 999px;
+  background-color: color-mix(in srgb, var(--tt-border) 65%, var(--tt-background));
+}
+
+.skeletonWide {
+  width: 78%;
+}
+
+.skeletonMid {
+  width: 56%;
+}
+
+.skeletonShort {
+  width: 40%;
+}
+
+@media (max-width: 720px) {
+  .page {
+    padding: 20px 0 32px;
+  }
+
+  .skeletonCover {
+    height: 170px;
+  }
 }

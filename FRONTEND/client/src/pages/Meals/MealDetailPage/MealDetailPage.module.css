@@ -1,207 +1,304 @@
-.pageContainer {
-  composes: palette from '../../../styles/common/palette.module.css';
-
-  min-height: 100vh;
-  background-color: var(--tt-background);
-  padding-bottom: 40px;
-}
-
-.heroImage {
-  height: 300px;
-  background-size: cover;
-  background-position: center;
-  position: relative;
-}
-
-.heroImageEditable {
-  cursor: default; /* la hero non è più cliccabile tutta */
-}
-
-/* Overlay fotocamera — piccolo bottone fisso in basso a destra */
-.coverEditOverlay {
-  position: absolute;
-  bottom: 14px;
-  right: 14px;
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 7px;
-  background: rgba(0, 0, 0, 0.62);
-  border-radius: 24px;
-  padding: 8px 14px 8px 10px;
-  cursor: pointer;
-  z-index: 10;
-  pointer-events: all;
-  transition: background 0.18s ease, transform 0.15s ease;
-  user-select: none;
-}
-
-.coverEditOverlay:hover,
-.coverEditOverlay:focus {
-  background: rgba(0, 0, 0, 0.80);
-  transform: scale(1.04);
-}
-
-.coverEditOverlay:active {
-  transform: scale(0.97);
-}
-
-/* Su mobile mostra solo l'icona senza testo */
-@media (hover: none) {
-  .coverEditLabel {
-    display: none;
-  }
-  .coverEditOverlay {
-    padding: 10px;
-    border-radius: 50%;
-    width: 44px;
-    height: 44px;
-    justify-content: center;
-  }
-}
-
-.coverEditIcon {
-  color: #fff;
-  font-size: 1.1rem;
-  flex-shrink: 0;
-}
-
-.coverEditLabel {
-  color: #fff;
-  font-size: 0.88rem;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-  white-space: nowrap;
-}
-
-.overlay {
+.page {
   width: 100%;
-  height: 100%;
-  background: linear-gradient(to bottom, rgba(0,0,0,0.3), rgba(0,0,0,0.7));
-  display: flex;
-  align-items: flex-end;
-  padding-bottom: 3rem;
-  position: relative;
-  z-index: 2;
-  pointer-events: none; /* lascia passare i click solo agli elementi figli interattivi */
-}
-
-/* Il BackButton dentro .overlay deve restare cliccabile */
-.overlay > * {
-  pointer-events: all;
-}
-
-.title {
-  color: white;
-  font-weight: 700;
-  font-size: 2.5rem;
-  text-shadow: 0 2px 4px rgba(0,0,0,0.5);
-}
-
-.contentContainer {
-  margin-top: -40px;
-  position: relative;
-  z-index: 2;
-}
-
-.card {
-  background: var(--tt-surface);
-  border-radius: 15px;
-  padding: 25px;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.05);
-  margin-bottom: 30px;
-}
-
-.actionCard {
-  position: sticky;
-  top: 20px;
-}
-
-.hostInfo {
-  display: flex;
-  align-items: center;
-  gap: 15px;
-  margin-bottom: 25px;
-  padding-bottom: 15px;
-  border-bottom: 1px solid var(--tt-border);
-}
-
-.hostAvatar {
-  width: 60px;
-  height: 60px;
-  border-radius: 50%;
-  object-fit: cover;
-}
-
-.infoGrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 20px;
-  margin-bottom: 25px;
-}
-
-.infoItem {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-}
-
-.icon {
-  color: var(--tt-accent);
-  font-size: 1.2rem;
-  margin-top: 3px;
-}
-
-.infoItem label {
-  font-size: 0.85rem;
-  color: var(--tt-text-muted);
-  margin-bottom: 2px;
-  display: block;
-}
-
-.infoItem p {
-  font-weight: 600;
-  margin: 0;
+  padding: 20px 0 40px;
   color: var(--tt-text);
 }
 
-.description {
-  line-height: 1.6;
+.topRow {
+  margin-bottom: 14px;
+}
+
+.sheet {
+  background-color: var(--tt-surface);
+  border: 1px solid var(--tt-border);
+  border-radius: var(--tt-radius-lg);
+  overflow: hidden;
+  box-shadow: var(--tt-shadow);
+}
+
+.coverBox {
+  position: relative;
+  width: 100%;
+}
+
+.hiddenInput {
+  display: none;
+}
+
+.coverEditBtn {
+  position: absolute;
+  bottom: 12px;
+  right: 12px;
+  z-index: 3;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0.45rem 0.85rem;
+  border-radius: 999px;
+  border: 1px solid var(--tt-border);
+  background-color: color-mix(in srgb, var(--tt-surface) 94%, transparent);
+  color: var(--tt-text);
+  font-family: var(--tt-font-body);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: var(--tt-shadow);
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.coverEditBtn:hover:not(:disabled) {
+  background-color: var(--tt-surface);
+  color: var(--tt-primary);
+}
+
+.contentGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: 28px;
+  padding: 24px;
+}
+
+.mainCol {
+  min-width: 0;
+}
+
+.title {
+  font-family: var(--tt-font-heading);
+  font-size: clamp(1.45rem, 3vw, 1.9rem);
+  font-weight: 700;
+  color: var(--tt-text);
+  margin: 0 0 14px;
+  line-height: 1.22;
+}
+
+.hostBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: transparent;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  text-align: left;
+  margin-bottom: 16px;
+}
+
+.hostText {
+  display: flex;
+  flex-direction: column;
+}
+
+.hostRole {
+  font-size: 0.76rem;
   color: var(--tt-text-muted);
+}
+
+.hostNameRow {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--tt-text);
+  font-size: 0.95rem;
+}
+
+.verified {
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+}
+
+.desc {
+  color: var(--tt-text-muted);
+  font-size: 0.96rem;
+  line-height: 1.65;
+  margin: 0 0 18px;
   white-space: pre-line;
 }
 
-.topicsContainer {
+.metaBox {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  background-color: var(--tt-background);
+  border-radius: var(--tt-radius-md);
+  padding: 16px;
+  font-size: 0.9rem;
+  margin-bottom: 16px;
+}
+
+.metaBox b {
+  display: block;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--tt-text-muted);
+  margin-bottom: 2px;
+}
+
+.tags {
   display: flex;
   flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.tag {
+  background-color: var(--tt-background);
+  border: 1px solid var(--tt-border);
+  border-radius: 999px;
+  padding: 0.2rem 0.7rem;
+  font-size: 0.78rem;
+  color: var(--tt-text-muted);
+}
+
+.mapSection {
+  margin-top: 22px;
+  padding-top: 18px;
+  border-top: 1px solid var(--tt-border);
+}
+
+.sectionTitle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--tt-font-heading);
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--tt-text);
+  margin: 0 0 8px;
+}
+
+.address {
+  color: var(--tt-text-muted);
+  font-size: 0.9rem;
+  margin: 0 0 12px;
+}
+
+.mapFrame {
+  height: 280px;
+  border-radius: var(--tt-radius-md);
+  overflow: hidden;
+  border: 1px solid var(--tt-border);
+}
+
+.mapsBtn {
+  margin-top: 12px;
+}
+
+/* Sidebar azioni */
+.sideCol {
+  min-width: 0;
+}
+
+.sideCard {
+  background-color: var(--tt-background);
+  border: 1px solid var(--tt-border);
+  border-radius: var(--tt-radius-lg);
+  padding: 18px;
+}
+
+.seatsHeader {
+  margin-bottom: 14px;
+}
+
+.actionStack {
+  display: flex;
+  flex-direction: column;
   gap: 10px;
+}
+
+.confirmBox {
+  padding: 14px;
+  border-radius: var(--tt-radius-md);
+  background-color: var(--tt-surface);
+  border: 1px solid var(--tt-border);
+}
+
+.confirmText {
+  margin: 0 0 12px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--tt-text);
+}
+
+.confirmActions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.videoNotice {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 0.6rem 0.85rem;
+  border-radius: var(--tt-radius-md);
+  border: 1px solid var(--tt-border);
+  background-color: var(--tt-surface);
+  color: var(--tt-text-muted);
+  font-size: 0.82rem;
+  text-align: center;
+}
+
+.participantsBlock {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--tt-border);
+}
+
+.participantsTitle {
+  font-family: var(--tt-font-heading);
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--tt-text);
+  margin: 0 0 10px;
 }
 
 .avatarList {
   display: flex;
   flex-wrap: wrap;
-  gap: -10px;
+  gap: 8px;
 }
 
-.miniAvatar {
-  width: 40px;
-  height: 40px;
+.participantBtn {
+  border: none;
+  background: transparent;
+  padding: 0;
   border-radius: 50%;
-  border: 2px solid white;
-  object-fit: cover;
-  margin-right: 8px;
+  cursor: pointer;
 }
 
-@media (max-width: 768px) {
-  .title {
-    font-size: 1.8rem;
-  }
+.deleteText {
+  color: var(--tt-text-muted);
+  font-size: 0.94rem;
+  margin: 0;
+  line-height: 1.5;
+}
 
-  .heroImage {
-    height: 200px;
-  }
+.skeletonHero {
+  height: 260px;
+  border-radius: var(--tt-radius-lg);
+  background-color: color-mix(in srgb, var(--tt-border) 55%, var(--tt-background));
+  margin-bottom: 16px;
+}
 
-  .contentContainer {
-    margin-top: -20px;
+.skeletonCard {
+  height: 220px;
+  border-radius: var(--tt-radius-lg);
+  background-color: var(--tt-surface);
+  border: 1px solid var(--tt-border);
+}
+
+@media (max-width: 860px) {
+  .contentGrid {
+    grid-template-columns: 1fr;
+    padding: 18px;
+  }
+}
+
+@media (max-width: 720px) {
+  .metaBox {
+    grid-template-columns: 1fr;
   }
 }

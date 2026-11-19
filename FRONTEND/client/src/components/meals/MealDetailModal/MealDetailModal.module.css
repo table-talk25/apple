@@ -1,0 +1,162 @@
+.modalShell > div:last-child {
+  padding: 0;
+}
+
+.coverWrap {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  border-top-left-radius: var(--tt-radius-lg);
+  border-top-right-radius: var(--tt-radius-lg);
+}
+
+.coverBadges {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  right: 54px;
+  z-index: 2;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.coverBadge {
+  background-color: color-mix(in srgb, var(--tt-surface) 94%, transparent);
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--tt-text) 15%, transparent);
+}
+
+.body {
+  padding: 22px 24px 24px;
+}
+
+.title {
+  font-family: var(--tt-font-heading);
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--tt-text);
+  margin: 0 0 8px;
+  line-height: 1.25;
+}
+
+.host {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  font-size: 0.88rem;
+  color: var(--tt-text-muted);
+}
+
+.hostName {
+  font-weight: 500;
+}
+
+.verified {
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+}
+
+.desc {
+  color: var(--tt-text-muted);
+  font-size: 0.95rem;
+  margin: 12px 0 16px;
+  line-height: 1.55;
+}
+
+.metaBox {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  background-color: var(--tt-background);
+  border-radius: var(--tt-radius-md);
+  padding: 14px;
+  font-size: 0.88rem;
+  color: var(--tt-text);
+  margin-bottom: 14px;
+}
+
+.metaBox b {
+  display: block;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--tt-text-muted);
+  margin-bottom: 2px;
+}
+
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+
+.tag {
+  background-color: var(--tt-background);
+  border: 1px solid var(--tt-border);
+  border-radius: 999px;
+  padding: 0.15rem 0.65rem;
+  font-size: 0.76rem;
+  color: var(--tt-text-muted);
+}
+
+.seatsRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.fullLink {
+  font-size: 0.84rem;
+  font-weight: 600;
+  color: var(--tt-accent);
+  text-decoration: none;
+}
+
+.fullLink:hover {
+  color: var(--tt-primary);
+}
+
+.actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.actions > * {
+  flex: 1;
+}
+
+.confirmBox {
+  margin-top: 16px;
+  padding: 14px;
+  border-radius: var(--tt-radius-md);
+  background-color: var(--tt-background);
+  border: 1px solid var(--tt-border);
+}
+
+.confirmText {
+  margin: 0 0 12px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--tt-text);
+}
+
+.confirmActions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+@media (max-width: 720px) {
+  .metaBox {
+    grid-template-columns: 1fr;
+  }
+
+  .actions {
+    flex-direction: column;
+  }
+}
