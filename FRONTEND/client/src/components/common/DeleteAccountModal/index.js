@@ -1,17 +1,17 @@
 import React, { useState } from 'react';
-import { Modal, Button, Form, Alert, ListGroup } from 'react-bootstrap';
-import { FaExclamationTriangle, FaTrash, FaCheck, FaTimes } from 'react-icons/fa';
+import { AlertTriangle, Trash2, Check, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import profileService from '../../../services/profileService';
+import { Avatar, Button, Modal } from '../../ui';
 import styles from './DeleteAccountModal.module.css';
 
 const DeleteAccountModal = ({ show, onHide, onDeleteAccount, user }) => {
   const { t } = useTranslation();
-  const [step, setStep] = useState(1); // 1: conferma, 2: password, 3: success
+  const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
     password: '',
     confirmCheckbox: false,
-    understandCheckbox: false
+    understandCheckbox: false,
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
@@ -27,7 +27,7 @@ const DeleteAccountModal = ({ show, onHide, onDeleteAccount, user }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!formData.password) {
       setError(t('deleteAccountModal.passwordRequired'));
       return;
@@ -43,7 +43,7 @@ const DeleteAccountModal = ({ show, onHide, onDeleteAccount, user }) => {
 
     try {
       await onDeleteAccount(formData.password);
-      setStep(3); // Mostra successo
+      setStep(3);
       setTimeout(() => {
         handleClose();
       }, 3000);
@@ -54,92 +54,101 @@ const DeleteAccountModal = ({ show, onHide, onDeleteAccount, user }) => {
     }
   };
 
-  const canProceed = formData.confirmCheckbox && formData.understandCheckbox && formData.password;
-
   const consequences = [
     t('deleteAccountModal.consequences.profile'),
     t('deleteAccountModal.consequences.meals'),
     t('deleteAccountModal.consequences.chat'),
     t('deleteAccountModal.consequences.invitations'),
     t('deleteAccountModal.consequences.access'),
-    t('deleteAccountModal.consequences.irreversible')
+    t('deleteAccountModal.consequences.irreversible'),
   ];
 
+  const userDisplayName = user?.nickname || user?.name || 'User';
+
   return (
-    <Modal show={show} onHide={handleClose} centered size="lg">
-      <Modal.Header closeButton className={styles.header}>
-        <Modal.Title className={styles.title}>
-          <FaExclamationTriangle className={styles.warningIcon} />
-          {t('deleteAccountModal.title')}
-        </Modal.Title>
-      </Modal.Header>
-      
-      <Modal.Body className={styles.body}>
+    <Modal
+      isOpen={Boolean(show)}
+      onClose={handleClose}
+      title={t('deleteAccountModal.title', 'Elimina account')}
+      size="md"
+    >
+      <div className={styles.body} data-testid="delete-account-dialog-body">
         {step === 1 && (
           <>
-            <Alert variant="danger" className={styles.warningAlert}>
-              <Alert.Heading>{t('deleteAccountModal.warningTitle')}</Alert.Heading>
-              <p>
-                {t('deleteAccountModal.warningMessage')}
-              </p>
-            </Alert>
+            <div className={styles.warningAlert} role="alert">
+              <div className={styles.warningTitleRow}>
+                <AlertTriangle size={18} strokeWidth={2.2} aria-hidden="true" />
+                <strong>{t('deleteAccountModal.warningTitle')}</strong>
+              </div>
+              <p>{t('deleteAccountModal.warningMessage')}</p>
+            </div>
 
             <div className={styles.userInfo}>
-              <img
-                src={profileService.getFullImageUrl(user?.profileImage)}
-                alt={user?.nickname}
-                className={styles.userAvatar}
-                onError={(e) => {
-                  try {
-                    e.target.src = profileService.getFullImageUrl(null);
-                  } catch (_) {}
-                }}
+              <Avatar
+                src={user?.profileImage ? profileService.getFullImageUrl(user.profileImage) : ''}
+                name={userDisplayName}
+                alt={userDisplayName}
+                size={48}
+                tone="primary"
               />
               <div>
-                <h6>{user?.nickname}</h6>
-                <small className="text-muted">{t('deleteAccountModal.accountToDelete')}</small>
+                <h6>{userDisplayName}</h6>
+                <small>{t('deleteAccountModal.accountToDelete')}</small>
               </div>
             </div>
 
             <h6 className={styles.sectionTitle}>{t('deleteAccountModal.whatWillHappen')}</h6>
-            <ListGroup className={styles.consequencesList}>
+            <ul className={styles.consequencesList}>
               {consequences.map((consequence, index) => (
-                <ListGroup.Item key={index} className={styles.consequenceItem}>
-                  <FaTimes className={styles.consequenceIcon} />
-                  {consequence}
-                </ListGroup.Item>
+                <li key={index} className={styles.consequenceItem}>
+                  <X size={15} strokeWidth={2.4} className={styles.consequenceIcon} aria-hidden="true" />
+                  <span>{consequence}</span>
+                </li>
               ))}
-            </ListGroup>
+            </ul>
 
             <div className={styles.checkboxes}>
-              <Form.Check
-                type="checkbox"
-                id="confirmCheckbox"
-                label={t('deleteAccountModal.confirmDelete')}
-                checked={formData.confirmCheckbox}
-                onChange={(e) => setFormData({ ...formData, confirmCheckbox: e.target.checked })}
-                className={styles.checkbox}
-              />
-              <Form.Check
-                type="checkbox"
-                id="understandCheckbox"
-                label={t('deleteAccountModal.understandIrreversible')}
-                checked={formData.understandCheckbox}
-                onChange={(e) => setFormData({ ...formData, understandCheckbox: e.target.checked })}
-                className={styles.checkbox}
-              />
+              <label className={styles.checkboxLabel}>
+                <input
+                  type="checkbox"
+                  checked={formData.confirmCheckbox}
+                  onChange={(e) =>
+                    setFormData({ ...formData, confirmCheckbox: e.target.checked })
+                  }
+                />
+                <span>{t('deleteAccountModal.confirmDelete')}</span>
+              </label>
+              <label className={styles.checkboxLabel}>
+                <input
+                  type="checkbox"
+                  checked={formData.understandCheckbox}
+                  onChange={(e) =>
+                    setFormData({ ...formData, understandCheckbox: e.target.checked })
+                  }
+                />
+                <span>{t('deleteAccountModal.understandIrreversible')}</span>
+              </label>
             </div>
 
             <div className={styles.actions}>
-              <Button variant="secondary" onClick={handleClose} disabled={isSubmitting}>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleClose}
+                disabled={isSubmitting}
+              >
                 {t('deleteAccountModal.cancel')}
               </Button>
-              <Button 
-                variant="danger" 
+              <Button
+                variant="danger"
+                size="sm"
                 onClick={() => setStep(2)}
-                disabled={!formData.confirmCheckbox || !formData.understandCheckbox || isSubmitting}
+                disabled={
+                  !formData.confirmCheckbox || !formData.understandCheckbox || isSubmitting
+                }
               >
-                <FaTrash /> {t('deleteAccountModal.proceed')}
+                <Trash2 size={14} strokeWidth={2.2} aria-hidden="true" />
+                <span>{t('deleteAccountModal.proceed')}</span>
               </Button>
             </div>
           </>
@@ -147,51 +156,67 @@ const DeleteAccountModal = ({ show, onHide, onDeleteAccount, user }) => {
 
         {step === 2 && (
           <>
-            <Alert variant="warning">
+            <div className={styles.warningAlert} role="alert">
               <strong>{t('deleteAccountModal.lastStep')}</strong>
-            </Alert>
+            </div>
 
-            {error && <Alert variant="danger">{error}</Alert>}
+            {error && (
+              <div className={styles.errorAlert} role="alert">
+                {error}
+              </div>
+            )}
 
-            <Form onSubmit={handleSubmit}>
-              <Form.Group className="mb-3">
-                <Form.Label>{t('deleteAccountModal.password')}</Form.Label>
-                <Form.Control
+            <form onSubmit={handleSubmit} className={styles.form}>
+              <div className={styles.field}>
+                <label htmlFor="delete-account-password">
+                  {t('deleteAccountModal.password')}
+                </label>
+                <input
+                  id="delete-account-password"
                   type="password"
                   value={formData.password}
                   onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                   placeholder={t('deleteAccountModal.passwordPlaceholder')}
+                  className={styles.input}
                   required
                 />
-              </Form.Group>
+              </div>
 
               <div className={styles.actions}>
-                <Button variant="secondary" onClick={() => setStep(1)} disabled={isSubmitting}>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setStep(1)}
+                  disabled={isSubmitting}
+                >
                   {t('deleteAccountModal.back')}
                 </Button>
-                <Button 
-                  variant="danger" 
+                <Button
+                  variant="primary"
+                  size="sm"
                   type="submit"
                   disabled={!formData.password || isSubmitting}
                 >
-                  {isSubmitting ? t('deleteAccountModal.deleting') : t('deleteAccountModal.deleteDefinitely')}
+                  {isSubmitting
+                    ? t('deleteAccountModal.deleting')
+                    : t('deleteAccountModal.deleteDefinitely')}
                 </Button>
               </div>
-            </Form>
+            </form>
           </>
         )}
 
         {step === 3 && (
-                      <div className={styles.successStep}>
-              <div className={styles.successIcon}>
-                <FaCheck />
-              </div>
-              <h5>{t('deleteAccountModal.accountDeleted')}</h5>
-              <p>{t('deleteAccountModal.deletedSuccess')}</p>
-              <small className="text-muted">{t('deleteAccountModal.redirecting')}</small>
+          <div className={styles.successStep}>
+            <div className={styles.successIcon}>
+              <Check size={34} strokeWidth={2.5} aria-hidden="true" />
             </div>
+            <h5>{t('deleteAccountModal.accountDeleted')}</h5>
+            <p>{t('deleteAccountModal.deletedSuccess')}</p>
+            <small>{t('deleteAccountModal.redirecting')}</small>
+          </div>
         )}
-      </Modal.Body>
+      </div>
     </Modal>
   );
 };

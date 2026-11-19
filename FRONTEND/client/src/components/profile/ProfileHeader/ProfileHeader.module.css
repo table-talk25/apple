@@ -1,115 +1,115 @@
-/* File: src/components/profile/ProfileHeader/ProfileHeader.module.css (Versione Completa) */
-
-.profileHeader {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 1rem;
+.pCard {
+  background-color: var(--tt-surface);
+  border: 1px solid var(--tt-border);
+  border-radius: var(--tt-radius-lg);
+  padding: 20px;
+  margin-bottom: 14px;
 }
 
-/* === QUI LA SOLUZIONE PRINCIPALE === */
-.profileImageContainer {
+.pHead {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.avatarWrap {
   position: relative;
-  width: 120px; /* Dimensione fissa per evitare salti di layout */
-  height: 120px; /* Dimensione fissa per evitare salti di layout */
+  width: 72px;
+  height: 72px;
   flex-shrink: 0;
 }
 
-.profileImage {
-  width: 100%;
-  height: 100%;
-  border-radius: 50%; /* Immagine rotonda */
-  object-fit: cover; /* Assicura che l'immagine copra lo spazio senza distorcersi */
-  border: 4px solid white;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-  /* Colore di sfondo che funge da placeholder durante il caricamento */
-  background-color: var(--tt-border); 
-}
-
-/* Placeholder per l'icona utente di default */
-.profileImagePlaceholder {
-  width: 120px;
-  height: 120px;
-  border-radius: 50%;
-  background-color: var(--tt-border);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 4rem;
-  color: #ccc;
-}
-
-/* Pulsante per cambiare foto */
-.cameraButton {
+.cameraBtn {
   position: absolute;
-  bottom: 5px;
-  right: 5px;
-  background: white;
-  color: var(--primary-color, var(--tt-primary));
-  border: 1px solid var(--tt-border);
+  bottom: -2px;
+  right: -2px;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-  transition: all 0.2s ease;
-}
-.cameraButton:hover { transform: scale(1.1); }
-.cameraButton.disabled { cursor: not-allowed; opacity: 0.7; }
-
-/* Stili per le info del profilo */
-.profileInfo {
-  text-align: center;
-  width: 100%;
-}
-
-.nickname {
-  font-size: 1.5rem;
-  font-weight: 600;
-  color: var(--tt-text);
-  margin-top: 0;
-  margin-bottom: 0.25rem;
-}
-
-.userEmail {
-  font-size: 0.9rem;
-  color: var(--tt-text-muted);
-  margin-bottom: 1.5rem;
-}
-
-.myMealsButton {
+  background-color: var(--tt-surface);
+  color: var(--tt-primary);
+  border: 1px solid var(--tt-border);
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 0.5rem;
-  background-color: var(--primary-color, var(--tt-primary));
-  color: white;
-  padding: 0.75rem 1.5rem;
-  border: none;
-  border-radius: 50px;
-  font-weight: 600;
-  text-decoration: none;
-  transition: all 0.2s ease-in-out;
   cursor: pointer;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-}
-.myMealsButton:hover {
-  background-color: var(--primary-dark, #e65a5a);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+  box-shadow: var(--tt-shadow);
+  transition: transform 0.15s ease, border-color 0.15s ease;
 }
 
-@media (max-width: 768px) {
-  .nickname { font-size: 1.3rem; }
-  .myMealsButton { width: 100%; padding: 0.8rem 1rem; }
+.cameraBtn:hover {
+  transform: scale(1.06);
+  border-color: var(--tt-primary);
+}
+
+.cameraBtnDisabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.info {
+  flex: 1;
+  min-width: 0;
+}
+
+.name {
+  font-family: var(--tt-font-heading);
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--tt-text);
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.email {
+  font-size: 0.84rem;
+  color: var(--tt-text-muted);
+  margin-top: 2px;
+  overflow-wrap: anywhere;
 }
 
 .bio {
-  font-size: 0.95rem;
-  color: #65676b;
-  margin-top: 8px;
-  white-space: pre-wrap; /* Mantiene le spaziature e le andate a capo della bio */
+  font-size: 0.92rem;
+  color: var(--tt-text-muted);
+  margin: 6px 0 0;
+  white-space: pre-wrap;
+}
+
+.bar {
+  height: 8px;
+  background-color: var(--tt-background);
+  border-radius: 999px;
+  overflow: hidden;
+  margin-top: 10px;
+}
+
+.barFill {
+  display: block;
+  height: 100%;
+  background-color: var(--tt-accent);
+  border-radius: 999px;
+  transition: width 0.25s ease;
+}
+
+.completenessText {
+  font-size: 0.78rem;
+  color: var(--tt-text-muted);
+  margin-top: 6px;
+}
+
+.actions {
+  flex-shrink: 0;
+}
+
+@media (max-width: 560px) {
+  .pHead {
+    flex-wrap: wrap;
+    align-items: flex-start;
+  }
+
+  .actions {
+    width: 100%;
+    display: flex;
+    justify-content: flex-end;
+  }
 }

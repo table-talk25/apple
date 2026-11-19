@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { Modal, Button, Form, Alert } from 'react-bootstrap';
-import { FaKey, FaEye, FaEyeSlash } from 'react-icons/fa';
+import { Eye, EyeOff } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { Button, Modal } from '../../ui';
 import styles from './ChangePasswordModal.module.css';
 
 const ChangePasswordModal = ({ show, onHide, onChangePassword }) => {
@@ -9,12 +9,12 @@ const ChangePasswordModal = ({ show, onHide, onChangePassword }) => {
   const [formData, setFormData] = useState({
     currentPassword: '',
     newPassword: '',
-    confirmPassword: ''
+    confirmPassword: '',
   });
   const [showPasswords, setShowPasswords] = useState({
     current: false,
     new: false,
-    confirm: false
+    confirm: false,
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
@@ -32,16 +32,16 @@ const ChangePasswordModal = ({ show, onHide, onChangePassword }) => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-    
-    // Rimuovi l'errore di validazione per questo campo
+    setFormData((prev) => ({ ...prev, [name]: value }));
+
     if (validationErrors[name]) {
-      setValidationErrors(prev => ({ ...prev, [name]: '' }));
+      setValidationErrors((prev) => ({ ...prev, [name]: '' }));
     }
+    if (error) setError('');
   };
 
   const togglePasswordVisibility = (field) => {
-    setShowPasswords(prev => ({ ...prev, [field]: !prev[field] }));
+    setShowPasswords((prev) => ({ ...prev, [field]: !prev[field] }));
   };
 
   const validateForm = () => {
@@ -71,7 +71,7 @@ const ChangePasswordModal = ({ show, onHide, onChangePassword }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       return;
     }
@@ -89,135 +89,138 @@ const ChangePasswordModal = ({ show, onHide, onChangePassword }) => {
     }
   };
 
-  const hasErrors = Object.values(validationErrors).some(error => error) || error;
+  const hasFieldErrors = Object.values(validationErrors).some(Boolean);
 
   return (
-    <Modal show={show} onHide={handleClose} centered>
-      <Modal.Header closeButton className={styles.header}>
-        <Modal.Title className={styles.title}>
-          <FaKey className={styles.keyIcon} />
-          {t('changePasswordModal.title')}
-        </Modal.Title>
-      </Modal.Header>
-      
-      <Modal.Body className={styles.body}>
-        <p className={styles.description}>
-          {t('changePasswordModal.description')}
-        </p>
+    <Modal
+      isOpen={Boolean(show)}
+      onClose={handleClose}
+      title={t('changePasswordModal.title', 'Cambia password')}
+      size="sm"
+    >
+      <div className={styles.body} data-testid="change-password-dialog-body">
+        <p className={styles.description}>{t('changePasswordModal.description')}</p>
 
         {error && (
-          <Alert variant="danger" className={styles.errorAlert}>
+          <div className={styles.errorAlert} role="alert">
             {error}
-          </Alert>
+          </div>
         )}
 
-        <Form onSubmit={handleSubmit}>
-          <Form.Group className="mb-3">
-            <Form.Label>{t('changePasswordModal.currentPassword')} *</Form.Label>
+        <form onSubmit={handleSubmit} className={styles.form}>
+          <div className={styles.field}>
+            <label htmlFor="cp-current">
+              {t('changePasswordModal.currentPassword')} *
+            </label>
             <div className={styles.passwordInputGroup}>
-              <Form.Control
+              <input
+                id="cp-current"
                 type={showPasswords.current ? 'text' : 'password'}
                 name="currentPassword"
                 value={formData.currentPassword}
                 onChange={handleChange}
                 placeholder={t('changePasswordModal.currentPasswordPlaceholder')}
-                isInvalid={!!validationErrors.currentPassword}
+                className={`${styles.input} ${validationErrors.currentPassword ? styles.inputInvalid : ''}`}
                 disabled={isSubmitting}
               />
-              <Button
+              <button
                 type="button"
-                variant="outline-secondary"
                 className={styles.eyeButton}
                 onClick={() => togglePasswordVisibility('current')}
                 disabled={isSubmitting}
+                aria-label={t('changePasswordModal.currentPassword')}
               >
-                {showPasswords.current ? <FaEyeSlash /> : <FaEye />}
-              </Button>
+                {showPasswords.current ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
             </div>
             {validationErrors.currentPassword && (
-              <Form.Control.Feedback type="invalid">
-                {validationErrors.currentPassword}
-              </Form.Control.Feedback>
+              <span className={styles.fieldError}>{validationErrors.currentPassword}</span>
             )}
-          </Form.Group>
+          </div>
 
-          <Form.Group className="mb-3">
-            <Form.Label>{t('changePasswordModal.newPassword')} *</Form.Label>
+          <div className={styles.field}>
+            <label htmlFor="cp-new">{t('changePasswordModal.newPassword')} *</label>
             <div className={styles.passwordInputGroup}>
-              <Form.Control
+              <input
+                id="cp-new"
                 type={showPasswords.new ? 'text' : 'password'}
                 name="newPassword"
                 value={formData.newPassword}
                 onChange={handleChange}
                 placeholder={t('changePasswordModal.newPasswordPlaceholder')}
-                isInvalid={!!validationErrors.newPassword}
+                className={`${styles.input} ${validationErrors.newPassword ? styles.inputInvalid : ''}`}
                 disabled={isSubmitting}
               />
-              <Button
+              <button
                 type="button"
-                variant="outline-secondary"
                 className={styles.eyeButton}
                 onClick={() => togglePasswordVisibility('new')}
                 disabled={isSubmitting}
+                aria-label={t('changePasswordModal.newPassword')}
               >
-                {showPasswords.new ? <FaEyeSlash /> : <FaEye />}
-              </Button>
+                {showPasswords.new ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
             </div>
             {validationErrors.newPassword && (
-              <Form.Control.Feedback type="invalid">
-                {validationErrors.newPassword}
-              </Form.Control.Feedback>
+              <span className={styles.fieldError}>{validationErrors.newPassword}</span>
             )}
-            <Form.Text className="text-muted">
-              {t('changePasswordModal.passwordRequirements')}
-            </Form.Text>
-          </Form.Group>
+            <small className={styles.hint}>{t('changePasswordModal.passwordRequirements')}</small>
+          </div>
 
-          <Form.Group className="mb-3">
-            <Form.Label>{t('changePasswordModal.confirmPassword')} *</Form.Label>
+          <div className={styles.field}>
+            <label htmlFor="cp-confirm">
+              {t('changePasswordModal.confirmPassword')} *
+            </label>
             <div className={styles.passwordInputGroup}>
-              <Form.Control
+              <input
+                id="cp-confirm"
                 type={showPasswords.confirm ? 'text' : 'password'}
                 name="confirmPassword"
                 value={formData.confirmPassword}
                 onChange={handleChange}
                 placeholder={t('changePasswordModal.confirmPasswordPlaceholder')}
-                isInvalid={!!validationErrors.confirmPassword}
+                className={`${styles.input} ${validationErrors.confirmPassword ? styles.inputInvalid : ''}`}
                 disabled={isSubmitting}
               />
-              <Button
+              <button
                 type="button"
-                variant="outline-secondary"
                 className={styles.eyeButton}
                 onClick={() => togglePasswordVisibility('confirm')}
                 disabled={isSubmitting}
+                aria-label={t('changePasswordModal.confirmPassword')}
               >
-                {showPasswords.confirm ? <FaEyeSlash /> : <FaEye />}
-              </Button>
+                {showPasswords.confirm ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
             </div>
             {validationErrors.confirmPassword && (
-              <Form.Control.Feedback type="invalid">
-                {validationErrors.confirmPassword}
-              </Form.Control.Feedback>
+              <span className={styles.fieldError}>{validationErrors.confirmPassword}</span>
             )}
-          </Form.Group>
+          </div>
 
           <div className={styles.actions}>
-            <Button variant="secondary" onClick={handleClose} disabled={isSubmitting}>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleClose}
+              disabled={isSubmitting}
+            >
               {t('changePasswordModal.cancel')}
             </Button>
-            <Button 
-              variant="primary" 
+            <Button
+              variant="primary"
+              size="sm"
               type="submit"
-              disabled={isSubmitting || hasErrors}
+              disabled={isSubmitting || hasFieldErrors}
             >
-              {isSubmitting ? t('changePasswordModal.changing') : t('changePasswordModal.changePassword')}
+              {isSubmitting
+                ? t('changePasswordModal.changing')
+                : t('changePasswordModal.changePassword')}
             </Button>
           </div>
-        </Form>
-      </Modal.Body>
+        </form>
+      </div>
     </Modal>
   );
 };
 
-export default ChangePasswordModal; 
+export default ChangePasswordModal;

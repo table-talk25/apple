@@ -1,246 +1,106 @@
-.container {
-  margin-bottom: 2rem;
-}
-
-.sectionTitle {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 1.2rem;
-  font-weight: 600;
-  color: var(--tt-text-muted);
-  margin-bottom: 1rem;
-}
-
-.sectionTitle svg {
-  color: var(--tt-primary);
-}
-
-.languagesList {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-}
-
-.languageTag {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 0.75rem;
-  background: color-mix(in srgb, var(--tt-accent) 10%, #FFFFFF);
-  border: 1px solid color-mix(in srgb, var(--tt-accent) 22%, #FFFFFF);
-  border-radius: 20px;
-  font-size: 0.9rem;
-  color: #1976d2;
-}
-
-.languageCode {
-  font-weight: 600;
-  font-size: 0.8rem;
-}
-
-.languageName {
-  color: var(--tt-accent);
-}
-
-.noLanguages {
-  color: var(--tt-text-muted);
-  font-style: italic;
-  margin: 0;
-}
-
-.selectedLanguages {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  margin-bottom: 1rem;
-}
-
-.removeButton {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 18px;
-  height: 18px;
-  background: #f44336;
-  color: white;
-  border: none;
-  border-radius: 50%;
-  cursor: pointer;
-  font-size: 0.7rem;
-  transition: background-color 0.2s ease;
-}
-
-.removeButton:hover {
-  background: #d32f2f;
-}
-
-.addLanguageSection {
-  position: relative;
-}
-
-.addButton {
-  padding: 0.5rem 1rem;
-  background: var(--tt-primary);
-  color: white;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 0.9rem;
-  transition: background-color 0.2s ease;
-}
-
-.addButton:hover:not(:disabled) {
-  background: #0056b3;
-}
-
-.addButton:disabled {
-  background: var(--tt-text-muted);
-  cursor: not-allowed;
-}
-
-.dropdown {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  background: white;
+.pCard {
+  background-color: var(--tt-surface);
   border: 1px solid var(--tt-border);
-  border-radius: 6px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  z-index: 1000;
-  margin-top: 0.25rem;
-  max-height: 200px;
-  overflow-y: auto;
-  min-width: 200px;
+  border-radius: var(--tt-radius-lg);
+  padding: 20px;
+  margin-bottom: 14px;
 }
 
-.languageOption {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  width: 100%;
-  padding: 0.75rem 1rem;
-  background: none;
-  border: none;
-  cursor: pointer;
-  transition: background-color 0.2s ease;
-  text-align: left;
-  font-size: 0.9rem;
-}
-
-.languageOption:hover {
-  background: var(--tt-background);
-}
-
-.languageOption .languageCode {
+.pCard h3 {
+  font-family: var(--tt-font-heading);
+  font-size: 1.02rem;
   font-weight: 600;
-  color: var(--tt-primary);
-  font-size: 0.8rem;
-  min-width: 25px;
+  color: var(--tt-text);
+  margin: 0 0 10px;
 }
 
-.languageOption .languageName {
-  flex: 1;
-  color: var(--tt-text-muted);
-}
-
-.addIcon {
-  color: #28a745;
-  font-size: 0.8rem;
-}
-
-.helpText {
-  color: var(--tt-text-muted);
-  font-size: 0.9rem;
-  margin: 0.5rem 0 0 0;
-  font-style: italic;
-}
-
-/* Animazioni */
-.dropdown {
-  animation: slideDown 0.2s ease-out;
-}
-
-@keyframes slideDown {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* Scrollbar personalizzata */
-.dropdown::-webkit-scrollbar {
-  width: 6px;
-}
-
-.dropdown::-webkit-scrollbar-track {
-  background: #f1f1f1;
-  border-radius: 3px;
-}
-
-.dropdown::-webkit-scrollbar-thumb {
-  background: #c1c1c1;
-  border-radius: 3px;
-}
-
-.dropdown::-webkit-scrollbar-thumb:hover {
-  background: #a8a8a8;
-}
-
-/* Responsive */
-@media (max-width: 768px) {
-  .languageTag {
-    padding: 0.4rem 0.6rem;
-    font-size: 0.8rem;
-  }
-  
-  .dropdown {
-    min-width: 180px;
-    left: auto;
-    right: 0;
-  }
-  
-  .languageOption {
-    padding: 0.6rem 0.8rem;
-  }
-} 
-
-.headerRow {
+.tags {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 10px; /* Spazio tra titolo e matita */
-  margin-bottom: 1rem;
+  gap: 8px;
 }
 
-/* Rimuovi il margin-bottom dal vecchio .sectionTitle se necessario, 
-   o lascialo sovrascritto dallo stile inline nel JS */
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background-color: var(--tt-background);
+  border: 1px solid var(--tt-border);
+  border-radius: 999px;
+  padding: 0.25rem 0.72rem;
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: var(--tt-text);
+}
 
-.editIconBtn {
+.removeChip {
+  border: none;
+  background: transparent;
+  color: var(--tt-primary);
+  font-size: 0.78rem;
+  font-weight: 700;
+  line-height: 1;
+  padding: 0 2px;
+  cursor: pointer;
+}
+
+.removeChip:hover {
+  color: var(--tt-primary-hover);
+}
+
+.linklike {
+  color: var(--tt-accent);
+  font-weight: 600;
   background: none;
   border: none;
+  padding: 0.15rem 0.25rem;
+  font-family: inherit;
+  font-size: 0.88rem;
   cursor: pointer;
-  color: var(--tt-primary); /* Colore blu come le icone */
+}
+
+.linklike:hover {
+  color: var(--tt-primary);
+}
+
+.linklike:focus-visible {
+  outline: 2px solid var(--tt-focus);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.emptyHint {
+  font-size: 0.84rem;
+  color: var(--tt-text-muted);
+}
+
+.pickerTray {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--tt-background);
   display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.optionChip {
+  display: inline-flex;
   align-items: center;
-  justify-content: center;
-  padding: 5px;
-  border-radius: 50%;
-  transition: background-color 0.2s;
+  gap: 6px;
+  background-color: var(--tt-surface);
+  border: 1.5px solid var(--tt-border);
+  border-radius: 999px;
+  padding: 0.28rem 0.75rem;
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: var(--tt-text);
+  cursor: pointer;
+  transition: border-color 0.15s ease, background-color 0.15s ease, color 0.15s ease;
 }
 
-.editIconBtn:hover {
-  background-color: color-mix(in srgb, var(--tt-accent) 10%, #FFFFFF); /* Sfondo leggero all'hover */
-}
-
-.editContainer {
-  animation: fadeIn 0.3s ease;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+.optionChip:hover {
+  border-color: var(--tt-accent);
+  color: var(--tt-accent);
+  background-color: color-mix(in srgb, var(--tt-accent) 6%, var(--tt-surface));
 }
