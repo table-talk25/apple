@@ -54,11 +54,11 @@
     "registering": "登録中...",
     "alreadyHaveAccount": "すでにアカウントをお持ちですか？",
     "noAccount": "アカウントをお持ちではありませんか？",
-    "loginToTableTalk": "TableTalkにログイン",
+    "loginToTableTalk": "table2Talkにログイン",
     "emailPlaceholder": "your@email.address",
     "passwordPlaceholder": "パスワード",
     "loggingIn": "ログイン中...",
-    "registerToTableTalk": "TableTalkに登録",
+    "registerToTableTalk": "table2Talkに登録",
     "namePlaceholder": "お名前",
     "surnamePlaceholder": "姓",
     "confirmPasswordPlaceholder": "パスワードを確認",
@@ -78,24 +78,24 @@
     "continueWithApple": "Appleで続行"
   },
   "meals": {
-    "createMeal": "TableTalk®を作成",
-    "editMeal": "TableTalk®を編集",
-    "deleteMeal": "TableTalk®を削除",
-    "deleteMealConfirmation": "このTableTalk®を削除してもよろしいですか？この操作は元に戻せません。",
-    "joinMeal": "TableTalk®に参加",
-    "leaveMeal": "TableTalk®を退出",
-    "mealDetails": "TableTalk®の詳細",
-    "myMeals": "私のTableTalk®",
-    "noMeals": "TableTalk®が見つかりません",
-    "pageTitle": "TableTalk®",
-    "searchPlaceholder": "TableTalk®を検索...",
-    "createButton": "TableTalk®を作成",
+    "createMeal": "t2tを作成",
+    "editMeal": "t2tを編集",
+    "deleteMeal": "t2tを削除",
+    "deleteMealConfirmation": "このt2tを削除してもよろしいですか？この操作は元に戻せません。",
+    "joinMeal": "t2tに参加",
+    "leaveMeal": "t2tを退出",
+    "mealDetails": "t2tの詳細",
+    "myMeals": "私のt2t",
+    "noMeals": "t2tが見つかりません",
+    "pageTitle": "t2t",
+    "searchPlaceholder": "t2tを検索...",
+    "createButton": "t2tを作成",
     "loading": "読み込み中...",
     "searchError": "検索中にエラーが発生しました。",
-    "noMealsFound": "「{{searchTerm}}」に一致するTableTalk®が見つかりませんでした。",
-    "noMealsWithFilters": "適用されたフィルターに一致するTableTalk®が見つかりませんでした。",
-    "mealCount_one": "{{count}}件のTableTalk®",
-    "mealCount_other": "{{count}}件のTableTalk®",
+    "noMealsFound": "「{{searchTerm}}」に一致するt2tが見つかりませんでした。",
+    "noMealsWithFilters": "適用されたフィルターに一致するt2tが見つかりませんでした。",
+    "mealCount_one": "{{count}}件のt2t",
+    "mealCount_other": "{{count}}件のt2t",
     "imageUploadSuccess": "画像のアップロードに成功しました！",
     "imageUploadError": "画像のアップロードエラー。もう一度お試しください。",
     "invitation_one": "{{count}}件の招待",
@@ -155,7 +155,7 @@
     },
     "filters": {
       "title": "フィルター",
-      "mealType": "TableTalk®タイプ",
+      "mealType": "t2tタイプ",
       "mode": "モード",
       "status": "ステータス",
       "sortBy": "並び替え",
@@ -169,12 +169,12 @@
       "resetFilters": "フィルターをリセット"
     },
     "emptyState": {
-      "title": "TableTalk®が見つかりません",
-      "description": "現在のフィルターに一致するTableTalk®がありません。フィルターを変更するか、自分で作成してください！"
+      "title": "t2tが見つかりません",
+      "description": "現在のフィルターに一致するt2tがありません。フィルターを変更するか、自分で作成してください！"
     },
     "emptyFeed": {
       "title": "ここは静かです...",
-      "description": "現在、他のユーザーが主催するアクティブなTableTalk®はありません。"
+      "description": "現在、他のユーザーが主催するアクティブなt2tはありません。"
     },
     "recommendedTitle": "おすすめ",
     "card": {
@@ -184,25 +184,25 @@
       "end": "終了",
       "participants": "参加者"
     },
-    "createNewTitle": "新しいTableTalk®を作成",
+    "createNewTitle": "新しいt2tを作成",
     "createNewSubtitle": "フィールドに入力して、次のバーチャルミーティングを主催しましょう。",
-    "createSuccess": "TableTalk®が正常に作成されました！",
-    "createError": "TableTalk®の作成エラー。",
+    "createSuccess": "t2tが正常に作成されました！",
+    "createError": "t2tの作成エラー。",
     "form": {
-      "typeLabel": "TableTalk®タイプ",
+      "typeLabel": "t2tタイプ",
       "virtualType": "バーチャル",
       "physicalType": "対面",
       "virtualDescription": "（ビデオ通話）",
       "physicalDescription": "（対面）",
       "virtualInfo": "参加者はビデオ通話で会います",
       "physicalInfo": "参加者は特定の場所で対面で会います",
-      "visibilityLabel": "TableTalk®の公開設定",
+      "visibilityLabel": "t2tの公開設定",
       "publicVisibility": "公開",
       "privateVisibility": "非公開",
       "publicDescription": "（誰でも参加リクエスト可能）",
       "privateDescription": "（招待のみ）",
-      "publicInfo": "TableTalk®は地図上に表示され、誰でも参加リクエストできます",
-      "privateInfo": "TableTalk®は個人で招待したユーザーのみに表示されます",
+      "publicInfo": "t2tは地図上に表示され、誰でも参加リクエストできます",
+      "privateInfo": "t2tは個人で招待したユーザーのみに表示されます",
       "titleLabel": "イベントタイトル",
       "titleRequired": "タイトルが必要です",
       "titleMinLength": "タイトルは10文字以上である必要があります",
@@ -234,13 +234,13 @@
       "addressLabel": "住所",
       "addressPlaceholder": "レストランまたは会場の住所を入力",
       "addressExample": "例：「イル・グスト レストラン、ローマ通り123、ミラノ」",
-      "locationRequired": "対面TableTalk®には場所が必要です",
+      "locationRequired": "対面t2tには場所が必要です",
       "mapLabel": "地図上で場所を選択",
       "topicsLabel": "会話のトピック",
       "topicsRequired": "少なくとも1つの会話トピックを追加してください",
       "topicsHelp": "トピックを入力し、Enterまたはカンマを押して追加します。最大5つまで。",
       "coverImageLabel": "カバー画像",
-      "coverImageAlt": "TableTalk®プレビュー",
+      "coverImageAlt": "t2tプレビュー",
       "chooseFromGallery": "ギャラリーから選択",
       "date": "日付",
       "time": "時間",
@@ -248,15 +248,15 @@
       "loading": "読み込み中..."
     },
     "detail": {
-      "loadError": "TableTalk®の詳細を読み込むエラー",
-      "joinSuccess": "TableTalk®に参加しました！",
-      "joinError": "TableTalk®への参加エラー",
-      "leaveSuccess": "TableTalk®を退出しました",
-      "leaveError": "TableTalk®からの退出エラー",
-      "deleteSuccess": "TableTalk®が正常に削除されました！",
-      "deleteNotAuthorized": "このTableTalk®を削除する権限がありません",
-      "deleteNotFound": "TableTalk®が見つかりません",
-      "deleteError": "TableTalk®の削除中にエラーが発生しました",
+      "loadError": "t2tの詳細を読み込むエラー",
+      "joinSuccess": "t2tに参加しました！",
+      "joinError": "t2tへの参加エラー",
+      "leaveSuccess": "t2tを退出しました",
+      "leaveError": "t2tからの退出エラー",
+      "deleteSuccess": "t2tが正常に削除されました！",
+      "deleteNotAuthorized": "このt2tを削除する権限がありません",
+      "deleteNotFound": "t2tが見つかりません",
+      "deleteError": "t2tの削除中にエラーが発生しました",
       "chatIdNotFound": "チャットIDが見つかりません",
       "confirmLeaveChat": "チャットを退出してもよろしいですか？",
       "chatLeaveSuccess": "チャットを退出しました",
@@ -264,7 +264,7 @@
       "chatNotAvailable": "チャットが利用できません",
       "joinChat": "チャットに参加",
       "leaveChat": "チャットを退出",
-      "coverImageAlt": "TableTalk®カバー画像",
+      "coverImageAlt": "t2tカバー画像",
       "participants": "{{count}}/{{max}}人の参加者",
       "description": "説明",
       "host": "ホスト",
@@ -280,10 +280,10 @@
     }
   },
   "home": {
-    "heroTitle": "TableTalk®を共有しましょう。<br />つながりを作りましょう。",
-    "heroSubtitle": "TableTalkは、ストーリーと味を共有することを愛する人々のためのグローバルコミュニティです。お気に入りのトピックでバーチャルTableTalk®を主催するか、すでに予定されている会話に参加しましょう。",
-    "createTableTalk": "TableTalk®を作成",
-    "exploreTableTalk": "TableTalk®を探索",
+    "heroTitle": "table2Talkを共有しましょう。<br />つながりを作りましょう。",
+    "heroSubtitle": "table2Talkは、ストーリーと味を共有することを愛する人々のためのグローバルコミュニティです。お気に入りのトピックでバーチャルt2tを主催するか、すでに予定されている会話に参加しましょう。",
+    "createTableTalk": "t2tを作成",
+    "exploreTableTalk": "t2tを探索",
     "registerNow": "今すぐ登録",
     "login": "ログイン",
     "howItWorks": {
@@ -298,11 +298,11 @@
       },
       "step3": {
         "title": "3. 出会い",
-        "description": "ビデオ通話にアクセスし、食事の仲間と出会いましょう。共有し、学び、素晴らしい仲間とTableTalk®を楽しむ時です。"
+        "description": "ビデオ通話にアクセスし、食事の仲間と出会いましょう。共有し、学び、素晴らしい仲間とt2tを楽しむ時です。"
       }
     },
     "whyTableTalk": {
-      "title": "なぜTableTalk？",
+      "title": "なぜtable2Talk？",
       "feature1": {
         "title": "孤独への解毒剤",
         "description": "簡単なコーヒーでも、手の込んだディナーでも、共有する人が常にいます。孤独は私たちのメニューにはありません。"
@@ -319,13 +319,13 @@
     "cta": {
       "title": "何を待っていますか？誰かがテーブルに座ろうとしています。",
       "subtitle": "登録は無料で、1分もかかりません。",
-      "organizeTableTalk": "TableTalk®を主催",
+      "organizeTableTalk": "t2tを主催",
       "startNow": "今すぐ始める"
     }
   },
   "navigation": {
     "home": "ホーム",
-    "meals": "TableTalk®",
+    "meals": "t2t",
     "map": "地図",
     "profile": "プロフィール",
     "chat": "チャット",
@@ -345,7 +345,7 @@
       "avatarAlt": "ユーザーのアバター",
       "noNickname": "ニックネーム",
       "noBio": "自己紹介が設定されていません。",
-      "myMealsButton": "私のTableTalk®"
+      "myMealsButton": "私のt2t"
     },
     "personalInfo": {
       "title": "個人情報",
@@ -393,8 +393,8 @@
       "hosting": "主催中",
       "joining": "参加中"
     },
-    "noHostedMeals": "まだTableTalkを主催していません。",
-    "noJoinedMeals": "まだTableTalkに参加していません。",
+    "noHostedMeals": "まだt2tを主催していません。",
+    "noJoinedMeals": "まだt2tに参加していません。",
     "settings": {
       "title": "詳細設定",
       "notifications": "通知",
@@ -420,8 +420,8 @@
     }
   },
   "map": {
-    "title": "近くのユーザーと対面TableTalk®",
-    "subtitle": "近くでTableTalk®に利用可能な人を探索し、予定されている対面TableTalk®を発見しましょう！",
+    "title": "近くのユーザーと対面t2t",
+    "subtitle": "近くでt2tに利用可能な人を探索し、予定されている対面t2tを発見しましょう！",
     "locationError": "場所を取得できません",
     "permissionDenied": "場所の権限が拒否されました。地図を使用するには、デバイス設定で場所の権限を有効にしてください。",
     "errorTitle": "場所エラー",
@@ -458,7 +458,7 @@
   },
   "report": {
     "reportUser": "ユーザーを報告",
-    "reportSuccess": "報告が正常に送信されました。TableTalk®を安全な環境に保つお手伝いをありがとうございます。",
+    "reportSuccess": "報告が正常に送信されました。table2Talkを安全な環境に保つお手伝いをありがとうございます。",
     "userToReport": "報告するユーザー",
     "reportReason": "報告理由 *",
     "selectReason": "理由を選択",
@@ -490,7 +490,7 @@
     "cancel": "キャンセル",
     "confirm": "確認",
     "subjects": {
-      "meal": "TableTalk®",
+      "meal": "t2t",
       "video": "ビデオ通話",
       "chat": "チャット"
     }
@@ -511,7 +511,7 @@
     "errorTitle": "チャットエラー",
     "notFoundTitle": "チャットが見つかりません",
     "notFoundMessage": "リクエストされたチャットが見つかりませんでした。",
-    "viewMeal": "TableTalk®を表示",
+    "viewMeal": "t2tを表示",
     "leaveChat": "チャットを退出",
     "leaveReportTitle": "チャットを退出",
     "messagePlaceholder": "メッセージを入力...",
@@ -534,14 +534,14 @@
     "backToHome": "ホームに戻る"
   },
   "privacy": {
-    "title": "TableTalkプライバシーポリシー",
+    "title": "table2Talkプライバシーポリシー",
     "lastUpdated": "最終更新日：2025年7月26日",
-    "introduction": "TableTalkへようこそ。TableTalk App（「当社」「私たち」）が提供するアプリケーションです。あなたのプライバシーは私たちの優先事項です。このプライバシーポリシーは、私たちのアプリケーション（「サービス」）を使用する際に、どのような個人データを収集し、どのように使用および保護し、データに関する権利を説明しています。",
+    "introduction": "table2Talkへようこそ。table2Talk App（「当社」「私たち」）が提供するアプリケーションです。あなたのプライバシーは私たちの優先事項です。このプライバシーポリシーは、私たちのアプリケーション（「サービス」）を使用する際に、どのような個人データを収集し、どのように使用および保護し、データに関する権利を説明しています。",
     "legalBasis": {
       "title": "1. 処理の法的根拠",
       "description": "私たちは、EU一般データ保護規則（GDPR）およびその他の適用されるプライバシー法に準拠して個人データを処理します。処理の法的根拠には以下が含まれます：",
       "contractual": "契約上の必要性：",
-      "contractualDesc": "利用規約で指定されているTableTalkのコア機能を提供するため。",
+      "contractualDesc": "利用規約で指定されているtable2Talkのコア機能を提供するため。",
       "consent": "同意：",
       "consentDesc": "場所へのアクセスやプッシュ通知などのオプション機能について。いつでも同意を撤回できます。",
       "legitimate": "正当な利益：",
@@ -562,13 +562,13 @@
       "usage": {
         "title": "サービス使用中に収集されるデータ：",
         "interaction": "インタラクションデータ：",
-        "interactionDesc": "作成または参加するバーチャルTableTalk®、ブロックまたは報告するユーザーに関する情報。",
+        "interactionDesc": "作成または参加するバーチャルt2t、ブロックまたは報告するユーザーに関する情報。",
         "technical": "技術データ：",
         "technicalDesc": "IPアドレス、デバイスタイプ、オペレーティングシステム、一意のデバイス識別子、クラッシュデータ。"
       },
       "location": {
         "title": "場所データ（同意を得て）：",
-        "description": "同意を提供した場合、都市レベルで場所を使用して、近くのTableTalk®を提案する場合があります。デバイス設定からいつでもこの機能を無効にできます。"
+        "description": "同意を提供した場合、都市レベルで場所を使用して、近くのt2tを提案する場合があります。デバイス設定からいつでもこの機能を無効にできます。"
       }
     },
     "dataUsage": {
@@ -626,21 +626,21 @@
     }
   },
   "history": {
-    "pageTitle": "私のTableTalk®",
-    "totalMeals": "履歴に合計{{count}}件のTableTalk®があります",
+    "pageTitle": "私のt2t",
+    "totalMeals": "履歴に合計{{count}}件のt2tがあります",
     "upcoming": "予定",
-    "past": "過去のTableTalk®履歴",
-    "organized": "主催するTableTalk®",
-    "participating": "参加するTableTalk®",
-    "organizedPast": "主催したTableTalk®",
-    "participatedPast": "参加したTableTalk®",
-    "noUpcomingCreated": "まだ将来のTableTalk®を作成していません。",
+    "past": "過去のt2t履歴",
+    "organized": "主催するt2t",
+    "participating": "参加するt2t",
+    "organizedPast": "主催したt2t",
+    "participatedPast": "参加したt2t",
+    "noUpcomingCreated": "まだ将来のt2tを作成していません。",
     "createOneNow": "今すぐ作成！",
-    "noUpcomingParticipated": "まだTableTalk®に登録していません。",
+    "noUpcomingParticipated": "まだt2tに登録していません。",
     "discoverSome": "いくつか発見しましょう！",
-    "noPastCreated": "まだ主催したTableTalk®を完了していません。",
-    "noPastParticipated": "まだTableTalk®に参加していません。",
-    "loadError": "TableTalk®の読み込みエラー。"
+    "noPastCreated": "まだ主催したt2tを完了していません。",
+    "noPastParticipated": "まだt2tに参加していません。",
+    "loadError": "t2tの読み込みエラー。"
   },
   "errorBoundary": {
     "title": "おっと！何か問題が発生しました",
@@ -653,8 +653,8 @@
     "retry": "再試行",
     "goHome": "ホームに戻る",
     "contactSupport": "サポートに連絡",
-    "supportEmailSubject": "TableTalkエラー - サポートリクエスト",
-    "supportEmailBody": "TableTalkチームへ\n\nアプリでエラーが発生しました：\n\nエラーID：{{errorId}}\nコンポーネント：{{componentName}}\n日付：{{date}}\nURL：{{url}}\n\nエラーの詳細：\n{{errorMessage}}\n\nスタックトレース：\n{{errorStack}}\n\nご協力ありがとうございます！"
+    "supportEmailSubject": "table2Talkエラー - サポートリクエスト",
+    "supportEmailBody": "table2Talkチームへ\n\nアプリでエラーが発生しました：\n\nエラーID：{{errorId}}\nコンポーネント：{{componentName}}\n日付：{{date}}\nURL：{{url}}\n\nエラーの詳細：\n{{errorMessage}}\n\nスタックトレース：\n{{errorStack}}\n\nご協力ありがとうございます！"
   },
   "errorMonitoring": {
     "title": "エラー監視",
@@ -681,8 +681,8 @@
     "notInitialized": "Sentryが初期化されていません",
     "dsnNotConfigured": "Sentry DSNが設定されていません",
     "monitoringDisabled": "エラー監視が無効になっています",
-    "testMessage": "Sentry接続テスト - TableTalk",
-    "testError": "Sentryのテストエラー - TableTalk",
+    "testMessage": "Sentry接続テスト - table2Talk",
+    "testError": "Sentryのテストエラー - table2Talk",
     "breadcrumbAdded": "ブレッドクラムが追加されました",
     "userContextSet": "ユーザーコンテキストが設定されました",
     "mealContextSet": "食事コンテキストが設定されました",
@@ -700,16 +700,16 @@
     "accept": "承認"
   },
   "terms": {
-    "title": "TableTalk利用規約",
+    "title": "table2Talk利用規約",
     "lastUpdated": "最終更新日：2025年7月26日",
-    "welcome": "TableTalkへようこそ。サービスを使用する前に、これらの利用規約を注意深くお読みください。",
+    "welcome": "table2Talkへようこそ。サービスを使用する前に、これらの利用規約を注意深くお読みください。",
     "acceptance": {
       "title": "1. 規約の承認",
-      "description": "TableTalkプラットフォーム（「サービス」）にアクセスして使用することにより、これらの規約に拘束されることに同意したものとみなされます。規約のいずれかの部分に同意しない場合、サービスにアクセスできません。"
+      "description": "table2Talkプラットフォーム（「サービス」）にアクセスして使用することにより、これらの規約に拘束されることに同意したものとみなされます。規約のいずれかの部分に同意しない場合、サービスにアクセスできません。"
     },
     "service": {
       "title": "2. サービスの説明",
-      "description": "TableTalkは、人々がTableTalk®と会話をビデオ通話で共有するためのバーチャルミーティングを促進するプラットフォームです。ユーザーはイベント（「TableTalk®」）を作成するか、他のユーザーが作成したものに参加できます。"
+      "description": "table2Talkは、人々がt2tと会話をビデオ通話で共有するためのバーチャルミーティングを促進するプラットフォームです。ユーザーはイベント（「t2t」）を作成するか、他のユーザーが作成したものに参加できます。"
     },
     "conduct": {
       "title": "3. ユーザーの行動",
@@ -717,7 +717,7 @@
     },
     "liability": {
       "title": "4. 責任の制限",
-      "description": "TableTalkは、ユーザーを接続するための技術プラットフォームのみを提供し、TableTalk®中のユーザーの行動や会話の内容について責任を負いません。サービスの使用は自己責任です。"
+      "description": "table2Talkは、ユーザーを接続するための技術プラットフォームのみを提供し、t2t中のユーザーの行動や会話の内容について責任を負いません。サービスの使用は自己責任です。"
     },
     "modifications": {
       "title": "5. サービスと規約の変更",
@@ -751,7 +751,7 @@
     "whatWillHappen": "何が起こるか：",
     "consequences": {
       "profile": "プロフィールとすべての個人データが永続的に削除されます",
-      "meals": "主催したすべてのTableTalk®がキャンセルされます",
+      "meals": "主催したすべてのt2tがキャンセルされます",
       "chat": "すべてのチャットとメッセージが削除されます",
       "invitations": "すべての招待と参加リクエストが削除されます",
       "access": "アカウントにアクセスできなくなります",
@@ -771,7 +771,7 @@
     "deleting": "削除中...",
     "deleteError": "アカウント削除中にエラーが発生しました",
     "accountDeleted": "アカウントが削除されました",
-    "deletedSuccess": "アカウントが正常に削除されました。TableTalk®をご利用いただき、ありがとうございました。",
+    "deletedSuccess": "アカウントが正常に削除されました。t2tをご利用いただき、ありがとうございました。",
     "redirecting": "ログインページにリダイレクトされます..."
   },
   "changePasswordModal": {
@@ -810,16 +810,16 @@
       "noLanguagesConfigured": "言語が設定されていません",
       "addLanguage": "+ 言語を追加",
       "removeLanguage": "削除",
-      "helpText": "TableTalk®の体験を向上させるために、知っている言語を選択してください"
+      "helpText": "table2Talkの体験を向上させるために、知っている言語を選択してください"
     },
     "preferredCuisine": "好みの料理",
     "noPreference": "好みがありません。",
     "whoIAm": "私について",
     "noBio": "自己紹介が入力されていません。",
-    "organizedMeals": "主催したTableTalk",
-    "noOrganizedMeals": "このユーザーはまだTableTalkを主催していません。",
+    "organizedMeals": "主催したt2t",
+    "noOrganizedMeals": "このユーザーはまだt2tを主催していません。",
     "recentParticipations": "最近の参加",
-    "noParticipations": "このユーザーはまだTableTalkに参加していません。"
+    "noParticipations": "このユーザーはまだt2tに参加していません。"
   },
   "videoCall": {
     "connecting": "接続中...",
@@ -827,15 +827,46 @@
     "connectionErrorTitle": "接続エラー",
     "permissionDenied": "権限が拒否されました。ビデオ通話に参加するには、カメラとマイクへのアクセスを許可する必要があります。ページをリロードしてもう一度お試しください。",
     "networkIssue": "ネットワークの問題。インターネット接続を確認してもう一度お試しください。",
-    "authError": "認証エラー。セッションが期限切れになっている可能性があります。TableTalk®ページに戻ってもう一度お試しください。",
+    "authError": "認証エラー。セッションが期限切れになっている可能性があります。t2tページに戻ってもう一度お試しください。",
     "roomNotFound": "ルームが見つかりません。ビデオ通話が終了したか、存在しなくなった可能性があります。",
     "mediaAccessError": "カメラまたはマイクにアクセスできません。デバイスが接続され、権限が許可されていることを確認してください。",
     "genericError": "ビデオ通話に接続できません。インターネット接続とブラウザの権限を確認してもう一度お試しください。",
     "retry": "再試行",
     "retrying": "再試行中...",
-    "backToTableTalk": "TableTalk®に戻る",
+    "backToTableTalk": "t2tに戻る",
     "leaveCall": "通話を退出",
     "endCallForEveryone": "全員の通話を終了",
     "confirmEndCall": "すべての参加者の通話を終了してもよろしいですか？"
+  },
+  "nav": {
+    "home": "Home",
+    "explore": "Explore",
+    "map": "Map",
+    "myT2t": "My t2t",
+    "myT2tShort": "Mine",
+    "create": "Create",
+    "chat": "Chat",
+    "notifications": "Notifications",
+    "profile": "Profile",
+    "login": "Log in",
+    "register": "Sign up",
+    "mainNavLabel": "Main navigation",
+    "mobileNavLabel": "Mobile navigation"
+  },
+  "ui": {
+    "card": {
+      "video": "Video",
+      "inPerson": "In person",
+      "join": "Join",
+      "full": "Full",
+      "joined": "Joined ✓",
+      "manage": "Manage",
+      "seatsLabel": "{{filled}} of {{total}} seats taken",
+      "verifiedHost": "Verified host",
+      "minutes": "min"
+    },
+    "modal": {
+      "close": "Close"
+    }
   }
 }

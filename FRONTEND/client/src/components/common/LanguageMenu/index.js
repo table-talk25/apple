@@ -1,101 +1,85 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useAuth } from '../../../contexts/AuthContext';
+import { Globe, Check } from 'lucide-react';
 import { translatedLanguages } from '../../../constants/profileConstants';
-import { FaGlobe } from 'react-icons/fa';
 import styles from './LanguageMenu.module.css';
 
 const LanguageMenu = () => {
   const { i18n, t } = useTranslation();
-  const { user } = useAuth();
-  const [userLanguages, setUserLanguages] = useState([]);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const containerRef = useRef(null);
 
-  // Rileva le lingue dal profilo utente
-  useEffect(() => {
-    // Per ora, mostra sempre tutte le lingue tradotte
-    setUserLanguages(translatedLanguages);
-  }, [user, i18n]);
+  const currentCode = (i18n.language || 'it').split('-')[0].toLowerCase();
 
   const changeLanguage = (lng) => {
     i18n.changeLanguage(lng);
     setIsMenuOpen(false);
-    console.log('Cambio lingua a:', lng);
   };
 
   const getCurrentLanguageName = () => {
-    const currentLang = translatedLanguages.find(lang => lang.code === i18n.language);
+    const currentLang = translatedLanguages.find((lang) => lang.code === currentCode);
     return currentLang ? currentLang.name : t('languageSwitcher.currentLanguage');
   };
 
-  const toggleMenu = () => {
-    setIsMenuOpen(!isMenuOpen);
-  };
-
-  // Chiudi il menu quando si clicca fuori
   useEffect(() => {
+    if (!isMenuOpen) return undefined;
     const handleClickOutside = (event) => {
-      if (!event.target.closest(`.${styles.container}`)) {
+      if (containerRef.current && !containerRef.current.contains(event.target)) {
         setIsMenuOpen(false);
       }
     };
-
-    if (isMenuOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
-
+    const handleEsc = (event) => {
+      if (event.key === 'Escape') setIsMenuOpen(false);
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('keydown', handleEsc);
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleEsc);
     };
   }, [isMenuOpen]);
 
-  // Se non ci sono lingue disponibili, non mostrare nulla
-  if (userLanguages.length === 0) {
+  if (!translatedLanguages || translatedLanguages.length === 0) {
     return null;
   }
 
   return (
-    <div className={styles.container}>
-      <button 
+    <div className={styles.container} ref={containerRef}>
+      <button
+        type="button"
         className={styles.languageButton}
-        onClick={toggleMenu}
+        onClick={() => setIsMenuOpen((prev) => !prev)}
         title={`${t('languageSwitcher.currentLanguage')}: ${getCurrentLanguageName()}`}
+        aria-expanded={isMenuOpen}
+        aria-haspopup="menu"
       >
-        <FaGlobe className={styles.globeIcon} />
-        <span className={styles.languageCode}>
-          {i18n.language.toUpperCase()}
-        </span>
-        <span className={`${styles.arrow} ${isMenuOpen ? styles.arrowUp : ''}`}>
-          ▼
-        </span>
+        <Globe size={14} strokeWidth={2} className={styles.globeIcon} aria-hidden="true" />
+        <span className={styles.languageCode}>{currentCode.toUpperCase()}</span>
       </button>
 
       {isMenuOpen && (
-        <div className={styles.dropdown}>
-          {userLanguages.map((language) => (
-            <button
-              key={language.code}
-              className={`${styles.languageOption} ${
-                i18n.language === language.code ? styles.active : ''
-              }`}
-              onClick={() => changeLanguage(language.code)}
-              disabled={i18n.language === language.code}
-            >
-              <span className={styles.languageCode}>
-                {language.code.toUpperCase()}
-              </span>
-              <span className={styles.languageName}>
-                {language.name}
-              </span>
-              {i18n.language === language.code && (
-                <span className={styles.checkmark}>✓</span>
-              )}
-            </button>
-          ))}
+        <div className={styles.dropdown} role="menu">
+          {translatedLanguages.map((language) => {
+            const active = currentCode === language.code;
+            return (
+              <button
+                type="button"
+                key={language.code}
+                className={`${styles.languageOption} ${active ? styles.active : ''}`}
+                onClick={() => changeLanguage(language.code)}
+                disabled={active}
+                role="menuitem"
+              >
+                <span className={styles.optionCode}>{language.code.toUpperCase()}</span>
+                <span className={styles.languageName}>{language.name}</span>
+                {active && <Check size={14} strokeWidth={2.5} className={styles.checkmark} />}
+              </button>
+            );
+          })}
         </div>
       )}
     </div>
   );
 };
 
-export default LanguageMenu; 
+export default LanguageMenu;

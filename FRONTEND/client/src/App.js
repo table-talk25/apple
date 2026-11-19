@@ -139,17 +139,17 @@ const App = () => {
                 <Route path="meals/create" element={<PrivateRoute requireCompleteProfile={true}><CreateMealPage /></PrivateRoute>} />
                 <Route path="meals/edit/:id" element={<PrivateRoute requireCompleteProfile={true}><EditMealPage /></PrivateRoute>} />
                 <Route path="meals/:mealId" element={<PrivateRoute requireCompleteProfile={true}><MealDetailPage /></PrivateRoute>} />
-              </Route>
 
-              {/* Rotte senza layout */}
-              <Route path="/login" element={<LoginPage />} />
-              <Route path="/register" element={<RegisterPage />} />
-              <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-              <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
-              <Route path="/verify-email" element={<VerifyEmailPage />} />
-              <Route path="/privacy" element={<PrivacyPolicyPage />} />
-              <Route path="/termini-e-condizioni" element={<TermsAndConditionsPage />} />
-              <Route path="*" element={<NotFoundPage />} />
+                {/* Rotte Auth, Legali e 404 — tutte nello shell unificato */}
+                <Route path="login" element={<LoginPage />} />
+                <Route path="register" element={<RegisterPage />} />
+                <Route path="forgot-password" element={<ForgotPasswordPage />} />
+                <Route path="reset-password/:token" element={<ResetPasswordPage />} />
+                <Route path="verify-email" element={<VerifyEmailPage />} />
+                <Route path="privacy" element={<PrivacyPolicyPage />} />
+                <Route path="termini-e-condizioni" element={<TermsAndConditionsPage />} />
+                <Route path="*" element={<NotFoundPage />} />
+              </Route>
             </Routes>
           </Suspense>
           <ToastContainer position="top-right" autoClose={3000} hideProgressBar={false} />

@@ -4,7 +4,7 @@ import dayjs from 'dayjs';
 import 'dayjs/locale/it';
 import { DEV_SERVER_URL, SERVER_URL, isNative, API_URL } from '../config/capacitorConfig';
 
-// --- TIPI DI TABLETALK® ---
+// --- TIPI DI t2t ---
 
 // 1. Definiamo le CHIAVI INGLESI che il backend si aspetta
 export const MEAL_TYPES = {
@@ -60,13 +60,13 @@ export const getMealModeIcon = (modeKey) => MEAL_MODE_ICONS[modeKey] || '🍽️
 
 export const getMealModeColor = (modeKey) => {
   const colors = {
-    [MEAL_MODES.VIRTUAL]: '#007bff', // Blu per virtuale
-    [MEAL_MODES.PHYSICAL]: '#28a745'  // Verde per fisico
+    [MEAL_MODES.VIRTUAL]: 'var(--tt-accent)',
+    [MEAL_MODES.PHYSICAL]: 'var(--tt-text)'
   };
-  return colors[modeKey] || '#6c757d';
+  return colors[modeKey] || 'var(--tt-text-muted)';
 };
 
-// --- STATI DEI TABLETALK® ---
+// --- STATI DEI t2t ---
 export const MEAL_STATUS = { UPCOMING: 'upcoming', ONGOING: 'ongoing', COMPLETED: 'completed', CANCELLED: 'cancelled' };
 export const MEAL_STATUS_LABELS = {
   [MEAL_STATUS.UPCOMING]: 'In Programma',
@@ -85,13 +85,13 @@ export const getMealStatusText = (statusKey) => MEAL_STATUS_LABELS[statusKey] ||
 
 export const getMealTypeColor = (typeKey) => {
   const colors = {
-    [MEAL_TYPES.BREAKFAST]: '#ffc107',
-    [MEAL_TYPES.BRUNCH]: '#ff9800',
-    [MEAL_TYPES.LUNCH]: '#28a745',
-    [MEAL_TYPES.DINNER]: '#6f42c1',
-    [MEAL_TYPES.APERITIF]: '#fd7e14'
+    [MEAL_TYPES.BREAKFAST]: 'var(--tt-primary)',
+    [MEAL_TYPES.BRUNCH]: 'var(--tt-primary)',
+    [MEAL_TYPES.LUNCH]: 'var(--tt-primary)',
+    [MEAL_TYPES.DINNER]: 'var(--tt-primary)',
+    [MEAL_TYPES.APERITIF]: 'var(--tt-primary)'
   };
-  return colors[typeKey] || '#007bff';
+  return colors[typeKey] || 'var(--tt-primary)';
 };
 
 export const formatDate = (dateString, formatString = "DD MMM, HH:mm") => {

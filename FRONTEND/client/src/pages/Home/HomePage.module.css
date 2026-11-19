@@ -3,7 +3,7 @@
   composes: palette from '../../styles/common/palette.module.css';
   width: 100%;
   overflow-x: hidden;
-  padding-top: 80px;
+  padding-top: 0;
   background: var(--tt-background);
   color: var(--tt-text);
 }

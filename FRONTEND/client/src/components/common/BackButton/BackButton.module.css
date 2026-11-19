@@ -1,18 +1,26 @@
-/* File: src/components/common/BackButton/BackButton.module.css */
-
 .backButton {
-  background-color: var(--tt-background);
-  border: 1px solid var(--tt-border);
-  border-radius: 5px;
-  padding: 8px 16px;
-  font-size: 0.9em;
-  font-weight: bold;
-  color: var(--tt-text-muted);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  background-color: var(--tt-surface);
+  border: 1.5px solid var(--tt-border);
+  border-radius: var(--tt-radius-md);
+  padding: 0.45rem 0.9rem;
+  font-family: var(--tt-font-body);
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--tt-text);
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
 }
 
 .backButton:hover {
-  background-color: var(--tt-border);
+  background-color: var(--tt-background);
+  border-color: var(--tt-accent);
+  color: var(--tt-accent);
 }
 
+.backButton:focus-visible {
+  outline: 2px solid var(--tt-focus);
+  outline-offset: 2px;
+}

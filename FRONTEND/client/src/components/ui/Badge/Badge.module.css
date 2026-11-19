@@ -1,0 +1,45 @@
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-family: var(--tt-font-body);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  line-height: 1.2;
+  padding: 0.25rem 0.6rem;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.category {
+  background-color: color-mix(in srgb, var(--tt-primary) 12%, transparent);
+  color: var(--tt-primary);
+}
+
+.video {
+  background-color: color-mix(in srgb, var(--tt-accent) 12%, transparent);
+  color: var(--tt-accent);
+}
+
+.inPerson {
+  background-color: color-mix(in srgb, var(--tt-text) 8%, transparent);
+  color: var(--tt-text);
+}
+
+.onImage {
+  position: absolute;
+  top: 10px;
+  z-index: 2;
+  background-color: color-mix(in srgb, var(--tt-surface) 94%, transparent);
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--tt-text) 15%, transparent);
+}
+
+.left {
+  left: 10px;
+}
+
+.right {
+  right: 10px;
+}

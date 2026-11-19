@@ -88,7 +88,7 @@ const VerifyEmailPage = () => {
               Grazie {user && user.name ? user.name : ''}, il tuo account è ora completamente attivo.
             </p>
             <p style={styles.text}>
-              Continua dove avevi lasciato: completa il tuo profilo per iniziare a usare TableTalk.
+              Continua dove avevi lasciato: completa il tuo profilo per iniziare a usare table2Talk.
             </p>
             {/* Coerente col flusso scelto: nuovo utente → onboarding profilo.
                 Se il profilo è già completo, ProfilePage mostra automaticamente

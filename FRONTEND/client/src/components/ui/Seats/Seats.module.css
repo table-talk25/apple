@@ -1,0 +1,25 @@
+.seats {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 1.5px solid var(--tt-primary);
+  background-color: transparent;
+  flex-shrink: 0;
+}
+
+.full {
+  background-color: var(--tt-primary);
+}
+
+.count {
+  font-size: 0.75rem;
+  color: var(--tt-text-muted);
+  margin-left: 4px;
+  font-weight: 500;
+}
