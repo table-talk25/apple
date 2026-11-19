@@ -1,167 +1,330 @@
-/* FE-02: opt-in colors, with existing home structure and spacing retained. */
-.homeContainer {
-  composes: palette from '../../styles/common/palette.module.css';
+.home {
   width: 100%;
-  overflow-x: hidden;
-  padding-top: 0;
-  background: var(--tt-background);
+  padding: 0 0 24px;
   color: var(--tt-text);
 }
 
-.heroSection {
+/* --- HERO --- */
+.hero {
+  padding: 60px 0 36px;
   text-align: center;
-  padding: clamp(32px, 7vh, 64px) 18px;
-  background: var(--tt-background);
-  color: var(--tt-text);
-  position: relative;
-  margin-top: 0;
 }
-.heroSection h1 {
-  font-size: clamp(2.0rem, 4.5vw, 3.2rem);
-  font-weight: 700;
-  margin-bottom: clamp(16px, 3vh, 24px);
-  animation: fadeInUp 1s ease-out;
-}
-.heroSection p {
-  font-size: clamp(0.95rem, 2.2vw, 1.1rem);
-  max-width: min(650px, 90%);
-  margin: 0 auto clamp(30px, 5vh, 40px);
-  line-height: 1.6;
+
+.livePill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background-color: var(--tt-surface);
+  border: 1px solid var(--tt-border);
+  border-radius: 999px;
+  padding: 0.35rem 0.9rem;
+  font-size: 0.82rem;
   color: var(--tt-text-muted);
-  animation: fadeInUp 1s ease-out 0.2s both;
+  margin-bottom: 22px;
 }
-.heroButtons {
+
+.liveDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: var(--tt-accent);
+  animation: livePulse 1.8s infinite;
+  flex-shrink: 0;
+}
+
+@keyframes livePulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--tt-accent) 35%, transparent);
+  }
+  50% {
+    box-shadow: 0 0 0 6px transparent;
+  }
+}
+
+.heroTitle {
+  font-family: var(--tt-font-heading);
+  font-size: clamp(2.1rem, 5.2vw, 3.2rem);
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--tt-text);
+  margin: 0 0 14px;
+}
+
+.heroTitle em {
+  font-style: normal;
+  color: var(--tt-primary);
+}
+
+.heroSubtitle {
+  max-width: 600px;
+  margin: 0 auto 26px;
+  color: var(--tt-text-muted);
+  font-size: 1.05rem;
+  line-height: 1.6;
+}
+
+.heroCta {
   display: flex;
-  gap: clamp(15px, 2vw, 20px);
+  gap: 14px;
   justify-content: center;
   flex-wrap: wrap;
-  animation: fadeInUp 1s ease-out 0.4s both;
 }
-.heroButtons .btn, .ctaButtons .btn {
-  padding: clamp(10px, 2vw, 14px) clamp(24px, 4vw, 32px);
-  font-size: clamp(0.85rem, 1.8vw, 1rem);
-  font-weight: 600;
-  border-radius: 50px;
-  transition: background-color 0.2s ease, color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
-  text-decoration: none;
+
+.heroLink {
   display: inline-block;
-  border: 2px solid transparent;
+  margin-top: 18px;
+  font-size: 0.88rem;
+  color: var(--tt-accent);
+  font-weight: 500;
+  background: transparent;
+  border: none;
+  padding: 0.25rem 0.5rem;
+  cursor: pointer;
+  border-radius: var(--tt-radius-md);
+  transition: color 0.2s ease, opacity 0.2s ease;
 }
-.heroButtons .btn:first-child {
-  background: var(--tt-primary);
+
+.heroLink:hover {
+  color: var(--tt-primary);
+}
+
+/* --- STEPS --- */
+.steps {
+  padding: 22px 0 8px;
+}
+
+.stepsGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+}
+
+.step {
+  background-color: var(--tt-surface);
+  border: 1px solid var(--tt-border);
+  border-radius: var(--tt-radius-lg);
+  padding: 22px;
+}
+
+.stepNum {
+  font-family: var(--tt-font-heading);
+  font-weight: 700;
+  font-size: 1.6rem;
+  color: var(--tt-primary);
+  line-height: 1.1;
+}
+
+.step h3 {
+  font-family: var(--tt-font-heading);
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--tt-text);
+  margin: 0.35rem 0 0.3rem;
+}
+
+.step p {
+  font-size: 0.9rem;
+  color: var(--tt-text-muted);
+  margin: 0;
+  line-height: 1.55;
+}
+
+/* --- WHY TABLE2TALK --- */
+.why {
+  padding: 40px 0 6px;
+}
+
+.why h2,
+.discover h2 {
+  font-family: var(--tt-font-heading);
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--tt-text);
+  margin: 0;
+}
+
+.whyGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+  margin-top: 16px;
+}
+
+.value {
+  background-color: var(--tt-surface);
+  border: 1px solid var(--tt-border);
+  border-radius: var(--tt-radius-lg);
+  padding: 22px;
+}
+
+.valueIco {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background-color: var(--tt-background);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  margin-bottom: 12px;
+}
+
+.value h3 {
+  font-family: var(--tt-font-heading);
+  font-size: 1.02rem;
+  font-weight: 600;
+  color: var(--tt-text);
+  margin: 0 0 0.3rem;
+}
+
+.value p {
+  font-size: 0.9rem;
+  color: var(--tt-text-muted);
+  margin: 0;
+  line-height: 1.55;
+}
+
+/* --- TAVOLI DI OGGI --- */
+.discover {
+  padding: 44px 0 20px;
+}
+
+.secHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.seeAll {
+  font-size: 0.88rem;
+  color: var(--tt-accent);
+  text-decoration: none;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: color 0.2s ease;
+}
+
+.seeAll:hover {
+  color: var(--tt-primary);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
+}
+
+/* Skeleton loading cards */
+.skeletonCard {
+  background-color: var(--tt-surface);
+  border: 1px solid var(--tt-border);
+  border-radius: var(--tt-radius-lg);
+  overflow: hidden;
+  box-shadow: var(--tt-shadow);
+}
+
+.skeletonCover {
+  height: 185px;
+  background-color: color-mix(in srgb, var(--tt-border) 55%, var(--tt-background));
+}
+
+.skeletonBody {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.skeletonLineWide,
+.skeletonLineMid,
+.skeletonLineShort {
+  height: 14px;
+  border-radius: 999px;
+  background-color: color-mix(in srgb, var(--tt-border) 65%, var(--tt-background));
+}
+
+.skeletonLineWide {
+  width: 78%;
+}
+
+.skeletonLineMid {
+  width: 56%;
+}
+
+.skeletonLineShort {
+  width: 40%;
+}
+
+/* --- FINAL CTA --- */
+.finalCta {
+  margin: 40px 0 30px;
+  background-color: var(--tt-primary);
+  border-radius: var(--tt-radius-lg);
+  padding: 44px 28px;
+  text-align: center;
   color: var(--tt-on-primary);
 }
-.heroButtons .btn:last-child {
-  background: var(--tt-surface);
-  border-color: var(--tt-accent);
-  color: var(--tt-accent);
-}
-.heroButtons .btn:first-child:hover { background: var(--tt-primary-hover); }
-.heroButtons .btn:last-child:hover {
-  background: var(--tt-accent);
-  color: var(--tt-on-accent);
-}
-.heroButtons .btn:hover, .ctaButtons .btn:hover {
-  transform: translateY(-3px);
-  box-shadow: var(--tt-shadow);
-}
 
-.featuresSection {
-  padding: clamp(40px, 7vh, 80px) 18px;
-  background: var(--tt-surface);
-}
-.secondarySection { background: var(--tt-background); }
-.featuresSection h2 {
-  text-align: center;
-  font-size: clamp(1.6rem, 3.6vw, 2.5rem);
-  color: var(--tt-text);
-  margin-bottom: clamp(40px, 6vh, 70px);
-}
-.featuresGrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
-  gap: clamp(20px, 3.5vw, 36px);
-  max-width: 1200px;
-  margin: 0 auto;
-}
-.featureCard {
-  background: var(--tt-surface);
-  padding: clamp(20px, 3.5vw, 30px);
-  border-radius: 15px;
-  border: 1px solid var(--tt-border);
-  text-align: center;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-.featureCard:hover {
-  transform: translateY(-8px);
-  box-shadow: var(--tt-shadow);
-}
-.featureIcon {
-  font-size: clamp(2.0rem, 3.6vw, 2.5rem);
-  color: var(--tt-accent);
-  margin-bottom: clamp(15px, 3vh, 20px);
-}
-.featureCard h3 {
-  font-size: clamp(1.1rem, 2.2vw, 1.4rem);
-  color: var(--tt-text);
-  margin-bottom: clamp(10px, 2vh, 15px);
-}
-.featureCard p {
-  color: var(--tt-text-muted);
-  line-height: 1.6;
-  font-size: clamp(0.85rem, 1.8vw, 0.95rem);
-}
-
-.ctaSection {
-  text-align: center;
-  padding: clamp(40px, 7vh, 80px) 18px;
-  background: var(--tt-accent);
-  color: var(--tt-on-accent);
-}
-.ctaSection h2 {
-  font-size: clamp(1.6rem, 3.6vw, 2.3rem);
-  margin-bottom: clamp(15px, 3vh, 25px);
+.finalCta h2 {
+  font-family: var(--tt-font-heading);
+  font-size: clamp(1.4rem, 3.5vw, 1.9rem);
   font-weight: 700;
-  color: var(--tt-on-accent);
+  color: var(--tt-on-primary);
+  margin: 0 0 10px;
 }
-.ctaSection p {
-  font-size: clamp(0.95rem, 2.2vw, 1.1rem);
-  max-width: min(550px, 90%);
-  margin: 0 auto clamp(30px, 4vh, 40px);
-  line-height: 1.6;
-  color: var(--tt-on-accent);
-}
-.ctaButtons { display: flex; justify-content: center; }
-.ctaButtons .btn {
-  background: var(--tt-surface);
-  color: var(--tt-accent);
-}
-.ctaButtons .btn:hover { background: var(--tt-background); }
 
-@keyframes fadeInUp {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
+.finalCta p {
+  opacity: 0.92;
+  margin: 0 auto 22px;
+  max-width: 540px;
+  color: var(--tt-on-primary);
 }
-@media (max-width: 1024px) {
-  .heroSection, .featuresSection, .ctaSection {
-    padding-top: clamp(40px, 6vh, 80px);
-    padding-bottom: clamp(40px, 6vh, 80px);
+
+/* --- TRUST ROW --- */
+.trust {
+  padding: 6px 0 10px;
+  display: flex;
+  gap: 26px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.trustItem {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.88rem;
+  color: var(--tt-text-muted);
+}
+
+.trustIcon {
+  color: var(--tt-accent);
+  flex-shrink: 0;
+}
+
+/* --- RESPONSIVE --- */
+@media (max-width: 720px) {
+  .hero {
+    padding: 42px 0 28px;
+  }
+
+  .stepsGrid,
+  .whyGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .finalCta {
+    padding: 36px 20px;
+  }
+
+  .trust {
+    gap: 14px 20px;
+  }
+
+  .skeletonCover {
+    height: 170px;
   }
 }
-@media (max-width: 480px) {
-  .heroButtons { flex-direction: column; align-items: center; }
-  .heroButtons .btn { width: 100%; max-width: 300px; text-align: center; }
-}
-@media (prefers-reduced-motion: reduce) {
-  .homeContainer *, .homeContainer *::before, .homeContainer *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-    scroll-behavior: auto !important;
-  }
-}
-.btn:focus, .featureCard:focus {
-  outline: 3px solid var(--tt-focus);
-  outline-offset: 3px;
-}
-.ctaButtons .btn:focus { outline-color: var(--tt-focus-on-dark); }
