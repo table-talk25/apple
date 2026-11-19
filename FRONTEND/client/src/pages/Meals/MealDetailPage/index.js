@@ -1,26 +1,66 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Container, Row, Col, Button, Badge, Spinner, Alert, Modal } from 'react-bootstrap';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'react-toastify';
-import { FaMapMarkerAlt, FaCalendarAlt, FaClock, FaUser, FaUsers, FaComment, FaVideo, FaShareAlt, FaArrowLeft, FaTrash, FaCamera } from 'react-icons/fa';
+import { Camera as CameraIcon, Video, MapPin, Trash2, Share2 } from 'lucide-react';
 import { Capacitor } from '@capacitor/core';
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
 
 import mealService from '../../../services/mealService';
 import { useAuth } from '../../../contexts/AuthContext';
-import { getHostAvatarUrl, getMealCoverImageUrl } from '../../../constants/mealConstants';
+import { useChatDrawer } from '../../../contexts/ChatDrawerContext';
+import {
+  getHostAvatarUrl,
+  getMealCoverImageUrl,
+} from '../../../constants/mealConstants';
+import { useMealTranslations } from '../../../hooks/useMealTranslations';
+import useOptimisticMealActions from '../../../hooks/useOptimisticMealActions';
+import {
+  extractCity,
+  formatMealWhen,
+  getMealHostId,
+  getMealRoleState,
+  getUserId,
+} from '../../../utils/mealFormat';
+import { openExternalShareUrl } from '../../../utils/mealShare';
 import OpenStreetMapComponent from '../../../components/maps/OpenStreetMapComponent';
 import BackButton from '../../../components/common/BackButton';
-import JoinMealButton from '../../../components/meals/JoinMealButton';
-import LeaveMealButton from '../../../components/meals/LeaveMealButton';
+import ShareMealModal from '../../../components/meals/ShareMealModal';
+import {
+  Avatar,
+  Button,
+  Cover,
+  EmptyState,
+  Modal,
+  Seats,
+  Toast,
+} from '../../../components/ui';
 import styles from './MealDetailPage.module.css';
 
+const VerifiedIcon = ({ label }) => (
+  <svg
+    className={styles.verified}
+    viewBox="0 0 24 24"
+    fill="var(--tt-accent)"
+    role="img"
+    aria-label={label}
+  >
+    <path d="M12 2l2.4 2.1 3.1-.4 1.1 3 2.9 1.3-.7 3.1 1.9 2.5-1.9 2.5.7 3.1-2.9 1.3-1.1 3-3.1-.4L12 22l-2.4-2.1-3.1.4-1.1-3-2.9-1.3.7-3.1L1.3 12l1.9-2.5-.7-3.1 2.9-1.3 1.1-3 3.1.4z" />
+    <path
+      d="M10.6 14.6l-2.2-2.2 1.1-1.1 1.1 1.1 3.9-3.9 1.1 1.1z"
+      fill="var(--tt-on-accent)"
+    />
+  </svg>
+);
+
 const MealDetailPage = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { mealId } = useParams();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, isAuthenticated } = useAuth();
+  const { openChat, openDrawer } = useChatDrawer();
+  const { getMealTypeText } = useMealTranslations();
+  const { joinOptimistic, leaveOptimistic, isPending } = useOptimisticMealActions();
   const coverImageInputRef = useRef(null);
 
   const [meal, setMeal] = useState(null);
@@ -28,18 +68,29 @@ const MealDetailPage = () => {
   const [error, setError] = useState(null);
   const [showShareModal, setShowShareModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [confirmingLeave, setConfirmingLeave] = useState(false);
+  const [notified, setNotified] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isUploadingCover, setIsUploadingCover] = useState(false);
+  const [toastState, setToastState] = useState({ message: '', tone: 'success', visible: false });
 
-  // Caricamento Dati Pasto
+  const showToast = useCallback((message, tone = 'success') => {
+    setToastState({ message, tone, visible: true });
+  }, []);
+
+  const hideToast = useCallback(() => {
+    setToastState((prev) => ({ ...prev, visible: false }));
+  }, []);
+
   const fetchMeal = useCallback(async () => {
     try {
       setLoading(true);
+      setError(null);
       const data = await mealService.getMealById(mealId);
-      setMeal(data.data || data);
+      setMeal(data?.data || data);
     } catch (err) {
-      console.error('Errore caricamento pasto:', err);
-      setError(t('meals.detail.loadError') || 'Impossibile caricare il pasto.');
+      console.error('Errore caricamento t2t:', err);
+      setError(t('meals.detail.loadError', 'Impossibile caricare il t2t.'));
     } finally {
       setLoading(false);
     }
@@ -47,20 +98,17 @@ const MealDetailPage = () => {
 
   useEffect(() => {
     fetchMeal();
+    setConfirmingLeave(false);
+    setNotified(false);
   }, [fetchMeal]);
 
-  const handleRefresh = () => {
-    fetchMeal();
-  };
-
-  // Upload immagine di copertina direttamente dalla hero
   const handleCoverImageChange = async (file) => {
     if (!file || !file.type.startsWith('image/')) {
-      toast.error('Seleziona solo file immagine');
+      showToast('Seleziona solo file immagine.', 'error');
       return;
     }
     if (file.size > 10 * 1024 * 1024) {
-      toast.error('Il file è troppo grande. Massimo 10MB.');
+      showToast('Il file è troppo grande. Massimo 10MB.', 'error');
       return;
     }
 
@@ -69,15 +117,15 @@ const MealDetailPage = () => {
       const formData = new FormData();
       formData.append('image', file);
       formData.append('title', meal.title);
-      formData.append('description', meal.description);
+      formData.append('description', meal.description || '');
       formData.append('mealType', meal.mealType);
       formData.append('type', meal.type);
       formData.append('date', new Date(meal.date).toISOString());
       formData.append('duration', meal.duration);
       formData.append('maxParticipants', meal.maxParticipants);
-      formData.append('language', meal.language || 'English');
-      if (meal.topics && meal.topics.length > 0) {
-        meal.topics.forEach(topic => formData.append('topics', topic));
+      formData.append('language', meal.language || 'Italiano');
+      if (Array.isArray(meal.topics) && meal.topics.length > 0) {
+        meal.topics.forEach((topic) => formData.append('topics', topic));
       }
       if (meal.location) {
         formData.append('location', JSON.stringify(meal.location));
@@ -87,18 +135,21 @@ const MealDetailPage = () => {
       }
 
       await mealService.updateMeal(meal._id, formData);
-      toast.success('Immagine di copertina aggiornata! 🎉');
+      showToast('Immagine di copertina aggiornata!', 'success');
       await fetchMeal();
     } catch (err) {
       console.error('Errore aggiornamento immagine:', err);
-      toast.error(err.response?.data?.message || 'Errore durante l\'aggiornamento dell\'immagine');
+      showToast(
+        err.response?.data?.message || "Errore durante l'aggiornamento dell'immagine.",
+        'error'
+      );
     } finally {
       setIsUploadingCover(false);
     }
   };
 
   const handleCoverFileInput = async (e) => {
-    const file = e.target.files[0];
+    const file = e.target.files?.[0];
     if (file) await handleCoverImageChange(file);
     e.target.value = '';
   };
@@ -112,7 +163,7 @@ const MealDetailPage = () => {
           resultType: CameraResultType.DataUrl,
           source: CameraSource.Photos,
           width: 1600,
-          height: 1600
+          height: 1600,
         });
         if (!image || !image.dataUrl) return;
         const response = await fetch(image.dataUrl);
@@ -121,53 +172,125 @@ const MealDetailPage = () => {
         await handleCoverImageChange(file);
       } catch (err) {
         console.error('Errore selezione foto:', err);
-        toast.error('Errore durante la selezione della foto');
+        showToast('Errore durante la selezione della foto.', 'error');
       }
     } else {
       coverImageInputRef.current?.click();
     }
   };
 
-  if (loading) return <div className="d-flex justify-content-center py-5"><Spinner animation="border" /></div>;
-  if (error) return <Container className="py-5"><Alert variant="danger">{error}</Alert><BackButton /></Container>;
-  if (!meal) return <Container className="py-5"><Alert variant="warning">Pasto non trovato</Alert><BackButton /></Container>;
+  if (loading) {
+    return (
+      <div className={styles.page}>
+        <div className={styles.skeletonHero} aria-busy="true" />
+        <div className={styles.skeletonCard} aria-hidden="true" />
+      </div>
+    );
+  }
 
-  // Logica Permessi
-  const isHost = user && (meal.host?._id === user._id || meal.host === user._id);
-  const isParticipant = user && meal.participants?.some(p => (p._id || p) === user._id);
+  if (error || !meal) {
+    return (
+      <div className={styles.page}>
+        <div className={styles.topRow}>
+          <BackButton />
+        </div>
+        <EmptyState
+          icon="🍽️"
+          title={error || t('detail.notFound', 't2t non trovato')}
+          description={t(
+            'detail.notFoundDesc',
+            'Potrebbe essere stato rimosso o il link non è più valido.'
+          )}
+          actionLabel={t('detail.backToExplore', 'Torna a Esplora')}
+          actionTo="/meals"
+        />
+      </div>
+    );
+  }
+
+  const roleState = getMealRoleState(meal, user);
+  const isHost = roleState === 'organizer';
+  const isParticipant = roleState === 'joined';
   const isVirtual = meal.mealType === 'virtual';
-  const isFull = meal.participants?.length >= meal.maxParticipants;
-  const isPast = new Date(meal.date) < new Date();
+  const currentUserId = getUserId(user);
+  const hostId = getMealHostId(meal);
+  const pending = isPending(meal._id);
 
   const mealDate = new Date(meal.date);
   const now = new Date();
   const durationMs = (meal.duration || 60) * 60 * 1000;
   const mealEndTime = new Date(mealDate.getTime() + durationMs);
   const tenMinutesBeforeStart = new Date(mealDate.getTime() - 10 * 60 * 1000);
+  const isPast = now > mealEndTime || meal.status === 'completed' || meal.status === 'cancelled';
 
-  const isVideoAccessible = isVirtual && 
-                            (isParticipant || isHost) && 
-                            now >= tenMinutesBeforeStart && 
-                            now <= mealEndTime;
+  const isVideoAccessible =
+    isVirtual &&
+    (isParticipant || isHost) &&
+    now >= tenMinutesBeforeStart &&
+    now <= mealEndTime;
 
-  const isTooEarly = isVirtual && (isParticipant || isHost) && now < tenMinutesBeforeStart && now > new Date(mealDate.getTime() - 24 * 60 * 60 * 1000);
+  const isTooEarly =
+    isVirtual &&
+    (isParticipant || isHost) &&
+    now < tenMinutesBeforeStart &&
+    now > new Date(mealDate.getTime() - 24 * 60 * 60 * 1000);
 
-  // Label tipo pasto con fallback esplicito (evita chiavi i18n non tradotte)
-  const mealTypeLabel = isVirtual
-    ? (t('meals.type.virtual') !== 'meals.type.virtual' ? t('meals.type.virtual') : 'Virtuale')
-    : (t('meals.type.physical') !== 'meals.type.physical' ? t('meals.type.physical') : 'In presenza');
+  const city = extractCity(meal.location);
+  const whereText = isVirtual
+    ? t('detail.onlineWhere', 'Online · Video')
+    : city
+    ? t('detail.inPersonWithCity', { city, defaultValue: `${city} · Dal vivo` })
+    : t('detail.inPersonWhere', 'Dal vivo');
+
+  const hostName = meal.host?.nickname || meal.host?.name || 'Host';
+  const hostVerified = Boolean(meal.host?.isVerified || meal.host?.isEmailVerified);
+  const coverSrc = meal.imageUrl ? getMealCoverImageUrl(meal.imageUrl) : '';
+  const hostAvatarSrc = meal.host?.profileImage
+    ? getHostAvatarUrl(meal.host.profileImage)
+    : '';
+  const seatsFilled = Array.isArray(meal.participants) ? meal.participants.length : 0;
+  const seatsTotal = Number(meal.maxParticipants) || 0;
+  const tags = Array.isArray(meal.topics) ? meal.topics.filter(Boolean) : [];
+
+  const handleJoin = async () => {
+    await joinOptimistic(meal, {
+      onUpdate: setMeal,
+      onToast: showToast,
+    });
+  };
+
+  const handleConfirmLeave = async () => {
+    setConfirmingLeave(false);
+    await leaveOptimistic(meal, {
+      onUpdate: setMeal,
+      onToast: showToast,
+    });
+  };
 
   const handleChatClick = () => {
-    if (meal.chatId) {
-      const targetId = typeof meal.chatId === 'object' ? meal.chatId._id : meal.chatId;
-      navigate(`/chat/${targetId}`);
+    if (!isAuthenticated) {
+      navigate('/login');
+      return;
+    }
+    const targetChatId =
+      typeof meal.chatId === 'object' ? meal.chatId?._id : meal.chatId;
+    if (targetChatId) {
+      openChat(targetChatId);
+    } else if (isParticipant || isHost) {
+      openDrawer();
+    } else if (hostId) {
+      navigate(`/public-profile/${hostId}`);
     } else {
-      toast.error(t('chat.notAvailable') || 'Chat non ancora disponibile');
+      showToast(
+        t('detail.chatUnavailable', 'La chat sarà disponibile appena entri al tavolo.'),
+        'info'
+      );
     }
   };
 
-  const handleVideoClick = () => {
-    navigate(`/meals/${meal._id}/video`);
+  const handleNotify = () => {
+    setNotified(true);
+    showToast(t('detail.toasts.notify', '🔔 Ti avviseremo se si libera un posto.'), 'success');
   };
 
   const handleDeleteMeal = async () => {
@@ -175,317 +298,432 @@ const MealDetailPage = () => {
     setIsDeleting(true);
     try {
       await mealService.deleteMeal(meal._id);
-      toast.success(t('meals.detail.deleteSuccess') || 'TableTalk® eliminato con successo!');
+      toast.success(t('meals.detail.deleteSuccess', 't2t eliminato con successo!'));
       navigate('/meals', { replace: true });
     } catch (err) {
-      console.error('Errore eliminazione pasto:', err);
-      const errorMsg = err.response?.data?.message || err.message || t('meals.detail.deleteError') || 'Errore durante l\'eliminazione';
-      toast.error(errorMsg);
+      console.error('Errore eliminazione t2t:', err);
+      const errorMsg =
+        err.response?.data?.message ||
+        err.message ||
+        t('meals.detail.deleteError', "Errore durante l'eliminazione.");
+      showToast(errorMsg, 'error');
     } finally {
       setIsDeleting(false);
       setShowDeleteModal(false);
     }
   };
 
+  const handleOpenMaps = () => {
+    if (!meal.location?.coordinates) return;
+    const url = `https://www.google.com/maps/search/?api=1&query=${meal.location.coordinates[1]},${meal.location.coordinates[0]}`;
+    openExternalShareUrl(url);
+  };
+
+  const goToUserProfile = (targetId) => {
+    if (!targetId) return;
+    if (currentUserId && String(targetId) === String(currentUserId)) {
+      navigate('/impostazioni/profilo');
+    } else {
+      navigate(`/public-profile/${targetId}`);
+    }
+  };
+
   return (
-    <div className={styles.pageContainer}>
-      {/* Header Immagine */}
-      <div
-        className={styles.heroImage}
-        style={{ backgroundImage: `url(${getMealCoverImageUrl(meal.imageUrl)})` }}
-      >
-        {/* Input file nascosto (web) */}
-        {isHost && !isPast && (
-          <input
-            ref={coverImageInputRef}
-            type="file"
-            accept="image/*"
-            style={{ display: 'none' }}
-            onChange={handleCoverFileInput}
-          />
-        )}
-
-        {/* Bottone cambio foto — piccolo, in basso a destra, NON copre tutta la hero */}
-        {isHost && !isPast && (
-          <div
-            className={styles.coverEditOverlay}
-            onClick={handleCoverClick}
-            role="button"
-            tabIndex={0}
-            aria-label="Cambia immagine di copertina"
-            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleCoverClick(); } }}
-          >
-            {isUploadingCover ? (
-              <Spinner animation="border" variant="light" size="sm" />
-            ) : (
-              <>
-                <FaCamera className={styles.coverEditIcon} />
-                <span className={styles.coverEditLabel}>Cambia foto</span>
-              </>
-            )}
-          </div>
-        )}
-
-        <div className={styles.overlay}>
-          <Container>
-            <BackButton className="mb-3 text-white" />
-            <Badge bg={isVirtual ? 'info' : 'success'} className="mb-2">
-              {mealTypeLabel}
-            </Badge>
-            <h1 className={styles.title}>{meal.title}</h1>
-          </Container>
-        </div>
+    <div className={styles.page}>
+      <div className={styles.topRow}>
+        <BackButton />
       </div>
 
-      <Container className={styles.contentContainer}>
-        <Row>
-          <Col lg={8}>
-            {/* Info Principali */}
-            <div className={styles.card}>
-              <div className={styles.hostInfo}>
-                <img
-                  src={getHostAvatarUrl(meal.host?.profileImage)}
-                  alt={meal.host?.nickname}
-                  className={styles.hostAvatar}
-                />
-                <div>
-                  <p className="mb-0 text-muted">{t('meals.detail.hostedBy')}</p>
-                  <strong>{meal.host?.nickname || 'Host'}</strong>
-                </div>
+      <article className={styles.sheet}>
+        <div className={styles.coverBox}>
+          <Cover
+            src={coverSrc}
+            alt={meal.title}
+            category={meal.type || 'dinner'}
+            categoryLabel={getMealTypeText(meal.type || 'dinner')}
+            format={meal.mealType || 'virtual'}
+            height={260}
+          />
+
+          {isHost && !isPast && (
+            <>
+              <input
+                ref={coverImageInputRef}
+                type="file"
+                accept="image/*"
+                className={styles.hiddenInput}
+                onChange={handleCoverFileInput}
+              />
+              <button
+                type="button"
+                className={styles.coverEditBtn}
+                onClick={handleCoverClick}
+                disabled={isUploadingCover}
+              >
+                <CameraIcon size={15} strokeWidth={2} aria-hidden="true" />
+                <span>
+                  {isUploadingCover
+                    ? t('common.loading', 'Caricamento...')
+                    : t('detail.changeCover', 'Cambia foto')}
+                </span>
+              </button>
+            </>
+          )}
+        </div>
+
+        <div className={styles.contentGrid}>
+          {/* Colonna principale */}
+          <div className={styles.mainCol}>
+            <h1 className={styles.title}>{meal.title}</h1>
+
+            <button
+              type="button"
+              className={styles.hostBtn}
+              onClick={() => goToUserProfile(hostId)}
+            >
+              <Avatar src={hostAvatarSrc} name={hostName} size="md" tone="primary" />
+              <div className={styles.hostText}>
+                <span className={styles.hostRole}>{t('meals.detail.hostedBy', 'Organizzato da')}</span>
+                <span className={styles.hostNameRow}>
+                  <strong>{hostName}</strong>
+                  {hostVerified && (
+                    <VerifiedIcon label={t('ui.card.verifiedHost', 'Host verificato')} />
+                  )}
+                </span>
               </div>
+            </button>
 
-              <div className={styles.infoGrid}>
-                <div className={styles.infoItem}>
-                  <FaCalendarAlt className={styles.icon} />
-                  <div>
-                    <label>{t('meals.form.dateLabel')}</label>
-                    <p>{new Date(meal.date).toLocaleDateString()}</p>
-                  </div>
-                </div>
-                <div className={styles.infoItem}>
-                  <FaClock className={styles.icon} />
-                  <div>
-                    <label>{t('meals.form.timeLabel')}</label>
-                    <p>{new Date(meal.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
-                  </div>
-                </div>
-                <div className={styles.infoItem}>
-                  <FaUsers className={styles.icon} />
-                  <div>
-                    <label>{t('meals.detail.participantsList')}</label>
-                    <p>{t('meals.detail.participantsText', {
-                      current: meal.participants?.length || 0,
-                      max: meal.maxParticipants
-                    })}</p>
-                  </div>
-                </div>
+            {meal.description && <p className={styles.desc}>{meal.description}</p>}
+
+            <div className={styles.metaBox}>
+              <div>
+                <b>{t('detail.when', 'Quando')}</b>
+                <span>{formatMealWhen(meal.date, i18n.language)}</span>
               </div>
-
-              <hr />
-
-              <h3>{t('meals.detail.description')}</h3>
-              <p className={styles.description}>{meal.description}</p>
-
-              {meal.topics && meal.topics.length > 0 && (
-                <div className="mb-4">
-                  <h5>{t('meals.form.topicsLabel')}</h5>
-                  <div className={styles.topicsContainer}>
-                    {meal.topics.map((topic, idx) => (
-                      <Badge key={idx} bg="light" text="dark" className="me-2 p-2 border">#{topic}</Badge>
-                    ))}
-                  </div>
-                </div>
-              )}
+              <div>
+                <b>{t('detail.where', 'Dove')}</b>
+                <span>{whereText}</span>
+              </div>
+              <div>
+                <b>{t('detail.language', 'Lingua')}</b>
+                <span>{meal.language || 'Italiano'}</span>
+              </div>
+              <div>
+                <b>{t('detail.duration', 'Durata')}</b>
+                <span>
+                  {meal.duration || 60} {t('ui.card.minutes', 'min')}
+                </span>
+              </div>
             </div>
 
-            {!isVirtual && meal.location && meal.location.coordinates && (
-              <div className={styles.card}>
-                <h4 className="mb-3"><FaMapMarkerAlt className="me-2" />{t('meals.detail.location')}</h4>
-                <p className="text-muted">{meal.location.address}</p>
-                <div style={{ height: '300px', borderRadius: '10px', overflow: 'hidden' }}>
+            {tags.length > 0 && (
+              <div className={styles.tags}>
+                {tags.map((tag, idx) => (
+                  <span key={`${tag}-${idx}`} className={styles.tag}>
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            )}
+
+            {!isVirtual && meal.location?.coordinates && (
+              <section className={styles.mapSection}>
+                <h2 className={styles.sectionTitle}>
+                  <MapPin size={18} strokeWidth={2} aria-hidden="true" />
+                  <span>{t('meals.detail.location', 'Posizione')}</span>
+                </h2>
+                {meal.location.address && (
+                  <p className={styles.address}>{meal.location.address}</p>
+                )}
+                <div className={styles.mapFrame}>
                   <OpenStreetMapComponent
                     readOnly={true}
                     center={[meal.location.coordinates[1], meal.location.coordinates[0]]}
                     zoom={15}
-                    markers={[{
-                      lat: meal.location.coordinates[1],
-                      lng: meal.location.coordinates[0],
-                      title: meal.title
-                    }]}
+                    markers={[
+                      {
+                        lat: meal.location.coordinates[1],
+                        lng: meal.location.coordinates[0],
+                        title: meal.title,
+                      },
+                    ]}
                   />
                 </div>
-                <Button
-                  variant="outline-primary"
-                  className="mt-3 w-100"
-                  onClick={() => window.open(`https://www.google.com/maps/search/?api=1&query=${meal.location.coordinates[1]},${meal.location.coordinates[0]}`, '_blank')}
-                >
-                  Apri in Google Maps 🗺️
+                <Button variant="ghost" size="sm" onClick={handleOpenMaps} className={styles.mapsBtn}>
+                  {t('detail.openGoogleMaps', 'Apri in Google Maps')}
                 </Button>
-              </div>
+              </section>
             )}
-          </Col>
+          </div>
 
-          {/* Sidebar Azioni */}
-          <Col lg={4}>
-            <div className={`${styles.card} ${styles.actionCard}`}>
-              <h4 className="mb-4">{t('meals.detail.actions')}</h4>
+          {/* Colonna azioni & partecipanti */}
+          <aside className={styles.sideCol}>
+            <div className={styles.sideCard}>
+              <div className={styles.seatsHeader}>
+                <Seats filled={seatsFilled} total={seatsTotal} />
+              </div>
 
-              {!isHost && !isParticipant && !isPast && (
-                <JoinMealButton mealId={meal._id} onSuccess={handleRefresh} className="w-100 mb-3 btn-lg" />
-              )}
-
-              {!isHost && isParticipant && !isPast && (
-                <LeaveMealButton mealId={meal._id} onSuccess={handleRefresh} className="w-100 mb-3 btn-outline-danger" />
-              )}
-
-              {(isParticipant || isHost) && meal.chatId && (
-                <Button
-                  variant="primary"
-                  className="w-100 mb-3 d-flex align-items-center justify-content-center gap-2"
-                  onClick={handleChatClick}
-                >
-                  <FaComment /> {t('meals.detail.openChat')}
-                </Button>
-              )}
-
-              {isVideoAccessible ? (
-                <Button
-                  variant="success"
-                  className="w-100 mb-3 d-flex align-items-center justify-content-center gap-2"
-                  onClick={handleVideoClick}
-                >
-                  <FaVideo /> {t('meals.detail.joinVideo')}
-                </Button>
-              ) : (
-                isTooEarly && (
-                  <div className="w-100 mb-3 text-center text-muted small border p-2 rounded bg-light">
-                    <FaVideo className="me-1" />
-                    Video disponibile dalle {tenMinutesBeforeStart.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+              {confirmingLeave ? (
+                <div className={styles.confirmBox} role="region" aria-live="polite">
+                  <p className={styles.confirmText}>
+                    {t('detail.leaveConfirmQuestion', 'Vuoi davvero abbandonare questo t2t?')}
+                  </p>
+                  <div className={styles.confirmActions}>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setConfirmingLeave(false)}
+                      disabled={pending}
+                    >
+                      {t('detail.leaveConfirmCancel', 'Annulla')}
+                    </Button>
+                    <Button
+                      variant="primary"
+                      size="sm"
+                      onClick={handleConfirmLeave}
+                      disabled={pending}
+                      data-testid="detail-confirm-leave-btn"
+                    >
+                      {pending
+                        ? t('detail.leaving', 'Uscita…')
+                        : t('detail.leaveConfirmYes', 'Sì, abbandona')}
+                    </Button>
                   </div>
-                )
+                </div>
+              ) : (
+                <div className={styles.actionStack}>
+                  {roleState === 'organizer' && (
+                    <>
+                      <Button
+                        variant="primary"
+                        fullWidth
+                        onClick={() => setShowShareModal(true)}
+                        data-testid="detail-invite-btn"
+                      >
+                        <Share2 size={16} strokeWidth={2} aria-hidden="true" />
+                        <span>{t('detail.inviteGuests', 'Invita commensali')}</span>
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        fullWidth
+                        onClick={() => navigate(`/meals/edit/${meal._id}`)}
+                      >
+                        {t('detail.edit', 'Modifica')}
+                      </Button>
+                      {meal.chatId && (
+                        <Button variant="green" fullWidth onClick={handleChatClick}>
+                          {t('detail.openChat', 'Apri chat')}
+                        </Button>
+                      )}
+                    </>
+                  )}
+
+                  {roleState === 'joined' && (
+                    <>
+                      <Button variant="green" fullWidth onClick={handleChatClick}>
+                        {t('detail.openChat', 'Apri chat')}
+                      </Button>
+                      {!isPast && (
+                        <Button
+                          variant="danger"
+                          fullWidth
+                          onClick={() => setConfirmingLeave(true)}
+                          disabled={pending}
+                          data-testid="detail-leave-btn"
+                        >
+                          {t('detail.leave', 'Abbandona')}
+                        </Button>
+                      )}
+                      <Button
+                        variant="ghost"
+                        fullWidth
+                        onClick={() => setShowShareModal(true)}
+                      >
+                        <Share2 size={16} strokeWidth={2} aria-hidden="true" />
+                        <span>{t('detail.inviteGuests', 'Invita commensali')}</span>
+                      </Button>
+                    </>
+                  )}
+
+                  {roleState === 'full' && (
+                    <>
+                      <Button variant="primary" fullWidth disabled>
+                        {t('detail.full', 'Completo')}
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        fullWidth
+                        onClick={handleNotify}
+                        disabled={notified}
+                      >
+                        {notified
+                          ? t('detail.notified', 'Avviso attivo ✓')
+                          : t('detail.notifyMe', 'Avvisami')}
+                      </Button>
+                    </>
+                  )}
+
+                  {roleState === 'available' && !isPast && (
+                    <>
+                      <Button
+                        variant="primary"
+                        fullWidth
+                        onClick={handleJoin}
+                        disabled={pending}
+                        data-testid="detail-join-btn"
+                      >
+                        {pending
+                          ? t('detail.joining', 'Iscrizione…')
+                          : t('detail.join', 'Partecipa')}
+                      </Button>
+                      <Button variant="ghost" fullWidth onClick={handleChatClick}>
+                        {t('detail.message', 'Messaggia')}
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        fullWidth
+                        onClick={() => setShowShareModal(true)}
+                      >
+                        <Share2 size={15} strokeWidth={2} aria-hidden="true" />
+                        <span>{t('detail.inviteGuests', 'Invita commensali')}</span>
+                      </Button>
+                    </>
+                  )}
+
+                  {isVideoAccessible && (
+                    <Button
+                      variant="green"
+                      fullWidth
+                      onClick={() => navigate(`/meals/${meal._id}/video`)}
+                    >
+                      <Video size={16} strokeWidth={2} aria-hidden="true" />
+                      <span>{t('detail.joinVideo', 'Entra in videochiamata')}</span>
+                    </Button>
+                  )}
+
+                  {!isVideoAccessible && isTooEarly && (
+                    <div className={styles.videoNotice}>
+                      <Video size={15} strokeWidth={2} aria-hidden="true" />
+                      <span>
+                        {t('detail.videoAvailableFrom', {
+                          time: tenMinutesBeforeStart.toLocaleTimeString([], {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          }),
+                          defaultValue: `Video disponibile dalle ${tenMinutesBeforeStart.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`,
+                        })}
+                      </span>
+                    </div>
+                  )}
+
+                  {isHost && !isPast && (
+                    <Button
+                      variant="danger"
+                      size="sm"
+                      fullWidth
+                      onClick={() => setShowDeleteModal(true)}
+                    >
+                      <Trash2 size={15} strokeWidth={2} aria-hidden="true" />
+                      <span>{t('detail.deleteMeal', 'Elimina t2t')}</span>
+                    </Button>
+                  )}
+                </div>
               )}
 
-              <Button
-                variant="outline-secondary"
-                className="w-100 mb-3"
-                onClick={() => {
-                  if (navigator.share) {
-                    navigator.share({ title: meal.title, text: `Unisciti a me per ${meal.title} su TableTalk!`, url: window.location.href });
-                  } else {
-                    navigator.clipboard.writeText(window.location.href);
-                    toast.success('Link copiato negli appunti!');
-                  }
-                }}
-              >
-                <FaShareAlt className="me-2" /> {t('common.share')}
-              </Button>
-
-              {isHost && !isPast && (
-                <Button
-                  variant="danger"
-                  className="w-100"
-                  onClick={() => setShowDeleteModal(true)}
-                >
-                  <FaTrash className="me-2" /> {t('meals.detail.deleteMeal') || 'Elimina TableTalk®'}
-                </Button>
-              )}
-
-              {/* Partecipanti Lista */}
-              <div className="mt-4">
-                <h5>{t('meals.detail.participantsList')} ({meal.participants?.length || 0})</h5>
+              {/* Lista partecipanti */}
+              <div className={styles.participantsBlock}>
+                <h2 className={styles.participantsTitle}>
+                  {t('detail.participantsTitle', 'Partecipanti')} ({seatsFilled})
+                </h2>
                 <div className={styles.avatarList}>
-                  {(() => {
-                    const hostId = meal.host?._id || meal.host;
-                    const isMeHost = user && hostId === user._id;
-                    return (
-                      <div
-                        className={styles.participantItem}
-                        title={`Host: ${meal.host?.nickname}`}
-                        role={!isMeHost && hostId ? 'button' : undefined}
-                        tabIndex={!isMeHost && hostId ? 0 : -1}
-                        onClick={() => {
-                          if (!hostId) return;
-                          if (isMeHost) navigate('/profile');
-                          else navigate(`/public-profile/${hostId}`);
-                        }}
-                        onKeyDown={(e) => {
-                          if ((e.key === 'Enter' || e.key === ' ') && hostId) {
-                            e.preventDefault();
-                            if (isMeHost) navigate('/profile');
-                            else navigate(`/public-profile/${hostId}`);
-                          }
-                        }}
-                        style={{ cursor: hostId ? 'pointer' : 'default' }}
-                      >
-                        <img src={getHostAvatarUrl(meal.host?.profileImage)} className={styles.miniAvatar} style={{ border: '2px solid var(--tt-primary)' }} alt="Host" />
-                      </div>
-                    );
-                  })()}
-                  {meal.participants?.map(p => {
-                    const participantId = p?._id || p;
-                    const hostId = meal.host?._id || meal.host;
-                    if (!participantId || participantId === hostId) return null;
-                    const isMe = user && participantId === user._id;
-                    const goToProfile = () => {
-                      if (isMe) navigate('/profile');
-                      else navigate(`/public-profile/${participantId}`);
-                    };
-                    return (
-                      <div
-                        key={participantId}
-                        className={styles.participantItem}
-                        title={p?.nickname}
-                        role="button"
-                        tabIndex={0}
-                        onClick={goToProfile}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter' || e.key === ' ') {
-                            e.preventDefault();
-                            goToProfile();
-                          }
-                        }}
-                        style={{ cursor: 'pointer' }}
-                      >
-                        <img src={getHostAvatarUrl(p?.profileImage)} className={styles.miniAvatar} alt={p?.nickname || 'User'} />
-                      </div>
-                    );
-                  })}
+                  <button
+                    type="button"
+                    className={styles.participantBtn}
+                    title={`Host: ${hostName}`}
+                    onClick={() => goToUserProfile(hostId)}
+                  >
+                    <Avatar src={hostAvatarSrc} name={hostName} size="md" tone="primary" />
+                  </button>
+
+                  {Array.isArray(meal.participants) &&
+                    meal.participants.map((p) => {
+                      const pid = typeof p === 'object' ? p?._id || p?.id : p;
+                      if (!pid || String(pid) === String(hostId)) return null;
+                      const pName =
+                        (typeof p === 'object' && (p.nickname || p.name)) || 'Ospite';
+                      const pImg =
+                        typeof p === 'object' && p.profileImage
+                          ? getHostAvatarUrl(p.profileImage)
+                          : '';
+                      return (
+                        <button
+                          type="button"
+                          key={pid}
+                          className={styles.participantBtn}
+                          title={pName}
+                          onClick={() => goToUserProfile(pid)}
+                        >
+                          <Avatar src={pImg} name={pName} size="md" tone="accent" />
+                        </button>
+                      );
+                    })}
                 </div>
               </div>
             </div>
-          </Col>
-        </Row>
-      </Container>
+          </aside>
+        </div>
+      </article>
 
-      {/* Modal Conferma Eliminazione */}
-      <Modal show={showDeleteModal} onHide={() => setShowDeleteModal(false)} centered>
-        <Modal.Header closeButton>
-          <Modal.Title>{t('meals.detail.deleteMeal') || 'Elimina TableTalk®'}</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <p>{t('meals.detail.deleteMealConfirmation') || 'Sei sicuro di voler eliminare questo TableTalk®? Questa azione non può essere annullata.'}</p>
-          {meal && (
-            <div className="mt-3 p-3 bg-light rounded">
-              <strong>{meal.title}</strong><br />
-              <small className="text-muted">
-                {new Date(meal.date).toLocaleDateString()} alle {new Date(meal.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-              </small>
-            </div>
+      <ShareMealModal
+        meal={meal}
+        isOpen={showShareModal}
+        onClose={() => setShowShareModal(false)}
+        onToast={showToast}
+      />
+
+      <Modal
+        isOpen={showDeleteModal}
+        onClose={() => !isDeleting && setShowDeleteModal(false)}
+        title={t('detail.deleteConfirmTitle', 'Elimina questo t2t?')}
+        size="sm"
+        footer={
+          <>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowDeleteModal(false)}
+              disabled={isDeleting}
+            >
+              {t('common.cancel', 'Annulla')}
+            </Button>
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={handleDeleteMeal}
+              disabled={isDeleting}
+            >
+              {isDeleting
+                ? t('meals.detail.deleting', 'Eliminazione…')
+                : t('detail.deleteMeal', 'Elimina t2t')}
+            </Button>
+          </>
+        }
+      >
+        <p className={styles.deleteText}>
+          {t(
+            'detail.deleteConfirmText',
+            'Questa azione è definitiva e rimuove il tavolo per tutti i partecipanti.'
           )}
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={() => setShowDeleteModal(false)} disabled={isDeleting}>
-            {t('common.cancel') || 'Annulla'}
-          </Button>
-          <Button variant="danger" onClick={handleDeleteMeal} disabled={isDeleting}>
-            {isDeleting ? (
-              <><Spinner animation="border" size="sm" className="me-2" />{t('meals.detail.deleting') || 'Eliminazione...'}</>
-            ) : (
-              <><FaTrash className="me-2" /> {t('meals.detail.deleteMeal') || 'Elimina'}</>
-            )}
-          </Button>
-        </Modal.Footer>
+        </p>
       </Modal>
+
+      <Toast
+        message={toastState.message}
+        tone={toastState.tone}
+        visible={toastState.visible}
+        onClose={hideToast}
+      />
     </div>
   );
 };

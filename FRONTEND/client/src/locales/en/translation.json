@@ -889,5 +889,79 @@
     "modal": {
       "close": "Close"
     }
+  },
+  "explore": {
+    "title": "Explore t2t",
+    "subtitle": "Find your next table: on video or in person.",
+    "searchPlaceholder": "Search by title, topic, or language…",
+    "clearSearch": "Clear search",
+    "chips": {
+      "all": "All",
+      "lunch": "Lunch",
+      "dinner": "Dinner",
+      "aperitif": "Aperitif",
+      "breakfast": "Breakfast",
+      "video": "💻 Video",
+      "inPerson": "📍 In person"
+    },
+    "emptyFiltered": "No t2t found. Try clearing a few filters.",
+    "emptyAll": "No t2t scheduled right now.",
+    "resetFilters": "Reset filters",
+    "createCta": "Create a t2t",
+    "loadError": "Could not load tables. Please try again shortly."
+  },
+  "detail": {
+    "when": "When",
+    "where": "Where",
+    "language": "Language",
+    "duration": "Duration",
+    "onlineWhere": "Online · Video",
+    "inPersonWhere": "In person",
+    "inPersonWithCity": "{{city}} · In person",
+    "join": "Join",
+    "joining": "Joining…",
+    "message": "Message",
+    "openChat": "Open chat",
+    "leave": "Leave",
+    "leaving": "Leaving…",
+    "leaveConfirmQuestion": "Are you sure you want to leave this t2t?",
+    "leaveConfirmYes": "Yes, leave",
+    "leaveConfirmCancel": "Cancel",
+    "inviteGuests": "Invite guests",
+    "edit": "Edit",
+    "full": "Full",
+    "notifyMe": "Notify me",
+    "notified": "Alert active ✓",
+    "openFullPage": "Open full page →",
+    "participantsTitle": "Participants",
+    "changeCover": "Change photo",
+    "deleteMeal": "Delete t2t",
+    "deleteConfirmTitle": "Delete this t2t?",
+    "deleteConfirmText": "This action is permanent and removes the table for all participants.",
+    "openGoogleMaps": "Open in Google Maps",
+    "videoAvailableFrom": "Video available from {{time}}",
+    "joinVideo": "Join video call",
+    "notFound": "t2t not found",
+    "notFoundDesc": "It may have been removed or the link is no longer valid.",
+    "backToExplore": "Back to Explore",
+    "loginRequiredJoin": "Log in to join this t2t.",
+    "chatUnavailable": "Chat will be available once you join the table.",
+    "toasts": {
+      "join": "🎉 You’re in! Find it in «My t2t».",
+      "leave": "You left the table. Your seat is open again.",
+      "notify": "🔔 We’ll let you know if a seat opens up.",
+      "copy": "🔗 Link copied to clipboard.",
+      "joinError": "Could not join the table. Please try again.",
+      "leaveError": "Could not leave the table. Please try again."
+    }
+  },
+  "share": {
+    "title": "Invite guests",
+    "subtitle": "Share «{{title}}» and fill the table.",
+    "whatsapp": "WhatsApp",
+    "telegram": "Telegram",
+    "email": "Email",
+    "copyLink": "Copy link",
+    "copied": "Link copied!"
   }
 }

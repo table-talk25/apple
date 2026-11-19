@@ -951,5 +951,79 @@
     "modal": {
       "close": "Chiudi"
     }
+  },
+  "explore": {
+    "title": "Esplora i t2t",
+    "subtitle": "Trova il tuo prossimo tavolo: in video o dal vivo.",
+    "searchPlaceholder": "Cerca per titolo, argomento o lingua…",
+    "clearSearch": "Cancella ricerca",
+    "chips": {
+      "all": "Tutti",
+      "lunch": "Pranzo",
+      "dinner": "Cena",
+      "aperitif": "Aperitivo",
+      "breakfast": "Colazione",
+      "video": "💻 Video",
+      "inPerson": "📍 Dal vivo"
+    },
+    "emptyFiltered": "Nessun t2t trovato. Prova a togliere qualche filtro.",
+    "emptyAll": "Nessun t2t in programma al momento.",
+    "resetFilters": "Reimposta filtri",
+    "createCta": "Crea un t2t",
+    "loadError": "Impossibile caricare i t2t. Riprova tra poco."
+  },
+  "detail": {
+    "when": "Quando",
+    "where": "Dove",
+    "language": "Lingua",
+    "duration": "Durata",
+    "onlineWhere": "Online · Video",
+    "inPersonWhere": "Dal vivo",
+    "inPersonWithCity": "{{city}} · Dal vivo",
+    "join": "Partecipa",
+    "joining": "Iscrizione…",
+    "message": "Messaggia",
+    "openChat": "Apri chat",
+    "leave": "Abbandona",
+    "leaving": "Uscita…",
+    "leaveConfirmQuestion": "Vuoi davvero abbandonare questo t2t?",
+    "leaveConfirmYes": "Sì, abbandona",
+    "leaveConfirmCancel": "Annulla",
+    "inviteGuests": "Invita commensali",
+    "edit": "Modifica",
+    "full": "Completo",
+    "notifyMe": "Avvisami",
+    "notified": "Avviso attivo ✓",
+    "openFullPage": "Apri pagina completa →",
+    "participantsTitle": "Partecipanti",
+    "changeCover": "Cambia foto",
+    "deleteMeal": "Elimina t2t",
+    "deleteConfirmTitle": "Elimina questo t2t?",
+    "deleteConfirmText": "Questa azione è definitiva e rimuove il tavolo per tutti i partecipanti.",
+    "openGoogleMaps": "Apri in Google Maps",
+    "videoAvailableFrom": "Video disponibile dalle {{time}}",
+    "joinVideo": "Entra in videochiamata",
+    "notFound": "t2t non trovato",
+    "notFoundDesc": "Potrebbe essere stato rimosso o il link non è più valido.",
+    "backToExplore": "Torna a Esplora",
+    "loginRequiredJoin": "Accedi per partecipare a questo t2t.",
+    "chatUnavailable": "La chat sarà disponibile appena entri al tavolo.",
+    "toasts": {
+      "join": "🎉 Sei dentro! Lo trovi in «I miei t2t».",
+      "leave": "Hai abbandonato il tavolo. Il posto è tornato libero.",
+      "notify": "🔔 Ti avviseremo se si libera un posto.",
+      "copy": "🔗 Link copiato negli appunti.",
+      "joinError": "Impossibile iscriversi al tavolo. Riprova.",
+      "leaveError": "Impossibile abbandonare il tavolo. Riprova."
+    }
+  },
+  "share": {
+    "title": "Invita commensali",
+    "subtitle": "Condividi «{{title}}» e riempi il tavolo.",
+    "whatsapp": "WhatsApp",
+    "telegram": "Telegram",
+    "email": "Email",
+    "copyLink": "Copia link",
+    "copied": "Link copiato!"
   }
 }
