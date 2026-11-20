@@ -45,7 +45,7 @@ const Navbar = () => {
   // Gli utenti autenticati non vedono la Home (landing): "/" reindirizza a Esplora
   const navItems = [
     ...(isAuthenticated ? [] : [{ key: 'home', to: '/', label: t('nav.home', 'Home') }]),
-    { key: 'explore', to: '/meals', label: t('nav.explore', 'Esplora') },
+    { key: 'explore', to: '/explore', label: t('nav.explore', 'Esplora') },
     { key: 'map', to: '/map', label: t('nav.map', 'Mappa') },
     { key: 'mine', to: '/my-meals', label: t('nav.myT2t', 'I miei t2t') },
   ];
@@ -53,7 +53,7 @@ const Navbar = () => {
   return (
     <header className={styles.topbar}>
       <div className={styles.wrap}>
-        <Logo to={isAuthenticated ? '/meals' : '/'} />
+        <Logo to={isAuthenticated ? '/explore' : '/'} />
 
         <nav
           className={styles.nav}

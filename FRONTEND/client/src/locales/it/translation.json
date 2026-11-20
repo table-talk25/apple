@@ -1163,5 +1163,26 @@
     "fallbackDesc": "I tavoli dal vivo sono comunque elencati in Esplora.",
     "fallbackCta": "Vai a Esplora →",
     "fallbackRetry": "Riprova"
+  },
+  "exploreHub": {
+    "title": "Esplora",
+    "subtitle": "Scegli come vuoi sederti a tavola oggi.",
+    "comingSoon": "Prossimamente",
+    "together": {
+      "title": "Mangiamo assieme",
+      "description": "Unisciti a un t2t già in programma o apparecchia tu un nuovo tavolo aperto alla community.",
+      "browse": "Vedi i t2t disponibili",
+      "create": "Crea un t2t"
+    },
+    "tribe": {
+      "title": "Tribù",
+      "description": "La tua mangiata tra amici: tavoli privati, solo su invito, con il tuo gruppo fisso.",
+      "meta": "Solo su invito"
+    },
+    "surprise": {
+      "title": "Talk a sorpresa",
+      "description": "Un faccia a faccia in video con una persona a caso, scelta per lingua e interessi.",
+      "meta": "Solo maggiorenni verificati · segnala e blocca"
+    }
   }
 }

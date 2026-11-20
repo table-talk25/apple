@@ -1101,5 +1101,26 @@
     "fallbackDesc": "You can still browse all live tables in Explore.",
     "fallbackCta": "Go to Explore →",
     "fallbackRetry": "Retry"
+  },
+  "exploreHub": {
+    "title": "Explore",
+    "subtitle": "Choose how you want to sit at the table today.",
+    "comingSoon": "Coming soon",
+    "together": {
+      "title": "Let's eat together",
+      "description": "Join a scheduled t2t or set up a new table open to the community.",
+      "browse": "See available t2t",
+      "create": "Create a t2t"
+    },
+    "tribe": {
+      "title": "Tribe",
+      "description": "Your dinner with friends: private, invite-only tables with your own group.",
+      "meta": "Invite only"
+    },
+    "surprise": {
+      "title": "Surprise talk",
+      "description": "A one-to-one video chat with a random person, matched by language and interests.",
+      "meta": "Verified adults only · report and block"
+    }
   }
 }

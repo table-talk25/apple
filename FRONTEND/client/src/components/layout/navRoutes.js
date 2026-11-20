@@ -5,7 +5,7 @@ export const isRouteActive = (key, pathname = '/') => {
     case 'home':
       return path === '/';
     case 'explore':
-      if (path === '/meals' || path === '/meals/search') return true;
+      if (path === '/explore' || path === '/meals' || path === '/meals/search') return true;
       if (
         path.startsWith('/meals/') &&
         path !== '/meals/create' &&

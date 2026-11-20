@@ -114,7 +114,7 @@ function HomePage() {
 
   // Utente già autenticato (anche via auto-login): va direttamente su Esplora
   if (shouldRedirect) {
-    return <Navigate to="/meals" replace />;
+    return <Navigate to="/explore" replace />;
   }
 
   return (

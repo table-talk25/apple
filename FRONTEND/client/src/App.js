@@ -25,6 +25,7 @@ const ResetPasswordPage = lazy(() => import('./pages/Auth/ResetPassword'));
 const VerifyEmailPage = lazy(() => import('./pages/Auth/VerifyEmail'));
 const ProfilePage = lazy(() => import('./pages/Profile'));
 const PublicProfilePage = lazy(() => import('./pages/PublicProfile'));
+const ExplorePage = lazy(() => import('./pages/Explore'));
 const MealsPage = lazy(() => import('./pages/Meals/MealsPage'));
 const SearchMealsPage = lazy(() => import('./pages/Meals/SearchMealsPage'));
 const MealDetailPage = lazy(() => import('./pages/Meals/MealDetailPage'));
@@ -107,6 +108,7 @@ const App = () => {
               <Route path="/" element={<Layout />}>
                 {/* Rotte Pubbliche */}
                 <Route index element={<HomePage />} />
+                <Route path="explore" element={<ExplorePage />} />
                 <Route path="meals" element={<MealsPage />} />
                 <Route path="meals/search" element={<SearchMealsPage />} />
 
