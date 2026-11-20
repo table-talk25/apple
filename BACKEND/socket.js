@@ -31,18 +31,29 @@ const checkRateLimit = (key, maxRequests, windowMs) => {
 
 const ALLOWED_EMOJIS = ['❤️','👍','😂','😮','😢','🔥','👏','🎉'];
 
-const allowedOrigins = [
-  'http://localhost:3000',
-  'http://localhost:3001',
-  'http://localhost:5001',
-  'http://localhost:5002',
-  'http://localhost:5003',
-  process.env.FRONTEND_URL || 'http://localhost:3000',
-  process.env.API_URL || 'http://localhost:5001',
-  'capacitor://localhost',
-  'http://localhost',
-  'https://localhost',
-];
+const normalizeOrigin = (value) =>
+  typeof value === 'string' ? value.trim().replace(/\/+$/, '') : '';
+
+const buildSocketAllowedOrigins = () => {
+  const fromCorsEnv = process.env.CORS_ORIGIN
+    ? process.env.CORS_ORIGIN.split(',').map(normalizeOrigin).filter(Boolean)
+    : [];
+  const defaults = [
+    'http://localhost:3000',
+    'http://localhost:3001',
+    'http://localhost:5001',
+    'http://localhost:5002',
+    'http://localhost:5003',
+    normalizeOrigin(process.env.FRONTEND_URL),
+    normalizeOrigin(process.env.API_URL),
+    'capacitor://localhost',
+    'ionic://localhost',
+    'http://localhost',
+    'https://localhost',
+  ].filter(Boolean);
+
+  return new Set([...fromCorsEnv, ...defaults]);
+};
 
 let ioInstance;
 
@@ -75,16 +86,26 @@ const startReminderCron = () => {
 };
 
 async function initializeSocket(server) {
+  const allowedOriginsSet = buildSocketAllowedOrigins();
+
   ioInstance = socketIO(server, {
     cors: {
-      origin: allowedOrigins,
+      origin: (origin, callback) => {
+        if (!origin) return callback(null, true);
+        const normalized = normalizeOrigin(origin);
+        if (allowedOriginsSet.has(normalized)) {
+          return callback(null, true);
+        }
+        console.warn(`⚠️ [Socket CORS] Origine rifiutata: ${origin}`);
+        return callback(new Error('Origine non permessa dalla policy CORS Socket.IO'));
+      },
       methods: ['GET', 'POST', 'OPTIONS'],
       credentials: true,
       allowedHeaders: ['Content-Type', 'Authorization'],
     },
     pingTimeout: 60000,
     pingInterval: 25000,
-    transports: ['websocket', 'polling'],
+    transports: ['polling', 'websocket'],
     allowUpgrades: true,
     upgradeTimeout: 10000,
   });

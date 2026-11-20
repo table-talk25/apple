@@ -445,7 +445,6 @@ const DrawerChat = ({ chatId, onMetaLoaded }) => {
   const [pendingPreview, setPendingPreview] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [connectionStatus, setConnectionStatus] = useState('connecting');
   const [replyTo, setReplyTo] = useState(null);
 
   const socketRef = useRef(null);
@@ -517,7 +516,7 @@ const DrawerChat = ({ chatId, onMetaLoaded }) => {
     const socketUrl = apiUrl.replace(/\/api\/?$/, '');
     const socket = io(socketUrl, {
       auth: { token },
-      transports: ['websocket', 'polling'],
+      transports: ['polling', 'websocket'],
       reconnection: true,
       reconnectionAttempts: Infinity,
       reconnectionDelay: 2000,
@@ -527,20 +526,16 @@ const DrawerChat = ({ chatId, onMetaLoaded }) => {
     socketRef.current = socket;
 
     socket.on('connect', () => {
-      setConnectionStatus('connected');
       if (onMetaLoaded) onMetaLoaded((prev) => ({ ...prev, connectionStatus: 'connected' }));
       socket.emit('joinChatRoom', chatId);
     });
     socket.on('disconnect', () => {
-      setConnectionStatus('disconnected');
       if (onMetaLoaded) onMetaLoaded((prev) => ({ ...prev, connectionStatus: 'disconnected' }));
     });
     socket.on('connect_error', () => {
-      setConnectionStatus('error');
       if (onMetaLoaded) onMetaLoaded((prev) => ({ ...prev, connectionStatus: 'disconnected' }));
     });
     socket.on('reconnect', () => {
-      setConnectionStatus('connected');
       if (onMetaLoaded) onMetaLoaded((prev) => ({ ...prev, connectionStatus: 'connected' }));
       socket.emit('joinChatRoom', chatId);
     });
@@ -618,7 +613,7 @@ const DrawerChat = ({ chatId, onMetaLoaded }) => {
 
   const handleSend = async (e) => {
     e?.preventDefault();
-    if ((!newMessage.trim() && !pendingFile) || !socketRef.current?.connected || uploading) {
+    if ((!newMessage.trim() && !pendingFile) || uploading) {
       return;
     }
 
@@ -653,24 +648,39 @@ const DrawerChat = ({ chatId, onMetaLoaded }) => {
     if (replyTo) payload.replyTo = replyTo;
     setNewMessage('');
     setReplyTo(null);
-    socketRef.current.emit('sendMessage', payload, (ack) => {
-      if (ack?.success && ack?.message) {
-        const nm = normalizeMessage(ack.message);
-        const mid = nm._id;
-        if (mid && messageIdsRef.current.has(mid)) return;
-        if (mid) messageIdsRef.current.add(mid);
-        setMessages((prev) => [...prev, nm]);
-      } else if (ack?.error) {
-        toast.error(ack.error);
+
+    if (socketRef.current?.connected) {
+      socketRef.current.emit('sendMessage', payload, (ack) => {
+        if (ack?.success && ack?.message) {
+          const nm = normalizeMessage(ack.message);
+          const mid = nm._id;
+          if (mid && messageIdsRef.current.has(mid)) return;
+          if (mid) messageIdsRef.current.add(mid);
+          setMessages((prev) => [...prev, nm]);
+        } else if (ack?.error) {
+          toast.error(ack.error);
+          if (content) setNewMessage(content);
+        }
+      });
+    } else {
+      try {
+        const sent = await chatService.sendMessage(chatId, payload);
+        if (sent) {
+          const nm = normalizeMessage(sent);
+          const mid = nm._id;
+          if (!mid || !messageIdsRef.current.has(mid)) {
+            if (mid) messageIdsRef.current.add(mid);
+            setMessages((prev) => [...prev, nm]);
+          }
+        }
+      } catch (err) {
+        toast.error(err?.response?.data?.message || 'Errore nell’invio del messaggio.');
         if (content) setNewMessage(content);
       }
-    });
+    }
   };
 
-  const canSend =
-    (Boolean(newMessage.trim()) || Boolean(pendingFile)) &&
-    connectionStatus === 'connected' &&
-    !uploading;
+  const canSend = (Boolean(newMessage.trim()) || Boolean(pendingFile)) && !uploading;
 
   return (
     <div className={styles.conversationShell}>
@@ -790,7 +800,7 @@ const DrawerChat = ({ chatId, onMetaLoaded }) => {
         <button
           type="button"
           onClick={() => fileInputRef.current?.click()}
-          disabled={connectionStatus !== 'connected' || uploading}
+          disabled={uploading}
           aria-label="Allega una foto"
           title="Allega una foto"
           className={styles.attachBtn}
@@ -817,7 +827,7 @@ const DrawerChat = ({ chatId, onMetaLoaded }) => {
               ? `Rispondi a ${replyTo.senderName}…`
               : 'Scrivi un messaggio…'
           }
-          disabled={connectionStatus !== 'connected' || uploading}
+          disabled={uploading}
           className={styles.composerInput}
         />
 
