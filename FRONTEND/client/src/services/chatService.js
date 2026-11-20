@@ -99,6 +99,17 @@ const getChatStatus = async (chatId) => {
   return response.data;
 };
 
+const uploadChatImage = async (chatId, file) => {
+  const normalizedId = normalizeChatId(chatId);
+  const formData = new FormData();
+  formData.append('image', file);
+  const response = await apiClient.post(`/chats/${normalizedId}/upload`, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+    suppressErrorAlert: true,
+  });
+  return response.data?.data || response.data;
+};
+
 const chatService = {
   getUserChats,
   getChatById,
@@ -108,6 +119,7 @@ const chatService = {
   stopTyping,
   markAsRead,
   getChatStatus,
+  uploadChatImage,
 };
 
 export default chatService;

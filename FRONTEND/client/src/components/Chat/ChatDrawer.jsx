@@ -11,6 +11,7 @@ import mealService from '../../services/mealService';
 import { getMealCoverImageUrl, getHostAvatarUrl } from '../../constants/mealConstants';
 import { API_URL } from '../../config/capacitorConfig';
 import { IoSend } from 'react-icons/io5';
+import { ImagePlus, X } from 'lucide-react';
 import { toast } from 'react-toastify';
 import { playNotificationSound } from '../../utils/notificationSound';
 import styles from './ChatDrawer.module.css';
@@ -315,6 +316,9 @@ const DrawerChat = ({ chatId }) => {
   const [chat, setChat] = useState(null);
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
+  const [pendingFile, setPendingFile] = useState(null);
+  const [pendingPreview, setPendingPreview] = useState(null);
+  const [uploading, setUploading] = useState(false);
   const [loading, setLoading] = useState(true);
   const [connectionStatus, setConnectionStatus] = useState('connecting');
   const [replyTo, setReplyTo] = useState(null);
@@ -322,10 +326,20 @@ const DrawerChat = ({ chatId }) => {
   const messagesEndRef = useRef(null);
   const messageIdsRef = useRef(new Set());
   const inputRef = useRef(null);
+  const fileInputRef = useRef(null);
+
+  useEffect(() => {
+    return () => {
+      if (pendingPreview) URL.revokeObjectURL(pendingPreview);
+    };
+  }, [pendingPreview]);
 
   const normalizeMessage = useCallback((msg) => {
     const sender = msg.sender || msg.user || {};
     const senderId = sender._id || msg.userId;
+    const attachments = Array.isArray(msg.attachments)
+      ? msg.attachments.filter((a) => a && a.type === 'image' && a.url)
+      : [];
     return {
       _id: msg._id || msg.id,
       sender,
@@ -333,6 +347,7 @@ const DrawerChat = ({ chatId }) => {
       username: sender.nickname || msg.username || 'Utente',
       profileImage: sender.profileImage || msg.profileImage || null,
       content: msg.content,
+      attachments,
       replyTo: msg.replyTo || null,
       reactions: msg.reactions || [],
       timestamp: msg.timestamp || msg.createdAt || new Date().toISOString(),
@@ -429,11 +444,61 @@ const DrawerChat = ({ chatId }) => {
     socketRef.current.emit('toggleReaction', { chatId, messageId, emoji });
   }, [chatId]);
 
-  const handleSend = (e) => {
+  const handleSelectPhoto = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      toast.error('Puoi allegare solo immagini.');
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('La foto non può superare i 5MB.');
+      return;
+    }
+    if (pendingPreview) URL.revokeObjectURL(pendingPreview);
+    setPendingFile(file);
+    setPendingPreview(URL.createObjectURL(file));
+    e.target.value = '';
+  };
+
+  const clearPendingPhoto = () => {
+    if (pendingPreview) URL.revokeObjectURL(pendingPreview);
+    setPendingFile(null);
+    setPendingPreview(null);
+  };
+
+  const handleSend = async (e) => {
     e?.preventDefault();
-    if (!newMessage.trim() || !socketRef.current?.connected) return;
+    if ((!newMessage.trim() && !pendingFile) || !socketRef.current?.connected || uploading) return;
+
     const content = newMessage.trim();
-    const payload = { chatId, content };
+    let attachments = [];
+
+    if (pendingFile) {
+      try {
+        setUploading(true);
+        const uploaded = await chatService.uploadChatImage(chatId, pendingFile);
+        if (uploaded?.url) {
+          attachments = [
+            {
+              type: 'image',
+              url: uploaded.url,
+              name: uploaded.name || pendingFile.name,
+              size: uploaded.size || pendingFile.size,
+            },
+          ];
+        }
+        clearPendingPhoto();
+      } catch (err) {
+        toast.error(err?.response?.data?.message || 'Errore nel caricamento della foto.');
+        setUploading(false);
+        return;
+      } finally {
+        setUploading(false);
+      }
+    }
+
+    const payload = { chatId, content: content || '📷 Foto', attachments };
     if (replyTo) payload.replyTo = replyTo;
     setNewMessage('');
     setReplyTo(null);
@@ -446,38 +511,67 @@ const DrawerChat = ({ chatId }) => {
         setMessages(prev => [...prev, nm]);
       } else if (ack?.error) {
         toast.error(ack.error);
-        setNewMessage(content);
+        if (content) setNewMessage(content);
       }
     });
   };
 
   const chatName = chat?.name || chat?.title || 'Chat';
+  const canSend = (Boolean(newMessage.trim()) || Boolean(pendingFile)) && connectionStatus === 'connected' && !uploading;
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>
-      <div style={{ padding: '6px 16px 8px', background: '#fff8f5', borderBottom: '1px solid #fde5d7', flexShrink: 0 }}>
-        <span style={{ fontWeight: 600, fontSize: '0.9rem', color: '#FF6B35' }}>{chatName}</span>
+    <div style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden', background: 'var(--tt-background, #FAF7F2)' }}>
+      <div style={{
+        padding: '10px 16px',
+        background: 'var(--tt-surface, #fff)',
+        borderBottom: '1px solid var(--tt-border, #DDD5CA)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        gap: 8,
+        flexShrink: 0,
+      }}>
+        <span style={{
+          fontFamily: 'var(--tt-font-heading, Poppins, sans-serif)',
+          fontWeight: 600,
+          fontSize: '0.94rem',
+          color: 'var(--tt-text, #242824)',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          whiteSpace: 'nowrap',
+        }}>{chatName}</span>
         {connectionStatus === 'disconnected' && (
-          <span style={{ marginLeft: 8, fontSize: '0.72rem', color: '#e53e3e' }}>● Disconnesso</span>
+          <span style={{
+            fontSize: '0.72rem', fontWeight: 600,
+            color: 'var(--tt-primary, #B54735)',
+            background: 'rgba(181,71,53,0.1)',
+            padding: '2px 8px', borderRadius: 999, flexShrink: 0,
+          }}>● Offline</span>
         )}
         {connectionStatus === 'connected' && (
-          <span style={{ marginLeft: 8, fontSize: '0.72rem', color: '#38a169' }}>● Connesso</span>
+          <span style={{
+            fontSize: '0.72rem', fontWeight: 600,
+            color: 'var(--tt-accent, #245C4A)',
+            background: 'rgba(36,92,74,0.1)',
+            padding: '2px 8px', borderRadius: 999, flexShrink: 0,
+          }}>● Online</span>
         )}
       </div>
 
       <div style={{
-        flex: 1, overflowY: 'auto', padding: '12px 10px',
-        background: '#f7f8fa', display: 'flex', flexDirection: 'column', gap: '4px'
+        flex: 1, overflowY: 'auto', padding: '14px 12px',
+        background: 'var(--tt-background, #FAF7F2)',
+        display: 'flex', flexDirection: 'column', gap: '6px',
       }}>
         {loading ? (
-          <div style={{ textAlign: 'center', padding: '3rem', color: '#aaa', fontSize: '14px' }}>
+          <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--tt-text-muted, #5C625C)', fontSize: '14px' }}>
             <div style={{ fontSize: '24px', marginBottom: '8px' }}>⏳</div>
             Caricamento…
           </div>
         ) : messages.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '3rem', color: '#aaa', fontSize: '14px' }}>
-            <div style={{ fontSize: '32px', marginBottom: '8px' }}>💬</div>
-            Nessun messaggio ancora.<br />Inizia la conversazione!
+          <div style={{ textAlign: 'center', padding: '3rem 1.5rem', color: 'var(--tt-text-muted, #5C625C)', fontSize: '14px' }}>
+            <div style={{ fontSize: '34px', marginBottom: '8px' }}>💬</div>
+            Nessun messaggio ancora.<br />Inizia la conversazione o condividi una foto!
           </div>
         ) : (
           messages.map((msg, index) => {
@@ -500,23 +594,61 @@ const DrawerChat = ({ chatId }) => {
       {replyTo && (
         <div style={{
           display: 'flex', alignItems: 'center', gap: 8,
-          padding: '7px 12px', background: '#fff0eb',
-          borderTop: '1px solid #ffd5c2', fontSize: 13, color: '#444', flexShrink: 0,
+          padding: '8px 14px', background: 'rgba(181,71,53,0.08)',
+          borderTop: '1px solid var(--tt-border, #DDD5CA)', fontSize: 13, color: 'var(--tt-text, #242824)', flexShrink: 0,
         }}>
-          <span style={{ color: '#FF6B35', fontWeight: 700, flexShrink: 0, fontSize: 15 }}>↩</span>
+          <span style={{ color: 'var(--tt-primary, #B54735)', fontWeight: 700, flexShrink: 0, fontSize: 15 }}>↩</span>
           <div style={{ flex: 1, overflow: 'hidden', minWidth: 0 }}>
-            <span style={{ fontWeight: 700, color: '#FF6B35', fontSize: 12 }}>{replyTo.senderName}</span>
+            <span style={{ fontWeight: 700, color: 'var(--tt-primary, #B54735)', fontSize: 12 }}>{replyTo.senderName}</span>
             <span style={{
-              marginLeft: 6, fontSize: 12, color: '#666',
+              marginLeft: 6, fontSize: 12, color: 'var(--tt-text-muted, #5C625C)',
               overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
               display: 'inline-block', maxWidth: 200, verticalAlign: 'bottom',
             }}>{replyTo.message}</span>
           </div>
           <button
+            type="button"
             onClick={() => setReplyTo(null)}
             aria-label="Annulla risposta"
-            style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 16, color: '#aaa', padding: '0 4px', lineHeight: 1, flexShrink: 0 }}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 16, color: 'var(--tt-text-muted, #5C625C)', padding: '0 4px', lineHeight: 1, flexShrink: 0 }}
           >✕</button>
+        </div>
+      )}
+
+      {pendingPreview && (
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 10,
+          padding: '8px 14px', background: 'var(--tt-surface, #fff)',
+          borderTop: '1px solid var(--tt-border, #DDD5CA)', flexShrink: 0,
+        }}>
+          <div style={{ position: 'relative', display: 'inline-flex' }}>
+            <img
+              src={pendingPreview}
+              alt="Anteprima foto"
+              style={{
+                width: 56, height: 56, borderRadius: 10,
+                objectFit: 'contain', background: 'var(--tt-background, #FAF7F2)',
+                border: '1px solid var(--tt-border, #DDD5CA)',
+              }}
+            />
+            <button
+              type="button"
+              onClick={clearPendingPhoto}
+              aria-label="Rimuovi foto"
+              style={{
+                position: 'absolute', top: -6, right: -6,
+                width: 20, height: 20, borderRadius: '50%',
+                border: 'none', background: 'var(--tt-primary, #B54735)', color: '#fff',
+                display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                cursor: 'pointer',
+              }}
+            >
+              <X size={12} />
+            </button>
+          </div>
+          <span style={{ fontSize: '0.8rem', color: 'var(--tt-text-muted, #5C625C)' }}>
+            {uploading ? 'Caricamento foto…' : 'Foto pronta per l’invio'}
+          </span>
         </div>
       )}
 
@@ -524,10 +656,36 @@ const DrawerChat = ({ chatId }) => {
         onSubmit={handleSend}
         style={{
           display: 'flex', alignItems: 'center', gap: '8px',
-          padding: '10px 12px', borderTop: '1px solid #e9ecef',
-          background: '#fff', flexShrink: 0,
+          padding: '10px 12px', borderTop: '1px solid var(--tt-border, #DDD5CA)',
+          background: 'var(--tt-surface, #fff)', flexShrink: 0,
         }}
       >
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          onChange={handleSelectPhoto}
+          style={{ display: 'none' }}
+        />
+        <button
+          type="button"
+          onClick={() => fileInputRef.current?.click()}
+          disabled={connectionStatus !== 'connected' || uploading}
+          aria-label="Allega una foto"
+          title="Allega una foto"
+          style={{
+            width: 38, height: 38, borderRadius: '50%',
+            background: 'var(--tt-background, #FAF7F2)',
+            color: 'var(--tt-accent, #245C4A)',
+            border: '1px solid var(--tt-border, #DDD5CA)',
+            cursor: connectionStatus === 'connected' && !uploading ? 'pointer' : 'not-allowed',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            flexShrink: 0,
+            opacity: connectionStatus === 'connected' && !uploading ? 1 : 0.5,
+          }}
+        >
+          <ImagePlus size={18} />
+        </button>
         <input
           ref={inputRef}
           type="text"
@@ -537,29 +695,30 @@ const DrawerChat = ({ chatId }) => {
             if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); }
             if (e.key === 'Escape') setReplyTo(null);
           }}
-          placeholder={replyTo ? `Rispondi a ${replyTo.senderName}…` : 'Scrivi un messaggio…'}
-          disabled={connectionStatus !== 'connected'}
+          placeholder={uploading ? 'Caricamento foto…' : replyTo ? `Rispondi a ${replyTo.senderName}…` : 'Scrivi un messaggio…'}
+          disabled={connectionStatus !== 'connected' || uploading}
           style={{
             flex: 1, padding: '9px 15px',
-            border: '1.5px solid #e9ecef', borderRadius: '20px',
-            outline: 'none', fontSize: '14px', background: '#f7f8fa',
+            border: '1.5px solid var(--tt-border, #DDD5CA)', borderRadius: '999px',
+            outline: 'none', fontSize: '14px', background: 'var(--tt-background, #FAF7F2)',
+            color: 'var(--tt-text, #242824)',
             transition: 'border-color 0.15s',
           }}
-          onFocus={e => e.target.style.borderColor = '#FF6B35'}
-          onBlur={e => e.target.style.borderColor = '#e9ecef'}
+          onFocus={e => e.target.style.borderColor = 'var(--tt-accent, #245C4A)'}
+          onBlur={e => e.target.style.borderColor = 'var(--tt-border, #DDD5CA)'}
         />
         <button
           type="submit"
-          disabled={!newMessage.trim() || connectionStatus !== 'connected'}
+          disabled={!canSend}
+          aria-label="Invia messaggio"
           style={{
             width: 38, height: 38, borderRadius: '50%',
-            background: newMessage.trim() ? 'linear-gradient(135deg, #FF6B35, #ff8c5a)' : '#e9ecef',
+            background: canSend ? 'var(--tt-primary, #B54735)' : 'var(--tt-border, #DDD5CA)',
             color: '#fff', border: 'none',
-            cursor: newMessage.trim() ? 'pointer' : 'not-allowed',
+            cursor: canSend ? 'pointer' : 'not-allowed',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             fontSize: '16px', flexShrink: 0,
             transition: 'background 0.2s',
-            boxShadow: newMessage.trim() ? '0 2px 8px rgba(255,107,53,0.3)' : 'none',
           }}
         ><IoSend /></button>
       </form>
@@ -629,25 +788,55 @@ const MessageRow = ({ msg, own, currentUserId, onReply, onToggleReaction }) => {
           />
         )}
         <div style={{
-          maxWidth: '75%', display: 'flex', flexDirection: 'column',
+          maxWidth: '78%', display: 'flex', flexDirection: 'column',
           alignItems: own ? 'flex-end' : 'flex-start',
         }}>
           {!own && (
-            <span style={{ fontSize: '11px', fontWeight: 600, color: '#FF6B35', marginBottom: '2px', marginLeft: '4px' }}>
+            <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--tt-accent, #245C4A)', marginBottom: '3px', marginLeft: '4px' }}>
               {msg.username}
             </span>
           )}
           <div style={{
             padding: '9px 13px',
             borderRadius: own ? '16px 4px 16px 16px' : '4px 16px 16px 16px',
-            background: own ? 'linear-gradient(135deg, #FF6B35, #ff8c5a)' : '#fff',
-            color: own ? '#fff' : '#1a1a2e',
-            boxShadow: '0 2px 6px rgba(0,0,0,0.07)',
+            background: own ? 'var(--tt-accent, #245C4A)' : 'var(--tt-surface, #fff)',
+            color: own ? '#fff' : 'var(--tt-text, #242824)',
+            border: own ? 'none' : '1px solid var(--tt-border, #DDD5CA)',
+            boxShadow: '0 2px 8px rgba(36,40,36,0.06)',
             wordBreak: 'break-word', fontSize: '14px', lineHeight: 1.45,
           }}>
             <ReplyPreview replyTo={msg.replyTo} own={own} />
-            <div>{msg.content}</div>
-            <div style={{ fontSize: '10px', opacity: 0.65, textAlign: 'right', marginTop: '3px' }}>
+            {Array.isArray(msg.attachments) && msg.attachments.length > 0 && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: msg.content && msg.content.trim() !== '📷 Foto' ? 6 : 2 }}>
+                {msg.attachments.map((att, idx) => (
+                  <a
+                    key={`${att.url}-${idx}`}
+                    href={att.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{ display: 'block' }}
+                  >
+                    <img
+                      src={att.url}
+                      alt={att.name || 'Foto in chat'}
+                      loading="lazy"
+                      style={{
+                        display: 'block',
+                        maxWidth: '100%',
+                        maxHeight: 220,
+                        borderRadius: 10,
+                        objectFit: 'contain',
+                        background: own ? 'rgba(0,0,0,0.16)' : 'var(--tt-background, #FAF7F2)',
+                      }}
+                    />
+                  </a>
+                ))}
+              </div>
+            )}
+            {!(Array.isArray(msg.attachments) && msg.attachments.length > 0 && msg.content?.trim() === '📷 Foto') && (
+              <div>{msg.content}</div>
+            )}
+            <div style={{ fontSize: '10px', opacity: 0.7, textAlign: 'right', marginTop: '3px' }}>
               {new Date(msg.timestamp).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' })}
             </div>
           </div>
@@ -660,15 +849,16 @@ const MessageRow = ({ msg, own, currentUserId, onReply, onToggleReaction }) => {
             />
           </div>
           <button
+            type="button"
             onClick={() => onReply(msg)}
             title="Rispondi"
             style={{
               background: 'none', border: 'none', cursor: 'pointer',
-              fontSize: '12px', color: '#bbb', padding: '2px 6px', marginTop: '2px',
+              fontSize: '12px', color: 'var(--tt-text-muted, #5C625C)', padding: '2px 6px', marginTop: '2px',
               borderRadius: '8px', transition: 'color 0.15s, background 0.15s',
             }}
-            onMouseEnter={e => { e.currentTarget.style.color = '#FF6B35'; e.currentTarget.style.background = '#fff0eb'; }}
-            onMouseLeave={e => { e.currentTarget.style.color = '#bbb'; e.currentTarget.style.background = 'none'; }}
+            onMouseEnter={e => { e.currentTarget.style.color = 'var(--tt-primary, #B54735)'; e.currentTarget.style.background = 'rgba(181,71,53,0.08)'; }}
+            onMouseLeave={e => { e.currentTarget.style.color = 'var(--tt-text-muted, #5C625C)'; e.currentTarget.style.background = 'none'; }}
           >↩ Rispondi</button>
         </div>
       </div>

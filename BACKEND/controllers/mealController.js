@@ -512,6 +512,7 @@ exports.leaveMeal = asyncHandler(async (req, res, next) => {
   if (meal.host.toString() === req.user.id) return next(new ErrorResponse('L\'host non può lasciare il pasto', 400));
   
   await meal.removeParticipant(req.user.id);
+  if (meal.chatId) await Chat.findByIdAndUpdate(meal.chatId, { $pull: { participants: req.user.id } });
   notificationService.sendNotification(meal.host, 'participant_left', `${req.user.nickname} ha lasciato il pasto.`, { mealId: meal._id });
   
   const updatedMeal = await Meal.findById(meal._id).populate('host', 'nickname profileImage').populate('participants', 'nickname profileImage');

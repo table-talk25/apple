@@ -4,12 +4,16 @@ import { useTranslation } from 'react-i18next';
 import { ArrowLeft } from 'lucide-react';
 import styles from './BackButton.module.css';
 
-const BackButton = ({ className = '' }) => {
+const BackButton = ({ className = '', to = null }) => {
   const navigate = useNavigate();
   const { t } = useTranslation();
 
   const handleBack = () => {
-    navigate(-1);
+    if (to) {
+      navigate(to);
+    } else {
+      navigate(-1);
+    }
   };
 
   return (
