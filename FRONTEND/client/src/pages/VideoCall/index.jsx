@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import Video from 'twilio-video';
 import {
   Mic,
@@ -178,6 +178,7 @@ const ActiveRemoteVideo = ({ participant, isSpeaking }) => {
 const VideoCall = () => {
   const { mealId } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useAuth();
 
   // Twilio state
@@ -541,6 +542,14 @@ const VideoCall = () => {
     }
   }, [room, isScreenSharing, stopScreenShare]);
 
+  const exitToMealDetail = useCallback(() => {
+    if (location.state?.fromMealDetail) {
+      navigate(-1);
+    } else {
+      navigate(mealId ? `/meals/${mealId}` : '/meals', { replace: true });
+    }
+  }, [location.state, mealId, navigate]);
+
   const confirmLeave = useCallback(() => {
     if (localScreenTrackRef.current) {
       stopScreenShare();
@@ -555,8 +564,8 @@ const VideoCall = () => {
       }
     });
     setShowLeaveModal(false);
-    navigate(mealId ? `/meals/${mealId}` : '/meals');
-  }, [room, mealId, navigate, stopScreenShare]);
+    exitToMealDetail();
+  }, [room, exitToMealDetail, stopScreenShare]);
 
   const toggleFullscreen = useCallback(async () => {
     try {
@@ -710,7 +719,7 @@ const VideoCall = () => {
               <button
                 type="button"
                 className={styles.modalBtnCancel}
-                onClick={() => navigate(mealId ? `/meals/${mealId}` : -1)}
+                onClick={exitToMealDetail}
               >
                 Torna indietro
               </button>

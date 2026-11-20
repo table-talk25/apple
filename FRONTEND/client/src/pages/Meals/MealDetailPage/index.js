@@ -595,7 +595,11 @@ const MealDetailPage = () => {
                     <Button
                       variant="green"
                       fullWidth
-                      onClick={() => navigate(`/meals/${meal._id}/video`)}
+                      onClick={() =>
+                        navigate(`/meals/${meal._id}/video`, {
+                          state: { fromMealDetail: true },
+                        })
+                      }
                     >
                       <Video size={16} strokeWidth={2} aria-hidden="true" />
                       <span>{t('detail.joinVideo', 'Entra in videochiamata')}</span>
