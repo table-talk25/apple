@@ -62,10 +62,24 @@
   border: 1px solid var(--tt-border);
   border-radius: var(--tt-radius-lg);
   box-shadow: var(--tt-shadow);
-  width: min(320px, calc(100vw - 32px));
+  width: min(340px, calc(100vw - 24px));
   max-height: 400px;
   overflow-y: auto;
+  overflow-x: hidden;
+  box-sizing: border-box;
   z-index: 1050;
+}
+
+@media (max-width: 640px) {
+  .dropdownMenu {
+    position: fixed;
+    top: calc(var(--tt-header-height, 64px) + env(safe-area-inset-top, 0px) + 6px);
+    left: 12px;
+    right: 12px;
+    width: auto;
+    max-width: none;
+    max-height: 70dvh;
+  }
 }
 
 .notificationItem {

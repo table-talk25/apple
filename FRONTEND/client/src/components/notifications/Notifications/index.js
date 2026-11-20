@@ -87,12 +87,27 @@ const Notifications = () => {
               >
                 <span className={styles.notificationText}>{notif.message}</span>
                 <span className={styles.notificationDate}>
-                  {notif.createdAt
-                    ? new Date(notif.createdAt).toLocaleTimeString([], {
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })
-                    : ''}
+                  {(() => {
+                    const raw = notif.createdAt || notif.date || notif.timestamp;
+                    if (!raw) return '';
+                    const d = new Date(raw);
+                    if (Number.isNaN(d.getTime())) return '';
+                    const now = new Date();
+                    const sameDay =
+                      d.getFullYear() === now.getFullYear() &&
+                      d.getMonth() === now.getMonth() &&
+                      d.getDate() === now.getDate();
+                    const timeStr = d.toLocaleTimeString('it-IT', {
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    });
+                    if (sameDay) return timeStr;
+                    const dateStr = d.toLocaleDateString('it-IT', {
+                      day: '2-digit',
+                      month: 'short',
+                    });
+                    return `${dateStr} · ${timeStr}`;
+                  })()}
                 </span>
               </button>
             ))
