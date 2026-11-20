@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Globe, Check } from 'lucide-react';
-import { translatedLanguages } from '../../../constants/profileConstants';
+import { SUPPORTED_LANGUAGES } from '../../../i18n';
 import styles from './LanguageMenu.module.css';
 
 const LanguageMenu = () => {
@@ -17,7 +17,7 @@ const LanguageMenu = () => {
   };
 
   const getCurrentLanguageName = () => {
-    const currentLang = translatedLanguages.find((lang) => lang.code === currentCode);
+    const currentLang = SUPPORTED_LANGUAGES.find((lang) => lang.code === currentCode);
     return currentLang ? currentLang.name : t('languageSwitcher.currentLanguage');
   };
 
@@ -39,7 +39,7 @@ const LanguageMenu = () => {
     };
   }, [isMenuOpen]);
 
-  if (!translatedLanguages || translatedLanguages.length === 0) {
+  if (!SUPPORTED_LANGUAGES || SUPPORTED_LANGUAGES.length === 0) {
     return null;
   }
 
@@ -59,7 +59,7 @@ const LanguageMenu = () => {
 
       {isMenuOpen && (
         <div className={styles.dropdown} role="menu">
-          {translatedLanguages.map((language) => {
+          {SUPPORTED_LANGUAGES.map((language) => {
             const active = currentCode === language.code;
             return (
               <button

@@ -4,6 +4,20 @@ import { initReactI18next } from 'react-i18next';
 // Carichiamo solo l'italiano all'avvio per ridurre il bundle iniziale
 import translationIT from './locales/it/translation.json';
 
+// Lingue supportate (allineate a src/locales/*)
+export const SUPPORTED_LANGUAGES = [
+  { code: 'it', name: 'Italiano' },
+  { code: 'en', name: 'English' },
+  { code: 'fr', name: 'Français' },
+  { code: 'es', name: 'Español' },
+  { code: 'de', name: 'Deutsch' },
+  { code: 'ar', name: 'العربية' },
+  { code: 'zh', name: '中文' },
+  { code: 'ja', name: '日本語' },
+];
+
+export const SUPPORTED_LNGS = SUPPORTED_LANGUAGES.map((lang) => lang.code);
+
 const resources = {
   it: { translation: translationIT },
 };
@@ -19,13 +33,53 @@ const dynamicLanguageLoaders = {
   ja: () => import('./locales/ja/translation.json'),
 };
 
+// Backend i18next per caricare il bundle PRIMA che languageChanged scateni il re-render React
+const dynamicLanguageBackend = {
+  type: 'backend',
+  read(language, namespace, callback) {
+    const baseLang = (language || '').split('-')[0].toLowerCase();
+    if (baseLang === 'it') {
+      callback(null, translationIT);
+      return;
+    }
+    const loader = dynamicLanguageLoaders[baseLang];
+    if (!loader) {
+      callback(new Error(`Unsupported language: ${language}`), null);
+      return;
+    }
+    loader()
+      .then((mod) => {
+        const bundle = mod.default || mod;
+        if (process.env.NODE_ENV === 'development') {
+          console.log(`✅ [i18n] Lingua ${baseLang} caricata con successo`);
+          console.log(`📊 [i18n] Chiavi disponibili: ${Object.keys(bundle).length}`);
+        }
+        callback(null, bundle);
+      })
+      .catch((err) => {
+        if (process.env.NODE_ENV === 'development') {
+          console.error(`❌ [i18n] Errore caricamento lingua ${baseLang}:`, err);
+          console.warn(`🔄 [i18n] Fallback a lingua italiana`);
+        }
+        callback(err, null);
+      });
+  },
+};
+
 i18n
+  .use(dynamicLanguageBackend)
   .use(initReactI18next)
   .init({
     resources,
+    partialBundledLanguages: true,
     lng: 'it',
-    fallbackLng: 'it',
+    supportedLngs: SUPPORTED_LNGS,
     interpolation: { escapeValue: false },
+    react: {
+      useSuspense: false,
+      bindI18n: 'languageChanged loaded',
+      bindI18nStore: 'added',
+    },
     // 🌍 Configurazione pluralizzazione dinamica
     pluralSeparator: '_',
     keySeparator: '.',
@@ -49,11 +103,11 @@ i18n
       'es': ['en', 'it'],
       'ar': ['en', 'it'],
       'zh': ['en', 'it'],
-      'ja': ['en', 'it']
+      'ja': ['en', 'it'],
+      'default': ['it'],
     },
     // 📊 Configurazione performance
     load: 'languageOnly',
-    preload: ['it', 'en'],
     // Configurazione pluralizzazione per lingue supportate
     pluralRules: {
       // Italiano: 1, 2+, 0
@@ -123,24 +177,9 @@ i18n
     }
   });
 
-// Quando cambia lingua, carica il pacchetto se non è già presente
-i18n.on('languageChanged', async (lng) => {
-  try {
-    if (!i18n.hasResourceBundle(lng, 'translation') && dynamicLanguageLoaders[lng]) {
-      const mod = await dynamicLanguageLoaders[lng]();
-      i18n.addResourceBundle(lng, 'translation', mod.default, true, true);
-      
-      if (process.env.NODE_ENV === 'development') {
-        console.log(`✅ [i18n] Lingua ${lng} caricata con successo`);
-        console.log(`📊 [i18n] Chiavi disponibili: ${Object.keys(mod.default).length}`);
-      }
-    }
-  } catch (err) {
-    // In caso di errore, restiamo su fallback 'it'
-    if (process.env.NODE_ENV === 'development') {
-      console.error(`❌ [i18n] Errore caricamento lingua ${lng}:`, err);
-      console.warn(`🔄 [i18n] Fallback a lingua italiana`);
-    }
+i18n.on('languageChanged', (lng) => {
+  if (typeof document !== 'undefined' && lng) {
+    document.documentElement.lang = lng.split('-')[0].toLowerCase();
   }
 });
 
