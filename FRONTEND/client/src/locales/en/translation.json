@@ -339,6 +339,7 @@
       "startNow": "Get started"
     },
     "trust": {
+      "ariaLabel": "Trust & safety",
       "verifiedProfiles": "Verified profiles",
       "protectedChatVideo": "Protected chat & video",
       "adultsOnly": "Adults only (18+)"

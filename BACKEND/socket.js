@@ -31,18 +31,29 @@ const checkRateLimit = (key, maxRequests, windowMs) => {
 
 const ALLOWED_EMOJIS = ['❤️','👍','😂','😮','😢','🔥','👏','🎉'];
 
-const allowedOrigins = [
-  'http://localhost:3000',
-  'http://localhost:3001',
-  'http://localhost:5001',
-  'http://localhost:5002',
-  'http://localhost:5003',
-  process.env.FRONTEND_URL || 'http://localhost:3000',
-  process.env.API_URL || 'http://localhost:5001',
-  'capacitor://localhost',
-  'http://localhost',
-  'https://localhost',
-];
+const normalizeOrigin = (value) =>
+  typeof value === 'string' ? value.trim().replace(/\/+$/, '') : '';
+
+const buildSocketAllowedOrigins = () => {
+  const fromCorsEnv = process.env.CORS_ORIGIN
+    ? process.env.CORS_ORIGIN.split(',').map(normalizeOrigin).filter(Boolean)
+    : [];
+  const defaults = [
+    'http://localhost:3000',
+    'http://localhost:3001',
+    'http://localhost:5001',
+    'http://localhost:5002',
+    'http://localhost:5003',
+    normalizeOrigin(process.env.FRONTEND_URL),
+    normalizeOrigin(process.env.API_URL),
+    'capacitor://localhost',
+    'ionic://localhost',
+    'http://localhost',
+    'https://localhost',
+  ].filter(Boolean);
+
+  return new Set([...fromCorsEnv, ...defaults]);
+};
 
 let ioInstance;
 
@@ -75,16 +86,26 @@ const startReminderCron = () => {
 };
 
 async function initializeSocket(server) {
+  const allowedOriginsSet = buildSocketAllowedOrigins();
+
   ioInstance = socketIO(server, {
     cors: {
-      origin: allowedOrigins,
+      origin: (origin, callback) => {
+        if (!origin) return callback(null, true);
+        const normalized = normalizeOrigin(origin);
+        if (allowedOriginsSet.has(normalized)) {
+          return callback(null, true);
+        }
+        console.warn(`⚠️ [Socket CORS] Origine rifiutata: ${origin}`);
+        return callback(new Error('Origine non permessa dalla policy CORS Socket.IO'));
+      },
       methods: ['GET', 'POST', 'OPTIONS'],
       credentials: true,
       allowedHeaders: ['Content-Type', 'Authorization'],
     },
     pingTimeout: 60000,
     pingInterval: 25000,
-    transports: ['websocket', 'polling'],
+    transports: ['polling', 'websocket'],
     allowUpgrades: true,
     upgradeTimeout: 10000,
   });
@@ -146,8 +167,8 @@ async function initializeSocket(server) {
     });
 
     // Invia messaggio — 20 msg / 10s per socketId
-    // Accetta campo opzionale replyTo: { _id, senderName, message }
-    socket.on('sendMessage', async ({ chatId, content, replyTo }, callback) => {
+    // Accetta campi opzionali replyTo e attachments (immagini)
+    socket.on('sendMessage', async ({ chatId, content, replyTo, attachments }, callback) => {
       try {
         if (!checkRateLimit(`msg:${socket.id}`, 20, 10000)) {
           if (callback) callback({ success: false, error: 'Stai inviando troppi messaggi, aspetta un momento.' });
@@ -167,12 +188,31 @@ async function initializeSocket(server) {
           return;
         }
 
+        const sanitizedAttachments = Array.isArray(attachments)
+          ? attachments
+              .filter(a => a && a.type === 'image' && typeof a.url === 'string' && /^https?:\/\//i.test(a.url))
+              .slice(0, 4)
+              .map(a => ({
+                type: 'image',
+                url: a.url,
+                name: typeof a.name === 'string' ? a.name.slice(0, 120) : 'image.jpg',
+                size: typeof a.size === 'number' ? a.size : undefined,
+              }))
+          : [];
+
+        const trimmedContent = typeof content === 'string' ? content.trim() : '';
+        const finalContent = trimmedContent || (sanitizedAttachments.length > 0 ? '📷 Foto' : '');
+        if (!finalContent) {
+          if (callback) callback({ success: false, error: 'Il messaggio non può essere vuoto.' });
+          return;
+        }
+
         // Sanitizza replyTo: accetta solo campi attesi, scarta il resto
         const sanitizedReplyTo = (replyTo && replyTo._id && replyTo.message)
           ? { _id: replyTo._id, senderName: replyTo.senderName || '', message: String(replyTo.message).substring(0, 200) }
           : null;
 
-        await chat.addMessage(socket.user._id, content.trim(), [], sanitizedReplyTo);
+        await chat.addMessage(socket.user._id, finalContent, sanitizedAttachments, sanitizedReplyTo);
         await chat.populate('messages.sender', 'nickname profileImage');
         const newMessage = chat.messages[chat.messages.length - 1];
 
@@ -180,7 +220,7 @@ async function initializeSocket(server) {
 
         const notificationService = require('./services/notificationService');
         if (typeof notificationService.handleChatNotification === 'function') {
-          await notificationService.handleChatNotification(chat, socket.user, content.trim(), newMessage);
+          await notificationService.handleChatNotification(chat, socket.user, finalContent, newMessage);
         }
 
         if (callback) callback({ success: true, message: newMessage });

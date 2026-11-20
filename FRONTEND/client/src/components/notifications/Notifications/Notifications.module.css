@@ -30,6 +30,11 @@
   outline-offset: 2px;
 }
 
+.iconEmoji {
+  font-size: 1.15rem;
+  line-height: 1;
+}
+
 .badge {
   position: absolute;
   top: 1px;

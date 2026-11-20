@@ -328,12 +328,12 @@ function HomePage() {
                   seatsFilled={seatsFilled}
                   seatsTotal={meal.maxParticipants || 0}
                   ctaState={ctaState}
-                  onCardClick={() => navigate(`/meals/${meal._id}`)}
+                  onCardClick={() => navigate(`/meals/${meal._id}`, { state: { from: '/' } })}
                   onActionClick={(state) => {
                     if (state === 'organizer') {
                       navigate('/my-meals');
                     } else {
-                      navigate(`/meals/${meal._id}`);
+                      navigate(`/meals/${meal._id}`, { state: { from: '/' } });
                     }
                   }}
                 />
@@ -376,7 +376,7 @@ function HomePage() {
       </section>
 
       {/* --- TRUST ROW --- */}
-      <section className={styles.trust} aria-label="Garanzie">
+      <section className={styles.trust} aria-label={t('home.trust.ariaLabel', 'Garanzie')}>
         {trustItems.map((label) => (
           <div key={label} className={styles.trustItem}>
             <Check size={16} strokeWidth={2.5} className={styles.trustIcon} aria-hidden="true" />

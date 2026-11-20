@@ -280,47 +280,70 @@
     }
   },
   "home": {
-    "heroTitle": "table2Talkを共有しましょう。<br />つながりを作りましょう。",
-    "heroSubtitle": "table2Talkは、ストーリーと味を共有することを愛する人々のためのグローバルコミュニティです。お気に入りのトピックでバーチャルt2tを主催するか、すでに予定されている会話に参加しましょう。",
+    "heroTitle": "table2Talkを共有しよう。<br />つながりを生み出そう。",
+    "heroTitlePrefix": "共有しよう、",
+    "heroTitleAccent": "table2Talk。",
+    "heroTitleSecondLine": "つながりを生み出そう。",
+    "heroSubtitle": "ストーリーと味を分かち合うのが好きな人のためのコミュニティ。好きなテーマでビデオテーブルを開くか、予定されている会話に参加しよう。どんな言語でも、いつでも。",
+    "livePill_one": "今テーブルに1人参加中",
+    "livePill_other": "今テーブルに{{count}}人参加中",
     "createTableTalk": "t2tを作成",
     "exploreTableTalk": "t2tを探索",
-    "registerNow": "今すぐ登録",
+    "registerNow": "無料で登録",
     "login": "ログイン",
+    "seeTodayTables": "今日のテーブルを見る ↓",
     "howItWorks": {
-      "title": "参加は簡単です",
+      "title": "使い方",
       "step1": {
-        "title": "1. 発見",
-        "description": "あなたにぴったりのバーチャルテーブルを見つけましょう。言語、時間、またはトピックでフィルターし、参加したい会話を選択します。"
+        "num": "01",
+        "title": "発見",
+        "description": "言語・時間・テーマで絞り込んで、ぴったりのテーブルを見つけよう。いつでも席は用意されています。"
       },
       "step2": {
-        "title": "2. 参加",
-        "description": "選択、クリック、参加。会話に入るのはそれほど簡単です。必要なのは好奇心（そして少しの食欲！）だけです。"
+        "num": "02",
+        "title": "参加",
+        "description": "ワンクリックで参加完了。好奇心と少しの食欲だけ持ってきてください。あとはお任せを。"
       },
       "step3": {
-        "title": "3. 出会い",
-        "description": "ビデオ通話にアクセスし、食事の仲間と出会いましょう。共有し、学び、素晴らしい仲間とt2tを楽しむ時です。"
+        "num": "03",
+        "title": "出会い",
+        "description": "ビデオ通話に参加してテーブル仲間と出会い、ストーリーや味、笑顔を分かち合おう。"
       }
     },
     "whyTableTalk": {
       "title": "なぜtable2Talk？",
       "feature1": {
         "title": "孤独への解毒剤",
-        "description": "簡単なコーヒーでも、手の込んだディナーでも、共有する人が常にいます。孤独は私たちのメニューにはありません。"
+        "description": "ちょっとしたコーヒーでも、手の込んだディナーでも、一緒に楽しむ相手がいつでもいます。孤独はメニューにありません。"
       },
       "feature2": {
         "title": "視野を広げる",
-        "description": "食卓から旅をしましょう。世界中の人々や文化と出会い、一口ごとに視野を広げましょう。"
+        "description": "食卓にいながら世界を旅しよう。世界中の人や文化と、ひと口ずつ出会えます。"
       },
       "feature3": {
         "title": "本物で安全なつながり",
-        "description": "自分らしくいられる、モデレートされ尊重される環境。すべてのプロフィールは発見する世界であり、完全に安全です。"
+        "description": "自分らしくいられる、思いやりと管理の行き届いた空間。認証済みプロフィール、プレッシャーゼロ。"
       }
+    },
+    "todayTables": {
+      "title": "今日のテーブル",
+      "seeAll": "すべて見る →",
+      "emptyTitle": "現在予定されているテーブルはありません",
+      "emptyDescription": "最初のテーブルを用意してコミュニティを招待しよう。",
+      "emptyCta": "t2tを作成"
     },
     "cta": {
       "title": "何を待っていますか？誰かがテーブルに座ろうとしています。",
       "subtitle": "登録は無料で、1分もかかりません。",
-      "organizeTableTalk": "t2tを主催",
+      "subtitleAuth": "次のテーブルを用意しよう。必要なのは1分とアイデアだけ。",
+      "organizeTableTalk": "t2tを作成",
       "startNow": "今すぐ始める"
+    },
+    "trust": {
+      "ariaLabel": "安心と安全",
+      "verifiedProfiles": "認証済みプロフィール",
+      "protectedChatVideo": "保護されたチャット＆ビデオ",
+      "adultsOnly": "18歳以上限定"
     }
   },
   "navigation": {

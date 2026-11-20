@@ -226,7 +226,8 @@
   max-height: 150px;
   max-width: 100%;
   border-radius: var(--tt-radius-md);
-  object-fit: cover;
+  object-fit: contain;
+  background-color: var(--tt-background);
 }
 
 .removeCoverBtn {

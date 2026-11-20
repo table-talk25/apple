@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'react-toastify';
 import { Camera as CameraIcon, Video, MapPin, Trash2, Share2 } from 'lucide-react';
@@ -57,6 +57,8 @@ const MealDetailPage = () => {
   const { t, i18n } = useTranslation();
   const { mealId } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
+  const returnTo = location.state?.from || null;
   const { user, isAuthenticated } = useAuth();
   const { openChat, openDrawer } = useChatDrawer();
   const { getMealTypeText } = useMealTranslations();
@@ -331,7 +333,7 @@ const MealDetailPage = () => {
   return (
     <div className={styles.page}>
       <div className={styles.topRow}>
-        <BackButton />
+        <BackButton to={returnTo} />
       </div>
 
       <article className={styles.sheet}>
@@ -576,9 +578,6 @@ const MealDetailPage = () => {
                           ? t('detail.joining', 'Iscrizione…')
                           : t('detail.join', 'Partecipa')}
                       </Button>
-                      <Button variant="ghost" fullWidth onClick={handleChatClick}>
-                        {t('detail.message', 'Messaggia')}
-                      </Button>
                       <Button
                         variant="ghost"
                         size="sm"
@@ -595,7 +594,11 @@ const MealDetailPage = () => {
                     <Button
                       variant="green"
                       fullWidth
-                      onClick={() => navigate(`/meals/${meal._id}/video`)}
+                      onClick={() =>
+                        navigate(`/meals/${meal._id}/video`, {
+                          state: { fromMealDetail: true, from: returnTo },
+                        })
+                      }
                     >
                       <Video size={16} strokeWidth={2} aria-hidden="true" />
                       <span>{t('detail.joinVideo', 'Entra in videochiamata')}</span>

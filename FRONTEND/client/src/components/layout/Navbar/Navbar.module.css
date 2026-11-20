@@ -95,6 +95,11 @@
   outline-offset: 2px;
 }
 
+.iconEmoji {
+  font-size: 1.15rem;
+  line-height: 1;
+}
+
 .dot {
   position: absolute;
   top: 1px;

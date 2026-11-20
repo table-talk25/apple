@@ -129,11 +129,10 @@ class EmailVerificationService {
     try {
       console.log(`🔍 [EmailVerification] Verifica token: ${token.substring(0, 8)}...`);
 
-      // Trova l'utente con questo token
+      // Trova l'utente con questo token (anche se già verificato)
       const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
       const user = await User.findOne({
-        verificationToken: hashedToken,
-        verificationTokenExpires: { $gt: new Date() }
+        verificationToken: hashedToken
       });
 
       if (!user) {
@@ -145,24 +144,44 @@ class EmailVerificationService {
         };
       }
 
-      // Verifica che il token sia ancora valido
+      // Idempotenza: se l'email è già verificata, restituisci successo senza errore
+      if (user.isEmailVerified === true) {
+        console.log(`✅ [EmailVerification] Email già verificata per utente: ${user._id}`);
+        return {
+          success: true,
+          alreadyVerified: true,
+          message: 'Account già verificato',
+          userId: user._id,
+          email: user.email,
+          user: {
+            _id: user._id,
+            name: user.name,
+            surname: user.surname,
+            email: user.email,
+            isEmailVerified: true
+          }
+        };
+      }
+
+      // Verifica che il token sia ancora valido e non scaduto
       if (!user.isEmailVerificationTokenValid(hashedToken)) {
-        console.log(`❌ [EmailVerification] Token non valido per utente: ${user._id}`);
+        console.log(`❌ [EmailVerification] Token non valido o scaduto per utente: ${user._id}`);
         return {
           success: false,
-          message: 'Token di verifica non valido',
+          message: 'Token di verifica non valido o scaduto',
           code: 'INVALID_TOKEN'
         };
       }
 
-      // Marca l'email come verificata
+      // Marca l'email come verificata (senza bloccare su validazioni di altri campi)
       user.verifyEmail();
-      await user.save();
+      await user.save({ validateBeforeSave: false });
 
       console.log(`✅ [EmailVerification] Email verificata con successo per utente: ${user._id}`);
 
       return {
         success: true,
+        alreadyVerified: false,
         message: 'Email verificata con successo',
         userId: user._id,
         email: user.email,

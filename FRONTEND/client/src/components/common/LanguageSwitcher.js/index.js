@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../../contexts/AuthContext';
-import { translatedLanguages } from '../../../constants/profileConstants';
+import { SUPPORTED_LANGUAGES } from '../../../i18n';
 import styles from './LanguageSwitcher.module.css';
 
 const LanguageSwitcher = () => {
@@ -15,10 +15,10 @@ const LanguageSwitcher = () => {
     console.log('🔍 Debug Language Switcher:');
     console.log('User:', user);
     console.log('User languages:', user?.languages);
-    console.log('Translated languages:', translatedLanguages);
+    console.log('Supported languages:', SUPPORTED_LANGUAGES);
     
     // Per ora, mostra sempre tutte le lingue tradotte per il testing
-    setUserLanguages(translatedLanguages);
+    setUserLanguages(SUPPORTED_LANGUAGES);
     console.log('Showing only translated languages');
     
     // TODO: Implementare la logica per filtrare in base al profilo utente
@@ -26,7 +26,7 @@ const LanguageSwitcher = () => {
     if (user && user.languages && user.languages.length > 0) {
       // Filtra le lingue disponibili in base a quelle del profilo
       // Gestisce sia codici (it, en) che nomi (Italiano, Inglese)
-      const filteredLanguages = translatedLanguages.filter(lang => 
+      const filteredLanguages = SUPPORTED_LANGUAGES.filter(lang => 
         user.languages.includes(lang.code) || user.languages.includes(lang.name)
       );
       console.log('Filtered languages:', filteredLanguages);
@@ -35,7 +35,7 @@ const LanguageSwitcher = () => {
       // Se la lingua corrente non è tra quelle del profilo, cambia alla prima disponibile
       const userLanguageCodes = user.languages.map(lang => {
         // Se è un nome, trova il codice corrispondente
-        const foundLang = translatedLanguages.find(al => al.name === lang);
+        const foundLang = SUPPORTED_LANGUAGES.find(al => al.name === lang);
         return foundLang ? foundLang.code : lang;
       });
       
@@ -46,7 +46,7 @@ const LanguageSwitcher = () => {
     } else {
       // Se l'utente non ha lingue nel profilo, mostra tutte le lingue tradotte
       console.log('No user languages found, showing all translated languages');
-      setUserLanguages(translatedLanguages);
+      setUserLanguages(SUPPORTED_LANGUAGES);
     }
     */
   }, [user, i18n]);
@@ -58,7 +58,7 @@ const LanguageSwitcher = () => {
   };
 
   const getCurrentLanguageName = () => {
-    const currentLang = translatedLanguages.find(lang => lang.code === i18n.language);
+    const currentLang = SUPPORTED_LANGUAGES.find(lang => lang.code === i18n.language);
     return currentLang ? currentLang.name : t('languageSwitcher.currentLanguage');
   };
 

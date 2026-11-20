@@ -7,6 +7,7 @@
 import React, { useState, useEffect } from 'react';
 import useTranslationDebug from '../../../hooks/useTranslationDebug';
 import { useTranslation } from 'react-i18next';
+import { SUPPORTED_LNGS } from '../../../i18n';
 import styles from './TranslationDebugPanel.module.css';
 
 const TranslationDebugPanel = () => {
@@ -141,7 +142,7 @@ const TranslationDebugPanel = () => {
           <div className={styles.section}>
             <h4>🌍 Controlli Lingua</h4>
             <div className={styles.languageControls}>
-              {['it', 'en', 'fr', 'de', 'es', 'ar', 'zh'].map(lng => (
+              {SUPPORTED_LNGS.map(lng => (
                 <button
                   key={lng}
                   onClick={() => changeLanguage(lng)}
