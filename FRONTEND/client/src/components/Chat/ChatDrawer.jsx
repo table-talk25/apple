@@ -1,22 +1,53 @@
 // File: src/components/Chat/ChatDrawer.jsx
-// Popup/drawer globale per le chat, apribile da qualsiasi pagina
+// Drawer globale chat in stile WhatsApp / Telegram / Messenger (palette Convivialità)
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { io } from 'socket.io-client';
+import {
+  ArrowLeft,
+  CheckCheck,
+  ImagePlus,
+  Reply,
+  Send,
+  SmilePlus,
+  X,
+} from 'lucide-react';
+import { toast } from 'react-toastify';
 import { useAuth } from '../../contexts/AuthContext';
 import { useChatDrawer } from '../../contexts/ChatDrawerContext';
 import chatService from '../../services/chatService';
 import mealService from '../../services/mealService';
 import { getMealCoverImageUrl, getHostAvatarUrl } from '../../constants/mealConstants';
 import { API_URL } from '../../config/capacitorConfig';
-import { IoSend } from 'react-icons/io5';
-import { ImagePlus, X } from 'lucide-react';
-import { toast } from 'react-toastify';
 import { playNotificationSound } from '../../utils/notificationSound';
 import styles from './ChatDrawer.module.css';
 
-const REACTION_EMOJIS = ['❤️','👍','😂','😮','😢','🔥','👏','🎉'];
+const REACTION_EMOJIS = ['❤️', '👍', '😂', '😮', '😢', '🔥', '👏', '🎉'];
+const GROUP_WINDOW_MS = 5 * 60 * 1000;
+
+const getDayKey = (ts) => {
+  const d = new Date(ts);
+  if (Number.isNaN(d.getTime())) return '';
+  return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+};
+
+const formatDayLabel = (ts) => {
+  const d = new Date(ts);
+  if (Number.isNaN(d.getTime())) return '';
+  const today = new Date();
+  const yesterday = new Date();
+  yesterday.setDate(today.getDate() - 1);
+  if (getDayKey(d) === getDayKey(today)) return 'Oggi';
+  if (getDayKey(d) === getDayKey(yesterday)) return 'Ieri';
+  return d.toLocaleDateString('it-IT', { day: 'numeric', month: 'long' });
+};
+
+const formatMsgTime = (ts) => {
+  const d = new Date(ts);
+  if (Number.isNaN(d.getTime())) return '';
+  return d.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
+};
 
 // ─────────────────────────────────────────────────────────────
 // VISTA LISTA CHAT
@@ -34,91 +65,88 @@ const ChatList = ({ onSelectChat }) => {
     try {
       const data = await chatService.getUserChats();
 
-      // Arricchisci le chat con imageUrl del meal se non già presente nel populate
       const enriched = await Promise.all(
         data.map(async (chat) => {
           const mealId = chat.mealId;
           if (!mealId) return chat;
-          // Se l'imageUrl è già presente, non fare nessuna chiamata extra
           if (mealId?.imageUrl || mealId?.coverImage) return chat;
           const mealIdStr = typeof mealId === 'object' ? mealId._id : mealId;
           if (!mealIdStr) return chat;
           try {
-            const res = await mealService.getMealById(mealIdStr);
-            const mealData = res?.data || res;
-            return {
-              ...chat,
-              mealId: {
-                ...(typeof mealId === 'object' ? mealId : { _id: mealIdStr }),
-                imageUrl: mealData?.imageUrl || null,
-              },
-            };
-          } catch {
-            return chat;
-          }
+            const meal = await mealService.getMealById(mealIdStr);
+            if (meal?.imageUrl || meal?.coverImage) {
+              return {
+                ...chat,
+                mealId: {
+                  ...(typeof mealId === 'object' ? mealId : { _id: mealIdStr }),
+                  imageUrl: meal.imageUrl || meal.coverImage,
+                },
+              };
+            }
+          } catch (_) {}
+          return chat;
         })
       );
 
       setChats(enriched);
-    } catch {
+    } catch (_) {
       setError('Impossibile caricare le chat.');
     } finally {
       setLoading(false);
     }
   }, []);
 
-  useEffect(() => { fetchChats(); }, [fetchChats]);
-
-  const formatTime = (timestamp) => {
-    if (!timestamp) return '';
-    const date = new Date(timestamp);
-    const now = new Date();
-    if (date.toDateString() === now.toDateString()) {
-      return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    }
-    return date.toLocaleDateString([], { day: '2-digit', month: '2-digit' });
-  };
+  useEffect(() => {
+    fetchChats();
+  }, [fetchChats]);
 
   const getChatName = (chat) => {
     if (chat.name) return chat.name;
     if (chat.mealId?.title) return chat.mealId.title;
-    const others = (chat.participants || []).filter(
-      p => (p._id || p).toString() !== (user?._id || user?.id || '').toString()
-    );
-    if (others.length > 0) return others.map(p => p.nickname || 'Utente').join(', ');
-    return 'Chat';
+    if (chat.participants?.length) {
+      const others = chat.participants.filter(
+        (p) => (p._id || p) !== (user?._id || user?.id)
+      );
+      if (others.length) return others.map((p) => p.nickname || 'Utente').join(', ');
+    }
+    return 'Chat di gruppo';
   };
 
-  // Usa l'immagine del meal come avatar della chat
   const getAvatarSrc = (chat) => {
-    const mealImage = chat.mealId?.imageUrl || chat.mealId?.coverImage || null;
-    return getMealCoverImageUrl(mealImage);
+    const mealImg = chat.mealId?.imageUrl || chat.mealId?.coverImage;
+    if (mealImg) return getMealCoverImageUrl(mealImg);
+    if (chat.participants?.length) {
+      const other = chat.participants.find(
+        (p) => (p._id || p) !== (user?._id || user?.id)
+      );
+      if (other?.profileImage) return getHostAvatarUrl(other.profileImage);
+    }
+    return '/assets/images/default-meal-placeholder.jpeg';
+  };
+
+  const formatListTime = (ts) => {
+    if (!ts) return '';
+    const d = new Date(ts);
+    const diffDays = Math.floor((Date.now() - d) / (1000 * 60 * 60 * 24));
+    if (diffDays === 0) return formatMsgTime(d);
+    if (diffDays === 1) return 'Ieri';
+    return d.toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit' });
   };
 
   if (loading) {
     return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', flex: 1, padding: '3rem' }}>
-        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-        <div style={{
-          width: 32, height: 32,
-          border: '3px solid #e2e8f0',
-          borderTopColor: '#FF6B35',
-          borderRadius: '50%',
-          animation: 'spin 0.7s linear infinite'
-        }} />
+      <div className={styles.emptyState}>
+        <div className={styles.emptyIcon}>⏳</div>
+        <p className={styles.emptyText}>Caricamento chat…</p>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div style={{ textAlign: 'center', padding: '3rem 1rem', color: '#718096' }}>
-        <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>⚠️</div>
-        <p style={{ marginBottom: '1rem' }}>{error}</p>
-        <button
-          onClick={fetchChats}
-          style={{ background: '#FF6B35', color: '#fff', border: 'none', borderRadius: '8px', padding: '0.5rem 1.2rem', cursor: 'pointer', fontWeight: 600 }}
-        >
+      <div className={styles.emptyState}>
+        <p className={styles.emptyText}>{error}</p>
+        <button type="button" onClick={fetchChats} className={styles.primaryCta}>
           Riprova
         </button>
       </div>
@@ -127,15 +155,16 @@ const ChatList = ({ onSelectChat }) => {
 
   if (chats.length === 0) {
     return (
-      <div style={{ textAlign: 'center', padding: '3rem 1rem', color: '#718096' }}>
-        <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>💬</div>
-        <p style={{ fontWeight: 600, color: '#4a5568', marginBottom: '0.4rem' }}>Nessuna chat attiva</p>
-        <p style={{ fontSize: '0.875rem', maxWidth: '30ch', margin: '0 auto 1.5rem' }}>
-          Le tue chat appariranno qui quando parteciperai a un t2t.
+      <div className={styles.emptyState}>
+        <div className={styles.emptyIcon}>💬</div>
+        <h3 className={styles.emptyTitle}>Nessuna chat attiva</h3>
+        <p className={styles.emptyText}>
+          Unisciti a un table2Talk per iniziare a chattare con gli altri partecipanti!
         </p>
         <button
+          type="button"
           onClick={() => navigate('/meals')}
-          style={{ background: '#FF6B35', color: '#fff', border: 'none', borderRadius: '8px', padding: '0.5rem 1.2rem', cursor: 'pointer', fontWeight: 600 }}
+          className={styles.primaryCta}
         >
           Esplora i t2t
         </button>
@@ -144,55 +173,43 @@ const ChatList = ({ onSelectChat }) => {
   }
 
   return (
-    <ul style={{ listStyle: 'none', padding: 0, margin: 0, overflowY: 'auto', flex: 1 }}>
+    <ul className={styles.chatList}>
       {chats.map((chat) => (
         <li
           key={chat._id}
-          onClick={() => onSelectChat(chat._id)}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.9rem',
-            padding: '0.85rem 1.1rem',
-            cursor: 'pointer',
-            borderBottom: '1px solid #f0f0f0',
-            background: chat.unreadCount > 0 ? '#fff8f5' : '#fff',
-            transition: 'background 0.15s',
-          }}
-          onMouseEnter={e => e.currentTarget.style.background = '#f7f8fc'}
-          onMouseLeave={e => e.currentTarget.style.background = chat.unreadCount > 0 ? '#fff8f5' : '#fff'}
+          onClick={() => onSelectChat(chat._id, { name: getChatName(chat), avatar: getAvatarSrc(chat) })}
+          className={`${styles.chatListItem} ${
+            chat.unreadCount > 0 ? styles.chatListItemUnread : ''
+          }`}
         >
-          <div style={{ position: 'relative', flexShrink: 0 }}>
+          <div className={styles.chatListAvatarWrap}>
             <img
               src={getAvatarSrc(chat)}
               alt={getChatName(chat)}
-              style={{ width: 48, height: 48, borderRadius: '50%', objectFit: 'cover', border: '2px solid #e2e8f0', display: 'block' }}
+              className={styles.chatListAvatar}
               loading="lazy"
-              onError={(e) => { e.target.src = '/assets/images/default-meal-placeholder.jpeg'; }}
+              onError={(e) => {
+                e.target.src = '/assets/images/default-meal-placeholder.jpeg';
+              }}
             />
             {chat.unreadCount > 0 && (
-              <span style={{
-                position: 'absolute', top: -2, right: -2,
-                background: '#FF6B35', color: '#fff',
-                fontSize: '0.65rem', fontWeight: 700,
-                borderRadius: '9999px', padding: '2px 5px',
-                minWidth: 18, textAlign: 'center', lineHeight: 1.3,
-                border: '2px solid #fff',
-              }}>
+              <span className={styles.unreadBadge}>
                 {chat.unreadCount > 99 ? '99+' : chat.unreadCount}
               </span>
             )}
           </div>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '0.5rem', marginBottom: '0.15rem' }}>
-              <span style={{ fontWeight: chat.unreadCount > 0 ? 700 : 600, fontSize: '0.93rem', color: '#1a202c', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                {getChatName(chat)}
-              </span>
-              <span style={{ fontSize: '0.72rem', color: '#a0aec0', flexShrink: 0 }}>
-                {formatTime(chat.lastMessage?.timestamp || chat.updatedAt)}
+          <div className={styles.chatListInfo}>
+            <div className={styles.chatListTop}>
+              <span className={styles.chatListName}>{getChatName(chat)}</span>
+              <span className={styles.chatListTime}>
+                {formatListTime(chat.lastMessage?.timestamp || chat.updatedAt)}
               </span>
             </div>
-            <p style={{ fontSize: '0.82rem', color: chat.unreadCount > 0 ? '#4a5568' : '#718096', fontWeight: chat.unreadCount > 0 ? 500 : 400, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', margin: 0 }}>
+            <p
+              className={`${styles.chatListPreview} ${
+                chat.unreadCount > 0 ? styles.chatListPreviewUnread : ''
+              }`}
+            >
               {chat.lastMessage?.content || 'Nessun messaggio ancora'}
             </p>
           </div>
@@ -203,31 +220,16 @@ const ChatList = ({ onSelectChat }) => {
 };
 
 // ─────────────────────────────────────────────────────────────
-// BUBBLE REPLY PREVIEW (inline, dentro la bubble del messaggio)
+// BUBBLE REPLY PREVIEW
 // ─────────────────────────────────────────────────────────────
 const ReplyPreview = ({ replyTo, own }) => {
   if (!replyTo?._id && !replyTo?.message) return null;
   return (
-    <div style={{
-      borderLeft: `3px solid ${own ? 'rgba(255,255,255,0.55)' : '#FF6B35'}`,
-      paddingLeft: 8,
-      marginBottom: 6,
-      opacity: 0.85,
-      fontSize: 12,
-      borderRadius: '0 4px 4px 0',
-      background: own ? 'rgba(255,255,255,0.12)' : 'rgba(255,107,53,0.07)',
-      padding: '4px 8px',
-    }}>
-      <div style={{ fontWeight: 700, marginBottom: 1, color: own ? 'rgba(255,255,255,0.9)' : '#FF6B35', fontSize: 11 }}>
+    <div className={`${styles.replyQuote} ${own ? styles.replyQuoteOwn : ''}`}>
+      <div className={`${styles.replyQuoteName} ${own ? styles.replyQuoteNameOwn : ''}`}>
         {replyTo.senderName || 'Utente'}
       </div>
-      <div style={{
-        overflow: 'hidden',
-        whiteSpace: 'nowrap',
-        textOverflow: 'ellipsis',
-        maxWidth: 220,
-        color: own ? 'rgba(255,255,255,0.8)' : '#555',
-      }}>
+      <div className={`${styles.replyQuoteText} ${own ? styles.replyQuoteTextOwn : ''}`}>
         {replyTo.message}
       </div>
     </div>
@@ -235,85 +237,208 @@ const ReplyPreview = ({ replyTo, own }) => {
 };
 
 // ─────────────────────────────────────────────────────────────
-// REACTION BAR — mostra le reazioni esistenti + picker
+// SINGOLA RIGA MESSAGGIO (WhatsApp / Telegram / Messenger style)
 // ─────────────────────────────────────────────────────────────
-const ReactionBar = ({ reactions = [], currentUserId, onToggle }) => {
+const MessageRow = ({
+  msg,
+  own,
+  isFirstInGroup,
+  isLastInGroup,
+  currentUserId,
+  onReply,
+  onToggleReaction,
+}) => {
+  const [swipeX, setSwipeX] = useState(0);
+  const [swiping, setSwiping] = useState(false);
   const [showPicker, setShowPicker] = useState(false);
+  const touchStartX = useRef(null);
+  const SWIPE_THRESHOLD = 60;
+
+  const handleTouchStart = (e) => {
+    touchStartX.current = e.touches[0].clientX;
+    setSwiping(true);
+  };
+  const handleTouchMove = (e) => {
+    if (touchStartX.current === null) return;
+    const dx = e.touches[0].clientX - touchStartX.current;
+    const direction = own ? -1 : 1;
+    const clamped = Math.max(0, Math.min(dx * direction, SWIPE_THRESHOLD + 10));
+    setSwipeX(clamped);
+  };
+  const handleTouchEnd = () => {
+    if (swipeX >= SWIPE_THRESHOLD) onReply(msg);
+    setSwipeX(0);
+    setSwiping(false);
+    touchStartX.current = null;
+  };
+
+  const hasAttachments = Array.isArray(msg.attachments) && msg.attachments.length > 0;
+  const showText =
+    msg.content && !(hasAttachments && msg.content.trim() === '📷 Foto');
+  const reactions = msg.reactions || [];
 
   const hasReacted = (emoji) => {
-    const r = reactions.find(r => r.emoji === emoji);
-    return r ? r.users.includes(currentUserId) : false;
+    const r = reactions.find((item) => item.emoji === emoji);
+    if (!r || !Array.isArray(r.users)) return false;
+    return r.users.some((u) => String(u?._id || u) === String(currentUserId));
   };
 
   return (
-    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 3, marginTop: 3, alignItems: 'center', position: 'relative' }}>
-      {reactions.map(r => (
-        <button
-          key={r.emoji}
-          onClick={() => onToggle(r.emoji)}
-          title={`${r.count} reazion${r.count === 1 ? 'e' : 'i'}`}
-          style={{
-            display: 'inline-flex', alignItems: 'center', gap: 2,
-            background: hasReacted(r.emoji) ? 'rgba(255,107,53,0.15)' : 'rgba(0,0,0,0.06)',
-            border: hasReacted(r.emoji) ? '1.5px solid #FF6B35' : '1.5px solid transparent',
-            borderRadius: 12, padding: '1px 6px',
-            cursor: 'pointer', fontSize: 13, lineHeight: 1.4,
-            transition: 'all 0.15s',
-          }}
-        >
-          <span>{r.emoji}</span>
-          <span style={{ fontSize: 10, fontWeight: 600, color: hasReacted(r.emoji) ? '#FF6B35' : '#666' }}>{r.count}</span>
-        </button>
-      ))}
-      {/* Pulsante + per aprire il picker */}
-      <button
-        onClick={() => setShowPicker(p => !p)}
-        title="Aggiungi reazione"
+    <div
+      className={`${styles.msgRow} ${!isFirstInGroup ? styles.msgRowGrouped : ''} ${
+        own ? styles.msgRowOwn : ''
+      }`}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+    >
+      <div
+        className={`${styles.msgInner} ${own ? styles.msgInnerOwn : ''}`}
         style={{
-          display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-          width: 22, height: 22, borderRadius: '50%',
-          background: 'rgba(0,0,0,0.05)', border: '1.5px solid transparent',
-          cursor: 'pointer', fontSize: 13, color: '#999',
-          transition: 'all 0.15s',
+          transform: swiping
+            ? `translateX(${own ? -swipeX : swipeX}px)`
+            : 'translateX(0)',
+          transition: swiping ? 'none' : 'transform 0.22s ease',
         }}
-        onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,107,53,0.12)'; e.currentTarget.style.color = '#FF6B35'; }}
-        onMouseLeave={e => { e.currentTarget.style.background = 'rgba(0,0,0,0.05)'; e.currentTarget.style.color = '#999'; }}
-      >😊</button>
-      {showPicker && (
-        <div style={{
-          position: 'absolute', bottom: 28, left: 0,
-          background: '#fff', borderRadius: 12, padding: '6px 8px',
-          boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
-          display: 'flex', gap: 4, zIndex: 100,
-          border: '1px solid #eee',
-        }}>
-          {REACTION_EMOJIS.map(emoji => (
-            <button
-              key={emoji}
-              onClick={() => { onToggle(emoji); setShowPicker(false); }}
-              style={{
-                background: 'none', border: 'none', cursor: 'pointer',
-                fontSize: 20, padding: '2px 3px', borderRadius: 6,
-                transition: 'transform 0.1s',
-              }}
-              onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.3)'}
-              onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
-            >{emoji}</button>
-          ))}
+      >
+        {!own && (
+          <div className={styles.avatarSlot}>
+            {isLastInGroup && (
+              <img
+                src={getHostAvatarUrl(msg.profileImage)}
+                alt={msg.username}
+                className={styles.msgAvatar}
+                loading="lazy"
+              />
+            )}
+          </div>
+        )}
+
+        <div className={`${styles.bubbleCol} ${own ? styles.bubbleColOwn : ''}`}>
+          <div className={`${styles.bubbleWrap} ${own ? styles.bubbleWrapOwn : ''}`}>
+            <div
+              className={`${styles.bubble} ${
+                own
+                  ? `${styles.bubbleOwn} ${!isFirstInGroup ? styles.bubbleOwnGrouped : ''}`
+                  : `${styles.bubbleOther} ${!isFirstInGroup ? styles.bubbleOtherGrouped : ''}`
+              }`}
+            >
+              {!own && isFirstInGroup && (
+                <div className={styles.senderName}>{msg.username}</div>
+              )}
+
+              <ReplyPreview replyTo={msg.replyTo} own={own} />
+
+              {hasAttachments && (
+                <div className={styles.attachmentsWrap}>
+                  {msg.attachments.map((att, idx) => (
+                    <a
+                      key={`${att.url}-${idx}`}
+                      href={att.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={styles.attachmentLink}
+                    >
+                      <img
+                        src={att.url}
+                        alt={att.name || 'Foto in chat'}
+                        loading="lazy"
+                        className={`${styles.attachmentImg} ${
+                          own ? styles.attachmentImgOwn : ''
+                        }`}
+                      />
+                    </a>
+                  ))}
+                </div>
+              )}
+
+              {showText && <div className={styles.msgText}>{msg.content}</div>}
+
+              <div className={`${styles.msgMeta} ${own ? styles.msgMetaOwn : styles.msgMetaOther}`}>
+                <span>{formatMsgTime(msg.timestamp)}</span>
+                {own && <CheckCheck size={13} strokeWidth={2.2} aria-hidden="true" />}
+              </div>
+            </div>
+
+            {/* Azioni rapide su hover (Reply + Emoji) */}
+            <div className={styles.hoverActions}>
+              <button
+                type="button"
+                className={styles.quickActionBtn}
+                onClick={() => onReply(msg)}
+                title="Rispondi"
+                aria-label="Rispondi al messaggio"
+              >
+                <Reply size={14} />
+              </button>
+              <button
+                type="button"
+                className={styles.quickActionBtn}
+                onClick={() => setShowPicker((v) => !v)}
+                title="Aggiungi reazione"
+                aria-label="Aggiungi reazione"
+              >
+                <SmilePlus size={14} />
+              </button>
+            </div>
+          </div>
+
+          {(reactions.length > 0 || showPicker) && (
+            <div className={styles.reactionsRow}>
+              {reactions.map((r) => {
+                const count = r.count || r.users?.length || 0;
+                if (!count) return null;
+                return (
+                  <button
+                    type="button"
+                    key={r.emoji}
+                    onClick={() => onToggleReaction(msg._id, r.emoji)}
+                    className={`${styles.reactionChip} ${
+                      hasReacted(r.emoji) ? styles.reactionChipActive : ''
+                    }`}
+                  >
+                    <span>{r.emoji}</span>
+                    {count > 1 && <span className={styles.reactionCount}>{count}</span>}
+                  </button>
+                );
+              })}
+
+              {showPicker && (
+                <div
+                  className={`${styles.reactionPicker} ${
+                    own ? styles.reactionPickerOwn : ''
+                  }`}
+                >
+                  {REACTION_EMOJIS.map((emoji) => (
+                    <button
+                      type="button"
+                      key={emoji}
+                      className={styles.reactionEmojiBtn}
+                      onClick={() => {
+                        onToggleReaction(msg._id, emoji);
+                        setShowPicker(false);
+                      }}
+                    >
+                      {emoji}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </div>
-      )}
+      </div>
     </div>
   );
 };
 
 // ─────────────────────────────────────────────────────────────
-// VISTA SINGOLA CHAT
+// CONVERSAZIONE SINGOLA NEL DRAWER
 // ─────────────────────────────────────────────────────────────
-const DrawerChat = ({ chatId }) => {
+const DrawerChat = ({ chatId, onMetaLoaded }) => {
   const { user, token } = useAuth();
   const currentUserId = user?._id || user?.id;
 
-  const [chat, setChat] = useState(null);
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
   const [pendingFile, setPendingFile] = useState(null);
@@ -322,6 +447,7 @@ const DrawerChat = ({ chatId }) => {
   const [loading, setLoading] = useState(true);
   const [connectionStatus, setConnectionStatus] = useState('connecting');
   const [replyTo, setReplyTo] = useState(null);
+
   const socketRef = useRef(null);
   const messagesEndRef = useRef(null);
   const messageIdsRef = useRef(new Set());
@@ -365,16 +491,27 @@ const DrawerChat = ({ chatId }) => {
     setReplyTo(null);
     messageIdsRef.current = new Set();
 
-    chatService.getChatById(chatId)
+    chatService
+      .getChatById(chatId)
       .then((chatData) => {
         if (!mounted) return;
-        setChat(chatData);
         const initial = (chatData.messages || []).map(normalizeMessage);
         setMessages(initial);
-        messageIdsRef.current = new Set(initial.map(m => m._id).filter(Boolean));
+        messageIdsRef.current = new Set(initial.map((m) => m._id).filter(Boolean));
+        if (onMetaLoaded) {
+          onMetaLoaded({
+            name: chatData?.name || chatData?.title || 'Chat',
+            participantsCount: Array.isArray(chatData?.participants)
+              ? chatData.participants.length
+              : null,
+            connectionStatus: 'connected',
+          });
+        }
       })
       .catch(() => {})
-      .finally(() => { if (mounted) setLoading(false); });
+      .finally(() => {
+        if (mounted) setLoading(false);
+      });
 
     const apiUrl = (process.env.REACT_APP_API_URL || API_URL || '').replace(/\/$/, '');
     const socketUrl = apiUrl.replace(/\/api\/?$/, '');
@@ -391,12 +528,20 @@ const DrawerChat = ({ chatId }) => {
 
     socket.on('connect', () => {
       setConnectionStatus('connected');
+      if (onMetaLoaded) onMetaLoaded((prev) => ({ ...prev, connectionStatus: 'connected' }));
       socket.emit('joinChatRoom', chatId);
     });
-    socket.on('disconnect', () => setConnectionStatus('disconnected'));
-    socket.on('connect_error', () => setConnectionStatus('error'));
+    socket.on('disconnect', () => {
+      setConnectionStatus('disconnected');
+      if (onMetaLoaded) onMetaLoaded((prev) => ({ ...prev, connectionStatus: 'disconnected' }));
+    });
+    socket.on('connect_error', () => {
+      setConnectionStatus('error');
+      if (onMetaLoaded) onMetaLoaded((prev) => ({ ...prev, connectionStatus: 'disconnected' }));
+    });
     socket.on('reconnect', () => {
       setConnectionStatus('connected');
+      if (onMetaLoaded) onMetaLoaded((prev) => ({ ...prev, connectionStatus: 'connected' }));
       socket.emit('joinChatRoom', chatId);
     });
     socket.on('receiveMessage', (message) => {
@@ -404,28 +549,29 @@ const DrawerChat = ({ chatId }) => {
       const mid = nm._id;
       if (mid && messageIdsRef.current.has(mid)) return;
       if (mid) messageIdsRef.current.add(mid);
-      setMessages(prev => [...prev, nm]);
+      setMessages((prev) => [...prev, nm]);
       const senderId = nm.senderId || nm.sender?._id;
       if (senderId && senderId.toString() !== (currentUserId || '').toString()) {
         playNotificationSound();
       }
     });
 
-    // Aggiorna le reazioni in tempo reale
     socket.on('reactionUpdated', ({ messageId, reactions }) => {
-      setMessages(prev => prev.map(m =>
-        m._id === messageId ? { ...m, reactions } : m
-      ));
+      setMessages((prev) =>
+        prev.map((m) => (m._id === messageId ? { ...m, reactions } : m))
+      );
     });
 
     return () => {
       mounted = false;
       socket.disconnect();
     };
-  }, [chatId, token, currentUserId, normalizeMessage]);
+  }, [chatId, token, currentUserId, normalizeMessage, onMetaLoaded]);
 
   useEffect(() => {
-    const handler = (e) => { if (e.key === 'Escape') setReplyTo(null); };
+    const handler = (e) => {
+      if (e.key === 'Escape') setReplyTo(null);
+    };
     document.addEventListener('keydown', handler);
     return () => document.removeEventListener('keydown', handler);
   }, []);
@@ -439,10 +585,13 @@ const DrawerChat = ({ chatId }) => {
     setTimeout(() => inputRef.current?.focus(), 50);
   }, []);
 
-  const handleToggleReaction = useCallback((messageId, emoji) => {
-    if (!socketRef.current?.connected) return;
-    socketRef.current.emit('toggleReaction', { chatId, messageId, emoji });
-  }, [chatId]);
+  const handleToggleReaction = useCallback(
+    (messageId, emoji) => {
+      if (!socketRef.current?.connected) return;
+      socketRef.current.emit('toggleReaction', { chatId, messageId, emoji });
+    },
+    [chatId]
+  );
 
   const handleSelectPhoto = (e) => {
     const file = e.target.files?.[0];
@@ -469,7 +618,9 @@ const DrawerChat = ({ chatId }) => {
 
   const handleSend = async (e) => {
     e?.preventDefault();
-    if ((!newMessage.trim() && !pendingFile) || !socketRef.current?.connected || uploading) return;
+    if ((!newMessage.trim() && !pendingFile) || !socketRef.current?.connected || uploading) {
+      return;
+    }
 
     const content = newMessage.trim();
     let attachments = [];
@@ -508,7 +659,7 @@ const DrawerChat = ({ chatId }) => {
         const mid = nm._id;
         if (mid && messageIdsRef.current.has(mid)) return;
         if (mid) messageIdsRef.current.add(mid);
-        setMessages(prev => [...prev, nm]);
+        setMessages((prev) => [...prev, nm]);
       } else if (ack?.error) {
         toast.error(ack.error);
         if (content) setNewMessage(content);
@@ -516,75 +667,72 @@ const DrawerChat = ({ chatId }) => {
     });
   };
 
-  const chatName = chat?.name || chat?.title || 'Chat';
-  const canSend = (Boolean(newMessage.trim()) || Boolean(pendingFile)) && connectionStatus === 'connected' && !uploading;
+  const canSend =
+    (Boolean(newMessage.trim()) || Boolean(pendingFile)) &&
+    connectionStatus === 'connected' &&
+    !uploading;
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden', background: 'var(--tt-background, #FAF7F2)' }}>
-      <div style={{
-        padding: '10px 16px',
-        background: 'var(--tt-surface, #fff)',
-        borderBottom: '1px solid var(--tt-border, #DDD5CA)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        gap: 8,
-        flexShrink: 0,
-      }}>
-        <span style={{
-          fontFamily: 'var(--tt-font-heading, Poppins, sans-serif)',
-          fontWeight: 600,
-          fontSize: '0.94rem',
-          color: 'var(--tt-text, #242824)',
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
-          whiteSpace: 'nowrap',
-        }}>{chatName}</span>
-        {connectionStatus === 'disconnected' && (
-          <span style={{
-            fontSize: '0.72rem', fontWeight: 600,
-            color: 'var(--tt-primary, #B54735)',
-            background: 'rgba(181,71,53,0.1)',
-            padding: '2px 8px', borderRadius: 999, flexShrink: 0,
-          }}>● Offline</span>
-        )}
-        {connectionStatus === 'connected' && (
-          <span style={{
-            fontSize: '0.72rem', fontWeight: 600,
-            color: 'var(--tt-accent, #245C4A)',
-            background: 'rgba(36,92,74,0.1)',
-            padding: '2px 8px', borderRadius: 999, flexShrink: 0,
-          }}>● Online</span>
-        )}
-      </div>
-
-      <div style={{
-        flex: 1, overflowY: 'auto', padding: '14px 12px',
-        background: 'var(--tt-background, #FAF7F2)',
-        display: 'flex', flexDirection: 'column', gap: '6px',
-      }}>
+    <div className={styles.conversationShell}>
+      <div className={styles.messagesCanvas}>
         {loading ? (
-          <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--tt-text-muted, #5C625C)', fontSize: '14px' }}>
-            <div style={{ fontSize: '24px', marginBottom: '8px' }}>⏳</div>
-            Caricamento…
+          <div className={styles.emptyState}>
+            <div className={styles.emptyIcon}>⏳</div>
+            <p className={styles.emptyText}>Caricamento messaggi…</p>
           </div>
         ) : messages.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '3rem 1.5rem', color: 'var(--tt-text-muted, #5C625C)', fontSize: '14px' }}>
-            <div style={{ fontSize: '34px', marginBottom: '8px' }}>💬</div>
-            Nessun messaggio ancora.<br />Inizia la conversazione o condividi una foto!
+          <div className={styles.emptyState}>
+            <div className={styles.emptyIcon}>💬</div>
+            <h3 className={styles.emptyTitle}>Inizia la conversazione</h3>
+            <p className={styles.emptyText}>
+              Scrivi un messaggio o condividi una foto con i partecipanti del tuo table2Talk.
+            </p>
           </div>
         ) : (
           messages.map((msg, index) => {
-            const own = (msg.senderId || msg.sender?._id)?.toString() === (currentUserId || '').toString();
+            const own =
+              (msg.senderId || msg.sender?._id)?.toString() ===
+              (currentUserId || '').toString();
+            const prev = index > 0 ? messages[index - 1] : null;
+            const next = index < messages.length - 1 ? messages[index + 1] : null;
+
+            const currDay = getDayKey(msg.timestamp);
+            const prevDay = prev ? getDayKey(prev.timestamp) : null;
+            const showDateDivider = currDay && currDay !== prevDay;
+
+            const samePrevSender =
+              prev &&
+              !showDateDivider &&
+              String(prev.senderId || prev.sender?._id || '') ===
+                String(msg.senderId || msg.sender?._id || '') &&
+              Math.abs(new Date(msg.timestamp) - new Date(prev.timestamp)) < GROUP_WINDOW_MS;
+
+            const sameNextSender =
+              next &&
+              getDayKey(next.timestamp) === currDay &&
+              String(next.senderId || next.sender?._id || '') ===
+                String(msg.senderId || msg.sender?._id || '') &&
+              Math.abs(new Date(next.timestamp) - new Date(msg.timestamp)) < GROUP_WINDOW_MS;
+
             return (
-              <MessageRow
-                key={msg._id || index}
-                msg={msg}
-                own={own}
-                currentUserId={currentUserId}
-                onReply={handleReply}
-                onToggleReaction={handleToggleReaction}
-              />
+              <React.Fragment key={msg._id || index}>
+                {showDateDivider && (
+                  <div className={styles.dateDivider}>
+                    <span className={styles.dateDividerPill}>
+                      {formatDayLabel(msg.timestamp)}
+                    </span>
+                  </div>
+                )}
+                <MessageRow
+                  msg={msg}
+                  own={own}
+                  isFirstInGroup={!samePrevSender}
+                  isLastInGroup={!sameNextSender}
+                  currentUserId={currentUserId}
+                  onReply={handleReply}
+                  onToggleReaction={handleToggleReaction}
+                />
+              </React.Fragment>
             );
           })
         )}
@@ -592,74 +740,46 @@ const DrawerChat = ({ chatId }) => {
       </div>
 
       {replyTo && (
-        <div style={{
-          display: 'flex', alignItems: 'center', gap: 8,
-          padding: '8px 14px', background: 'rgba(181,71,53,0.08)',
-          borderTop: '1px solid var(--tt-border, #DDD5CA)', fontSize: 13, color: 'var(--tt-text, #242824)', flexShrink: 0,
-        }}>
-          <span style={{ color: 'var(--tt-primary, #B54735)', fontWeight: 700, flexShrink: 0, fontSize: 15 }}>↩</span>
-          <div style={{ flex: 1, overflow: 'hidden', minWidth: 0 }}>
-            <span style={{ fontWeight: 700, color: 'var(--tt-primary, #B54735)', fontSize: 12 }}>{replyTo.senderName}</span>
-            <span style={{
-              marginLeft: 6, fontSize: 12, color: 'var(--tt-text-muted, #5C625C)',
-              overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-              display: 'inline-block', maxWidth: 200, verticalAlign: 'bottom',
-            }}>{replyTo.message}</span>
+        <div className={styles.replyBanner}>
+          <div className={styles.replyBannerBody}>
+            <div className={styles.replyBannerAuthor}>{replyTo.senderName}</div>
+            <div className={styles.replyBannerText}>{replyTo.message}</div>
           </div>
           <button
             type="button"
             onClick={() => setReplyTo(null)}
             aria-label="Annulla risposta"
-            style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 16, color: 'var(--tt-text-muted, #5C625C)', padding: '0 4px', lineHeight: 1, flexShrink: 0 }}
-          >✕</button>
+            className={styles.iconBtn}
+          >
+            <X size={16} />
+          </button>
         </div>
       )}
 
       {pendingPreview && (
-        <div style={{
-          display: 'flex', alignItems: 'center', gap: 10,
-          padding: '8px 14px', background: 'var(--tt-surface, #fff)',
-          borderTop: '1px solid var(--tt-border, #DDD5CA)', flexShrink: 0,
-        }}>
-          <div style={{ position: 'relative', display: 'inline-flex' }}>
+        <div className={styles.pendingPhotoBar}>
+          <div className={styles.pendingThumbWrap}>
             <img
               src={pendingPreview}
               alt="Anteprima foto"
-              style={{
-                width: 56, height: 56, borderRadius: 10,
-                objectFit: 'contain', background: 'var(--tt-background, #FAF7F2)',
-                border: '1px solid var(--tt-border, #DDD5CA)',
-              }}
+              className={styles.pendingThumb}
             />
             <button
               type="button"
               onClick={clearPendingPhoto}
               aria-label="Rimuovi foto"
-              style={{
-                position: 'absolute', top: -6, right: -6,
-                width: 20, height: 20, borderRadius: '50%',
-                border: 'none', background: 'var(--tt-primary, #B54735)', color: '#fff',
-                display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                cursor: 'pointer',
-              }}
+              className={styles.pendingRemoveBtn}
             >
               <X size={12} />
             </button>
           </div>
-          <span style={{ fontSize: '0.8rem', color: 'var(--tt-text-muted, #5C625C)' }}>
+          <span className={styles.emptyText}>
             {uploading ? 'Caricamento foto…' : 'Foto pronta per l’invio'}
           </span>
         </div>
       )}
 
-      <form
-        onSubmit={handleSend}
-        style={{
-          display: 'flex', alignItems: 'center', gap: '8px',
-          padding: '10px 12px', borderTop: '1px solid var(--tt-border, #DDD5CA)',
-          background: 'var(--tt-surface, #fff)', flexShrink: 0,
-        }}
-      >
+      <form onSubmit={handleSend} className={styles.composer}>
         <input
           ref={fileInputRef}
           type="file"
@@ -673,227 +793,105 @@ const DrawerChat = ({ chatId }) => {
           disabled={connectionStatus !== 'connected' || uploading}
           aria-label="Allega una foto"
           title="Allega una foto"
-          style={{
-            width: 38, height: 38, borderRadius: '50%',
-            background: 'var(--tt-background, #FAF7F2)',
-            color: 'var(--tt-accent, #245C4A)',
-            border: '1px solid var(--tt-border, #DDD5CA)',
-            cursor: connectionStatus === 'connected' && !uploading ? 'pointer' : 'not-allowed',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            flexShrink: 0,
-            opacity: connectionStatus === 'connected' && !uploading ? 1 : 0.5,
-          }}
+          className={styles.attachBtn}
         >
-          <ImagePlus size={18} />
+          <ImagePlus size={20} />
         </button>
+
         <input
           ref={inputRef}
           type="text"
           value={newMessage}
-          onChange={e => setNewMessage(e.target.value)}
-          onKeyDown={e => {
-            if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); }
+          onChange={(e) => setNewMessage(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+              e.preventDefault();
+              handleSend();
+            }
             if (e.key === 'Escape') setReplyTo(null);
           }}
-          placeholder={uploading ? 'Caricamento foto…' : replyTo ? `Rispondi a ${replyTo.senderName}…` : 'Scrivi un messaggio…'}
+          placeholder={
+            uploading
+              ? 'Caricamento foto…'
+              : replyTo
+              ? `Rispondi a ${replyTo.senderName}…`
+              : 'Scrivi un messaggio…'
+          }
           disabled={connectionStatus !== 'connected' || uploading}
-          style={{
-            flex: 1, padding: '9px 15px',
-            border: '1.5px solid var(--tt-border, #DDD5CA)', borderRadius: '999px',
-            outline: 'none', fontSize: '14px', background: 'var(--tt-background, #FAF7F2)',
-            color: 'var(--tt-text, #242824)',
-            transition: 'border-color 0.15s',
-          }}
-          onFocus={e => e.target.style.borderColor = 'var(--tt-accent, #245C4A)'}
-          onBlur={e => e.target.style.borderColor = 'var(--tt-border, #DDD5CA)'}
+          className={styles.composerInput}
         />
+
         <button
           type="submit"
           disabled={!canSend}
           aria-label="Invia messaggio"
-          style={{
-            width: 38, height: 38, borderRadius: '50%',
-            background: canSend ? 'var(--tt-primary, #B54735)' : 'var(--tt-border, #DDD5CA)',
-            color: '#fff', border: 'none',
-            cursor: canSend ? 'pointer' : 'not-allowed',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: '16px', flexShrink: 0,
-            transition: 'background 0.2s',
-          }}
-        ><IoSend /></button>
+          className={styles.sendBtn}
+        >
+          <Send size={18} />
+        </button>
       </form>
     </div>
   );
 };
 
 // ─────────────────────────────────────────────────────────────
-// SINGOLA RIGA MESSAGGIO con pulsante reply, swipe mobile e reazioni
-// ─────────────────────────────────────────────────────────────
-const MessageRow = ({ msg, own, currentUserId, onReply, onToggleReaction }) => {
-  const [swipeX, setSwipeX] = useState(0);
-  const [swiping, setSwiping] = useState(false);
-  const touchStartX = useRef(null);
-  const SWIPE_THRESHOLD = 60;
-
-  const handleTouchStart = (e) => {
-    touchStartX.current = e.touches[0].clientX;
-    setSwiping(true);
-  };
-  const handleTouchMove = (e) => {
-    if (touchStartX.current === null) return;
-    const dx = e.touches[0].clientX - touchStartX.current;
-    const direction = own ? -1 : 1;
-    const clamped = Math.max(0, Math.min(dx * direction, SWIPE_THRESHOLD + 10));
-    setSwipeX(clamped);
-  };
-  const handleTouchEnd = () => {
-    if (swipeX >= SWIPE_THRESHOLD) onReply(msg);
-    setSwipeX(0);
-    setSwiping(false);
-    touchStartX.current = null;
-  };
-
-  const swipeProgress = Math.min(swipeX / SWIPE_THRESHOLD, 1);
-
-  return (
-    <div
-      style={{
-        display: 'flex', flexDirection: own ? 'row-reverse' : 'row',
-        alignItems: 'flex-end', gap: '7px', marginBottom: '4px', position: 'relative',
-      }}
-      onTouchStart={handleTouchStart}
-      onTouchMove={handleTouchMove}
-      onTouchEnd={handleTouchEnd}
-    >
-      {swiping && swipeX > 8 && (
-        <div style={{
-          position: 'absolute', [own ? 'left' : 'right']: 4,
-          top: '50%', transform: 'translateY(-50%)',
-          opacity: swipeProgress, fontSize: 18, color: '#FF6B35',
-          transition: 'opacity 0.1s', pointerEvents: 'none',
-        }}>↩</div>
-      )}
-
-      <div style={{
-        display: 'flex', flexDirection: own ? 'row-reverse' : 'row',
-        alignItems: 'flex-end', gap: '7px', flex: 1,
-        transform: swiping ? `translateX(${own ? -swipeX : swipeX}px)` : 'translateX(0)',
-        transition: swiping ? 'none' : 'transform 0.25s cubic-bezier(0.25, 1, 0.5, 1)',
-      }}>
-        {!own && (
-          <img
-            src={getHostAvatarUrl(msg.profileImage)}
-            alt={msg.username}
-            style={{ width: 28, height: 28, borderRadius: '50%', objectFit: 'cover', flexShrink: 0, border: '2px solid #fff', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}
-          />
-        )}
-        <div style={{
-          maxWidth: '78%', display: 'flex', flexDirection: 'column',
-          alignItems: own ? 'flex-end' : 'flex-start',
-        }}>
-          {!own && (
-            <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--tt-accent, #245C4A)', marginBottom: '3px', marginLeft: '4px' }}>
-              {msg.username}
-            </span>
-          )}
-          <div style={{
-            padding: '9px 13px',
-            borderRadius: own ? '16px 4px 16px 16px' : '4px 16px 16px 16px',
-            background: own ? 'var(--tt-accent, #245C4A)' : 'var(--tt-surface, #fff)',
-            color: own ? '#fff' : 'var(--tt-text, #242824)',
-            border: own ? 'none' : '1px solid var(--tt-border, #DDD5CA)',
-            boxShadow: '0 2px 8px rgba(36,40,36,0.06)',
-            wordBreak: 'break-word', fontSize: '14px', lineHeight: 1.45,
-          }}>
-            <ReplyPreview replyTo={msg.replyTo} own={own} />
-            {Array.isArray(msg.attachments) && msg.attachments.length > 0 && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: msg.content && msg.content.trim() !== '📷 Foto' ? 6 : 2 }}>
-                {msg.attachments.map((att, idx) => (
-                  <a
-                    key={`${att.url}-${idx}`}
-                    href={att.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style={{ display: 'block' }}
-                  >
-                    <img
-                      src={att.url}
-                      alt={att.name || 'Foto in chat'}
-                      loading="lazy"
-                      style={{
-                        display: 'block',
-                        maxWidth: '100%',
-                        maxHeight: 220,
-                        borderRadius: 10,
-                        objectFit: 'contain',
-                        background: own ? 'rgba(0,0,0,0.16)' : 'var(--tt-background, #FAF7F2)',
-                      }}
-                    />
-                  </a>
-                ))}
-              </div>
-            )}
-            {!(Array.isArray(msg.attachments) && msg.attachments.length > 0 && msg.content?.trim() === '📷 Foto') && (
-              <div>{msg.content}</div>
-            )}
-            <div style={{ fontSize: '10px', opacity: 0.7, textAlign: 'right', marginTop: '3px' }}>
-              {new Date(msg.timestamp).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' })}
-            </div>
-          </div>
-          {/* Reazioni */}
-          <div style={{ marginTop: 2, marginLeft: own ? 0 : 4, marginRight: own ? 4 : 0 }}>
-            <ReactionBar
-              reactions={msg.reactions || []}
-              currentUserId={currentUserId?.toString()}
-              onToggle={(emoji) => onToggleReaction(msg._id, emoji)}
-            />
-          </div>
-          <button
-            type="button"
-            onClick={() => onReply(msg)}
-            title="Rispondi"
-            style={{
-              background: 'none', border: 'none', cursor: 'pointer',
-              fontSize: '12px', color: 'var(--tt-text-muted, #5C625C)', padding: '2px 6px', marginTop: '2px',
-              borderRadius: '8px', transition: 'color 0.15s, background 0.15s',
-            }}
-            onMouseEnter={e => { e.currentTarget.style.color = 'var(--tt-primary, #B54735)'; e.currentTarget.style.background = 'rgba(181,71,53,0.08)'; }}
-            onMouseLeave={e => { e.currentTarget.style.color = 'var(--tt-text-muted, #5C625C)'; e.currentTarget.style.background = 'none'; }}
-          >↩ Rispondi</button>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-const ChatListWrapper = () => {
-  const { openChat } = useChatDrawer();
-  return <ChatList onSelectChat={openChat} />;
-};
-
-// ─────────────────────────────────────────────────────────────
 // DRAWER PRINCIPALE
 // ─────────────────────────────────────────────────────────────
 const ChatDrawer = () => {
-  const { isOpen, activeChatId, closeDrawer, goToList } = useChatDrawer();
+  const { isOpen, activeChatId, openChat, closeDrawer, goToList } = useChatDrawer();
   const [closing, setClosing] = useState(false);
+  const [activeMeta, setActiveMeta] = useState({
+    name: 'Chat',
+    avatar: null,
+    participantsCount: null,
+    connectionStatus: 'connecting',
+  });
+
+  const handleSelectChat = useCallback(
+    (id, previewMeta) => {
+      setActiveMeta({
+        name: previewMeta?.name || 'Chat',
+        avatar: previewMeta?.avatar || null,
+        participantsCount: null,
+        connectionStatus: 'connecting',
+      });
+      openChat(id);
+    },
+    [openChat]
+  );
+
+  const handleMetaUpdate = useCallback((update) => {
+    setActiveMeta((prev) =>
+      typeof update === 'function' ? update(prev) : { ...prev, ...update }
+    );
+  }, []);
 
   const handleClose = useCallback(() => {
     setClosing(true);
-    setTimeout(() => { setClosing(false); closeDrawer(); }, 290);
+    setTimeout(() => {
+      setClosing(false);
+      closeDrawer();
+    }, 260);
   }, [closeDrawer]);
 
   useEffect(() => {
-    if (!isOpen) return;
-    const handler = (e) => { if (e.key === 'Escape') handleClose(); };
+    if (!isOpen) return undefined;
+    const handler = (e) => {
+      if (e.key === 'Escape') handleClose();
+    };
     document.addEventListener('keydown', handler);
     return () => document.removeEventListener('keydown', handler);
   }, [isOpen, handleClose]);
 
   useEffect(() => {
-    if (isOpen) { document.body.style.overflow = 'hidden'; }
-    else { document.body.style.overflow = ''; }
-    return () => { document.body.style.overflow = ''; };
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
   }, [isOpen]);
 
   if (!isOpen && !closing) return null;
@@ -907,20 +905,77 @@ const ChatDrawer = () => {
       />
       <div
         className={`${styles.drawer} ${closing ? styles.drawerClosing : ''}`}
-        role="dialog" aria-modal="true" aria-label="Chat"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Chat"
       >
         <div className={styles.handle} onClick={handleClose} />
+
         <div className={styles.header}>
           <div className={styles.headerLeft}>
             {activeChatId && (
-              <button className={styles.backBtn} onClick={goToList} aria-label="Torna alla lista">←</button>
+              <button
+                type="button"
+                className={styles.iconBtn}
+                onClick={goToList}
+                aria-label="Torna alla lista chat"
+              >
+                <ArrowLeft size={20} />
+              </button>
             )}
-            <span className={styles.headerTitle}>{activeChatId ? 'Chat' : '💬 Chat'}</span>
+
+            {activeChatId && activeMeta.avatar && (
+              <img
+                src={activeMeta.avatar}
+                alt={activeMeta.name}
+                className={styles.headerAvatar}
+                onError={(e) => {
+                  e.target.style.display = 'none';
+                }}
+              />
+            )}
+
+            <div className={styles.headerMeta}>
+              <span className={styles.headerTitle}>
+                {activeChatId ? activeMeta.name : '💬 Le tue chat'}
+              </span>
+              {activeChatId && (
+                <span className={styles.headerSub}>
+                  <span
+                    className={
+                      activeMeta.connectionStatus === 'connected'
+                        ? styles.statusDotOnline
+                        : styles.statusDotOffline
+                    }
+                  />
+                  <span>
+                    {activeMeta.connectionStatus === 'connected'
+                      ? activeMeta.participantsCount
+                        ? `Online · ${activeMeta.participantsCount} partecipanti`
+                        : 'Online'
+                      : 'Connessione…'}
+                  </span>
+                </span>
+              )}
+            </div>
           </div>
-          <button className={styles.closeBtn} onClick={handleClose} aria-label="Chiudi chat">✕</button>
+
+          <button
+            type="button"
+            className={styles.iconBtn}
+            onClick={handleClose}
+            aria-label="Chiudi chat"
+          >
+            <X size={20} />
+          </button>
         </div>
+
         <div className={styles.body}>
-          {activeChatId ? <DrawerChat chatId={activeChatId} /> : <ChatListWrapper />}
+          {activeChatId ? (
+            <DrawerChat chatId={activeChatId} onMetaLoaded={handleMetaUpdate} />
+          ) : (
+            <ChatList onSelectChat={handleSelectChat} />
+          )}
         </div>
       </div>
     </>
