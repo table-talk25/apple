@@ -114,38 +114,6 @@ const VideoCallChat = ({ mealId, isVisible, onUnreadMessage }) => {
     let mounted = true;
     messageIdsRef.current = new Set();
 
-    chatService
-      .getChatById(chatId)
-      .then((chatData) => {
-        if (!mounted) return;
-        const initial = (chatData?.messages || [])
-          .map(normalizeMessage)
-          .filter((m) => m && (m.content || m.attachments.length > 0));
-        initial.forEach((m) => {
-          if (m._id) messageIdsRef.current.add(String(m._id));
-        });
-        setMessages(initial);
-      })
-      .catch(() => {
-        if (mounted) setError('Impossibile caricare i messaggi.');
-      })
-      .finally(() => {
-        if (mounted) setLoading(false);
-      });
-
-    const apiUrl = (process.env.REACT_APP_API_URL || API_URL || '').replace(/\/$/, '');
-    const socketUrl = apiUrl.replace(/\/api\/?$/, '');
-    const socket = io(socketUrl, {
-      auth: { token },
-      transports: ['polling', 'websocket'],
-      reconnection: true,
-      reconnectionAttempts: Infinity,
-      reconnectionDelay: 2000,
-      timeout: 15000,
-      withCredentials: true,
-    });
-    socketRef.current = socket;
-
     const appendMessage = (raw) => {
       const nm = normalizeMessage(raw);
       if (!nm || (!nm.content && nm.attachments.length === 0)) return;
@@ -163,6 +131,48 @@ const VideoCallChat = ({ mealId, isVisible, onUnreadMessage }) => {
       }
     };
 
+    const syncMessagesFromHttp = async (isInitial = false) => {
+      try {
+        const chatData = await chatService.getChatById(chatId);
+        if (!mounted) return;
+        const fetched = (chatData?.messages || [])
+          .map(normalizeMessage)
+          .filter((m) => m && (m.content || m.attachments.length > 0));
+        if (isInitial) {
+          fetched.forEach((m) => {
+            if (m._id) messageIdsRef.current.add(String(m._id));
+          });
+          setMessages(fetched);
+        } else {
+          fetched.forEach((m) => {
+            const mid = String(m._id);
+            if (!messageIdsRef.current.has(mid)) {
+              appendMessage(m);
+            }
+          });
+        }
+      } catch (_) {
+        if (isInitial && mounted) setError('Impossibile caricare i messaggi.');
+      } finally {
+        if (isInitial && mounted) setLoading(false);
+      }
+    };
+
+    syncMessagesFromHttp(true);
+
+    const apiUrl = (API_URL || process.env.REACT_APP_API_URL || '').replace(/\/$/, '');
+    const socketUrl = apiUrl.replace(/\/api\/?$/, '');
+    const socket = io(socketUrl, {
+      auth: { token },
+      transports: ['polling', 'websocket'],
+      reconnection: true,
+      reconnectionAttempts: Infinity,
+      reconnectionDelay: 2000,
+      timeout: 15000,
+      withCredentials: true,
+    });
+    socketRef.current = socket;
+
     socket.on('connect', () => {
       if (!mounted) return;
       socket.emit('joinChatRoom', chatId);
@@ -171,10 +181,20 @@ const VideoCallChat = ({ mealId, isVisible, onUnreadMessage }) => {
       if (!mounted) return;
       socket.emit('joinChatRoom', chatId);
     });
+    socket.on('connect_error', (err) => {
+      console.warn('[VideoCallChat] Socket.IO connect_error:', err?.message || err);
+    });
     socket.on('receiveMessage', appendMessage);
+
+    const pollInterval = setInterval(() => {
+      if (mounted && !socket.connected) {
+        syncMessagesFromHttp(false);
+      }
+    }, 4000);
 
     return () => {
       mounted = false;
+      clearInterval(pollInterval);
       socket.disconnect();
       socketRef.current = null;
     };

@@ -490,29 +490,51 @@ const DrawerChat = ({ chatId, onMetaLoaded }) => {
     setReplyTo(null);
     messageIdsRef.current = new Set();
 
-    chatService
-      .getChatById(chatId)
-      .then((chatData) => {
-        if (!mounted) return;
-        const initial = (chatData.messages || []).map(normalizeMessage);
-        setMessages(initial);
-        messageIdsRef.current = new Set(initial.map((m) => m._id).filter(Boolean));
-        if (onMetaLoaded) {
-          onMetaLoaded({
-            name: chatData?.name || chatData?.title || 'Chat',
-            participantsCount: Array.isArray(chatData?.participants)
-              ? chatData.participants.length
-              : null,
-            connectionStatus: 'connected',
-          });
-        }
-      })
-      .catch(() => {})
-      .finally(() => {
-        if (mounted) setLoading(false);
-      });
+    let httpLoaded = false;
 
-    const apiUrl = (process.env.REACT_APP_API_URL || API_URL || '').replace(/\/$/, '');
+    const syncMessagesFromHttp = async (isInitial = false) => {
+      try {
+        const chatData = await chatService.getChatById(chatId);
+        if (!mounted) return;
+        httpLoaded = true;
+        const fetched = (chatData.messages || []).map(normalizeMessage);
+        if (isInitial) {
+          setMessages(fetched);
+          messageIdsRef.current = new Set(fetched.map((m) => m._id).filter(Boolean));
+          if (onMetaLoaded) {
+            onMetaLoaded({
+              name: chatData?.name || chatData?.title || 'Chat',
+              participantsCount: Array.isArray(chatData?.participants)
+                ? chatData.participants.length
+                : null,
+              connectionStatus: 'connected',
+            });
+          }
+        } else {
+          const fresh = fetched.filter((m) => m._id && !messageIdsRef.current.has(m._id));
+          if (fresh.length > 0) {
+            fresh.forEach((m) => messageIdsRef.current.add(m._id));
+            setMessages((prev) => [...prev, ...fresh]);
+            const hasIncoming = fresh.some((nm) => {
+              const sid = nm.senderId || nm.sender?._id;
+              return sid && sid.toString() !== (currentUserId || '').toString();
+            });
+            if (hasIncoming) playNotificationSound();
+          }
+          if (onMetaLoaded) {
+            onMetaLoaded((prev) => ({ ...prev, connectionStatus: 'connected' }));
+          }
+        }
+      } catch (_) {
+        // Ignorato: il prossimo ciclo o Socket.IO riproverà
+      } finally {
+        if (isInitial && mounted) setLoading(false);
+      }
+    };
+
+    syncMessagesFromHttp(true);
+
+    const apiUrl = (API_URL || process.env.REACT_APP_API_URL || '').replace(/\/$/, '');
     const socketUrl = apiUrl.replace(/\/api\/?$/, '');
     const socket = io(socketUrl, {
       auth: { token },
@@ -530,10 +552,15 @@ const DrawerChat = ({ chatId, onMetaLoaded }) => {
       socket.emit('joinChatRoom', chatId);
     });
     socket.on('disconnect', () => {
-      if (onMetaLoaded) onMetaLoaded((prev) => ({ ...prev, connectionStatus: 'disconnected' }));
+      if (!httpLoaded && onMetaLoaded) {
+        onMetaLoaded((prev) => ({ ...prev, connectionStatus: 'disconnected' }));
+      }
     });
-    socket.on('connect_error', () => {
-      if (onMetaLoaded) onMetaLoaded((prev) => ({ ...prev, connectionStatus: 'disconnected' }));
+    socket.on('connect_error', (err) => {
+      console.warn('[ChatDrawer] Socket.IO connect_error:', err?.message || err);
+      if (!httpLoaded && onMetaLoaded) {
+        onMetaLoaded((prev) => ({ ...prev, connectionStatus: 'disconnected' }));
+      }
     });
     socket.on('reconnect', () => {
       if (onMetaLoaded) onMetaLoaded((prev) => ({ ...prev, connectionStatus: 'connected' }));
@@ -557,8 +584,15 @@ const DrawerChat = ({ chatId, onMetaLoaded }) => {
       );
     });
 
+    const pollInterval = setInterval(() => {
+      if (mounted && !socket.connected) {
+        syncMessagesFromHttp(false);
+      }
+    }, 4000);
+
     return () => {
       mounted = false;
+      clearInterval(pollInterval);
       socket.disconnect();
     };
   }, [chatId, token, currentUserId, normalizeMessage, onMetaLoaded]);
