@@ -177,8 +177,10 @@ const sendMessage = asyncHandler(async (req, res, next) => {
     const populatedChat = await chat.populate('messages.sender', 'nickname profileImage');
     const messageToSend = populatedChat.messages[populatedChat.messages.length - 1];
 
-    if (req.io) {
-        req.io.to(chatId).emit('receiveMessage', messageToSend);
+    const { getIO } = require('../socket');
+    const io = req.io || getIO();
+    if (io) {
+        io.to(chatId).emit('receiveMessage', messageToSend);
     }
 
     const otherParticipants = chat.participants

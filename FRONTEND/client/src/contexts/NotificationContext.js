@@ -60,12 +60,12 @@ export const NotificationProvider = ({ children }) => {
       return;
     }
 
-    const apiUrl = (process.env.REACT_APP_API_URL || API_URL || '').replace(/\/$/, '');
+    const apiUrl = (API_URL || process.env.REACT_APP_API_URL || '').replace(/\/$/, '');
     const socketUrl = apiUrl.replace(/\/api\/?$/, '');
 
     const socket = io(socketUrl, {
       auth: { token },
-      transports: ['websocket', 'polling'],
+      transports: ['polling', 'websocket'],
       reconnection: true,
       reconnectionAttempts: Infinity,
       reconnectionDelay: 3000,
