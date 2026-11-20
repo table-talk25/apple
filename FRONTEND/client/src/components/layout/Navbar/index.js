@@ -1,7 +1,6 @@
 import React, { useMemo } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { MessageCircle } from 'lucide-react';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useChatDrawer } from '../../../contexts/ChatDrawerContext';
 import { useNotifications } from '../../../contexts/NotificationContext';
@@ -96,7 +95,7 @@ const Navbar = () => {
                 onClick={openDrawer}
                 aria-label={t('nav.chat', 'Chat')}
               >
-                <MessageCircle size={20} strokeWidth={2} />
+                <span className={styles.iconEmoji} aria-hidden="true">💬</span>
                 {chatUnreadCount > 0 && (
                   <span className={styles.dot}>
                     {chatUnreadCount > 99 ? '99+' : chatUnreadCount}

@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Bell } from 'lucide-react';
 import { useNotifications } from '../../../contexts/NotificationContext';
 import styles from './Notifications.module.css';
 
@@ -59,7 +58,7 @@ const Notifications = () => {
         aria-label={t('nav.notifications', 'Notifiche')}
         aria-expanded={isOpen}
       >
-        <Bell size={20} strokeWidth={2} />
+        <span className={styles.iconEmoji} aria-hidden="true">🔔</span>
         {unreadCount > 0 && (
           <span className={styles.badge}>
             {unreadCount > 99 ? '99+' : unreadCount}
