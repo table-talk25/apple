@@ -1,0 +1,148 @@
+.page {
+  width: 100%;
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 26px 0 40px;
+  color: var(--tt-text);
+  box-sizing: border-box;
+}
+
+.pageHead h1 {
+  font-family: var(--tt-font-heading);
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.pageHead p {
+  color: var(--tt-text-muted);
+  font-size: 0.95rem;
+  margin: 4px 0 0;
+}
+
+.sections {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 20px;
+}
+
+.card {
+  position: relative;
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  background-color: var(--tt-surface);
+  border: 1px solid var(--tt-border);
+  border-radius: var(--tt-radius-lg);
+  padding: 22px 20px;
+  box-shadow: var(--tt-shadow);
+  min-width: 0;
+}
+
+.cardPrimary {
+  border-color: var(--tt-primary);
+  border-width: 1.5px;
+}
+
+.cardSoon {
+  opacity: 0.72;
+}
+
+.cardIcon {
+  flex-shrink: 0;
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--tt-primary);
+  color: var(--tt-on-primary);
+}
+
+.cardSoon .cardIcon {
+  background-color: var(--tt-background);
+  color: var(--tt-text-muted);
+  border: 1px solid var(--tt-border);
+}
+
+.cardBody {
+  flex: 1;
+  min-width: 0;
+}
+
+.cardBody h2 {
+  font-family: var(--tt-font-heading);
+  font-size: 1.2rem;
+  font-weight: 700;
+  margin: 2px 0 6px;
+  padding-right: 96px;
+}
+
+.cardPrimary .cardBody h2 {
+  padding-right: 0;
+}
+
+.cardBody p {
+  color: var(--tt-text-muted);
+  font-size: 0.93rem;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.cardActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.metaRow {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 12px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--tt-text-muted);
+}
+
+.soonBadge {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background-color: var(--tt-accent);
+  color: var(--tt-on-accent);
+}
+
+@media (max-width: 480px) {
+  .page {
+    padding: 18px 0 32px;
+  }
+
+  .card {
+    flex-direction: column;
+    gap: 12px;
+    padding: 18px 16px;
+  }
+
+  .cardIcon {
+    width: 44px;
+    height: 44px;
+  }
+
+  .cardBody h2 {
+    padding-right: 0;
+  }
+
+  .cardActions > * {
+    flex: 1 1 100%;
+  }
+}

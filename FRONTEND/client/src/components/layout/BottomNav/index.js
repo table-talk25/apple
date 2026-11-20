@@ -22,7 +22,7 @@ const BottomNav = () => {
     ...(isAuthenticated
       ? []
       : [{ key: 'home', to: '/', label: t('nav.home', 'Home'), Icon: Home }]),
-    { key: 'explore', to: '/meals', label: t('nav.explore', 'Esplora'), Icon: Search },
+    { key: 'explore', to: '/explore', label: t('nav.explore', 'Esplora'), Icon: Search },
     {
       key: 'create',
       to: '/meals/create',
