@@ -45,7 +45,7 @@ if (!admin.apps.length) {
 
 const bucket = admin.storage().bucket(STORAGE_BUCKET);
 
-const uploadImage = async (fileBuffer, fileName, folder = 'profile-images') => {
+const uploadImage = async (fileBuffer, fileName, folder = 'profile-images', contentType = 'image/jpeg') => {
   try {
     const timestamp = Date.now();
     const sanitizedFileName = fileName.replace(/[^a-zA-Z0-9._-]/g, '_');
@@ -55,19 +55,19 @@ const uploadImage = async (fileBuffer, fileName, folder = 'profile-images') => {
 
     await file.save(fileBuffer, {
       metadata: {
-        contentType: 'image/jpeg',
+        contentType,
       },
     });
 
     await file.makePublic();
 
     const publicUrl = `https://storage.googleapis.com/${bucket.name}/${fullFileName}`;
-    console.log(`✅ [Firebase Storage] Immagine caricata: ${publicUrl}`);
+    console.log(`✅ [Firebase Storage] File caricato (${contentType}): ${publicUrl}`);
 
     return publicUrl;
   } catch (error) {
     console.error('❌ [Firebase Storage] Errore upload:', error);
-    throw new Error(`Errore nel caricamento dell'immagine: ${error.message}`);
+    throw new Error(`Errore nel caricamento del file: ${error.message}`);
   }
 };
 

@@ -51,7 +51,7 @@ const MessageSchema = new mongoose.Schema({
   attachments: [{
     type: {
       type: String,
-      enum: ['image', 'file', 'link'],
+      enum: ['image', 'audio', 'file', 'link'],
       required: true
     },
     url: {
@@ -59,7 +59,8 @@ const MessageSchema = new mongoose.Schema({
       required: true
     },
     name: String,
-    size: Number
+    size: Number,
+    duration: Number
   }],
   // Reazioni emoji: { emoji: '❤️', users: [userId, ...] }
   reactions: [{

@@ -2,12 +2,14 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useNotifications } from '../../../contexts/NotificationContext';
+import { useChatDrawer } from '../../../contexts/ChatDrawerContext';
 import styles from './Notifications.module.css';
 
 const Notifications = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { notifications, unreadCount, loading, markAllAsRead, setNavigate } = useNotifications();
+  const { openChat } = useChatDrawer();
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef(null);
 
@@ -43,7 +45,7 @@ const Notifications = () => {
   const handleNotifClick = (notif) => {
     setIsOpen(false);
     if (notif.type === 'new_message' && notif.chatId) {
-      navigate(`/chat/${notif.chatId}`);
+      openChat(notif.chatId);
     } else if (notif.mealId) {
       navigate(`/meals/${notif.mealId}`);
     }

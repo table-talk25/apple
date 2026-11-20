@@ -77,12 +77,87 @@ export const NotificationProvider = ({ children }) => {
     socket.on('new_chat_message_alert', ({ senderName, preview, chatId }) => {
       const msg = `💬 ${senderName}: ${preview}`;
       playNotificationSound();
-      toast.info(msg, {
-        autoClose: 5000,
-        onClick: () => {
-          if (navigateRef.current) navigateRef.current(`/chat/${chatId}`);
-        },
-      });
+      toast(
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '12px',
+            padding: '2px 0',
+          }}
+        >
+          <div
+            style={{
+              width: '38px',
+              height: '38px',
+              borderRadius: '50%',
+              background: 'linear-gradient(135deg, #c2513e 0%, #b54735 100%)',
+              color: '#fff',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '18px',
+              flexShrink: 0,
+              boxShadow: '0 2px 8px rgba(181, 71, 53, 0.28)',
+            }}
+            aria-hidden="true"
+          >
+            💬
+          </div>
+          <div style={{ minWidth: 0, flex: 1 }}>
+            <div
+              style={{
+                fontWeight: 700,
+                fontSize: '0.9rem',
+                color: '#b54735',
+                lineHeight: 1.25,
+                marginBottom: '2px',
+              }}
+            >
+              {senderName || 'Nuovo messaggio'}
+            </div>
+            <div
+              style={{
+                fontSize: '0.86rem',
+                color: '#242824',
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                lineHeight: 1.35,
+              }}
+            >
+              {preview}
+            </div>
+            <div
+              style={{
+                fontSize: '0.72rem',
+                color: '#7c837d',
+                marginTop: '2px',
+              }}
+            >
+              Tocca per rispondere
+            </div>
+          </div>
+        </div>,
+        {
+          autoClose: 5500,
+          icon: false,
+          style: {
+            background: '#FAF7F2',
+            borderLeft: '4px solid #B54735',
+            borderRadius: '14px',
+            boxShadow: '0 10px 28px rgba(36, 40, 36, 0.16)',
+            color: '#242824',
+            cursor: 'pointer',
+          },
+          progressStyle: {
+            background: '#B54735',
+          },
+          onClick: () => {
+            if (navigateRef.current) navigateRef.current(`/chat/${chatId}`);
+          },
+        }
+      );
       pushNotification({
         _id: `chat_${Date.now()}`,
         message: msg,

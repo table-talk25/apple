@@ -107,7 +107,7 @@
   flex-direction: row-reverse; /* Inverte l'ordine per i nostri messaggi */
 }
 .ownMessage .messageContent, .myMessage .messageBubble {
-  background-color: #0084ff; /* Un blu moderno */
+  background: linear-gradient(135deg, #c2513e 0%, #b54735 100%);
   color: white;
   border-bottom-right-radius: 4px;
 }
@@ -115,7 +115,7 @@
   display: none; /* Nascondiamo il nostro avatar */
 }
 .ownMessage .messageTime, .myMessage .timestamp {
-  color: rgba(255, 255, 255, 0.7);
+  color: rgba(255, 255, 255, 0.82);
 }
 
 .optimistic {
@@ -126,7 +126,7 @@
 .messageForm {
   flex-shrink: 0; /* Il form non deve sparire */
   background: white;
-  padding: 10px;
+  padding: 10px 10px max(10px, env(safe-area-inset-bottom));
   border-top: 1px solid var(--tt-border);
   display: flex;
   align-items: center;
@@ -144,11 +144,11 @@
   transition: border-color 0.2s;
 }
 .messageInput:focus, .chatInput:focus {
-  border-color: #0084ff;
+  border-color: var(--tt-primary, #b54735);
 }
 
 .sendButton {
-  background: #0084ff;
+  background: var(--tt-primary, #b54735);
   border: none;
   color: white;
   width: 40px;
@@ -162,7 +162,7 @@
   transition: background-color 0.2s;
 }
 .sendButton:hover {
-  background: #0073e0;
+  background: #9e3c2c;
 }
 .sendButton:disabled {
   background: #aeb4bb;

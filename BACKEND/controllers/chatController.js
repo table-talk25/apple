@@ -78,13 +78,14 @@ const path = require('path');
 const sanitizeAttachments = (attachments) => {
     if (!Array.isArray(attachments)) return [];
     return attachments
-        .filter((a) => a && a.type === 'image' && typeof a.url === 'string' && /^https?:\/\//i.test(a.url))
+        .filter((a) => a && (a.type === 'image' || a.type === 'audio') && typeof a.url === 'string' && /^https?:\/\//i.test(a.url))
         .slice(0, 4)
         .map((a) => ({
-            type: 'image',
+            type: a.type,
             url: a.url,
-            name: typeof a.name === 'string' ? a.name.slice(0, 120) : 'image.jpg',
+            name: typeof a.name === 'string' ? a.name.slice(0, 120) : (a.type === 'audio' ? 'voice.webm' : 'image.jpg'),
             size: typeof a.size === 'number' ? a.size : undefined,
+            duration: typeof a.duration === 'number' ? Math.round(a.duration) : undefined,
         }));
 };
 
@@ -124,7 +125,7 @@ const uploadChatImage = asyncHandler(async (req, res, next) => {
     const uniqueFileName = `chat_${chatId}_${userId}_${Date.now()}${ext}`;
 
     try {
-        const url = await uploadImage(req.file.buffer, uniqueFileName, 'chat-images');
+        const url = await uploadImage(req.file.buffer, uniqueFileName, 'chat-images', req.file.mimetype);
         res.status(201).json({
             success: true,
             data: {
@@ -140,6 +141,72 @@ const uploadChatImage = asyncHandler(async (req, res, next) => {
     }
 });
 
+// @desc    Caricare un messaggio vocale in chat
+// @route   POST /api/chats/:id/upload-audio
+const uploadChatAudio = asyncHandler(async (req, res, next) => {
+    const chatId = req.params.id;
+    const userId = req.user.id;
+
+    if (!chatId || !chatId.match(/^[0-9a-fA-F]{24}$/)) {
+        return next(new ErrorResponse('ID chat non valido', 400));
+    }
+
+    if (!req.file || !req.file.buffer) {
+        return next(new ErrorResponse('Nessun file audio fornito', 400));
+    }
+
+    const rawMime = (req.file.mimetype || '').split(';')[0].trim().toLowerCase();
+    const isAudio = rawMime.startsWith('audio/') || rawMime === 'video/webm';
+    if (!isAudio) {
+        return next(new ErrorResponse('Formato audio non supportato.', 400));
+    }
+
+    const chat = await Chat.findById(chatId);
+    if (!chat) {
+        return next(new ErrorResponse('Chat non trovata', 404));
+    }
+
+    const isParticipant = chat.participants.some(
+        (p) => (p._id ? p._id.toString() : p.toString()) === userId
+    );
+    if (!isParticipant) {
+        return next(new ErrorResponse('Non autorizzato a inviare vocali in questa chat', 403));
+    }
+
+    const extMap = {
+        'audio/webm': '.webm',
+        'video/webm': '.webm',
+        'audio/mp4': '.m4a',
+        'audio/x-m4a': '.m4a',
+        'audio/aac': '.aac',
+        'audio/ogg': '.ogg',
+        'audio/mpeg': '.mp3',
+        'audio/wav': '.wav',
+    };
+    const ext = extMap[rawMime] || path.extname(req.file.originalname || '') || '.webm';
+    const contentType = rawMime === 'video/webm' ? 'audio/webm' : rawMime;
+    const uniqueFileName = `voice_${chatId}_${userId}_${Date.now()}${ext}`;
+    const durationNum = req.body?.duration ? Math.max(1, Math.round(Number(req.body.duration))) : undefined;
+
+    const { uploadImage } = require('../services/firebaseStorageService');
+    try {
+        const url = await uploadImage(req.file.buffer, uniqueFileName, 'chat-audio', contentType);
+        res.status(201).json({
+            success: true,
+            data: {
+                type: 'audio',
+                url,
+                name: req.file.originalname || uniqueFileName,
+                size: req.file.size,
+                duration: Number.isFinite(durationNum) ? durationNum : undefined,
+            },
+        });
+    } catch (error) {
+        console.error('❌ [ChatUploadAudio] Errore upload vocale chat:', error);
+        return next(new ErrorResponse('Errore nel caricamento del messaggio vocale.', 500));
+    }
+});
+
 // @desc    Inviare un messaggio (Endpoint HTTP Fallback)
 // @route   POST /api/chats/:id/messages
 const sendMessage = asyncHandler(async (req, res, next) => {
@@ -149,7 +216,9 @@ const sendMessage = asyncHandler(async (req, res, next) => {
 
     const sanitizedAttachments = sanitizeAttachments(attachments);
     const trimmedContent = typeof content === 'string' ? content.trim() : '';
-    const finalContent = trimmedContent || (sanitizedAttachments.length > 0 ? '📷 Foto' : '');
+    const hasAudio = sanitizedAttachments.some((a) => a.type === 'audio');
+    const fallbackLabel = hasAudio ? '🎤 Messaggio vocale' : (sanitizedAttachments.length > 0 ? '📷 Foto' : '');
+    const finalContent = trimmedContent || fallbackLabel;
 
     if (!finalContent) {
         return next(new ErrorResponse('Il messaggio non può essere vuoto', 400));
@@ -203,4 +272,5 @@ module.exports = {
     getChatById,
     sendMessage,
     uploadChatImage,
+    uploadChatAudio,
 };

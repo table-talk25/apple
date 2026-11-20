@@ -22,7 +22,7 @@ const normalizeMessage = (msg) => {
     senderObj?.name ||
     'Partecipante';
   const attachments = Array.isArray(msg.attachments)
-    ? msg.attachments.filter((a) => a && a.type === 'image' && a.url)
+    ? msg.attachments.filter((a) => a && (a.type === 'image' || a.type === 'audio') && a.url)
     : [];
   return {
     _id: msg._id || msg.id || `${Date.now()}-${Math.random()}`,
@@ -323,9 +323,13 @@ const VideoCallChat = ({ mealId, isVisible, onUnreadMessage }) => {
         ) : (
           messages.map((msg) => {
             const isMine = currentUserId && msg.senderId === currentUserId;
+            const trimmedMsg = (msg.content || '').trim();
             const showText =
               msg.content &&
-              !(msg.attachments.length > 0 && msg.content.trim() === '📷 Foto');
+              !(
+                msg.attachments.length > 0 &&
+                (trimmedMsg === '📷 Foto' || trimmedMsg === '🎤 Messaggio vocale')
+              );
             return (
               <div
                 key={msg._id}
@@ -341,21 +345,31 @@ const VideoCallChat = ({ mealId, isVisible, onUnreadMessage }) => {
                   )}
                   {msg.attachments.length > 0 && (
                     <div className={styles.chatAttachments}>
-                      {msg.attachments.map((att, idx) => (
-                        <a
-                          key={`${att.url}-${idx}`}
-                          href={att.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        >
-                          <img
+                      {msg.attachments.map((att, idx) =>
+                        att.type === 'audio' ? (
+                          <audio
+                            key={`${att.url}-${idx}`}
+                            controls
+                            preload="metadata"
                             src={att.url}
-                            alt={att.name || 'Foto in chat'}
-                            className={styles.chatAttachmentImg}
-                            loading="lazy"
+                            style={{ width: '100%', minWidth: 200, height: 34 }}
                           />
-                        </a>
-                      ))}
+                        ) : (
+                          <a
+                            key={`${att.url}-${idx}`}
+                            href={att.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            <img
+                              src={att.url}
+                              alt={att.name || 'Foto in chat'}
+                              className={styles.chatAttachmentImg}
+                              loading="lazy"
+                            />
+                          </a>
+                        )
+                      )}
                     </div>
                   )}
                   {showText && <div className={styles.chatText}>{msg.content}</div>}

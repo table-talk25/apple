@@ -192,18 +192,21 @@ async function initializeSocket(server) {
 
         const sanitizedAttachments = Array.isArray(attachments)
           ? attachments
-              .filter(a => a && a.type === 'image' && typeof a.url === 'string' && /^https?:\/\//i.test(a.url))
+              .filter(a => a && (a.type === 'image' || a.type === 'audio') && typeof a.url === 'string' && /^https?:\/\//i.test(a.url))
               .slice(0, 4)
               .map(a => ({
-                type: 'image',
+                type: a.type,
                 url: a.url,
-                name: typeof a.name === 'string' ? a.name.slice(0, 120) : 'image.jpg',
+                name: typeof a.name === 'string' ? a.name.slice(0, 120) : (a.type === 'audio' ? 'voice.webm' : 'image.jpg'),
                 size: typeof a.size === 'number' ? a.size : undefined,
+                duration: typeof a.duration === 'number' ? Math.round(a.duration) : undefined,
               }))
           : [];
 
         const trimmedContent = typeof content === 'string' ? content.trim() : '';
-        const finalContent = trimmedContent || (sanitizedAttachments.length > 0 ? '📷 Foto' : '');
+        const hasAudio = sanitizedAttachments.some(a => a.type === 'audio');
+        const fallbackLabel = hasAudio ? '🎤 Messaggio vocale' : (sanitizedAttachments.length > 0 ? '📷 Foto' : '');
+        const finalContent = trimmedContent || fallbackLabel;
         if (!finalContent) {
           if (callback) callback({ success: false, error: 'Il messaggio non può essere vuoto.' });
           return;
