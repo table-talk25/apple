@@ -9,6 +9,14 @@ import { playNotificationSound } from '../utils/notificationSound';
 
 export const NotificationContext = createContext();
 
+const getNotifTime = (n) => {
+  const raw = n?.createdAt || n?.date || n?.timestamp || 0;
+  const ts = new Date(raw).getTime();
+  return Number.isFinite(ts) ? ts : 0;
+};
+
+const sortByNewest = (list) => [...list].sort((a, b) => getNotifTime(b) - getNotifTime(a));
+
 export const NotificationProvider = ({ children }) => {
   const { isAuthenticated, token } = useAuth();
   const [notifications, setNotifications] = useState([]);
@@ -17,9 +25,9 @@ export const NotificationProvider = ({ children }) => {
   const socketRef = useRef(null);
   const navigateRef = useRef(null);
 
-  // Helper: aggiungi una notifica in cima alla lista, incrementa badge e suona
+  // Helper: aggiungi una notifica in ordine cronologico (più recente in alto)
   const pushNotification = useCallback((notif) => {
-    setNotifications(prev => [notif, ...prev]);
+    setNotifications(prev => sortByNewest([notif, ...prev]));
     setUnreadCount(prev => prev + 1);
     playNotificationSound();
   }, []);
@@ -34,8 +42,9 @@ export const NotificationProvider = ({ children }) => {
     try {
       const list = await notificationService.getNotifications();
       if (Array.isArray(list)) {
-        setNotifications(list);
-        setUnreadCount(list.filter(n => !(n.isRead || n.read)).length);
+        const sorted = sortByNewest(list);
+        setNotifications(sorted);
+        setUnreadCount(sorted.filter(n => !(n.isRead || n.read)).length);
       } else {
         setNotifications([]);
         setUnreadCount(0);
