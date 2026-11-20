@@ -2,12 +2,14 @@ import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Home, Search, Plus, MapPin, CalendarDays } from 'lucide-react';
+import { useAuth } from '../../../contexts/AuthContext';
 import { isRouteActive } from '../navRoutes';
 import styles from './BottomNav.module.css';
 
 const BottomNav = () => {
   const { t } = useTranslation();
   const location = useLocation();
+  const { isAuthenticated } = useAuth();
 
   if (
     location.pathname.startsWith('/chat') ||
@@ -17,7 +19,9 @@ const BottomNav = () => {
   }
 
   const items = [
-    { key: 'home', to: '/', label: t('nav.home', 'Home'), Icon: Home },
+    ...(isAuthenticated
+      ? []
+      : [{ key: 'home', to: '/', label: t('nav.home', 'Home'), Icon: Home }]),
     { key: 'explore', to: '/meals', label: t('nav.explore', 'Esplora'), Icon: Search },
     {
       key: 'create',

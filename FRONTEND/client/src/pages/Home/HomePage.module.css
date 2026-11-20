@@ -283,6 +283,24 @@
   color: var(--tt-on-primary);
 }
 
+.finalCtaActions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.finalCta .finalCtaOutline {
+  background-color: transparent;
+  color: var(--tt-on-primary);
+  border: 1.5px solid var(--tt-on-primary);
+}
+
+.finalCta .finalCtaOutline:hover:not(:disabled) {
+  background-color: rgba(255, 255, 255, 0.14);
+  color: var(--tt-on-primary);
+}
+
 /* --- TRUST ROW --- */
 .trust {
   padding: 6px 0 10px;
