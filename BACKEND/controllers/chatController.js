@@ -21,8 +21,17 @@ const getUserChats = asyncHandler(async (req, res, next) => {
         const msgs = chat.messages || [];
         const lastMsg = msgs[msgs.length - 1] || null;
         const unread = msgs.filter(m => {
-            const readBy = m.readBy || [];
-            return !readBy.some(r => r.toString() === userId);
+            const senderId = m.sender && m.sender._id ? m.sender._id.toString() : (m.sender ? m.sender.toString() : '');
+            if (senderId === userId) return false;
+            const readArr = Array.isArray(m.read) ? m.read : [];
+            const inRead = readArr.some(r => (r && r._id ? r._id.toString() : String(r)) === userId);
+            if (inRead) return false;
+            const readBy = Array.isArray(m.readBy) ? m.readBy : [];
+            const inReadBy = readBy.some(r => {
+                const uid = r && r.user ? (r.user._id ? r.user._id.toString() : r.user.toString()) : (r ? r.toString() : '');
+                return uid === userId;
+            });
+            return !inReadBy;
         }).length;
         return {
             _id: chat._id,
@@ -35,10 +44,14 @@ const getUserChats = asyncHandler(async (req, res, next) => {
         };
     });
 
-    enriched.sort((a, b) => {
-        if (b.unreadCount !== a.unreadCount) return b.unreadCount - a.unreadCount;
-        return new Date(b.updatedAt) - new Date(a.updatedAt);
-    });
+    const getChatSortTs = (c) => {
+        const raw = c.lastMessage?.timestamp || c.updatedAt || 0;
+        const ts = new Date(raw).getTime();
+        return Number.isFinite(ts) ? ts : 0;
+    };
+
+    // Ordine cronologico rigoroso: dalla chat più recente in alto fino alla più vecchia
+    enriched.sort((a, b) => getChatSortTs(b) - getChatSortTs(a));
 
     res.status(200).json({ success: true, data: enriched });
 });
@@ -67,6 +80,12 @@ const getChatById = asyncHandler(async (req, res, next) => {
     if (!isParticipant) {
         return next(new ErrorResponse('Non autorizzato ad accedere a questa chat', 403));
     }
+
+    // Segna i messaggi della chat come letti in background per questo utente
+    Chat.updateOne(
+        { _id: chatId },
+        { $addToSet: { 'messages.$[].read': userId } }
+    ).catch(() => {});
 
     const messages = chat.messages || [];
 
