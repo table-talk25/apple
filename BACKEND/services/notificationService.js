@@ -131,6 +131,7 @@ const handleChatNotification = async (chat, sender, content, newMessage) => {
       } else if (isOnline && io) {
         const payload = {
           chatId,
+          messageId: newMessage && newMessage._id ? newMessage._id.toString() : null,
           senderId: sender._id.toString(),
           senderName,
           senderAvatar: sender.profileImage || null,
