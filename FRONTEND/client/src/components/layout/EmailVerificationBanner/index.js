@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
 import { useAuth } from '../../../contexts/AuthContext';
 import { resendVerification } from '../../../services/authService';
@@ -21,12 +21,23 @@ const EmailVerificationBanner = () => {
     }
   });
 
+  useEffect(() => {
+    if (!storageKey) {
+      setDismissed(false);
+      return;
+    }
+    try {
+      setDismissed(localStorage.getItem(storageKey) === 'true');
+    } catch (_) {
+      setDismissed(false);
+    }
+  }, [storageKey]);
+
   const [sending, setSending] = useState(false);
 
-  if (!isAuthenticated || !user) return null;
-  if (!serverVerified) return null;
-  if (user.isEmailVerified !== false) return null;
-  if (dismissed) return null;
+  if (!isAuthenticated || !user || !serverVerified || user.isEmailVerified || dismissed) {
+    return null;
+  }
 
   const handleDismiss = () => {
     setDismissed(true);

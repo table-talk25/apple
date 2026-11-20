@@ -240,7 +240,10 @@ exports.verifyEmail = asyncHandler(async (req, res, next) => {
             const authToken = userDoc ? userDoc.generateAuthToken() : undefined;
             res.status(200).json({
                 success: true,
-                message: 'Email verificata con successo! Ora puoi accedere a tutte le funzionalita di TableTalk.',
+                alreadyVerified: Boolean(verificationResult.alreadyVerified),
+                message: verificationResult.alreadyVerified
+                    ? 'Account già verificato.'
+                    : 'Email verificata con successo! Ora puoi accedere a tutte le funzionalita di TableTalk.',
                 token: authToken,
                 user: userDoc ? toSafeUserPayload(userDoc) : undefined,
             });

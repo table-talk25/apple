@@ -1,4 +1,4 @@
-import React, { createContext, useState, useEffect, useContext, useMemo, useRef } from 'react';
+import React, { createContext, useState, useEffect, useContext, useMemo, useRef, useCallback } from 'react';
 import { App as CapacitorApp } from '@capacitor/app';
 import { Capacitor } from '@capacitor/core';
 
@@ -204,48 +204,67 @@ export const AuthProvider = ({ children }) => {
         };
     }, [isAuthenticated]);
 
-    const login = async (credentials) => {
+    const login = useCallback(async (credentials) => {
         const data = await authService.login(credentials);
         try { await authPreferences.saveToken(data.token); await authPreferences.saveUser(data.user); } catch(e) { console.error(e); }
         setUser(prev => mergeUserFromServer(prev, data.user)); setToken(data.token); setIsAuthenticated(true); setServerVerified(true);
         flushPendingPushToken();
-    };
+    }, []);
 
-    const register = async (d) => {
+    const register = useCallback(async (d) => {
         const data = await authService.register(d);
         setUser(prev => mergeUserFromServer(prev, data.user)); setToken(data.token); setIsAuthenticated(true); setServerVerified(true);
         flushPendingPushToken();
-    };
+    }, []);
 
-    const loginFromVerification = async (data) => {
+    const loginFromVerification = useCallback(async (data) => {
         if (!data || !data.token || !data.user) return;
-        try { await authPreferences.saveToken(data.token); await authPreferences.saveUser(data.user); } catch (e) { console.error(e); }
-        setUser(prev => mergeUserFromServer(prev, data.user)); setToken(data.token); setIsAuthenticated(true); setServerVerified(true);
+        const verifiedUser = { ...data.user, isEmailVerified: true };
+        setUser(prev => {
+            const merged = mergeUserFromServer(prev, verifiedUser);
+            authPreferences.saveUser(merged).catch((e) => console.error(e));
+            return merged;
+        });
+        try {
+            await authPreferences.saveToken(data.token);
+            await authPreferences.saveUser(verifiedUser);
+        } catch (e) {
+            console.error(e);
+        }
+        setToken(data.token);
+        setIsAuthenticated(true);
+        setServerVerified(true);
         flushPendingPushToken();
-    };
+    }, []);
 
-    const logout = async () => {
+    const logout = useCallback(async () => {
         setUser(null); setToken(null); setIsAuthenticated(false); setServerVerified(false);
         await authPreferences.clearAuth();
         try { await authService.logout(); } catch(e) {}
-    };
+    }, []);
 
-    const deleteAccount = async (p) => {
+    const deleteAccount = useCallback(async (p) => {
         await profileService.deleteAccount(p);
         await logout();
         return { success: true };
-    };
+    }, [logout]);
 
-    const updateUser = async (u) => {
-        const m = u ? { ...user, ...u } : user;
-        setUser(m);
-        try { await authPreferences.saveUser(m); } catch (_) {}
-    };
+    const updateUser = useCallback(async (u) => {
+        if (!u) return;
+        let nextUser = null;
+        setUser(prev => {
+            nextUser = { ...(prev || {}), ...u };
+            return nextUser;
+        });
+        if (nextUser) {
+            try { await authPreferences.saveUser(nextUser); } catch (_) {}
+        }
+    }, []);
 
     const value = useMemo(() => ({
         user, token, isAuthenticated, loading, error, serverVerified,
         login, logout, register, deleteAccount, updateUser, loginFromVerification
-    }), [user, token, isAuthenticated, loading, error, serverVerified]);
+    }), [user, token, isAuthenticated, loading, error, serverVerified, login, logout, register, deleteAccount, updateUser, loginFromVerification]);
 
     return (
         <AuthContext.Provider value={value}>
