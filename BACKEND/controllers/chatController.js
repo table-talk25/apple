@@ -183,25 +183,13 @@ const sendMessage = asyncHandler(async (req, res, next) => {
         io.to(chatId).emit('receiveMessage', messageToSend);
     }
 
-    const otherParticipants = chat.participants
-        .map(p => p._id ? p._id.toString() : p.toString())
-        .filter(id => id !== userId);
-
     try {
-        const sender = await User.findById(userId);
-        for (const pId of otherParticipants) {
-            const recipient = await User.findById(pId);
-            if (recipient?.fcmToken) {
-                await notificationService.sendPushNotification(
-                    recipient.fcmToken,
-                    `Messaggio da ${sender.nickname}`,
-                    finalContent,
-                    { type: 'chat_message', chatId: chatId }
-                );
-            }
+        const sender = await User.findById(userId).select('nickname profileImage');
+        if (sender && typeof notificationService.handleChatNotification === 'function') {
+            await notificationService.handleChatNotification(chat, sender, finalContent, messageToSend);
         }
     } catch (err) {
-        console.error('Errore invio notifiche push chat:', err);
+        console.error('Errore invio notifiche chat:', err);
     }
 
     res.status(201).json({

@@ -111,12 +111,16 @@ const handleChatNotification = async (chat, sender, content, newMessage) => {
 
     for (const recipient of recipients) {
       const recipientIdStr = recipient._id.toString();
-      const socketId = connectedUsers ? connectedUsers.get(recipientIdStr) : null;
-      const isOnline = !!socketId;
+      const userRoom = `user:${recipientIdStr}`;
+      const userSockets = io ? await io.in(userRoom).fetchSockets() : [];
+      const fallbackSocketId = connectedUsers ? connectedUsers.get(recipientIdStr) : null;
+      const isOnline = userSockets.length > 0 || !!fallbackSocketId;
 
       let isInChatRoom = false;
-      if (isOnline && io && socketId) {
-        const socket = io.sockets.sockets.get(socketId);
+      if (userSockets.length > 0) {
+        isInChatRoom = userSockets.some((s) => s.rooms && s.rooms.has(chatId));
+      } else if (isOnline && io && fallbackSocketId) {
+        const socket = io.sockets.sockets.get(fallbackSocketId);
         if (socket && socket.rooms.has(chatId)) isInChatRoom = true;
       }
 
@@ -124,18 +128,21 @@ const handleChatNotification = async (chat, sender, content, newMessage) => {
 
       if (isInChatRoom) {
         console.log(`👁️ [ChatNotification] ${recipient.nickname} è nella chat, nessuna notifica`);
-      } else if (isOnline && socketId) {
-        if (io) {
-          io.to(socketId).emit('new_chat_message_alert', {
-            chatId,
-            senderId: sender._id.toString(),
-            senderName,
-            senderAvatar: sender.profileImage || null,
-            preview,
-            timestamp: new Date().toISOString(),
-          });
-          console.log(`🔔 [ChatNotification] In-app alert → ${recipient.nickname}`);
+      } else if (isOnline && io) {
+        const payload = {
+          chatId,
+          senderId: sender._id.toString(),
+          senderName,
+          senderAvatar: sender.profileImage || null,
+          preview,
+          timestamp: new Date().toISOString(),
+        };
+        if (userSockets.length > 0) {
+          io.to(userRoom).emit('new_chat_message_alert', payload);
+        } else if (fallbackSocketId) {
+          io.to(fallbackSocketId).emit('new_chat_message_alert', payload);
         }
+        console.log(`🔔 [ChatNotification] In-app alert → ${recipient.nickname}`);
         if (recipient.fcmToken && admin.apps.length) {
           await sendPushNotification(
             recipient.fcmToken,

@@ -783,7 +783,7 @@
 }
 
 .chatBubbleMine {
-  background: linear-gradient(135deg, #245c4a 0%, #1d4c3d 100%);
+  background: linear-gradient(135deg, #c2513e 0%, #b54735 100%);
   color: #fff;
   border-bottom-right-radius: 5px;
 }
