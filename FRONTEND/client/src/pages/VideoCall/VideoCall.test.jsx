@@ -23,7 +23,13 @@ jest.mock('../../services/videoService', () => ({
 jest.mock('../../contexts/AuthContext', () => ({
   useAuth: () => ({
     user: { _id: 'u1', nickname: 'Giulia', profileImage: null },
+    token: 'fake-jwt',
   }),
+}));
+
+jest.mock('./VideoCallChat', () => ({
+  __esModule: true,
+  default: () => <div data-testid="videocall-chat-panel">Chat del table2Talk</div>,
 }));
 
 const createEmitter = () => {
@@ -172,9 +178,9 @@ describe('VideoCall Google Meet UI & Twilio integration', () => {
     fireEvent.click(screen.getByRole('button', { name: /Interrompi condivisione schermo/i }));
     expect(mockRoom.localParticipant.unpublishTrack).toHaveBeenCalledWith(mockScreenTrack);
 
-    // Chat side panel placeholder
+    // Chat side panel (connected to persistent t2t chat)
     fireEvent.click(screen.getByRole('button', { name: /Apri chat della stanza/i }));
-    expect(screen.getByText('Chat in arrivo')).toBeInTheDocument();
+    expect(screen.getByTestId('videocall-chat-panel')).toBeInTheDocument();
 
     // Switch to Partecipanti tab
     fireEvent.click(screen.getByRole('tab', { name: /Partecipanti/i }));
