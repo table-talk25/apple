@@ -52,7 +52,6 @@ const VideoCallChat = ({ mealId, isVisible, onUnreadMessage }) => {
   const [uploading, setUploading] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [connected, setConnected] = useState(false);
 
   const socketRef = useRef(null);
   const fileInputRef = useRef(null);
@@ -138,7 +137,7 @@ const VideoCallChat = ({ mealId, isVisible, onUnreadMessage }) => {
     const socketUrl = apiUrl.replace(/\/api\/?$/, '');
     const socket = io(socketUrl, {
       auth: { token },
-      transports: ['websocket', 'polling'],
+      transports: ['polling', 'websocket'],
       reconnection: true,
       reconnectionAttempts: Infinity,
       reconnectionDelay: 2000,
@@ -166,16 +165,11 @@ const VideoCallChat = ({ mealId, isVisible, onUnreadMessage }) => {
 
     socket.on('connect', () => {
       if (!mounted) return;
-      setConnected(true);
       socket.emit('joinChatRoom', chatId);
     });
     socket.on('reconnect', () => {
       if (!mounted) return;
-      setConnected(true);
       socket.emit('joinChatRoom', chatId);
-    });
-    socket.on('disconnect', () => {
-      if (mounted) setConnected(false);
     });
     socket.on('receiveMessage', appendMessage);
 
@@ -213,7 +207,7 @@ const VideoCallChat = ({ mealId, isVisible, onUnreadMessage }) => {
     async (e) => {
       if (e && e.preventDefault) e.preventDefault();
       const content = draft.trim();
-      if ((!content && !pendingFile) || !chatId || !socketRef.current?.connected || uploading) {
+      if ((!content && !pendingFile) || !chatId || uploading) {
         return;
       }
 
@@ -242,10 +236,9 @@ const VideoCallChat = ({ mealId, isVisible, onUnreadMessage }) => {
       }
 
       setDraft('');
-      socketRef.current.emit(
-        'sendMessage',
-        { chatId, content: content || '📷 Foto', attachments },
-        (ack) => {
+      const payload = { chatId, content: content || '📷 Foto', attachments };
+      if (socketRef.current?.connected) {
+        socketRef.current.emit('sendMessage', payload, (ack) => {
           if (ack?.success && ack?.message) {
             const nm = normalizeMessage(ack.message);
             if (nm && !messageIdsRef.current.has(String(nm._id))) {
@@ -255,8 +248,19 @@ const VideoCallChat = ({ mealId, isVisible, onUnreadMessage }) => {
           } else if (ack?.error && content) {
             setDraft(content);
           }
+        });
+      } else {
+        try {
+          const sent = await chatService.sendMessage(chatId, payload);
+          const nm = normalizeMessage(sent);
+          if (nm && !messageIdsRef.current.has(String(nm._id))) {
+            messageIdsRef.current.add(String(nm._id));
+            setMessages((prev) => [...prev, nm]);
+          }
+        } catch (_) {
+          if (content) setDraft(content);
         }
-      );
+      }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [draft, pendingFile, chatId, uploading]
@@ -375,7 +379,7 @@ const VideoCallChat = ({ mealId, isVisible, onUnreadMessage }) => {
           type="button"
           className={styles.chatPhotoBtn}
           onClick={() => fileInputRef.current?.click()}
-          disabled={!connected || uploading}
+          disabled={uploading}
           aria-label="Allega una foto"
           title="Allega una foto"
         >
@@ -386,20 +390,14 @@ const VideoCallChat = ({ mealId, isVisible, onUnreadMessage }) => {
           className={styles.chatInput}
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
-          placeholder={
-            uploading
-              ? 'Caricamento foto…'
-              : connected
-              ? 'Scrivi un messaggio…'
-              : 'Connessione alla chat…'
-          }
+          placeholder={uploading ? 'Caricamento foto…' : 'Scrivi un messaggio…'}
           aria-label="Scrivi un messaggio in chat"
-          disabled={!connected || uploading}
+          disabled={uploading}
         />
         <button
           type="submit"
           className={styles.chatSendBtn}
-          disabled={(!draft.trim() && !pendingFile) || !connected || uploading}
+          disabled={(!draft.trim() && !pendingFile) || uploading}
           aria-label="Invia messaggio"
         >
           <Send size={16} />

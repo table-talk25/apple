@@ -110,6 +110,14 @@ const uploadChatImage = async (chatId, file) => {
   return response.data?.data || response.data;
 };
 
+const sendMessage = async (chatId, payload) => {
+  const normalizedId = normalizeChatId(chatId);
+  const response = await apiClient.post(`/chats/${normalizedId}/messages`, payload, {
+    suppressErrorAlert: true,
+  });
+  return response.data?.data || response.data;
+};
+
 const chatService = {
   getUserChats,
   getChatById,
@@ -120,6 +128,7 @@ const chatService = {
   markAsRead,
   getChatStatus,
   uploadChatImage,
+  sendMessage,
 };
 
 export default chatService;
