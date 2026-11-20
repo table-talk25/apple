@@ -53,13 +53,17 @@ const getChatById = asyncHandler(async (req, res, next) => {
         return next(new ErrorResponse(`ID chat non valido`, 400));
     }
 
-    const chat = await Chat.findById(chatId).populate('mealId', 'title date host imageUrl coverImage');
+    const chat = await Chat.findById(chatId)
+        .populate('mealId', 'title date host imageUrl coverImage status')
+        .lean();
 
     if (!chat) {
         return next(new ErrorResponse(`Chat non trovata`, 404));
     }
 
-    const isParticipant = chat.participants.some(p => p._id.toString() === userId);
+    const isParticipant = (chat.participants || []).some(
+        p => (p && p._id ? p._id.toString() : String(p)) === userId
+    );
     if (!isParticipant) {
         return next(new ErrorResponse('Non autorizzato ad accedere a questa chat', 403));
     }
@@ -267,10 +271,99 @@ const sendMessage = asyncHandler(async (req, res, next) => {
     });
 });
 
+// @desc    Modificare un proprio messaggio in chat
+// @route   PUT /api/chats/:id/messages/:messageId
+const editMessage = asyncHandler(async (req, res, next) => {
+    const { id: chatId, messageId } = req.params;
+    const userId = req.user.id;
+    const trimmed = typeof req.body?.content === 'string' ? req.body.content.trim() : '';
+
+    if (!trimmed || trimmed.length > 500) {
+        return next(new ErrorResponse('Testo non valido (1-500 caratteri)', 400));
+    }
+
+    const chat = await Chat.findById(chatId);
+    if (!chat) {
+        return next(new ErrorResponse('Chat non trovata', 404));
+    }
+
+    const message = chat.messages.id(messageId);
+    if (!message) {
+        return next(new ErrorResponse('Messaggio non trovato', 404));
+    }
+
+    const senderId = message.sender && message.sender._id
+        ? message.sender._id.toString()
+        : message.sender.toString();
+    if (senderId !== userId) {
+        return next(new ErrorResponse('Puoi modificare solo i tuoi messaggi', 403));
+    }
+
+    message.content = trimmed;
+    message.edited = true;
+    message.editedAt = new Date();
+    await chat.save();
+
+    const payload = {
+        chatId,
+        messageId: message._id.toString(),
+        content: message.content,
+        edited: true,
+        editedAt: message.editedAt,
+    };
+
+    const { getIO } = require('../socket');
+    const io = req.io || getIO();
+    if (io) {
+        io.to(chatId).emit('messageEdited', payload);
+    }
+
+    res.status(200).json({ success: true, data: payload });
+});
+
+// @desc    Eliminare un proprio messaggio in chat
+// @route   DELETE /api/chats/:id/messages/:messageId
+const deleteMessage = asyncHandler(async (req, res, next) => {
+    const { id: chatId, messageId } = req.params;
+    const userId = req.user.id;
+
+    const chat = await Chat.findById(chatId);
+    if (!chat) {
+        return next(new ErrorResponse('Chat non trovata', 404));
+    }
+
+    const message = chat.messages.id(messageId);
+    if (!message) {
+        return next(new ErrorResponse('Messaggio non trovato', 404));
+    }
+
+    const senderId = message.sender && message.sender._id
+        ? message.sender._id.toString()
+        : message.sender.toString();
+    if (senderId !== userId) {
+        return next(new ErrorResponse('Puoi eliminare solo i tuoi messaggi', 403));
+    }
+
+    chat.messages.pull({ _id: message._id });
+    await chat.save();
+
+    const payload = { chatId, messageId: message._id.toString() };
+
+    const { getIO } = require('../socket');
+    const io = req.io || getIO();
+    if (io) {
+        io.to(chatId).emit('messageDeleted', payload);
+    }
+
+    res.status(200).json({ success: true, data: payload });
+});
+
 module.exports = {
     getUserChats,
     getChatById,
     sendMessage,
+    editMessage,
+    deleteMessage,
     uploadChatImage,
     uploadChatAudio,
 };

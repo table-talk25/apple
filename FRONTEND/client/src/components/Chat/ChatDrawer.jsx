@@ -10,6 +10,7 @@ import {
   CheckCheck,
   ImagePlus,
   Mic,
+  Pencil,
   Reply,
   Send,
   SmilePlus,
@@ -255,11 +256,14 @@ const MessageRow = ({
   isLastInGroup,
   currentUserId,
   onReply,
+  onEdit,
+  onDelete,
   onToggleReaction,
 }) => {
   const [swipeX, setSwipeX] = useState(0);
   const [swiping, setSwiping] = useState(false);
   const [showPicker, setShowPicker] = useState(false);
+  const [showTapActions, setShowTapActions] = useState(false);
   const touchStartX = useRef(null);
   const SWIPE_THRESHOLD = 60;
 
@@ -328,6 +332,11 @@ const MessageRow = ({
         <div className={`${styles.bubbleCol} ${own ? styles.bubbleColOwn : ''}`}>
           <div className={`${styles.bubbleWrap} ${own ? styles.bubbleWrapOwn : ''}`}>
             <div
+              onClick={(e) => {
+                if (!own) return;
+                if (e.target.closest('a, button, audio, [role="slider"]')) return;
+                setShowTapActions((v) => !v);
+              }}
               className={`${styles.bubble} ${
                 own
                   ? `${styles.bubbleOwn} ${!isFirstInGroup ? styles.bubbleOwnGrouped : ''}`
@@ -375,12 +384,13 @@ const MessageRow = ({
               {showText && <div className={styles.msgText}>{msg.content}</div>}
 
               <div className={`${styles.msgMeta} ${own ? styles.msgMetaOwn : styles.msgMetaOther}`}>
+                {msg.edited && <span className={styles.editedTag}>modificato</span>}
                 <span>{formatMsgTime(msg.timestamp)}</span>
                 {own && <CheckCheck size={13} strokeWidth={2.2} aria-hidden="true" />}
               </div>
             </div>
 
-            {/* Azioni rapide su hover (Reply + Emoji) */}
+            {/* Azioni rapide su hover (desktop) */}
             <div className={styles.hoverActions}>
               <button
                 type="button"
@@ -400,8 +410,72 @@ const MessageRow = ({
               >
                 <SmilePlus size={14} />
               </button>
+              {own && showText && onEdit && (
+                <button
+                  type="button"
+                  className={styles.quickActionBtn}
+                  onClick={() => onEdit(msg)}
+                  title="Modifica messaggio"
+                  aria-label="Modifica messaggio"
+                >
+                  <Pencil size={13} />
+                </button>
+              )}
+              {own && onDelete && (
+                <button
+                  type="button"
+                  className={`${styles.quickActionBtn} ${styles.quickActionDanger}`}
+                  onClick={() => onDelete(msg)}
+                  title="Elimina messaggio"
+                  aria-label="Elimina messaggio"
+                >
+                  <Trash2 size={13} />
+                </button>
+              )}
             </div>
           </div>
+
+          {own && showTapActions && (
+            <div className={styles.msgTapActions}>
+              <button
+                type="button"
+                className={styles.msgTapActionBtn}
+                onClick={() => {
+                  setShowTapActions(false);
+                  onReply(msg);
+                }}
+              >
+                <Reply size={13} />
+                <span>Rispondi</span>
+              </button>
+              {showText && onEdit && (
+                <button
+                  type="button"
+                  className={styles.msgTapActionBtn}
+                  onClick={() => {
+                    setShowTapActions(false);
+                    onEdit(msg);
+                  }}
+                >
+                  <Pencil size={13} />
+                  <span>Modifica</span>
+                </button>
+              )}
+              {onDelete && (
+                <button
+                  type="button"
+                  className={`${styles.msgTapActionBtn} ${styles.msgTapActionDanger}`}
+                  onClick={() => {
+                    setShowTapActions(false);
+                    onDelete(msg);
+                  }}
+                >
+                  <Trash2 size={13} />
+                  <span>Elimina</span>
+                </button>
+              )}
+            </div>
+          )}
 
           {(reactions.length > 0 || showPicker) && (
             <div className={styles.reactionsRow}>
@@ -466,6 +540,7 @@ const DrawerChat = ({ chatId, onMetaLoaded }) => {
   const [uploading, setUploading] = useState(false);
   const [loading, setLoading] = useState(true);
   const [replyTo, setReplyTo] = useState(null);
+  const [editingMsg, setEditingMsg] = useState(null);
   const [isRecording, setIsRecording] = useState(false);
   const [recordingSeconds, setRecordingSeconds] = useState(0);
   const [recordingBars, setRecordingBars] = useState(() => Array(LIVE_WAVE_BARS).fill(18));
@@ -544,6 +619,7 @@ const DrawerChat = ({ chatId, onMetaLoaded }) => {
       attachments,
       replyTo: msg.replyTo || null,
       reactions: msg.reactions || [],
+      edited: Boolean(msg.edited),
       timestamp: msg.timestamp || msg.createdAt || new Date().toISOString(),
     };
   }, []);
@@ -654,6 +730,21 @@ const DrawerChat = ({ chatId, onMetaLoaded }) => {
       );
     });
 
+    socket.on('messageEdited', ({ messageId, content, edited }) => {
+      setMessages((prev) =>
+        prev.map((m) =>
+          String(m._id) === String(messageId)
+            ? { ...m, content, edited: Boolean(edited ?? true) }
+            : m
+        )
+      );
+    });
+
+    socket.on('messageDeleted', ({ messageId }) => {
+      messageIdsRef.current.delete(messageId);
+      setMessages((prev) => prev.filter((m) => String(m._id) !== String(messageId)));
+    });
+
     const pollInterval = setInterval(() => {
       if (mounted && !socket.connected) {
         syncMessagesFromHttp(false);
@@ -669,13 +760,17 @@ const DrawerChat = ({ chatId, onMetaLoaded }) => {
 
   useEffect(() => {
     const handler = (e) => {
-      if (e.key === 'Escape') setReplyTo(null);
+      if (e.key === 'Escape') {
+        setReplyTo(null);
+        setEditingMsg(null);
+      }
     };
     document.addEventListener('keydown', handler);
     return () => document.removeEventListener('keydown', handler);
   }, []);
 
   const handleReply = useCallback((msg) => {
+    setEditingMsg(null);
     setReplyTo({
       _id: msg._id,
       senderName: msg.username || 'Utente',
@@ -683,6 +778,44 @@ const DrawerChat = ({ chatId, onMetaLoaded }) => {
     });
     setTimeout(() => inputRef.current?.focus(), 50);
   }, []);
+
+  const handleStartEdit = useCallback((msg) => {
+    setReplyTo(null);
+    setEditingMsg({ _id: msg._id, content: msg.content || '' });
+    setNewMessage(msg.content || '');
+    setTimeout(() => inputRef.current?.focus(), 50);
+  }, []);
+
+  const handleCancelEdit = useCallback(() => {
+    setEditingMsg(null);
+    setNewMessage('');
+  }, []);
+
+  const handleDeleteMessage = useCallback(
+    async (msg) => {
+      if (!msg?._id) return;
+      const messageId = msg._id;
+      if (socketRef.current?.connected) {
+        socketRef.current.emit('deleteMessage', { chatId, messageId }, (ack) => {
+          if (ack?.success) {
+            messageIdsRef.current.delete(messageId);
+            setMessages((prev) => prev.filter((m) => String(m._id) !== String(messageId)));
+          } else if (ack?.error) {
+            toast.error(ack.error);
+          }
+        });
+      } else {
+        try {
+          await chatService.deleteMessage(chatId, messageId);
+          messageIdsRef.current.delete(messageId);
+          setMessages((prev) => prev.filter((m) => String(m._id) !== String(messageId)));
+        } catch (err) {
+          toast.error(err?.response?.data?.message || 'Errore nell’eliminazione del messaggio.');
+        }
+      }
+    },
+    [chatId]
+  );
 
   const handleToggleReaction = useCallback(
     (messageId, emoji) => {
@@ -722,6 +855,40 @@ const DrawerChat = ({ chatId, onMetaLoaded }) => {
     }
 
     const content = newMessage.trim();
+
+    // Modalità modifica messaggio esistente
+    if (editingMsg) {
+      if (!content) return;
+      const targetId = editingMsg._id;
+      setEditingMsg(null);
+      setNewMessage('');
+      if (socketRef.current?.connected) {
+        socketRef.current.emit('editMessage', { chatId, messageId: targetId, content }, (ack) => {
+          if (ack?.success) {
+            setMessages((prev) =>
+              prev.map((m) =>
+                String(m._id) === String(targetId) ? { ...m, content, edited: true } : m
+              )
+            );
+          } else if (ack?.error) {
+            toast.error(ack.error);
+          }
+        });
+      } else {
+        try {
+          await chatService.editMessage(chatId, targetId, content);
+          setMessages((prev) =>
+            prev.map((m) =>
+              String(m._id) === String(targetId) ? { ...m, content, edited: true } : m
+            )
+          );
+        } catch (err) {
+          toast.error(err?.response?.data?.message || 'Errore nella modifica del messaggio.');
+        }
+      }
+      return;
+    }
+
     let attachments = [];
 
     if (pendingFile) {
@@ -1006,6 +1173,8 @@ const DrawerChat = ({ chatId, onMetaLoaded }) => {
                   isLastInGroup={!sameNextSender}
                   currentUserId={currentUserId}
                   onReply={handleReply}
+                  onEdit={handleStartEdit}
+                  onDelete={handleDeleteMessage}
                   onToggleReaction={handleToggleReaction}
                 />
               </React.Fragment>
@@ -1014,6 +1183,23 @@ const DrawerChat = ({ chatId, onMetaLoaded }) => {
         )}
         <div ref={messagesEndRef} />
       </div>
+
+      {editingMsg && (
+        <div className={styles.replyBanner}>
+          <div className={styles.replyBannerBody}>
+            <div className={styles.replyBannerAuthor}>✏️ Modifica messaggio</div>
+            <div className={styles.replyBannerText}>{editingMsg.content}</div>
+          </div>
+          <button
+            type="button"
+            onClick={handleCancelEdit}
+            aria-label="Annulla modifica"
+            className={styles.iconBtn}
+          >
+            <X size={16} />
+          </button>
+        </div>
+      )}
 
       {replyTo && (
         <div className={styles.replyBanner}>

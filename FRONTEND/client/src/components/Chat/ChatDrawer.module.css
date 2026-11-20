@@ -943,6 +943,57 @@
   transform: scale(1.04);
 }
 
+.editedTag {
+  font-style: italic;
+  font-size: 0.66rem;
+  opacity: 0.82;
+}
+
+.quickActionDanger:hover {
+  color: #d93025;
+}
+
+.msgTapActions {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 4px;
+  padding: 4px 6px;
+  background: var(--tt-surface, #ffffff);
+  border: 1px solid var(--tt-border, #ddd5ca);
+  border-radius: 999px;
+  box-shadow: 0 4px 14px rgba(36, 40, 36, 0.14);
+  animation: fadeIn 0.14s ease;
+}
+
+.msgTapActionBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border: none;
+  background: transparent;
+  color: var(--tt-text, #242824);
+  font-size: 0.76rem;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.msgTapActionBtn:hover {
+  background: rgba(181, 71, 53, 0.09);
+  color: var(--tt-primary, #b54735);
+}
+
+.msgTapActionDanger {
+  color: #d93025;
+}
+
+.msgTapActionDanger:hover {
+  background: rgba(217, 48, 37, 0.1);
+  color: #b71c1c;
+}
+
 @media (hover: none), (max-width: 768px) {
   .hoverActions {
     display: none;

@@ -296,6 +296,83 @@ async function initializeSocket(server) {
       }
     });
 
+    // Modifica un proprio messaggio
+    socket.on('editMessage', async ({ chatId, messageId, content }, callback) => {
+      try {
+        const trimmed = typeof content === 'string' ? content.trim() : '';
+        if (!trimmed || trimmed.length > 500) {
+          if (callback) callback({ success: false, error: 'Testo non valido (1-500 caratteri).' });
+          return;
+        }
+        const chat = await Chat.findOne({ _id: chatId, participants: socket.user._id });
+        if (!chat) {
+          if (callback) callback({ success: false, error: 'Chat non trovata o non autorizzato.' });
+          return;
+        }
+        const message = chat.messages.id(messageId);
+        if (!message) {
+          if (callback) callback({ success: false, error: 'Messaggio non trovato.' });
+          return;
+        }
+        const senderId = message.sender && message.sender._id
+          ? message.sender._id.toString()
+          : message.sender.toString();
+        if (senderId !== socket.user._id.toString()) {
+          if (callback) callback({ success: false, error: 'Puoi modificare solo i tuoi messaggi.' });
+          return;
+        }
+        message.content = trimmed;
+        message.edited = true;
+        message.editedAt = new Date();
+        await chat.save();
+
+        const payload = {
+          chatId,
+          messageId: message._id.toString(),
+          content: message.content,
+          edited: true,
+          editedAt: message.editedAt,
+        };
+        ioInstance.to(chatId).emit('messageEdited', payload);
+        if (callback) callback({ success: true, ...payload });
+      } catch (error) {
+        console.error('[Socket] Errore editMessage:', error.message);
+        if (callback) callback({ success: false, error: 'Errore server.' });
+      }
+    });
+
+    // Elimina un proprio messaggio
+    socket.on('deleteMessage', async ({ chatId, messageId }, callback) => {
+      try {
+        const chat = await Chat.findOne({ _id: chatId, participants: socket.user._id });
+        if (!chat) {
+          if (callback) callback({ success: false, error: 'Chat non trovata o non autorizzato.' });
+          return;
+        }
+        const message = chat.messages.id(messageId);
+        if (!message) {
+          if (callback) callback({ success: false, error: 'Messaggio non trovato.' });
+          return;
+        }
+        const senderId = message.sender && message.sender._id
+          ? message.sender._id.toString()
+          : message.sender.toString();
+        if (senderId !== socket.user._id.toString()) {
+          if (callback) callback({ success: false, error: 'Puoi eliminare solo i tuoi messaggi.' });
+          return;
+        }
+        chat.messages.pull({ _id: message._id });
+        await chat.save();
+
+        const payload = { chatId, messageId: message._id.toString() };
+        ioInstance.to(chatId).emit('messageDeleted', payload);
+        if (callback) callback({ success: true, ...payload });
+      } catch (error) {
+        console.error('[Socket] Errore deleteMessage:', error.message);
+        if (callback) callback({ success: false, error: 'Errore server.' });
+      }
+    });
+
     socket.on('joinRoom', async ({ mealId }) => {
       try {
         const meal = await Meal.findById(mealId);
