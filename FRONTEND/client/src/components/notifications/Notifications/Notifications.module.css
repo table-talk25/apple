@@ -55,35 +55,22 @@
 }
 
 .dropdownMenu {
-  position: absolute;
-  top: calc(100% + 8px);
-  right: 0;
+  position: fixed;
   background-color: var(--tt-surface);
   border: 1px solid var(--tt-border);
   border-radius: var(--tt-radius-lg);
   box-shadow: var(--tt-shadow);
-  width: min(340px, calc(100vw - 24px));
-  max-height: 400px;
+  width: min(340px, calc(100vw - 20px));
+  max-height: 70dvh;
   overflow-y: auto;
   overflow-x: hidden;
   box-sizing: border-box;
-  z-index: 1050;
-}
-
-@media (max-width: 640px) {
-  .dropdownMenu {
-    position: fixed;
-    top: calc(var(--tt-header-height, 64px) + env(safe-area-inset-top, 0px) + 6px);
-    left: 12px;
-    right: 12px;
-    width: auto;
-    max-width: none;
-    max-height: 70dvh;
-  }
+  z-index: 2000;
 }
 
 .notificationItem {
   width: 100%;
+  box-sizing: border-box;
   text-align: left;
   background: transparent;
   border: none;
@@ -114,6 +101,8 @@
 .notificationText {
   color: var(--tt-text);
   line-height: 1.4;
+  word-break: break-word;
+  overflow-wrap: anywhere;
 }
 
 .notificationDate {

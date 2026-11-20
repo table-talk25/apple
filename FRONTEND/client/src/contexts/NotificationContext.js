@@ -24,6 +24,7 @@ export const NotificationProvider = ({ children }) => {
   const [loading, setLoading] = useState(false);
   const socketRef = useRef(null);
   const navigateRef = useRef(null);
+  const openChatRef = useRef(null);
   const seenChatNotifIdsRef = useRef(new Set());
   const initialFetchedRef = useRef(false);
 
@@ -106,7 +107,11 @@ export const NotificationProvider = ({ children }) => {
           background: '#B54735',
         },
         onClick: () => {
-          if (navigateRef.current && chatId) navigateRef.current(`/chat/${chatId}`);
+          if (chatId && openChatRef.current) {
+            openChatRef.current(chatId);
+          } else if (navigateRef.current && chatId) {
+            navigateRef.current(`/chat/${chatId}`);
+          }
         },
       }
     );
@@ -310,6 +315,7 @@ export const NotificationProvider = ({ children }) => {
   };
 
   const setNavigate = useCallback((fn) => { navigateRef.current = fn; }, []);
+  const setOpenChat = useCallback((fn) => { openChatRef.current = fn; }, []);
 
   const value = {
     notifications,
@@ -319,6 +325,7 @@ export const NotificationProvider = ({ children }) => {
     markAsRead,
     markAllAsRead,
     setNavigate,
+    setOpenChat,
   };
 
   return (
