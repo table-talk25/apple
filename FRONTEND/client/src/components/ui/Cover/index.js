@@ -75,12 +75,14 @@ const Cover = ({
 
   return (
     <div
-      className={`${styles.cover} ${mini ? styles.mini : ''} ${className}`.trim()}
+      className={`${styles.cover} ${mini ? styles.mini : ''} ${showImg ? styles.hasImage : ''} ${className}`.trim()}
       style={height ? { height } : undefined}
     >
-      <span className={styles.emoji} aria-hidden="true">
-        {emoji}
-      </span>
+      {!showImg && (
+        <span className={styles.emoji} aria-hidden="true">
+          {emoji}
+        </span>
+      )}
 
       {showImg && (
         <img
