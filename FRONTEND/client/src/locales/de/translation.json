@@ -273,48 +273,70 @@
     }
   },
   "home": {
-    "heroTitle": "Teilen Sie einen table2Talk.<br />Erstellen Sie eine Verbindung.",
-    "heroSubtitle": "table2Talk ist die globale Community für alle, die Geschichten und Aromen lieben. Organisieren Sie einen virtuellen t2t zu Ihren Lieblingsthemen oder schließen Sie sich einem bereits geplanten Gespräch an.",
-    "createTableTalk": "t2t erstellen",
-    "exploreTableTalk": "t2t erkunden",
-    "registerNow": "Jetzt registrieren",
+    "heroTitle": "Teile einen table2Talk.<br />Schaffe eine Verbindung.",
+    "heroTitlePrefix": "Teile einen",
+    "heroTitleAccent": "table2Talk.",
+    "heroTitleSecondLine": "Schaffe eine Verbindung.",
+    "heroSubtitle": "Die Community für alle, die gerne Geschichten und Aromen teilen. Organisiere einen Videotisch zu deinen Lieblingsthemen oder tritt einem geplanten Gespräch bei – in jeder Sprache, zu jeder Uhrzeit.",
+    "livePill_one": "1 Person sitzt gerade am Tisch",
+    "livePill_other": "{{count}} Personen sitzen gerade am Tisch",
+    "createTableTalk": "Einen t2t erstellen",
+    "exploreTableTalk": "t2t entdecken",
+    "registerNow": "Kostenlos registrieren",
     "login": "Anmelden",
+    "seeTodayTables": "Heutige Tische ansehen ↓",
     "howItWorks": {
-      "title": "Teilnehmen ist einfach",
+      "title": "So funktioniert’s",
       "step1": {
-        "title": "1. Entdecken",
-        "description": "Finden Sie den perfekten virtuellen Tisch für sich. Filtern Sie nach Sprache, Uhrzeit oder Thema und wählen Sie das Gespräch, dem Sie beitreten möchten."
+        "num": "01",
+        "title": "Entdecken",
+        "description": "Filtere nach Sprache, Uhrzeit oder Thema und finde den passenden Tisch. Es ist immer einer gedeckt."
       },
       "step2": {
-        "title": "2. Teilnehmen",
-        "description": "Wählen, klicken, teilnehmen. So einfach ist es, in ein Gespräch einzusteigen. Sie brauchen nur Neugier (und ein bisschen Hunger!)."
+        "num": "02",
+        "title": "Teilnehmen",
+        "description": "Ein Klick und du bist dabei. Bring deine Neugier mit, um den Rest kümmern wir uns. Und ein wenig Appetit."
       },
       "step3": {
-        "title": "3. Treffen",
-        "description": "Treten Sie dem Videoanruf bei und lernen Sie Ihre Tischgenossen kennen. Es ist Zeit zu teilen, zu lernen und einen t2t in bester Gesellschaft zu genießen."
+        "num": "03",
+        "title": "Treffen",
+        "description": "Starte den Videoanruf, lerne deine Tischrunde kennen und teilt Geschichten, Genuss und gute Laune."
       }
     },
     "whyTableTalk": {
       "title": "Warum table2Talk?",
       "feature1": {
-        "title": "Ein Gegenmittel zur Einsamkeit",
-        "description": "Ob ein schneller Kaffee oder ein aufwendiges Abendessen, es gibt immer jemanden, mit dem man es teilen kann. Einsamkeit steht nicht auf unserer Speisekarte."
+        "title": "Ein Gegenmittel gegen Einsamkeit",
+        "description": "Ob ein schneller Kaffee oder ein ausgedehntes Abendessen – es gibt immer jemanden zum Teilen. Einsamkeit steht nicht auf unserer Karte."
       },
       "feature2": {
-        "title": "Erweitern Sie Ihren Horizont",
-        "description": "Reisen Sie von Ihrem Esstisch aus. Treffen Sie Menschen und Kulturen aus der ganzen Welt und erweitern Sie Ihren Horizont bei jedem Bissen."
+        "title": "Erweitere deinen Horizont",
+        "description": "Reise direkt vom Esstisch aus: Triff Menschen und Kulturen aus aller Welt, Bissen für Bissen."
       },
       "feature3": {
-        "title": "Authentische und sichere Verbindungen",
-        "description": "Eine moderierte und respektvolle Umgebung, in der Sie Sie selbst sein können. Jedes Profil ist eine Welt zu entdecken, in völliger Sicherheit."
+        "title": "Echte, sichere Verbindungen",
+        "description": "Ein moderierter, respektvoller Raum, in dem du du selbst sein kannst. Verifizierte Profile, null Druck."
       }
     },
+    "todayTables": {
+      "title": "Heutige Tische",
+      "seeAll": "Alle ansehen →",
+      "emptyTitle": "Gerade keine Tische geplant",
+      "emptyDescription": "Decke den ersten Tisch und lade die Community ein.",
+      "emptyCta": "Einen t2t erstellen"
+    },
     "cta": {
-      "title": "Bereit zu beginnen?",
-      "subtitle": "Schließen Sie sich der table2Talk-Community an und beginnen Sie, unvergessliche Momente zu teilen.",
-      "getStarted": "Jetzt beginnen",
-      "startNow": "Jetzt beginnen",
-      "organizeTableTalk": "Organisieren Sie Ihr t2t"
+      "title": "Worauf wartest du? Gleich nimmt jemand am Tisch Platz.",
+      "subtitle": "Die Registrierung ist kostenlos und dauert weniger als eine Minute.",
+      "subtitleAuth": "Decke deinen nächsten Tisch: Eine Minute und eine Idee genügen.",
+      "organizeTableTalk": "Einen t2t erstellen",
+      "startNow": "Jetzt starten"
+    },
+    "trust": {
+      "ariaLabel": "Vertrauen und Sicherheit",
+      "verifiedProfiles": "Verifizierte Profile",
+      "protectedChatVideo": "Geschützter Chat & Video",
+      "adultsOnly": "Nur für Erwachsene (18+)"
     }
   },
   "navigation": {

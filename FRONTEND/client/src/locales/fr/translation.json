@@ -274,47 +274,69 @@
   },
   "home": {
     "heroTitle": "Partagez un table2Talk.<br />Créez une connexion.",
-    "heroSubtitle": "table2Talk est la communauté mondiale pour ceux qui aiment partager des histoires et des saveurs. Organisez un t2t virtuel sur vos sujets préférés ou rejoignez une conversation déjà programmée.",
+    "heroTitlePrefix": "Partagez un",
+    "heroTitleAccent": "table2Talk.",
+    "heroTitleSecondLine": "Créez une connexion.",
+    "heroSubtitle": "La communauté pour celles et ceux qui aiment partager histoires et saveurs. Organisez une table en vidéo sur vos sujets préférés ou rejoignez une conversation déjà prévue : dans n’importe quelle langue, à toute heure.",
+    "livePill_one": "1 personne à table en ce moment",
+    "livePill_other": "{{count}} personnes à table en ce moment",
     "createTableTalk": "Créer un t2t",
     "exploreTableTalk": "Explorer les t2t",
-    "registerNow": "S'inscrire maintenant",
+    "registerNow": "S’inscrire gratuitement",
     "login": "Se connecter",
+    "seeTodayTables": "Voir les tables du jour ↓",
     "howItWorks": {
-      "title": "Participer est Simple",
+      "title": "Comment ça marche",
       "step1": {
-        "title": "1. Découvrez",
-        "description": "Trouvez la table virtuelle parfaite pour vous. Filtrez par langue, heure ou sujet et choisissez la conversation à laquelle vous voulez participer."
+        "num": "01",
+        "title": "Découvrez",
+        "description": "Filtrez par langue, horaire ou sujet et trouvez la table faite pour vous. Il y en a toujours une de dressée."
       },
       "step2": {
-        "title": "2. Participez",
-        "description": "Choisissez, cliquez, participez. C'est si simple d'entrer dans une conversation. Il vous suffit de la curiosité (et un peu de faim !)."
+        "num": "02",
+        "title": "Participez",
+        "description": "Un clic et vous y êtes. Apportez votre curiosité, on s’occupe du reste. Et un peu d’appétit."
       },
       "step3": {
-        "title": "3. Rencontrez",
-        "description": "Accédez à l'appel vidéo et rencontrez vos compagnons de table. C'est le moment de partager, apprendre et savourer un t2t en excellente compagnie."
+        "num": "03",
+        "title": "Rencontrez",
+        "description": "Rejoignez l’appel vidéo, rencontrez vos convives et partagez histoires, saveurs et quelques rires."
       }
     },
     "whyTableTalk": {
       "title": "Pourquoi table2Talk ?",
       "feature1": {
         "title": "Un antidote à la solitude",
-        "description": "Que ce soit un café rapide ou un dîner élaboré, il y a toujours quelqu'un avec qui le partager. La solitude n'est pas dans notre menu."
+        "description": "Qu’il s’agisse d’un café rapide ou d’un dîner élaboré, il y a toujours quelqu’un avec qui le partager. La solitude n’est pas au menu."
       },
       "feature2": {
         "title": "Élargissez vos horizons",
-        "description": "Voyagez depuis votre table de salle à manger. Rencontrez des personnes et des cultures du monde entier et élargissez vos horizons à chaque bouchée."
+        "description": "Voyagez sans quitter la table : rencontrez des personnes et des cultures du monde entier, une bouchée à la fois."
       },
       "feature3": {
-        "title": "Connexions authentiques et sécurisées",
-        "description": "Un environnement modéré et respectueux où vous pouvez être vous-même. Chaque profil est un monde à découvrir, en toute sécurité."
+        "title": "Connexions authentiques et sûres",
+        "description": "Un espace modéré et respectueux où vous pouvez être vous-même. Profils vérifiés, zéro pression."
       }
     },
+    "todayTables": {
+      "title": "Tables du jour",
+      "seeAll": "Voir tout →",
+      "emptyTitle": "Aucune table prévue pour le moment",
+      "emptyDescription": "Dressez la première table et invitez la communauté.",
+      "emptyCta": "Créer un t2t"
+    },
     "cta": {
-      "title": "Prêt à commencer ?",
-      "subtitle": "Rejoignez la communauté table2Talk et commencez à partager des moments inoubliables.",
-      "getStarted": "Commencer maintenant",
-      "startNow": "Commencer maintenant",
-      "organizeTableTalk": "Organisez Votre t2t"
+      "title": "Qu’attendez-vous ? Quelqu’un s’apprête à passer à table.",
+      "subtitle": "L’inscription est gratuite et prend moins d’une minute.",
+      "subtitleAuth": "Dressez votre prochaine table : il suffit d’une minute et d’une idée.",
+      "organizeTableTalk": "Créer un t2t",
+      "startNow": "Commencer"
+    },
+    "trust": {
+      "ariaLabel": "Garanties",
+      "verifiedProfiles": "Profils vérifiés",
+      "protectedChatVideo": "Chat et vidéo protégés",
+      "adultsOnly": "Réservé aux majeurs (18+)"
     }
   },
   "navigation": {

@@ -274,48 +274,70 @@
     }
   },
   "home": {
-    "heroTitle": "分享一个table2Talk。<br />建立连接。",
-    "heroSubtitle": "table2Talk是全球社区，为热爱分享故事和美食的人们而设。围绕您喜爱的话题组织虚拟t2t，或加入已安排的对话。",
-    "createTableTalk": "创建t2t",
-    "exploreTableTalk": "探索t2t",
-    "registerNow": "立即注册",
+    "heroTitle": "分享一个 table2Talk。<br />建立真实连接。",
+    "heroTitlePrefix": "分享一个",
+    "heroTitleAccent": "table2Talk。",
+    "heroTitleSecondLine": "建立真实连接。",
+    "heroSubtitle": "专为热爱分享故事与美食的人打造的社区。围绕你喜欢的话题发起视频餐桌，或加入已安排好的对话：不限语言，随时开席。",
+    "livePill_one": "此刻有 1 人正在同桌",
+    "livePill_other": "此刻有 {{count}} 人正在同桌",
+    "createTableTalk": "创建 t2t",
+    "exploreTableTalk": "探索 t2t",
+    "registerNow": "免费注册",
     "login": "登录",
+    "seeTodayTables": "查看今日餐桌 ↓",
     "howItWorks": {
-      "title": "参与很简单",
+      "title": "如何使用",
       "step1": {
-        "title": "1. 发现",
-        "description": "找到适合您的完美虚拟餐桌。按语言、时间或主题筛选，选择您想加入的对话。"
+        "num": "01",
+        "title": "发现",
+        "description": "按语言、时间或主题筛选，找到适合你的餐桌。总有一桌为你摆好。"
       },
       "step2": {
-        "title": "2. 参与",
-        "description": "选择、点击、参与。进入对话就是这么简单。您只需要好奇心（和一点饥饿感！）。"
+        "num": "02",
+        "title": "参与",
+        "description": "一键加入。带上你的好奇心和一点好胃口，剩下的交给我们。"
       },
       "step3": {
-        "title": "3. 相遇",
-        "description": "加入视频通话，认识您的餐桌伙伴。是时候分享、学习和在优秀伙伴陪伴下享受t2t了。"
+        "num": "03",
+        "title": "相遇",
+        "description": "进入视频通话，结识同桌伙伴，分享故事、美味与欢笑。"
       }
     },
     "whyTableTalk": {
-      "title": "为什么选择table2Talk？",
+      "title": "为什么选择 table2Talk？",
       "feature1": {
         "title": "孤独的解药",
-        "description": "无论是快速咖啡还是精致晚餐，总有人可以分享。孤独不在我们的菜单上。"
+        "description": "无论是一杯快手咖啡还是一顿丰盛晚餐，总有人与你共享。孤独不在我们的菜单上。"
       },
       "feature2": {
-        "title": "拓展您的视野",
-        "description": "从您的餐桌开始旅行。结识来自世界各地的人们和文化，每一口都拓展您的视野。"
+        "title": "拓展你的视野",
+        "description": "足不出户环游世界：在餐桌上结识来自各地的人与文化，每一口都是新风景。"
       },
       "feature3": {
         "title": "真实而安全的连接",
-        "description": "一个温和、尊重的环境，您可以做真实的自己。每个个人资料都是一个待发现的世界，完全安全。"
+        "description": "友好、有秩序且受尊重的空间，让你自在做自己。实名认证档案，零压力交流。"
       }
     },
+    "todayTables": {
+      "title": "今日餐桌",
+      "seeAll": "查看全部 →",
+      "emptyTitle": "目前暂无安排中的餐桌",
+      "emptyDescription": "由你摆好第一张餐桌，邀请社区伙伴加入吧。",
+      "emptyCta": "创建 t2t"
+    },
     "cta": {
-      "title": "准备开始了吗？",
-      "subtitle": "加入table2Talk社区，开始分享难忘时刻。",
-      "getStarted": "立即开始",
-      "startNow": "立即开始",
-      "organizeTableTalk": "组织您的t2t"
+      "title": "还在等什么？有人正准备入座了。",
+      "subtitle": "免费注册，不到一分钟即可完成。",
+      "subtitleAuth": "摆好你的下一张餐桌：只需一分钟和一个好点子。",
+      "organizeTableTalk": "创建 t2t",
+      "startNow": "立即开始"
+    },
+    "trust": {
+      "ariaLabel": "安全保障",
+      "verifiedProfiles": "已验证档案",
+      "protectedChatVideo": "受保护的聊天与视频",
+      "adultsOnly": "仅限成年人 (18+)"
     }
   },
   "navigation": {
