@@ -24,10 +24,26 @@ import mealService from '../../services/mealService';
 import { getMealCoverImageUrl, getHostAvatarUrl } from '../../constants/mealConstants';
 import { API_URL } from '../../config/capacitorConfig';
 import { playNotificationSound } from '../../utils/notificationSound';
+import VoiceMessagePlayer from './VoiceMessagePlayer';
 import styles from './ChatDrawer.module.css';
 
 const REACTION_EMOJIS = ['❤️', '👍', '😂', '😮', '😢', '🔥', '👏', '🎉'];
 const GROUP_WINDOW_MS = 5 * 60 * 1000;
+const T2T_DEFAULT_ICON = '/icons/t2t-icon-192.png';
+const LIVE_WAVE_BARS = 22;
+
+const resolveChatAvatar = (chat) => {
+  const mealImg = chat?.mealId?.imageUrl || chat?.mealId?.coverImage;
+  if (
+    typeof mealImg === 'string' &&
+    mealImg.trim() &&
+    !mealImg.includes('default-meal') &&
+    !mealImg.includes('placeholder')
+  ) {
+    return getMealCoverImageUrl(mealImg);
+  }
+  return T2T_DEFAULT_ICON;
+};
 
 const getDayKey = (ts) => {
   const d = new Date(ts);
@@ -115,17 +131,7 @@ const ChatList = ({ onSelectChat }) => {
     return 'Chat di gruppo';
   };
 
-  const getAvatarSrc = (chat) => {
-    const mealImg = chat.mealId?.imageUrl || chat.mealId?.coverImage;
-    if (mealImg) return getMealCoverImageUrl(mealImg);
-    if (chat.participants?.length) {
-      const other = chat.participants.find(
-        (p) => (p._id || p) !== (user?._id || user?.id)
-      );
-      if (other?.profileImage) return getHostAvatarUrl(other.profileImage);
-    }
-    return '/assets/images/default-meal-placeholder.jpeg';
-  };
+  const getAvatarSrc = (chat) => resolveChatAvatar(chat);
 
   const formatListTime = (ts) => {
     if (!ts) return '';
@@ -192,7 +198,7 @@ const ChatList = ({ onSelectChat }) => {
               className={styles.chatListAvatar}
               loading="lazy"
               onError={(e) => {
-                e.target.src = '/assets/images/default-meal-placeholder.jpeg';
+                e.target.src = T2T_DEFAULT_ICON;
               }}
             />
             {chat.unreadCount > 0 && (
@@ -338,20 +344,12 @@ const MessageRow = ({
                 <div className={styles.attachmentsWrap}>
                   {msg.attachments.map((att, idx) =>
                     att.type === 'audio' ? (
-                      <div key={`${att.url}-${idx}`} className={styles.audioWrap}>
-                        <audio
-                          controls
-                          preload="metadata"
-                          src={att.url}
-                          className={styles.audioPlayer}
-                        />
-                        {att.duration ? (
-                          <span className={styles.audioDuration}>
-                            🎤 {Math.floor(att.duration / 60)}:
-                            {String(att.duration % 60).padStart(2, '0')}
-                          </span>
-                        ) : null}
-                      </div>
+                      <VoiceMessagePlayer
+                        key={`${att.url}-${idx}`}
+                        url={att.url}
+                        duration={att.duration}
+                        own={own}
+                      />
                     ) : (
                       <a
                         key={`${att.url}-${idx}`}
@@ -470,6 +468,8 @@ const DrawerChat = ({ chatId, onMetaLoaded }) => {
   const [replyTo, setReplyTo] = useState(null);
   const [isRecording, setIsRecording] = useState(false);
   const [recordingSeconds, setRecordingSeconds] = useState(0);
+  const [recordingBars, setRecordingBars] = useState(() => Array(LIVE_WAVE_BARS).fill(18));
+  const [showPhotoMenu, setShowPhotoMenu] = useState(false);
 
   const socketRef = useRef(null);
   const messagesEndRef = useRef(null);
@@ -477,10 +477,13 @@ const DrawerChat = ({ chatId, onMetaLoaded }) => {
   const inputRef = useRef(null);
   const fileInputRef = useRef(null);
   const cameraInputRef = useRef(null);
+  const photoMenuRef = useRef(null);
   const mediaRecorderRef = useRef(null);
   const audioChunksRef = useRef([]);
   const recordingStreamRef = useRef(null);
   const recordingTimerRef = useRef(null);
+  const waveIntervalRef = useRef(null);
+  const recordingAudioCtxRef = useRef(null);
   const recordingDurationRef = useRef(0);
 
   useEffect(() => {
@@ -490,8 +493,32 @@ const DrawerChat = ({ chatId, onMetaLoaded }) => {
   }, [pendingPreview]);
 
   useEffect(() => {
+    if (!showPhotoMenu) return undefined;
+    const handleOutside = (e) => {
+      if (photoMenuRef.current && !photoMenuRef.current.contains(e.target)) {
+        setShowPhotoMenu(false);
+      }
+    };
+    const handleEsc = (e) => {
+      if (e.key === 'Escape') setShowPhotoMenu(false);
+    };
+    document.addEventListener('mousedown', handleOutside);
+    document.addEventListener('touchstart', handleOutside, { passive: true });
+    document.addEventListener('keydown', handleEsc);
+    return () => {
+      document.removeEventListener('mousedown', handleOutside);
+      document.removeEventListener('touchstart', handleOutside);
+      document.removeEventListener('keydown', handleEsc);
+    };
+  }, [showPhotoMenu]);
+
+  useEffect(() => {
     return () => {
       if (recordingTimerRef.current) clearInterval(recordingTimerRef.current);
+      if (waveIntervalRef.current) clearInterval(waveIntervalRef.current);
+      if (recordingAudioCtxRef.current) {
+        try { recordingAudioCtxRef.current.close(); } catch (_) {}
+      }
       if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
         try { mediaRecorderRef.current.stop(); } catch (_) {}
       }
@@ -545,7 +572,8 @@ const DrawerChat = ({ chatId, onMetaLoaded }) => {
           messageIdsRef.current = new Set(fetched.map((m) => m._id).filter(Boolean));
           if (onMetaLoaded) {
             onMetaLoaded({
-              name: chatData?.name || chatData?.title || 'Chat',
+              name: chatData?.name || chatData?.title || chatData?.mealId?.title || 'Chat',
+              avatar: resolveChatAvatar(chatData),
               participantsCount: Array.isArray(chatData?.participants)
                 ? chatData.participants.length
                 : null,
@@ -765,6 +793,14 @@ const DrawerChat = ({ chatId, onMetaLoaded }) => {
       clearInterval(recordingTimerRef.current);
       recordingTimerRef.current = null;
     }
+    if (waveIntervalRef.current) {
+      clearInterval(waveIntervalRef.current);
+      waveIntervalRef.current = null;
+    }
+    if (recordingAudioCtxRef.current) {
+      try { recordingAudioCtxRef.current.close(); } catch (_) {}
+      recordingAudioCtxRef.current = null;
+    }
     if (recordingStreamRef.current) {
       recordingStreamRef.current.getTracks().forEach((t) => t.stop());
       recordingStreamRef.current = null;
@@ -774,6 +810,7 @@ const DrawerChat = ({ chatId, onMetaLoaded }) => {
     recordingDurationRef.current = 0;
     setIsRecording(false);
     setRecordingSeconds(0);
+    setRecordingBars(Array(LIVE_WAVE_BARS).fill(18));
   };
 
   const startRecording = async () => {
@@ -783,6 +820,7 @@ const DrawerChat = ({ chatId, onMetaLoaded }) => {
       return;
     }
     try {
+      setShowPhotoMenu(false);
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       recordingStreamRef.current = stream;
       audioChunksRef.current = [];
@@ -811,6 +849,30 @@ const DrawerChat = ({ chatId, onMetaLoaded }) => {
       recorder.start(250);
       setIsRecording(true);
       setRecordingSeconds(0);
+      setRecordingBars(Array(LIVE_WAVE_BARS).fill(18));
+
+      // Analizzatore frequenze microfono in tempo reale (stile WhatsApp)
+      try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (AudioCtx) {
+          const ctx = new AudioCtx();
+          recordingAudioCtxRef.current = ctx;
+          const source = ctx.createMediaStreamSource(stream);
+          const analyser = ctx.createAnalyser();
+          analyser.fftSize = 64;
+          source.connect(analyser);
+          const dataArr = new Uint8Array(analyser.frequencyBinCount);
+          waveIntervalRef.current = setInterval(() => {
+            analyser.getByteFrequencyData(dataArr);
+            let sum = 0;
+            for (let i = 0; i < dataArr.length; i += 1) sum += dataArr[i];
+            const avg = sum / (dataArr.length || 1);
+            const level = Math.max(16, Math.min(100, Math.round((avg / 140) * 100)));
+            setRecordingBars((prev) => [...prev.slice(1), level]);
+          }, 75);
+        }
+      } catch (_) {}
+
       recordingTimerRef.current = setInterval(() => {
         recordingDurationRef.current += 1;
         setRecordingSeconds(recordingDurationRef.current);
@@ -1027,7 +1089,15 @@ const DrawerChat = ({ chatId, onMetaLoaded }) => {
                 {Math.floor(recordingSeconds / 60)}:
                 {String(recordingSeconds % 60).padStart(2, '0')}
               </span>
-              <span className={styles.recordingLabel}>Registrazione vocale…</span>
+              <div className={styles.recordingWave} aria-hidden="true">
+                {recordingBars.map((lvl, idx) => (
+                  <span
+                    key={idx}
+                    className={styles.recordingWaveBar}
+                    style={{ height: `${lvl}%` }}
+                  />
+                ))}
+              </div>
             </div>
             <button
               type="button"
@@ -1042,27 +1112,48 @@ const DrawerChat = ({ chatId, onMetaLoaded }) => {
           </>
         ) : (
           <>
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              disabled={uploading}
-              aria-label="Scegli foto dalla galleria"
-              title="Foto dalla galleria"
-              className={styles.attachBtn}
-            >
-              <ImagePlus size={19} />
-            </button>
+            <div className={styles.photoMenuWrap} ref={photoMenuRef}>
+              <button
+                type="button"
+                onClick={() => setShowPhotoMenu((prev) => !prev)}
+                disabled={uploading}
+                aria-label="Aggiungi foto"
+                aria-expanded={showPhotoMenu}
+                title="Aggiungi foto"
+                className={styles.attachBtn}
+              >
+                <Camera size={20} />
+              </button>
 
-            <button
-              type="button"
-              onClick={() => cameraInputRef.current?.click()}
-              disabled={uploading}
-              aria-label="Scatta una foto"
-              title="Scatta una foto"
-              className={styles.attachBtn}
-            >
-              <Camera size={19} />
-            </button>
+              {showPhotoMenu && (
+                <div className={styles.photoMenu} role="menu">
+                  <button
+                    type="button"
+                    role="menuitem"
+                    className={styles.photoMenuItem}
+                    onClick={() => {
+                      setShowPhotoMenu(false);
+                      fileInputRef.current?.click();
+                    }}
+                  >
+                    <ImagePlus size={18} />
+                    <span>Libreria foto</span>
+                  </button>
+                  <button
+                    type="button"
+                    role="menuitem"
+                    className={styles.photoMenuItem}
+                    onClick={() => {
+                      setShowPhotoMenu(false);
+                      cameraInputRef.current?.click();
+                    }}
+                  >
+                    <Camera size={18} />
+                    <span>Scatta foto</span>
+                  </button>
+                </div>
+              )}
+            </div>
 
             <input
               ref={inputRef}
@@ -1123,7 +1214,7 @@ const ChatDrawer = () => {
   const [closing, setClosing] = useState(false);
   const [activeMeta, setActiveMeta] = useState({
     name: 'Chat',
-    avatar: null,
+    avatar: T2T_DEFAULT_ICON,
     participantsCount: null,
     connectionStatus: 'connecting',
   });
@@ -1132,7 +1223,7 @@ const ChatDrawer = () => {
     (id, previewMeta) => {
       setActiveMeta({
         name: previewMeta?.name || 'Chat',
-        avatar: previewMeta?.avatar || null,
+        avatar: previewMeta?.avatar || T2T_DEFAULT_ICON,
         participantsCount: null,
         connectionStatus: 'connecting',
       });
@@ -1205,13 +1296,15 @@ const ChatDrawer = () => {
               </button>
             )}
 
-            {activeChatId && activeMeta.avatar && (
+            {activeChatId && (
               <img
-                src={activeMeta.avatar}
+                src={activeMeta.avatar || T2T_DEFAULT_ICON}
                 alt={activeMeta.name}
                 className={styles.headerAvatar}
                 onError={(e) => {
-                  e.target.style.display = 'none';
+                  if (!e.target.src.endsWith(T2T_DEFAULT_ICON)) {
+                    e.target.src = T2T_DEFAULT_ICON;
+                  }
                 }}
               />
             )}

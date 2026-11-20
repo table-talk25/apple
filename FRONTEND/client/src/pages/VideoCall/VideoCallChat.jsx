@@ -6,6 +6,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import mealService from '../../services/mealService';
 import chatService from '../../services/chatService';
 import { playNotificationSound } from '../../utils/notificationSound';
+import VoiceMessagePlayer from '../../components/Chat/VoiceMessagePlayer';
 import styles from './VideoCall.module.css';
 
 const normalizeMessage = (msg) => {
@@ -347,12 +348,11 @@ const VideoCallChat = ({ mealId, isVisible, onUnreadMessage }) => {
                     <div className={styles.chatAttachments}>
                       {msg.attachments.map((att, idx) =>
                         att.type === 'audio' ? (
-                          <audio
+                          <VoiceMessagePlayer
                             key={`${att.url}-${idx}`}
-                            controls
-                            preload="metadata"
-                            src={att.url}
-                            style={{ width: '100%', minWidth: 200, height: 34 }}
+                            url={att.url}
+                            duration={att.duration}
+                            own={isMine}
                           />
                         ) : (
                           <a
