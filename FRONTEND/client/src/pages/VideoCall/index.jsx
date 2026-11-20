@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import videoService from '../../services/videoService';
+import VideoCallChat from './VideoCallChat';
 import styles from './VideoCall.module.css';
 
 const getInitials = (name) => {
@@ -1066,15 +1067,7 @@ const VideoCall = () => {
 
           <div className={styles.panelBody}>
             {sidePanelTab === 'chat' ? (
-              <div className={styles.chatPlaceholder}>
-                <div className={styles.chatPlaceholderIcon}>
-                  <MessageSquare size={26} />
-                </div>
-                <h3 className={styles.chatPlaceholderTitle}>Chat in arrivo</h3>
-                <p className={styles.chatPlaceholderText}>
-                  Presto potrai inviare messaggi e link direttamente dentro la videochiamata.
-                </p>
-              </div>
+              <VideoCallChat mealId={mealId} isVisible={true} />
             ) : (
               allParticipants.map((p) => (
                 <div
