@@ -26,9 +26,17 @@ export const NotificationProvider = ({ children }) => {
   const navigateRef = useRef(null);
   const openChatRef = useRef(null);
   const seenChatNotifIdsRef = useRef(new Set());
+  const recentToastKeysRef = useRef(new Map());
   const initialFetchedRef = useRef(false);
 
-  const showChatToast = useCallback(({ senderName, preview, chatId }) => {
+  const showChatToast = useCallback(({ senderName, preview, chatId, notifId }) => {
+    const now = Date.now();
+    const dedupeKey = `${chatId || ''}::${String(preview || '').trim()}`;
+    const lastShown = recentToastKeysRef.current.get(dedupeKey) || 0;
+    if (now - lastShown < 30000) return;
+    recentToastKeysRef.current.set(dedupeKey, now);
+    if (notifId) seenChatNotifIdsRef.current.add(notifId);
+
     playNotificationSound();
     toast(
       <div
@@ -93,6 +101,7 @@ export const NotificationProvider = ({ children }) => {
         </div>
       </div>,
       {
+        toastId: notifId || `chat_toast_${chatId}_${dedupeKey}`,
         autoClose: 5500,
         icon: false,
         style: {
@@ -129,6 +138,7 @@ export const NotificationProvider = ({ children }) => {
       setNotifications([]);
       setUnreadCount(0);
       seenChatNotifIdsRef.current = new Set();
+      recentToastKeysRef.current = new Map();
       initialFetchedRef.current = false;
       return;
     }
@@ -152,6 +162,7 @@ export const NotificationProvider = ({ children }) => {
               senderName: n.senderName || 'Nuovo messaggio',
               preview: n.preview || n.message,
               chatId: n.chatId,
+              notifId: n._id,
             });
           });
         } else {
@@ -211,13 +222,15 @@ export const NotificationProvider = ({ children }) => {
     socketRef.current = socket;
 
     // ── 1. Messaggio in chat (utente NON nella chat room) ─────────────
-    socket.on('new_chat_message_alert', ({ senderName, preview, chatId }) => {
+    socket.on('new_chat_message_alert', ({ senderName, preview, chatId, messageId }) => {
       const msg = `💬 ${senderName}: ${preview}`;
-      const id = `chat_rt_${chatId}_${Date.now()}`;
+      const id = messageId ? `chat_${chatId}_${messageId}` : `chat_rt_${chatId}_${Date.now()}`;
+      if (seenChatNotifIdsRef.current.has(id)) return;
       seenChatNotifIdsRef.current.add(id);
-      showChatToast({ senderName, preview, chatId });
-      setNotifications((prev) =>
-        sortByNewest([
+      showChatToast({ senderName, preview, chatId, notifId: id });
+      setNotifications((prev) => {
+        if (prev.some((n) => n._id === id)) return prev;
+        return sortByNewest([
           {
             _id: id,
             message: msg,
@@ -230,8 +243,8 @@ export const NotificationProvider = ({ children }) => {
             createdAt: new Date().toISOString(),
           },
           ...prev,
-        ])
-      );
+        ]);
+      });
       setUnreadCount((prev) => prev + 1);
     });
 
