@@ -136,6 +136,25 @@ const sendMessage = async (chatId, payload) => {
   return response.data?.data || response.data;
 };
 
+const editMessage = async (chatId, messageId, content) => {
+  const normalizedId = normalizeChatId(chatId);
+  const response = await apiClient.put(
+    `/chats/${normalizedId}/messages/${messageId}`,
+    { content },
+    { suppressErrorAlert: true }
+  );
+  return response.data?.data || response.data;
+};
+
+const deleteMessage = async (chatId, messageId) => {
+  const normalizedId = normalizeChatId(chatId);
+  const response = await apiClient.delete(
+    `/chats/${normalizedId}/messages/${messageId}`,
+    { suppressErrorAlert: true }
+  );
+  return response.data?.data || response.data;
+};
+
 const chatService = {
   getUserChats,
   getChatById,
@@ -148,6 +167,8 @@ const chatService = {
   uploadChatImage,
   uploadChatAudio,
   sendMessage,
+  editMessage,
+  deleteMessage,
 };
 
 export default chatService;

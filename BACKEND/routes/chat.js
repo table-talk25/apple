@@ -34,6 +34,10 @@ router.get('/', protect, chatController.getUserChats);
 router.get('/:id', protect, chatController.getChatById);
 // POST /api/chats/:id/messages - Invia messaggio (HTTP fallback)
 router.post('/:id/messages', protect, chatController.sendMessage);
+// PUT /api/chats/:id/messages/:messageId - Modifica un proprio messaggio
+router.put('/:id/messages/:messageId', protect, chatController.editMessage);
+// DELETE /api/chats/:id/messages/:messageId - Elimina un proprio messaggio
+router.delete('/:id/messages/:messageId', protect, chatController.deleteMessage);
 // POST /api/chats/:id/upload   - Carica foto in chat
 router.post('/:id/upload', protect, chatImageUpload.single('image'), chatController.uploadChatImage);
 // POST /api/chats/:id/upload-audio - Carica messaggio vocale in chat
