@@ -24,6 +24,93 @@ export const NotificationProvider = ({ children }) => {
   const [loading, setLoading] = useState(false);
   const socketRef = useRef(null);
   const navigateRef = useRef(null);
+  const seenChatNotifIdsRef = useRef(new Set());
+  const initialFetchedRef = useRef(false);
+
+  const showChatToast = useCallback(({ senderName, preview, chatId }) => {
+    playNotificationSound();
+    toast(
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '12px',
+          padding: '2px 0',
+        }}
+      >
+        <div
+          style={{
+            width: '38px',
+            height: '38px',
+            borderRadius: '50%',
+            background: 'linear-gradient(135deg, #c2513e 0%, #b54735 100%)',
+            color: '#fff',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: '18px',
+            flexShrink: 0,
+            boxShadow: '0 2px 8px rgba(181, 71, 53, 0.28)',
+          }}
+          aria-hidden="true"
+        >
+          💬
+        </div>
+        <div style={{ minWidth: 0, flex: 1 }}>
+          <div
+            style={{
+              fontWeight: 700,
+              fontSize: '0.9rem',
+              color: '#b54735',
+              lineHeight: 1.25,
+              marginBottom: '2px',
+            }}
+          >
+            {senderName || 'Nuovo messaggio'}
+          </div>
+          <div
+            style={{
+              fontSize: '0.86rem',
+              color: '#242824',
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              lineHeight: 1.35,
+            }}
+          >
+            {preview}
+          </div>
+          <div
+            style={{
+              fontSize: '0.72rem',
+              color: '#7c837d',
+              marginTop: '2px',
+            }}
+          >
+            Tocca per rispondere
+          </div>
+        </div>
+      </div>,
+      {
+        autoClose: 5500,
+        icon: false,
+        style: {
+          background: '#FAF7F2',
+          borderLeft: '4px solid #B54735',
+          borderRadius: '14px',
+          boxShadow: '0 10px 28px rgba(36, 40, 36, 0.16)',
+          color: '#242824',
+          cursor: 'pointer',
+        },
+        progressStyle: {
+          background: '#B54735',
+        },
+        onClick: () => {
+          if (navigateRef.current && chatId) navigateRef.current(`/chat/${chatId}`);
+        },
+      }
+    );
+  }, []);
 
   // Helper: aggiungi una notifica in ordine cronologico (più recente in alto)
   const pushNotification = useCallback((notif) => {
@@ -32,17 +119,42 @@ export const NotificationProvider = ({ children }) => {
     playNotificationSound();
   }, []);
 
-  const fetchNotifications = useCallback(async () => {
+  const fetchNotifications = useCallback(async (silent = false) => {
     if (!isAuthenticated) {
       setNotifications([]);
       setUnreadCount(0);
+      seenChatNotifIdsRef.current = new Set();
+      initialFetchedRef.current = false;
       return;
     }
-    setLoading(true);
+    if (!silent) setLoading(true);
     try {
       const list = await notificationService.getNotifications();
       if (Array.isArray(list)) {
         const sorted = sortByNewest(list);
+        if (initialFetchedRef.current) {
+          // Segnala con toast terracotta + bling eventuali nuovi messaggi chat arrivati
+          const freshUnreadChats = sorted.filter(
+            (n) =>
+              n.type === 'new_message' &&
+              !(n.isRead || n.read) &&
+              n._id &&
+              !seenChatNotifIdsRef.current.has(n._id)
+          );
+          freshUnreadChats.forEach((n) => {
+            seenChatNotifIdsRef.current.add(n._id);
+            showChatToast({
+              senderName: n.senderName || 'Nuovo messaggio',
+              preview: n.preview || n.message,
+              chatId: n.chatId,
+            });
+          });
+        } else {
+          sorted.forEach((n) => {
+            if (n._id) seenChatNotifIdsRef.current.add(n._id);
+          });
+          initialFetchedRef.current = true;
+        }
         setNotifications(sorted);
         setUnreadCount(sorted.filter(n => !(n.isRead || n.read)).length);
       } else {
@@ -50,15 +162,26 @@ export const NotificationProvider = ({ children }) => {
         setUnreadCount(0);
       }
     } catch (error) {
-      console.error('[NotificationContext] Errore caricamento notifiche:', error);
+      if (!silent) console.error('[NotificationContext] Errore caricamento notifiche:', error);
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, showChatToast]);
 
   useEffect(() => {
-    fetchNotifications();
+    fetchNotifications(false);
   }, [fetchNotifications]);
+
+  // Polling leggero di riserva ogni 10s così le notifiche chat arrivano sempre
+  useEffect(() => {
+    if (!isAuthenticated) return undefined;
+    const interval = setInterval(() => {
+      if (document.visibilityState === 'visible') {
+        fetchNotifications(true);
+      }
+    }, 10000);
+    return () => clearInterval(interval);
+  }, [isAuthenticated, fetchNotifications]);
 
   useEffect(() => {
     if (!isAuthenticated || !token) {
@@ -85,96 +208,26 @@ export const NotificationProvider = ({ children }) => {
     // ── 1. Messaggio in chat (utente NON nella chat room) ─────────────
     socket.on('new_chat_message_alert', ({ senderName, preview, chatId }) => {
       const msg = `💬 ${senderName}: ${preview}`;
-      playNotificationSound();
-      toast(
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '12px',
-            padding: '2px 0',
-          }}
-        >
-          <div
-            style={{
-              width: '38px',
-              height: '38px',
-              borderRadius: '50%',
-              background: 'linear-gradient(135deg, #c2513e 0%, #b54735 100%)',
-              color: '#fff',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '18px',
-              flexShrink: 0,
-              boxShadow: '0 2px 8px rgba(181, 71, 53, 0.28)',
-            }}
-            aria-hidden="true"
-          >
-            💬
-          </div>
-          <div style={{ minWidth: 0, flex: 1 }}>
-            <div
-              style={{
-                fontWeight: 700,
-                fontSize: '0.9rem',
-                color: '#b54735',
-                lineHeight: 1.25,
-                marginBottom: '2px',
-              }}
-            >
-              {senderName || 'Nuovo messaggio'}
-            </div>
-            <div
-              style={{
-                fontSize: '0.86rem',
-                color: '#242824',
-                whiteSpace: 'nowrap',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                lineHeight: 1.35,
-              }}
-            >
-              {preview}
-            </div>
-            <div
-              style={{
-                fontSize: '0.72rem',
-                color: '#7c837d',
-                marginTop: '2px',
-              }}
-            >
-              Tocca per rispondere
-            </div>
-          </div>
-        </div>,
-        {
-          autoClose: 5500,
-          icon: false,
-          style: {
-            background: '#FAF7F2',
-            borderLeft: '4px solid #B54735',
-            borderRadius: '14px',
-            boxShadow: '0 10px 28px rgba(36, 40, 36, 0.16)',
-            color: '#242824',
-            cursor: 'pointer',
+      const id = `chat_rt_${chatId}_${Date.now()}`;
+      seenChatNotifIdsRef.current.add(id);
+      showChatToast({ senderName, preview, chatId });
+      setNotifications((prev) =>
+        sortByNewest([
+          {
+            _id: id,
+            message: msg,
+            type: 'new_message',
+            chatId,
+            senderName,
+            preview,
+            isRead: false,
+            read: false,
+            createdAt: new Date().toISOString(),
           },
-          progressStyle: {
-            background: '#B54735',
-          },
-          onClick: () => {
-            if (navigateRef.current) navigateRef.current(`/chat/${chatId}`);
-          },
-        }
+          ...prev,
+        ])
       );
-      pushNotification({
-        _id: `chat_${Date.now()}`,
-        message: msg,
-        type: 'new_message',
-        chatId,
-        isRead: false,
-        createdAt: new Date().toISOString(),
-      });
+      setUnreadCount((prev) => prev + 1);
     });
 
     // ── 2. Reminder 30 min prima del pasto ───────────────────────────
@@ -232,7 +285,7 @@ export const NotificationProvider = ({ children }) => {
       socket.disconnect();
       socketRef.current = null;
     };
-  }, [isAuthenticated, token, pushNotification]);
+  }, [isAuthenticated, token, pushNotification, showChatToast]);
 
   const markAsRead = async (notificationId) => {
     try {

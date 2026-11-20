@@ -2,33 +2,82 @@
 
 const asyncHandler = require('express-async-handler');
 const Meal = require('../models/Meal');
+const Chat = require('../models/Chat');
 const User = require('../models/User');
 const admin = require('firebase-admin');
 
 /**
- * @desc    Ottenere le notifiche per l'utente loggato
+ * @desc    Ottenere le notifiche per l'utente loggato (pasti + messaggi chat)
  * @route   GET /api/notifications
  */
 exports.getMyNotifications = asyncHandler(async (req, res, next) => {
   const page = parseInt(req.query.page, 10) || 1;
-  const limit = parseInt(req.query.limit, 10) || 15;
+  const limit = parseInt(req.query.limit, 10) || 20;
   const skip = (page - 1) * limit;
+  const userId = req.user.id;
 
-  // Troviamo tutti i pasti dove l'utente loggato è il destinatario di una notifica
-  const mealsWithNotifications = await Meal.find({ 
-    'notifications.recipient': req.user.id 
+  // 1. Notifiche dei pasti
+  const mealsWithNotifications = await Meal.find({
+    'notifications.recipient': userId,
   }).select('notifications title _id');
 
-  // Estraiamo e filtriamo solo le notifiche per l'utente corrente
-  let userNotifications = mealsWithNotifications.flatMap(meal => 
+  const mealNotifications = mealsWithNotifications.flatMap((meal) =>
     meal.notifications
-      .filter(notif => notif.recipient.toString() === req.user.id)
-      .map(notif => ({
+      .filter((notif) => notif.recipient.toString() === userId)
+      .map((notif) => ({
         ...notif.toObject(),
-        mealId: meal._id, // Aggiungiamo l'ID del pasto per creare un link
-        mealTitle: meal.title, // E il titolo
+        mealId: meal._id,
+        mealTitle: meal.title,
       }))
-  ).sort((a, b) => b.createdAt - a.createdAt); // Ordiniamo dalla più recente
+  );
+
+  // 2. Notifiche dei messaggi recenti nelle chat attive dell'utente (inviati da altri)
+  const userChats = await Chat.find({
+    participants: userId,
+    status: { $ne: 'closed' },
+  })
+    .populate('mealId', 'title status')
+    .lean();
+
+  const chatNotifications = [];
+  for (const chat of userChats) {
+    const msgs = Array.isArray(chat.messages) ? chat.messages : [];
+    const incoming = msgs.filter((m) => {
+      const sid = m.sender && m.sender._id ? m.sender._id.toString() : (m.sender ? m.sender.toString() : '');
+      return sid && sid !== userId;
+    });
+    if (incoming.length === 0) continue;
+
+    const latest = incoming[incoming.length - 1];
+    const readArr = Array.isArray(latest.read) ? latest.read : [];
+    const isInRead = readArr.some((r) => (r && r._id ? r._id.toString() : String(r)) === userId);
+    const readByArr = Array.isArray(latest.readBy) ? latest.readBy : [];
+    const isInReadBy = readByArr.some((r) => {
+      const uid = r && r.user ? (r.user._id ? r.user._id.toString() : r.user.toString()) : (r ? r.toString() : '');
+      return uid === userId;
+    });
+    const isRead = isInRead || isInReadBy;
+    const senderName = (latest.sender && latest.sender.nickname) || 'Partecipante';
+    const rawContent = typeof latest.content === 'string' ? latest.content : '';
+    const preview = rawContent.length > 60 ? `${rawContent.substring(0, 60)}...` : rawContent;
+
+    chatNotifications.push({
+      _id: `chat_${chat._id}_${latest._id}`,
+      type: 'new_message',
+      chatId: chat._id.toString(),
+      senderName,
+      preview,
+      message: `💬 ${senderName}: ${preview}`,
+      read: isRead,
+      isRead,
+      createdAt: latest.timestamp || latest.createdAt || chat.updatedAt,
+    });
+  }
+
+  // Uniamo e ordiniamo strettamente dalla più recente alla più vecchia
+  let userNotifications = [...mealNotifications, ...chatNotifications].sort(
+    (a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()
+  );
 
   const total = userNotifications.length;
   userNotifications = userNotifications.slice(skip, skip + limit);
@@ -48,12 +97,18 @@ exports.getMyNotifications = asyncHandler(async (req, res, next) => {
  * @route   POST /api/notifications/read
  */
 exports.markNotificationsAsRead = asyncHandler(async (req, res, next) => {
-    await Meal.updateMany(
-        { 'notifications.recipient': req.user.id, 'notifications.read': false },
-        { $set: { 'notifications.$[].read': true } }
-    );
+  await Promise.all([
+    Meal.updateMany(
+      { 'notifications.recipient': req.user.id, 'notifications.read': false },
+      { $set: { 'notifications.$[].read': true } }
+    ),
+    Chat.updateMany(
+      { participants: req.user.id, status: { $ne: 'closed' } },
+      { $addToSet: { 'messages.$[].read': req.user.id } }
+    ),
+  ]);
 
-    res.status(200).json({ success: true, message: 'Notifiche segnate come lette' });
+  res.status(200).json({ success: true, message: 'Notifiche segnate come lette' });
 });
 
 /**
