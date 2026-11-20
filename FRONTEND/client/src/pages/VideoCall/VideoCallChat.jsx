@@ -5,6 +5,7 @@ import { API_URL } from '../../config/capacitorConfig';
 import { useAuth } from '../../contexts/AuthContext';
 import mealService from '../../services/mealService';
 import chatService from '../../services/chatService';
+import { playNotificationSound } from '../../utils/notificationSound';
 import styles from './VideoCall.module.css';
 
 const normalizeMessage = (msg) => {
@@ -121,13 +122,11 @@ const VideoCallChat = ({ mealId, isVisible, onUnreadMessage }) => {
       if (messageIdsRef.current.has(mid)) return;
       messageIdsRef.current.add(mid);
       setMessages((prev) => [...prev, nm]);
-      if (
-        !isVisibleRef.current &&
-        nm.senderId &&
-        nm.senderId !== currentUserId &&
-        onUnreadRef.current
-      ) {
-        onUnreadRef.current();
+      if (nm.senderId && nm.senderId !== currentUserId) {
+        playNotificationSound();
+        if (!isVisibleRef.current && onUnreadRef.current) {
+          onUnreadRef.current();
+        }
       }
     };
 

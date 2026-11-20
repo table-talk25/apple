@@ -141,7 +141,9 @@ async function initializeSocket(server) {
 
   ioInstance.on('connection', (socket) => {
     console.log(`✅ [Socket] Connesso: ${socket.user.nickname}`);
-    connectedUsers.set(socket.user._id.toString(), socket.id);
+    const userIdStr = socket.user._id.toString();
+    connectedUsers.set(userIdStr, socket.id);
+    socket.join(`user:${userIdStr}`);
 
     socket.on('joinChatRoom', async (chatId) => {
       try {
@@ -306,7 +308,9 @@ async function initializeSocket(server) {
 
     socket.on('disconnect', () => {
       console.log(`❌ [Socket] Disconnesso: ${socket.user.nickname}`);
-      connectedUsers.delete(socket.user._id.toString());
+      if (connectedUsers.get(userIdStr) === socket.id) {
+        connectedUsers.delete(userIdStr);
+      }
       rateLimitMap.delete(`msg:${socket.id}`);
       rateLimitMap.delete(`typing:${socket.id}`);
       rateLimitMap.delete(`reaction:${socket.id}`);

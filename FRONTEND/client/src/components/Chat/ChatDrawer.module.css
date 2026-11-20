@@ -454,7 +454,7 @@
 }
 
 .bubbleOwn {
-  background: linear-gradient(135deg, #245c4a 0%, #1d4c3d 100%);
+  background: linear-gradient(135deg, #c2513e 0%, #b54735 100%);
   color: #ffffff;
   border-bottom-right-radius: 5px;
 }
@@ -759,7 +759,7 @@
   border-radius: 50%;
   border: none;
   background: var(--tt-background, #faf7f2);
-  color: var(--tt-accent, #245c4a);
+  color: var(--tt-primary, #b54735);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -769,7 +769,7 @@
 }
 
 .attachBtn:hover:not(:disabled) {
-  background: rgba(36, 92, 74, 0.12);
+  background: rgba(181, 71, 53, 0.12);
   transform: scale(1.04);
 }
 
@@ -794,7 +794,7 @@
 }
 
 .composerInput:focus {
-  border-color: var(--tt-accent, #245c4a);
+  border-color: var(--tt-primary, #b54735);
   background: #ffffff;
 }
 
@@ -803,7 +803,7 @@
   height: 44px;
   border-radius: 50%;
   border: none;
-  background: var(--tt-accent, #245c4a);
+  background: var(--tt-primary, #b54735);
   color: #ffffff;
   display: inline-flex;
   align-items: center;
@@ -811,11 +811,11 @@
   cursor: pointer;
   flex-shrink: 0;
   transition: background 0.16s ease, transform 0.14s ease, opacity 0.16s ease;
-  box-shadow: 0 3px 10px rgba(36, 92, 74, 0.25);
+  box-shadow: 0 3px 10px rgba(181, 71, 53, 0.28);
 }
 
 .sendBtn:hover:not(:disabled) {
-  background: #1c4a3b;
+  background: #9e3c2c;
   transform: scale(1.04);
 }
 

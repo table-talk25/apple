@@ -26,18 +26,40 @@ export const unlockAudioContext = () => {
   }
 };
 
+let _listenersBound = false;
+
 /**
- * Suona il bing di notifica.
- * Su iOS/Chrome mobile: se il contesto è suspended tenta il resume()
- * prima di suonare — recupera il contesto senza richiedere un nuovo
- * gesto utente (funziona se l'utente ha già interagito con la pagina).
+ * Registra lo sblocco automatico dell'AudioContext al primo gesto utente
+ * (click, tap o tasto) così il "bling" funziona sempre su desktop e mobile.
+ */
+export const initNotificationSound = () => {
+  if (_listenersBound || typeof window === 'undefined') return;
+  _listenersBound = true;
+  const unlock = () => {
+    unlockAudioContext();
+    if (_audioCtx && _audioCtx.state === 'running') {
+      window.removeEventListener('pointerdown', unlock, true);
+      window.removeEventListener('keydown', unlock, true);
+      window.removeEventListener('touchstart', unlock, true);
+    }
+  };
+  window.addEventListener('pointerdown', unlock, { capture: true, passive: true });
+  window.addEventListener('keydown', unlock, { capture: true, passive: true });
+  window.addEventListener('touchstart', unlock, { capture: true, passive: true });
+};
+
+// Attiva subito l'auto-unlock al caricamento del modulo nel browser
+initNotificationSound();
+
+/**
+ * Suona un "bling" cristallino e piacevole (stile WhatsApp/Telegram)
+ * quando arriva un nuovo messaggio in chat o una notifica.
  */
 export const playNotificationSound = () => {
   try {
     const Ctx = window.AudioContext || window.webkitAudioContext;
     if (!Ctx) return;
 
-    // Crea il contesto al primo utilizzo se non esiste ancora
     if (!_audioCtx || _audioCtx.state === 'closed') {
       try { _audioCtx = new Ctx(); } catch (_) { return; }
     }
@@ -47,34 +69,48 @@ export const playNotificationSound = () => {
         const ctx = _audioCtx;
         const now = ctx.currentTime;
 
-        const playTone = (frequency, startTime, duration, gainValue) => {
-          const oscillator = ctx.createOscillator();
+        const playBellNote = (frequency, startTime, duration, peakGain) => {
+          const osc = ctx.createOscillator();
+          const overtone = ctx.createOscillator();
           const gainNode = ctx.createGain();
-          oscillator.connect(gainNode);
+          const overtoneGain = ctx.createGain();
+
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(frequency, startTime);
+
+          // Leggera armonica superiore per l'effetto cristallino "bling"
+          overtone.type = 'triangle';
+          overtone.frequency.setValueAtTime(frequency * 2, startTime);
+
+          gainNode.gain.setValueAtTime(0.0001, startTime);
+          gainNode.gain.linearRampToValueAtTime(peakGain, startTime + 0.012);
+          gainNode.gain.exponentialRampToValueAtTime(0.0008, startTime + duration);
+
+          overtoneGain.gain.setValueAtTime(0.0001, startTime);
+          overtoneGain.gain.linearRampToValueAtTime(peakGain * 0.18, startTime + 0.008);
+          overtoneGain.gain.exponentialRampToValueAtTime(0.0004, startTime + duration * 0.65);
+
+          osc.connect(gainNode);
+          overtone.connect(overtoneGain);
           gainNode.connect(ctx.destination);
-          oscillator.type = 'sine';
-          oscillator.frequency.setValueAtTime(frequency, startTime);
-          gainNode.gain.setValueAtTime(0, startTime);
-          gainNode.gain.linearRampToValueAtTime(gainValue, startTime + 0.01);
-          gainNode.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
-          oscillator.start(startTime);
-          oscillator.stop(startTime + duration);
+          overtoneGain.connect(ctx.destination);
+
+          osc.start(startTime);
+          overtone.start(startTime);
+          osc.stop(startTime + duration + 0.02);
+          overtone.stop(startTime + duration + 0.02);
         };
 
-        playTone(1046, now,        0.18, 0.4);
-        playTone(784,  now + 0.15, 0.28, 0.25);
+        // Doppio rintocco ascendente brillante (A5 → E6)
+        playBellNote(880,    now,        0.16, 0.24);
+        playBellNote(1318.5, now + 0.09, 0.30, 0.28);
       } catch (_) {}
     };
 
     if (_audioCtx.state === 'running') {
       fire();
     } else if (_audioCtx.state === 'suspended' || _audioCtx.state === 'interrupted') {
-      // Tenta il resume — se riesce, suona subito
       _audioCtx.resume().then(fire).catch(() => {});
     }
-    // Se state === 'closed' non possiamo fare nulla senza gesto utente
   } catch (_) {}
 };
-
-// Retrocompatibilità con App.js
-export const initNotificationSound = () => {};
