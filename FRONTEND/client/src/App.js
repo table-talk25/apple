@@ -32,7 +32,7 @@ const CreateMealPage = lazy(() => import('./pages/Meals/CreateMealPage'));
 const EditMealPage = lazy(() => import('./pages/Meals/EditMealPage'));
 const MealHistoryPage = lazy(() => import('./pages/Meals/MealHistoryPage'));
 const NotFoundPage = lazy(() => import('./pages/NotFound'));
-const VideoCallPage = lazy(() => import('./pages/VideoCallPage'));
+const VideoCallPage = lazy(() => import('./pages/VideoCall'));
 const ChatPage = lazy(() => import('./pages/ChatPage'));
 const ChatListPage = lazy(() => import('./pages/ChatListPage'));
 const MapPage = lazy(() => import('./pages/MapPage'));
