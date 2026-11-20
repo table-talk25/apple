@@ -388,6 +388,7 @@
       "startNow": "Inizia ora"
     },
     "trust": {
+      "ariaLabel": "Garanzie",
       "verifiedProfiles": "Profili verificati",
       "protectedChatVideo": "Chat e video protetti",
       "adultsOnly": "Solo maggiorenni"

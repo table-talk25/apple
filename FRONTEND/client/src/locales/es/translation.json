@@ -274,24 +274,33 @@
   },
   "home": {
     "heroTitle": "Comparte un table2Talk.<br />Crea una conexión.",
-    "heroSubtitle": "table2Talk es la comunidad global para quienes aman compartir historias y sabores. Organiza un t2t virtual sobre tus temas favoritos o únete a una conversación ya programada.",
+    "heroTitlePrefix": "Comparte un",
+    "heroTitleAccent": "table2Talk.",
+    "heroTitleSecondLine": "Crea una conexión.",
+    "heroSubtitle": "La comunidad para quienes aman compartir historias y sabores. Organiza una mesa por video sobre tus temas favoritos o únete a una conversación ya programada: en cualquier idioma, a cualquier hora.",
+    "livePill_one": "1 persona a la mesa ahora",
+    "livePill_other": "{{count}} personas a la mesa ahora",
     "createTableTalk": "Crear un t2t",
     "exploreTableTalk": "Explorar t2t",
-    "registerNow": "Registrarse ahora",
+    "registerNow": "Regístrate gratis",
     "login": "Iniciar sesión",
+    "seeTodayTables": "Ver las mesas de hoy ↓",
     "howItWorks": {
-      "title": "Participar es Simple",
+      "title": "Cómo funciona",
       "step1": {
-        "title": "1. Descubre",
-        "description": "Encuentra la mesa virtual perfecta para ti. Filtra por idioma, hora o tema y elige la conversación a la que quieres unirte."
+        "num": "01",
+        "title": "Descubre",
+        "description": "Filtra por idioma, horario o tema y encuentra la mesa ideal para ti. Siempre hay una puesta."
       },
       "step2": {
-        "title": "2. Participa",
-        "description": "Elige, haz clic, participa. Es así de simple entrar en una conversación. Solo necesitas curiosidad (¡y un poco de hambre!)."
+        "num": "02",
+        "title": "Participa",
+        "description": "Un clic y estás dentro. Trae tu curiosidad, del resto nos encargamos nosotros. Y un poco de apetito."
       },
       "step3": {
-        "title": "3. Conoce",
-        "description": "Accede a la videollamada y conoce a tus compañeros de mesa. Es el momento de compartir, aprender y disfrutar un t2t en excelente compañía."
+        "num": "03",
+        "title": "Conoce",
+        "description": "Entra a la videollamada, conoce a tus comensales y comparte historias, sabores y buenas risas."
       }
     },
     "whyTableTalk": {
@@ -302,19 +311,32 @@
       },
       "feature2": {
         "title": "Amplía tus horizontes",
-        "description": "Viaja desde tu mesa de comedor. Conoce personas y culturas de todo el mundo y amplía tus horizontes con cada bocado."
+        "description": "Viaja sin levantarte de la mesa: conoce personas y culturas de todo el mundo, bocado a bocado."
       },
       "feature3": {
         "title": "Conexiones auténticas y seguras",
-        "description": "Un entorno moderado y respetuoso donde puedes ser tú mismo. Cada perfil es un mundo por descubrir, en total seguridad."
+        "description": "Un espacio moderado y respetuoso donde puedes ser tú mismo. Perfiles verificados, cero presión."
       }
     },
+    "todayTables": {
+      "title": "Mesas de hoy",
+      "seeAll": "Ver todos →",
+      "emptyTitle": "No hay mesas programadas ahora",
+      "emptyDescription": "Prepara tú la primera mesa e invita a la comunidad.",
+      "emptyCta": "Crear un t2t"
+    },
     "cta": {
-      "title": "¿Listo para empezar?",
-      "subtitle": "Únete a la comunidad table2Talk y comienza a compartir momentos inolvidables.",
-      "getStarted": "Comenzar ahora",
-      "startNow": "Comenzar ahora",
-      "organizeTableTalk": "Organiza Tu t2t"
+      "title": "¿Qué esperas? Alguien está a punto de sentarse a la mesa.",
+      "subtitle": "El registro es gratis y toma menos de un minuto.",
+      "subtitleAuth": "Prepara tu próxima mesa: solo necesitas un minuto y una idea.",
+      "organizeTableTalk": "Crear un t2t",
+      "startNow": "Empezar ahora"
+    },
+    "trust": {
+      "ariaLabel": "Garantías",
+      "verifiedProfiles": "Perfiles verificados",
+      "protectedChatVideo": "Chat y video protegidos",
+      "adultsOnly": "Solo mayores de edad (18+)"
     }
   },
   "navigation": {
