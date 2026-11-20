@@ -767,24 +767,25 @@
 }
 
 .chatBubble {
-  max-width: 82%;
-  padding: 8px 12px;
-  border-radius: 12px;
-  font-size: 0.86rem;
-  line-height: 1.4;
+  max-width: 88%;
+  min-width: 84px;
+  padding: 10px 14px 8px;
+  border-radius: 16px;
+  font-size: 0.93rem;
+  line-height: 1.46;
   word-break: break-word;
 }
 
 .chatBubbleOther {
   background: var(--surface-2);
   color: var(--text);
-  border-bottom-left-radius: 4px;
+  border-bottom-left-radius: 5px;
 }
 
 .chatBubbleMine {
-  background: var(--ac);
+  background: linear-gradient(135deg, #245c4a 0%, #1d4c3d 100%);
   color: #fff;
-  border-bottom-right-radius: 4px;
+  border-bottom-right-radius: 5px;
 }
 
 .chatSender {
