@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { io } from 'socket.io-client';
-import { Send, MessageSquare } from 'lucide-react';
+import { Send, MessageSquare, ImagePlus, X } from 'lucide-react';
 import { API_URL } from '../../config/capacitorConfig';
 import { useAuth } from '../../contexts/AuthContext';
 import mealService from '../../services/mealService';
@@ -20,9 +20,13 @@ const normalizeMessage = (msg) => {
     senderObj?.nickname ||
     senderObj?.name ||
     'Partecipante';
+  const attachments = Array.isArray(msg.attachments)
+    ? msg.attachments.filter((a) => a && a.type === 'image' && a.url)
+    : [];
   return {
     _id: msg._id || msg.id || `${Date.now()}-${Math.random()}`,
     content: msg.content || msg.message || msg.text || '',
+    attachments,
     senderId: senderId ? String(senderId) : '',
     senderName,
     createdAt: msg.createdAt || msg.timestamp || new Date().toISOString(),
@@ -43,11 +47,15 @@ const VideoCallChat = ({ mealId, isVisible, onUnreadMessage }) => {
   const [chatId, setChatId] = useState(null);
   const [messages, setMessages] = useState([]);
   const [draft, setDraft] = useState('');
+  const [pendingFile, setPendingFile] = useState(null);
+  const [pendingPreview, setPendingPreview] = useState(null);
+  const [uploading, setUploading] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [connected, setConnected] = useState(false);
 
   const socketRef = useRef(null);
+  const fileInputRef = useRef(null);
   const messageIdsRef = useRef(new Set());
   const bottomRef = useRef(null);
   const isVisibleRef = useRef(isVisible);
@@ -55,6 +63,12 @@ const VideoCallChat = ({ mealId, isVisible, onUnreadMessage }) => {
 
   isVisibleRef.current = isVisible;
   onUnreadRef.current = onUnreadMessage;
+
+  useEffect(() => {
+    return () => {
+      if (pendingPreview) URL.revokeObjectURL(pendingPreview);
+    };
+  }, [pendingPreview]);
 
   // 1. Resolve chatId from mealId
   useEffect(() => {
@@ -107,7 +121,7 @@ const VideoCallChat = ({ mealId, isVisible, onUnreadMessage }) => {
         if (!mounted) return;
         const initial = (chatData?.messages || [])
           .map(normalizeMessage)
-          .filter((m) => m && m.content);
+          .filter((m) => m && (m.content || m.attachments.length > 0));
         initial.forEach((m) => {
           if (m._id) messageIdsRef.current.add(String(m._id));
         });
@@ -135,7 +149,7 @@ const VideoCallChat = ({ mealId, isVisible, onUnreadMessage }) => {
 
     const appendMessage = (raw) => {
       const nm = normalizeMessage(raw);
-      if (!nm || !nm.content) return;
+      if (!nm || (!nm.content && nm.attachments.length === 0)) return;
       const mid = String(nm._id);
       if (messageIdsRef.current.has(mid)) return;
       messageIdsRef.current.add(mid);
@@ -178,26 +192,74 @@ const VideoCallChat = ({ mealId, isVisible, onUnreadMessage }) => {
     }
   }, [messages, isVisible]);
 
+  const handleSelectPhoto = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) return;
+    if (file.size > 5 * 1024 * 1024) return;
+    if (pendingPreview) URL.revokeObjectURL(pendingPreview);
+    setPendingFile(file);
+    setPendingPreview(URL.createObjectURL(file));
+    e.target.value = '';
+  };
+
+  const clearPendingPhoto = () => {
+    if (pendingPreview) URL.revokeObjectURL(pendingPreview);
+    setPendingFile(null);
+    setPendingPreview(null);
+  };
+
   const handleSend = useCallback(
-    (e) => {
+    async (e) => {
       if (e && e.preventDefault) e.preventDefault();
       const content = draft.trim();
-      if (!content || !chatId || !socketRef.current?.connected) return;
+      if ((!content && !pendingFile) || !chatId || !socketRef.current?.connected || uploading) {
+        return;
+      }
+
+      let attachments = [];
+      if (pendingFile) {
+        try {
+          setUploading(true);
+          const uploaded = await chatService.uploadChatImage(chatId, pendingFile);
+          if (uploaded?.url) {
+            attachments = [
+              {
+                type: 'image',
+                url: uploaded.url,
+                name: uploaded.name || pendingFile.name,
+                size: uploaded.size || pendingFile.size,
+              },
+            ];
+          }
+          clearPendingPhoto();
+        } catch (_) {
+          setUploading(false);
+          return;
+        } finally {
+          setUploading(false);
+        }
+      }
 
       setDraft('');
-      socketRef.current.emit('sendMessage', { chatId, content }, (ack) => {
-        if (ack?.success && ack?.message) {
-          const nm = normalizeMessage(ack.message);
-          if (nm && !messageIdsRef.current.has(String(nm._id))) {
-            messageIdsRef.current.add(String(nm._id));
-            setMessages((prev) => [...prev, nm]);
+      socketRef.current.emit(
+        'sendMessage',
+        { chatId, content: content || '📷 Foto', attachments },
+        (ack) => {
+          if (ack?.success && ack?.message) {
+            const nm = normalizeMessage(ack.message);
+            if (nm && !messageIdsRef.current.has(String(nm._id))) {
+              messageIdsRef.current.add(String(nm._id));
+              setMessages((prev) => [...prev, nm]);
+            }
+          } else if (ack?.error && content) {
+            setDraft(content);
           }
-        } else if (ack?.error) {
-          setDraft(content);
         }
-      });
+      );
     },
-    [draft, chatId]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [draft, pendingFile, chatId, uploading]
   );
 
   if (!isVisible) return null;
@@ -232,12 +294,15 @@ const VideoCallChat = ({ mealId, isVisible, onUnreadMessage }) => {
             </div>
             <h3 className={styles.chatPlaceholderTitle}>Chat del table2Talk</h3>
             <p className={styles.chatPlaceholderText}>
-              I messaggi inviati qui restano salvati nella chat del tuo t2t anche dopo la chiamata.
+              I messaggi e le foto inviati qui restano salvati nella chat del tuo t2t anche dopo la chiamata.
             </p>
           </div>
         ) : (
           messages.map((msg) => {
             const isMine = currentUserId && msg.senderId === currentUserId;
+            const showText =
+              msg.content &&
+              !(msg.attachments.length > 0 && msg.content.trim() === '📷 Foto');
             return (
               <div
                 key={msg._id}
@@ -251,7 +316,26 @@ const VideoCallChat = ({ mealId, isVisible, onUnreadMessage }) => {
                   {!isMine && (
                     <div className={styles.chatSender}>{msg.senderName}</div>
                   )}
-                  <div className={styles.chatText}>{msg.content}</div>
+                  {msg.attachments.length > 0 && (
+                    <div className={styles.chatAttachments}>
+                      {msg.attachments.map((att, idx) => (
+                        <a
+                          key={`${att.url}-${idx}`}
+                          href={att.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          <img
+                            src={att.url}
+                            alt={att.name || 'Foto in chat'}
+                            className={styles.chatAttachmentImg}
+                            loading="lazy"
+                          />
+                        </a>
+                      ))}
+                    </div>
+                  )}
+                  {showText && <div className={styles.chatText}>{msg.content}</div>}
                   <div className={styles.chatTime}>{formatTime(msg.createdAt)}</div>
                 </div>
               </div>
@@ -261,22 +345,61 @@ const VideoCallChat = ({ mealId, isVisible, onUnreadMessage }) => {
         <div ref={bottomRef} />
       </div>
 
+      {pendingPreview && (
+        <div className={styles.chatPendingWrap}>
+          <img
+            src={pendingPreview}
+            alt="Anteprima foto"
+            className={styles.chatPendingThumb}
+          />
+          <button
+            type="button"
+            className={styles.chatPendingRemove}
+            onClick={clearPendingPhoto}
+            aria-label="Rimuovi foto selezionata"
+          >
+            <X size={14} />
+          </button>
+        </div>
+      )}
+
       <form className={styles.chatInputBar} onSubmit={handleSend}>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          onChange={handleSelectPhoto}
+          style={{ display: 'none' }}
+        />
+        <button
+          type="button"
+          className={styles.chatPhotoBtn}
+          onClick={() => fileInputRef.current?.click()}
+          disabled={!connected || uploading}
+          aria-label="Allega una foto"
+          title="Allega una foto"
+        >
+          <ImagePlus size={18} />
+        </button>
         <input
           type="text"
           className={styles.chatInput}
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
           placeholder={
-            connected ? 'Scrivi un messaggio…' : 'Connessione alla chat…'
+            uploading
+              ? 'Caricamento foto…'
+              : connected
+              ? 'Scrivi un messaggio…'
+              : 'Connessione alla chat…'
           }
           aria-label="Scrivi un messaggio in chat"
-          disabled={!connected}
+          disabled={!connected || uploading}
         />
         <button
           type="submit"
           className={styles.chatSendBtn}
-          disabled={!draft.trim() || !connected}
+          disabled={(!draft.trim() && !pendingFile) || !connected || uploading}
           aria-label="Invia messaggio"
         >
           <Send size={16} />

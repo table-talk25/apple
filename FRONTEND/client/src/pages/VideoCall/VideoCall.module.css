@@ -859,6 +859,80 @@
   cursor: not-allowed;
 }
 
+.chatPhotoBtn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex: none;
+  transition: background 0.16s ease;
+}
+
+.chatPhotoBtn:hover:not(:disabled) {
+  background: var(--surface-hover);
+}
+
+.chatPhotoBtn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.chatAttachments {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.chatAttachmentImg {
+  display: block;
+  max-width: 100%;
+  max-height: 200px;
+  border-radius: 8px;
+  object-fit: contain;
+  background: rgba(0, 0, 0, 0.25);
+}
+
+.chatPendingWrap {
+  position: relative;
+  display: inline-flex;
+  align-self: flex-start;
+  padding: 4px;
+  border-radius: 10px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+}
+
+.chatPendingThumb {
+  width: 64px;
+  height: 64px;
+  object-fit: contain;
+  border-radius: 6px;
+  background: var(--bg);
+}
+
+.chatPendingRemove {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: none;
+  background: var(--danger);
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
 /* Participants list */
 .participantRow {
   display: flex;

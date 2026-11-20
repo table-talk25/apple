@@ -301,21 +301,16 @@ const MealDetailModal = ({
             )}
 
             {roleState === 'available' && (
-              <>
-                <Button
-                  variant="primary"
-                  onClick={handleJoin}
-                  disabled={pending}
-                  data-testid="modal-join-btn"
-                >
-                  {pending
-                    ? t('detail.joining', 'Iscrizione…')
-                    : t('detail.join', 'Partecipa')}
-                </Button>
-                <Button variant="ghost" onClick={handleChat}>
-                  {t('detail.message', 'Messaggia')}
-                </Button>
-              </>
+              <Button
+                variant="primary"
+                onClick={handleJoin}
+                disabled={pending}
+                data-testid="modal-join-btn"
+              >
+                {pending
+                  ? t('detail.joining', 'Iscrizione…')
+                  : t('detail.join', 'Partecipa')}
+              </Button>
             )}
           </div>
         )}

@@ -547,7 +547,10 @@ const VideoCall = () => {
     if (location.state?.fromMealDetail) {
       navigate(-1);
     } else {
-      navigate(mealId ? `/meals/${mealId}` : '/meals', { replace: true });
+      navigate(mealId ? `/meals/${mealId}` : '/meals', {
+        replace: true,
+        state: location.state?.from ? { from: location.state.from } : undefined,
+      });
     }
   }, [location.state, mealId, navigate]);
 

@@ -146,8 +146,8 @@ async function initializeSocket(server) {
     });
 
     // Invia messaggio — 20 msg / 10s per socketId
-    // Accetta campo opzionale replyTo: { _id, senderName, message }
-    socket.on('sendMessage', async ({ chatId, content, replyTo }, callback) => {
+    // Accetta campi opzionali replyTo e attachments (immagini)
+    socket.on('sendMessage', async ({ chatId, content, replyTo, attachments }, callback) => {
       try {
         if (!checkRateLimit(`msg:${socket.id}`, 20, 10000)) {
           if (callback) callback({ success: false, error: 'Stai inviando troppi messaggi, aspetta un momento.' });
@@ -167,12 +167,31 @@ async function initializeSocket(server) {
           return;
         }
 
+        const sanitizedAttachments = Array.isArray(attachments)
+          ? attachments
+              .filter(a => a && a.type === 'image' && typeof a.url === 'string' && /^https?:\/\//i.test(a.url))
+              .slice(0, 4)
+              .map(a => ({
+                type: 'image',
+                url: a.url,
+                name: typeof a.name === 'string' ? a.name.slice(0, 120) : 'image.jpg',
+                size: typeof a.size === 'number' ? a.size : undefined,
+              }))
+          : [];
+
+        const trimmedContent = typeof content === 'string' ? content.trim() : '';
+        const finalContent = trimmedContent || (sanitizedAttachments.length > 0 ? '📷 Foto' : '');
+        if (!finalContent) {
+          if (callback) callback({ success: false, error: 'Il messaggio non può essere vuoto.' });
+          return;
+        }
+
         // Sanitizza replyTo: accetta solo campi attesi, scarta il resto
         const sanitizedReplyTo = (replyTo && replyTo._id && replyTo.message)
           ? { _id: replyTo._id, senderName: replyTo.senderName || '', message: String(replyTo.message).substring(0, 200) }
           : null;
 
-        await chat.addMessage(socket.user._id, content.trim(), [], sanitizedReplyTo);
+        await chat.addMessage(socket.user._id, finalContent, sanitizedAttachments, sanitizedReplyTo);
         await chat.populate('messages.sender', 'nickname profileImage');
         const newMessage = chat.messages[chat.messages.length - 1];
 
@@ -180,7 +199,7 @@ async function initializeSocket(server) {
 
         const notificationService = require('./services/notificationService');
         if (typeof notificationService.handleChatNotification === 'function') {
-          await notificationService.handleChatNotification(chat, socket.user, content.trim(), newMessage);
+          await notificationService.handleChatNotification(chat, socket.user, finalContent, newMessage);
         }
 
         if (callback) callback({ success: true, message: newMessage });
