@@ -1,41 +1,11 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Navigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import dayjs from 'dayjs';
-import 'dayjs/locale/it';
-import 'dayjs/locale/en';
 import { Check } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import mealService from '../../services/mealService';
-import {
-  getHostAvatarUrl,
-  getMealCoverImageUrl,
-} from '../../constants/mealConstants';
-import { useMealTranslations } from '../../hooks/useMealTranslations';
-import { Button, CardT2t, EmptyState } from '../../components/ui';
+import { Button } from '../../components/ui';
 import styles from './HomePage.module.css';
-
-const extractCity = (location) => {
-  if (!location) return '';
-  if (typeof location === 'string') {
-    const trimmed = location.trim();
-    if (/^-?\d+(\.\d+)?\s*,\s*-?\d+(\.\d+)?$/.test(trimmed)) return '';
-    return trimmed.split(',')[0].trim();
-  }
-  if (typeof location === 'object') {
-    if (location.city) return String(location.city).trim();
-    if (location.address) return String(location.address).split(',')[0].trim();
-  }
-  return '';
-};
-
-const formatMealWhen = (dateValue, langCode) => {
-  if (!dateValue) return '';
-  const locale = (langCode || 'it').toLowerCase().startsWith('en') ? 'en' : 'it';
-  const parsed = dayjs(dateValue).locale(locale);
-  if (!parsed.isValid()) return '';
-  return parsed.format('DD MMM · HH:mm');
-};
 
 const computeLivePeopleCount = (meals) => {
   if (!Array.isArray(meals) || meals.length === 0) return 0;
@@ -62,19 +32,18 @@ const computeLivePeopleCount = (meals) => {
 };
 
 function HomePage() {
-  const { isAuthenticated, user } = useAuth();
-  const { t, i18n } = useTranslation();
-  const { getMealTypeText } = useMealTranslations();
-  const navigate = useNavigate();
+  const { isAuthenticated, loading: authLoading } = useAuth();
+  const { t } = useTranslation();
 
   const [meals, setMeals] = useState([]);
-  const [loadingMeals, setLoadingMeals] = useState(true);
+  const shouldRedirect = !authLoading && isAuthenticated;
 
+  // Fetch leggero usato solo per la pill "persone in linea"
   useEffect(() => {
+    if (shouldRedirect) return undefined;
     let cancelled = false;
 
-    const loadHomeMeals = async () => {
-      setLoadingMeals(true);
+    const loadLiveMeals = async () => {
       try {
         const response = await mealService.getMeals({
           status: 'upcoming,ongoing',
@@ -89,63 +58,17 @@ function HomePage() {
           : [];
         setMeals(list);
       } catch (_) {
-        if (!cancelled) {
-          setMeals([]);
-        }
-      } finally {
-        if (!cancelled) {
-          setLoadingMeals(false);
-        }
+        if (!cancelled) setMeals([]);
       }
     };
 
-    loadHomeMeals();
+    loadLiveMeals();
     return () => {
       cancelled = true;
     };
-  }, [isAuthenticated]);
+  }, [shouldRedirect]);
 
   const livePeopleCount = useMemo(() => computeLivePeopleCount(meals), [meals]);
-
-  const featuredMeals = useMemo(() => {
-    const active = meals.filter((meal) => {
-      if (!meal || !meal._id) return false;
-      const status = meal.virtualStatus || meal.status;
-      return status !== 'completed' && status !== 'cancelled';
-    });
-    return active.slice(0, 6);
-  }, [meals]);
-
-  const currentUserId = user?.id || user?._id || null;
-
-  const getCtaState = (meal) => {
-    const hostId =
-      typeof meal.host === 'object' ? meal.host?._id || meal.host?.id : meal.host;
-    if (currentUserId && hostId && String(hostId) === String(currentUserId)) {
-      return 'organizer';
-    }
-    const participants = Array.isArray(meal.participants) ? meal.participants : [];
-    const isJoined =
-      currentUserId &&
-      participants.some((p) => {
-        const pid = typeof p === 'object' ? p?._id || p?.id : p;
-        return pid && String(pid) === String(currentUserId);
-      });
-    if (isJoined) return 'joined';
-
-    const maxP = Number(meal.maxParticipants) || 0;
-    if (maxP > 0 && participants.length >= maxP) return 'full';
-
-    return 'available';
-  };
-
-  const handleScrollToTables = (e) => {
-    e.preventDefault();
-    const target = document.getElementById('home-tavoli');
-    if (target) {
-      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-  };
 
   const steps = [
     {
@@ -189,6 +112,11 @@ function HomePage() {
     t('home.trust.adultsOnly', 'Solo maggiorenni'),
   ];
 
+  // Utente già autenticato (anche via auto-login): va direttamente su Esplora
+  if (shouldRedirect) {
+    return <Navigate to="/meals" replace />;
+  }
+
   return (
     <div className={styles.home}>
       {/* --- HERO --- */}
@@ -210,34 +138,13 @@ function HomePage() {
         <p className={styles.heroSubtitle}>{t('home.heroSubtitle')}</p>
 
         <div className={styles.heroCta}>
-          {isAuthenticated ? (
-            <>
-              <Button variant="primary" to="/meals/create">
-                {t('home.createTableTalk')}
-              </Button>
-              <Button variant="ghost" to="/meals">
-                {t('home.exploreTableTalk')}
-              </Button>
-            </>
-          ) : (
-            <>
-              <Button variant="primary" to="/register">
-                {t('home.registerNow')}
-              </Button>
-              <Button variant="ghost" to="/login">
-                {t('home.login')}
-              </Button>
-            </>
-          )}
+          <Button variant="primary" to="/login">
+            {t('home.login', 'Accedi')}
+          </Button>
+          <Button variant="ghost" to="/register">
+            {t('home.registerNow', 'Registrati')}
+          </Button>
         </div>
-
-        <button
-          type="button"
-          className={styles.heroLink}
-          onClick={handleScrollToTables}
-        >
-          {t('home.seeTodayTables', 'Guarda i tavoli di oggi ↓')}
-        </button>
       </section>
 
       {/* --- STEP 01 / 02 / 03 --- */}
@@ -269,110 +176,18 @@ function HomePage() {
         </div>
       </section>
 
-      {/* --- TAVOLI DI OGGI --- */}
-      <section className={styles.discover} id="home-tavoli">
-        <div className={styles.secHead}>
-          <h2>{t('home.todayTables.title', 'Tavoli di oggi')}</h2>
-          <Link to="/meals" className={styles.seeAll}>
-            {t('home.todayTables.seeAll', 'Vedi tutti →')}
-          </Link>
-        </div>
-
-        {loadingMeals ? (
-          <div className={styles.grid} aria-busy="true">
-            {[0, 1, 2].map((idx) => (
-              <div key={idx} className={styles.skeletonCard} aria-hidden="true">
-                <div className={styles.skeletonCover} />
-                <div className={styles.skeletonBody}>
-                  <div className={styles.skeletonLineWide} />
-                  <div className={styles.skeletonLineMid} />
-                  <div className={styles.skeletonLineShort} />
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : featuredMeals.length > 0 ? (
-          <div className={styles.grid}>
-            {featuredMeals.map((meal) => {
-              const ctaState = getCtaState(meal);
-              const hostName =
-                meal.host?.nickname || meal.host?.name || '';
-              const coverSrc = meal.imageUrl
-                ? getMealCoverImageUrl(meal.imageUrl)
-                : '';
-              const hostAvatarSrc = meal.host?.profileImage
-                ? getHostAvatarUrl(meal.host.profileImage)
-                : '';
-              const seatsFilled = Array.isArray(meal.participants)
-                ? meal.participants.length
-                : 0;
-
-              return (
-                <CardT2t
-                  key={meal._id}
-                  title={meal.title}
-                  coverSrc={coverSrc}
-                  category={meal.type || 'dinner'}
-                  categoryLabel={getMealTypeText(meal.type || 'dinner')}
-                  format={meal.mealType || 'virtual'}
-                  hostName={hostName}
-                  hostAvatarSrc={hostAvatarSrc}
-                  hostVerified={Boolean(
-                    meal.host?.isVerified || meal.host?.isEmailVerified
-                  )}
-                  when={formatMealWhen(meal.date, i18n.language)}
-                  duration={meal.duration || 60}
-                  language={meal.language || ''}
-                  city={extractCity(meal.location)}
-                  tags={Array.isArray(meal.topics) ? meal.topics : []}
-                  seatsFilled={seatsFilled}
-                  seatsTotal={meal.maxParticipants || 0}
-                  ctaState={ctaState}
-                  onCardClick={() => navigate(`/meals/${meal._id}`, { state: { from: '/' } })}
-                  onActionClick={(state) => {
-                    if (state === 'organizer') {
-                      navigate('/my-meals');
-                    } else {
-                      navigate(`/meals/${meal._id}`, { state: { from: '/' } });
-                    }
-                  }}
-                />
-              );
-            })}
-          </div>
-        ) : (
-          <EmptyState
-            icon="🍽️"
-            title={t(
-              'home.todayTables.emptyTitle',
-              'Nessun tavolo in programma adesso'
-            )}
-            description={t(
-              'home.todayTables.emptyDescription',
-              'Apparecchia tu il primo tavolo e invita la community.'
-            )}
-            actionLabel={t('home.todayTables.emptyCta', 'Crea un t2t')}
-            actionTo="/meals/create"
-          />
-        )}
-      </section>
-
       {/* --- BANDA CTA FINALE --- */}
       <section className={styles.finalCta}>
         <h2>{t('home.cta.title')}</h2>
-        <p>
-          {isAuthenticated
-            ? t('home.cta.subtitleAuth', t('home.cta.subtitle'))
-            : t('home.cta.subtitle')}
-        </p>
-        <Button
-          variant="white"
-          to={isAuthenticated ? '/meals/create' : '/register'}
-        >
-          {isAuthenticated
-            ? t('home.cta.organizeTableTalk')
-            : t('home.cta.startNow')}
-        </Button>
+        <p>{t('home.cta.subtitle')}</p>
+        <div className={styles.finalCtaActions}>
+          <Button variant="white" to="/login">
+            {t('home.login', 'Accedi')}
+          </Button>
+          <Button variant="white" to="/register" className={styles.finalCtaOutline}>
+            {t('home.registerNow', 'Registrati')}
+          </Button>
+        </div>
       </section>
 
       {/* --- TRUST ROW --- */}
