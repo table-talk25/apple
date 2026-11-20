@@ -9,6 +9,13 @@ const BottomNav = () => {
   const { t } = useTranslation();
   const location = useLocation();
 
+  if (
+    location.pathname.startsWith('/chat') ||
+    location.pathname.startsWith('/video')
+  ) {
+    return null;
+  }
+
   const items = [
     { key: 'home', to: '/', label: t('nav.home', 'Home'), Icon: Home },
     { key: 'explore', to: '/meals', label: t('nav.explore', 'Esplora'), Icon: Search },

@@ -6,11 +6,14 @@ import { useNavigate } from 'react-router-dom';
 import { io } from 'socket.io-client';
 import {
   ArrowLeft,
+  Camera,
   CheckCheck,
   ImagePlus,
+  Mic,
   Reply,
   Send,
   SmilePlus,
+  Trash2,
   X,
 } from 'lucide-react';
 import { toast } from 'react-toastify';
@@ -273,8 +276,10 @@ const MessageRow = ({
   };
 
   const hasAttachments = Array.isArray(msg.attachments) && msg.attachments.length > 0;
-  const showText =
-    msg.content && !(hasAttachments && msg.content.trim() === '📷 Foto');
+  const trimmedMsg = (msg.content || '').trim();
+  const isAttachmentPlaceholder =
+    trimmedMsg === '📷 Foto' || trimmedMsg === '🎤 Messaggio vocale';
+  const showText = msg.content && !(hasAttachments && isAttachmentPlaceholder);
   const reactions = msg.reactions || [];
 
   const hasReacted = (emoji) => {
@@ -331,24 +336,41 @@ const MessageRow = ({
 
               {hasAttachments && (
                 <div className={styles.attachmentsWrap}>
-                  {msg.attachments.map((att, idx) => (
-                    <a
-                      key={`${att.url}-${idx}`}
-                      href={att.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className={styles.attachmentLink}
-                    >
-                      <img
-                        src={att.url}
-                        alt={att.name || 'Foto in chat'}
-                        loading="lazy"
-                        className={`${styles.attachmentImg} ${
-                          own ? styles.attachmentImgOwn : ''
-                        }`}
-                      />
-                    </a>
-                  ))}
+                  {msg.attachments.map((att, idx) =>
+                    att.type === 'audio' ? (
+                      <div key={`${att.url}-${idx}`} className={styles.audioWrap}>
+                        <audio
+                          controls
+                          preload="metadata"
+                          src={att.url}
+                          className={styles.audioPlayer}
+                        />
+                        {att.duration ? (
+                          <span className={styles.audioDuration}>
+                            🎤 {Math.floor(att.duration / 60)}:
+                            {String(att.duration % 60).padStart(2, '0')}
+                          </span>
+                        ) : null}
+                      </div>
+                    ) : (
+                      <a
+                        key={`${att.url}-${idx}`}
+                        href={att.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className={styles.attachmentLink}
+                      >
+                        <img
+                          src={att.url}
+                          alt={att.name || 'Foto in chat'}
+                          loading="lazy"
+                          className={`${styles.attachmentImg} ${
+                            own ? styles.attachmentImgOwn : ''
+                          }`}
+                        />
+                      </a>
+                    )
+                  )}
                 </div>
               )}
 
@@ -446,12 +468,20 @@ const DrawerChat = ({ chatId, onMetaLoaded }) => {
   const [uploading, setUploading] = useState(false);
   const [loading, setLoading] = useState(true);
   const [replyTo, setReplyTo] = useState(null);
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordingSeconds, setRecordingSeconds] = useState(0);
 
   const socketRef = useRef(null);
   const messagesEndRef = useRef(null);
   const messageIdsRef = useRef(new Set());
   const inputRef = useRef(null);
   const fileInputRef = useRef(null);
+  const cameraInputRef = useRef(null);
+  const mediaRecorderRef = useRef(null);
+  const audioChunksRef = useRef([]);
+  const recordingStreamRef = useRef(null);
+  const recordingTimerRef = useRef(null);
+  const recordingDurationRef = useRef(0);
 
   useEffect(() => {
     return () => {
@@ -459,11 +489,23 @@ const DrawerChat = ({ chatId, onMetaLoaded }) => {
     };
   }, [pendingPreview]);
 
+  useEffect(() => {
+    return () => {
+      if (recordingTimerRef.current) clearInterval(recordingTimerRef.current);
+      if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+        try { mediaRecorderRef.current.stop(); } catch (_) {}
+      }
+      if (recordingStreamRef.current) {
+        recordingStreamRef.current.getTracks().forEach((t) => t.stop());
+      }
+    };
+  }, []);
+
   const normalizeMessage = useCallback((msg) => {
     const sender = msg.sender || msg.user || {};
     const senderId = sender._id || msg.userId;
     const attachments = Array.isArray(msg.attachments)
-      ? msg.attachments.filter((a) => a && a.type === 'image' && a.url)
+      ? msg.attachments.filter((a) => a && (a.type === 'image' || a.type === 'audio') && a.url)
       : [];
     return {
       _id: msg._id || msg.id,
@@ -683,6 +725,10 @@ const DrawerChat = ({ chatId, onMetaLoaded }) => {
     setNewMessage('');
     setReplyTo(null);
 
+    await dispatchPayload(payload, content);
+  };
+
+  const dispatchPayload = async (payload, restoreContent = '') => {
     if (socketRef.current?.connected) {
       socketRef.current.emit('sendMessage', payload, (ack) => {
         if (ack?.success && ack?.message) {
@@ -693,7 +739,7 @@ const DrawerChat = ({ chatId, onMetaLoaded }) => {
           setMessages((prev) => [...prev, nm]);
         } else if (ack?.error) {
           toast.error(ack.error);
-          if (content) setNewMessage(content);
+          if (restoreContent) setNewMessage(restoreContent);
         }
       });
     } else {
@@ -709,8 +755,132 @@ const DrawerChat = ({ chatId, onMetaLoaded }) => {
         }
       } catch (err) {
         toast.error(err?.response?.data?.message || 'Errore nell’invio del messaggio.');
-        if (content) setNewMessage(content);
+        if (restoreContent) setNewMessage(restoreContent);
       }
+    }
+  };
+
+  const cleanupRecording = () => {
+    if (recordingTimerRef.current) {
+      clearInterval(recordingTimerRef.current);
+      recordingTimerRef.current = null;
+    }
+    if (recordingStreamRef.current) {
+      recordingStreamRef.current.getTracks().forEach((t) => t.stop());
+      recordingStreamRef.current = null;
+    }
+    mediaRecorderRef.current = null;
+    audioChunksRef.current = [];
+    recordingDurationRef.current = 0;
+    setIsRecording(false);
+    setRecordingSeconds(0);
+  };
+
+  const startRecording = async () => {
+    if (uploading || isRecording) return;
+    if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === 'undefined') {
+      toast.error('La registrazione vocale non è supportata su questo browser.');
+      return;
+    }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      recordingStreamRef.current = stream;
+      audioChunksRef.current = [];
+      recordingDurationRef.current = 0;
+
+      const mimeCandidates = [
+        'audio/webm;codecs=opus',
+        'audio/webm',
+        'audio/mp4',
+        'audio/ogg;codecs=opus',
+      ];
+      const chosenMime = mimeCandidates.find(
+        (m) => typeof MediaRecorder.isTypeSupported === 'function' && MediaRecorder.isTypeSupported(m)
+      );
+      const recorder = chosenMime
+        ? new MediaRecorder(stream, { mimeType: chosenMime })
+        : new MediaRecorder(stream);
+
+      recorder.ondataavailable = (ev) => {
+        if (ev.data && ev.data.size > 0) {
+          audioChunksRef.current.push(ev.data);
+        }
+      };
+
+      mediaRecorderRef.current = recorder;
+      recorder.start(250);
+      setIsRecording(true);
+      setRecordingSeconds(0);
+      recordingTimerRef.current = setInterval(() => {
+        recordingDurationRef.current += 1;
+        setRecordingSeconds(recordingDurationRef.current);
+      }, 1000);
+    } catch (_) {
+      toast.error('Consenti l’accesso al microfono per inviare messaggi vocali.');
+      cleanupRecording();
+    }
+  };
+
+  const cancelRecording = () => {
+    const recorder = mediaRecorderRef.current;
+    if (recorder && recorder.state !== 'inactive') {
+      recorder.onstop = null;
+      try { recorder.stop(); } catch (_) {}
+    }
+    cleanupRecording();
+  };
+
+  const stopAndSendRecording = () => {
+    const recorder = mediaRecorderRef.current;
+    if (!recorder || recorder.state === 'inactive') {
+      cleanupRecording();
+      return;
+    }
+    const durationSec = Math.max(1, recordingDurationRef.current);
+    const mimeType = recorder.mimeType || 'audio/webm';
+
+    recorder.onstop = async () => {
+      const chunks = [...audioChunksRef.current];
+      cleanupRecording();
+      if (chunks.length === 0) return;
+
+      const blob = new Blob(chunks, { type: mimeType });
+      if (blob.size === 0) return;
+
+      try {
+        setUploading(true);
+        const uploaded = await chatService.uploadChatAudio(chatId, blob, durationSec);
+        if (uploaded?.url) {
+          const payload = {
+            chatId,
+            content: '🎤 Messaggio vocale',
+            attachments: [
+              {
+                type: 'audio',
+                url: uploaded.url,
+                name: uploaded.name || 'voice.webm',
+                size: uploaded.size || blob.size,
+                duration: uploaded.duration || durationSec,
+              },
+            ],
+          };
+          if (replyTo) {
+            payload.replyTo = replyTo;
+            setReplyTo(null);
+          }
+          await dispatchPayload(payload);
+        }
+      } catch (err) {
+        toast.error(err?.response?.data?.message || 'Errore nell’invio del messaggio vocale.');
+      } finally {
+        setUploading(false);
+      }
+    };
+
+    try {
+      recorder.stop();
+    } catch (_) {
+      cleanupRecording();
     }
   };
 
@@ -831,48 +1001,115 @@ const DrawerChat = ({ chatId, onMetaLoaded }) => {
           onChange={handleSelectPhoto}
           style={{ display: 'none' }}
         />
-        <button
-          type="button"
-          onClick={() => fileInputRef.current?.click()}
-          disabled={uploading}
-          aria-label="Allega una foto"
-          title="Allega una foto"
-          className={styles.attachBtn}
-        >
-          <ImagePlus size={20} />
-        </button>
-
         <input
-          ref={inputRef}
-          type="text"
-          value={newMessage}
-          onChange={(e) => setNewMessage(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
-              e.preventDefault();
-              handleSend();
-            }
-            if (e.key === 'Escape') setReplyTo(null);
-          }}
-          placeholder={
-            uploading
-              ? 'Caricamento foto…'
-              : replyTo
-              ? `Rispondi a ${replyTo.senderName}…`
-              : 'Scrivi un messaggio…'
-          }
-          disabled={uploading}
-          className={styles.composerInput}
+          ref={cameraInputRef}
+          type="file"
+          accept="image/*"
+          capture="environment"
+          onChange={handleSelectPhoto}
+          style={{ display: 'none' }}
         />
 
-        <button
-          type="submit"
-          disabled={!canSend}
-          aria-label="Invia messaggio"
-          className={styles.sendBtn}
-        >
-          <Send size={18} />
-        </button>
+        {isRecording ? (
+          <>
+            <button
+              type="button"
+              onClick={cancelRecording}
+              aria-label="Annulla registrazione vocale"
+              title="Annulla"
+              className={styles.recordingCancelBtn}
+            >
+              <Trash2 size={18} />
+            </button>
+            <div className={styles.recordingBar}>
+              <span className={styles.recordingDot} aria-hidden="true" />
+              <span className={styles.recordingTimer}>
+                {Math.floor(recordingSeconds / 60)}:
+                {String(recordingSeconds % 60).padStart(2, '0')}
+              </span>
+              <span className={styles.recordingLabel}>Registrazione vocale…</span>
+            </div>
+            <button
+              type="button"
+              onClick={stopAndSendRecording}
+              disabled={uploading}
+              aria-label="Invia messaggio vocale"
+              title="Invia messaggio vocale"
+              className={styles.sendBtn}
+            >
+              <Send size={18} />
+            </button>
+          </>
+        ) : (
+          <>
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploading}
+              aria-label="Scegli foto dalla galleria"
+              title="Foto dalla galleria"
+              className={styles.attachBtn}
+            >
+              <ImagePlus size={19} />
+            </button>
+
+            <button
+              type="button"
+              onClick={() => cameraInputRef.current?.click()}
+              disabled={uploading}
+              aria-label="Scatta una foto"
+              title="Scatta una foto"
+              className={styles.attachBtn}
+            >
+              <Camera size={19} />
+            </button>
+
+            <input
+              ref={inputRef}
+              type="text"
+              value={newMessage}
+              onChange={(e) => setNewMessage(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  handleSend();
+                }
+                if (e.key === 'Escape') setReplyTo(null);
+              }}
+              placeholder={
+                uploading
+                  ? 'Caricamento in corso…'
+                  : replyTo
+                  ? `Rispondi a ${replyTo.senderName}…`
+                  : 'Scrivi un messaggio…'
+              }
+              disabled={uploading}
+              className={styles.composerInput}
+            />
+
+            {canSend ? (
+              <button
+                type="submit"
+                disabled={!canSend}
+                aria-label="Invia messaggio"
+                className={styles.sendBtn}
+              >
+                <Send size={18} />
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={startRecording}
+                disabled={uploading}
+                aria-label="Registra messaggio vocale"
+                title="Registra messaggio vocale"
+                className={styles.sendBtn}
+              >
+                <Mic size={19} />
+              </button>
+            )}
+          </>
+        )}
       </form>
     </div>
   );

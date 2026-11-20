@@ -110,6 +110,24 @@ const uploadChatImage = async (chatId, file) => {
   return response.data?.data || response.data;
 };
 
+const uploadChatAudio = async (chatId, audioBlob, durationSeconds) => {
+  const normalizedId = normalizeChatId(chatId);
+  const ext = (audioBlob?.type || '').includes('mp4') ? 'm4a' : 'webm';
+  const file = new File([audioBlob], `voice_${Date.now()}.${ext}`, {
+    type: audioBlob?.type || 'audio/webm',
+  });
+  const formData = new FormData();
+  formData.append('audio', file);
+  if (durationSeconds) {
+    formData.append('duration', String(Math.max(1, Math.round(durationSeconds))));
+  }
+  const response = await apiClient.post(`/chats/${normalizedId}/upload-audio`, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+    suppressErrorAlert: true,
+  });
+  return response.data?.data || response.data;
+};
+
 const sendMessage = async (chatId, payload) => {
   const normalizedId = normalizeChatId(chatId);
   const response = await apiClient.post(`/chats/${normalizedId}/messages`, payload, {
@@ -128,6 +146,7 @@ const chatService = {
   markAsRead,
   getChatStatus,
   uploadChatImage,
+  uploadChatAudio,
   sendMessage,
 };
 
