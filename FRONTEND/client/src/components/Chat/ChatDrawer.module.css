@@ -335,7 +335,8 @@
 .messagesCanvas {
   flex: 1;
   overflow-y: auto;
-  padding: 16px 14px 18px;
+  overflow-x: hidden;
+  padding: 16px 12px 18px;
   display: flex;
   flex-direction: column;
   gap: 2px;
@@ -425,6 +426,7 @@
   align-items: center;
   gap: 6px;
   max-width: 100%;
+  min-width: 0;
 }
 
 .bubbleWrapOwn {
@@ -433,13 +435,15 @@
 
 .bubble {
   position: relative;
-  min-width: 84px;
+  min-width: 72px;
   max-width: 100%;
+  box-sizing: border-box;
   padding: 10px 14px 8px;
   border-radius: 18px;
   font-size: 0.95rem;
   line-height: 1.48;
   word-break: break-word;
+  overflow-wrap: anywhere;
   box-shadow: 0 1px 3px rgba(36, 40, 36, 0.09);
 }
 
@@ -825,40 +829,66 @@
   cursor: not-allowed;
 }
 
-.audioWrap {
+.photoMenuWrap {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.photoMenu {
+  position: absolute;
+  bottom: calc(100% + 10px);
+  left: 0;
+  min-width: 176px;
+  background: var(--tt-surface, #ffffff);
+  border: 1px solid var(--tt-border, #ddd5ca);
+  border-radius: 14px;
+  box-shadow: 0 10px 28px rgba(36, 40, 36, 0.16);
+  padding: 6px;
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  min-width: 215px;
-  max-width: 270px;
+  gap: 2px;
+  z-index: 40;
+  animation: fadeIn 0.14s ease;
 }
 
-.audioPlayer {
+.photoMenuItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
   width: 100%;
-  height: 36px;
-  border-radius: 18px;
+  border: none;
+  background: transparent;
+  color: var(--tt-text, #242824);
+  font-size: 0.9rem;
+  font-weight: 500;
+  padding: 10px 12px;
+  border-radius: 10px;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.14s ease, color 0.14s ease;
 }
 
-.audioDuration {
-  font-size: 0.72rem;
-  opacity: 0.8;
+.photoMenuItem:hover {
+  background: rgba(181, 71, 53, 0.08);
+  color: var(--tt-primary, #b54735);
 }
 
 .recordingBar {
   flex: 1;
+  min-width: 0;
   display: flex;
   align-items: center;
   gap: 10px;
   height: 44px;
   padding: 0 14px;
   border-radius: 999px;
-  background: rgba(181, 71, 53, 0.09);
-  border: 1.5px solid rgba(181, 71, 53, 0.35);
+  background: rgba(181, 71, 53, 0.08);
+  border: 1.5px solid rgba(181, 71, 53, 0.32);
 }
 
 .recordingDot {
-  width: 10px;
-  height: 10px;
+  width: 9px;
+  height: 9px;
   border-radius: 50%;
   background: #d93025;
   flex-shrink: 0;
@@ -866,19 +896,31 @@
 }
 
 .recordingTimer {
-  font-size: 0.92rem;
+  font-size: 0.88rem;
   font-weight: 700;
   color: var(--tt-primary, #b54735);
   font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
 }
 
-.recordingLabel {
-  font-size: 0.84rem;
-  color: var(--tt-text-muted, #5c625c);
+.recordingWave {
   flex: 1;
-  white-space: nowrap;
+  min-width: 0;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2px;
   overflow: hidden;
-  text-overflow: ellipsis;
+}
+
+.recordingWaveBar {
+  flex: 1;
+  min-width: 2px;
+  max-width: 3.5px;
+  border-radius: 999px;
+  background: var(--tt-primary, #b54735);
+  transition: height 0.07s linear;
 }
 
 .recordingCancelBtn {
@@ -899,6 +941,21 @@
 .recordingCancelBtn:hover {
   background: rgba(217, 48, 37, 0.18);
   transform: scale(1.04);
+}
+
+@media (hover: none), (max-width: 768px) {
+  .hoverActions {
+    display: none;
+  }
+
+  .bubbleCol {
+    max-width: 82%;
+  }
+
+  .composer {
+    padding: 8px 10px max(10px, env(safe-area-inset-bottom));
+    gap: 6px;
+  }
 }
 
 @keyframes pulseRec {

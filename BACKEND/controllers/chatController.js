@@ -53,7 +53,7 @@ const getChatById = asyncHandler(async (req, res, next) => {
         return next(new ErrorResponse(`ID chat non valido`, 400));
     }
 
-    const chat = await Chat.findById(chatId);
+    const chat = await Chat.findById(chatId).populate('mealId', 'title date host imageUrl coverImage');
 
     if (!chat) {
         return next(new ErrorResponse(`Chat non trovata`, 404));
