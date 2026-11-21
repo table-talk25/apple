@@ -5,6 +5,7 @@ const Meal = require('../models/Meal');
 const Chat = require('../models/Chat');
 const User = require('../models/User');
 const admin = require('firebase-admin');
+const { getTribeNotifications, markTribeNotificationsRead } = require('./tribeController');
 
 /**
  * @desc    Ottenere le notifiche per l'utente loggato (pasti + messaggi chat)
@@ -74,8 +75,16 @@ exports.getMyNotifications = asyncHandler(async (req, res, next) => {
     });
   }
 
+  // 3. Notifiche tribù (inviti ricevuti in attesa + inviti accettati)
+  let tribeNotifications = [];
+  try {
+    tribeNotifications = await getTribeNotifications(userId);
+  } catch (err) {
+    console.error('[Notifications] Errore notifiche tribù:', err.message);
+  }
+
   // Uniamo e ordiniamo strettamente dalla più recente alla più vecchia
-  let userNotifications = [...mealNotifications, ...chatNotifications].sort(
+  let userNotifications = [...mealNotifications, ...chatNotifications, ...tribeNotifications].sort(
     (a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()
   );
 
@@ -106,6 +115,7 @@ exports.markNotificationsAsRead = asyncHandler(async (req, res, next) => {
       { participants: req.user.id, status: { $ne: 'closed' } },
       { $addToSet: { 'messages.$[].read': req.user.id } }
     ),
+    markTribeNotificationsRead(req.user.id),
   ]);
 
   res.status(200).json({ success: true, message: 'Notifiche segnate come lette' });

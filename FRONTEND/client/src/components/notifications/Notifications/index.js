@@ -2,8 +2,10 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import ReactDOM from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { toast } from 'react-toastify';
 import { useNotifications } from '../../../contexts/NotificationContext';
 import { useChatDrawer } from '../../../contexts/ChatDrawerContext';
+import tribeService from '../../../services/tribeService';
 import styles from './Notifications.module.css';
 
 const Notifications = () => {
@@ -14,11 +16,13 @@ const Notifications = () => {
     unreadCount,
     loading,
     markAllAsRead,
+    fetchNotifications,
     setNavigate,
     setOpenChat,
   } = useNotifications();
   const { openChat } = useChatDrawer();
   const [isOpen, setIsOpen] = useState(false);
+  const [busyInviteId, setBusyInviteId] = useState(null);
   const [menuStyle, setMenuStyle] = useState({});
   const containerRef = useRef(null);
   const dropdownRef = useRef(null);
@@ -105,6 +109,25 @@ const Notifications = () => {
       openChat(notif.chatId);
     } else if (notif.mealId) {
       navigate(`/meals/${notif.mealId}`);
+    }
+  };
+
+  const handleTribeInvite = async (inviteId, action) => {
+    setBusyInviteId(inviteId);
+    try {
+      if (action === 'accept') {
+        await tribeService.acceptInvite(inviteId);
+        toast.success(t('tribe.accepted', 'Ora fa parte della tua tribù!'));
+      } else {
+        await tribeService.declineInvite(inviteId);
+      }
+    } catch (err) {
+      toast.error(
+        err?.response?.data?.message || t('tribe.actionError', 'Operazione non riuscita.')
+      );
+    } finally {
+      setBusyInviteId(null);
+      if (fetchNotifications) fetchNotifications(true);
     }
   };
 

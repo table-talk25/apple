@@ -2,11 +2,12 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'react-toastify';
-import { Camera as CameraIcon, Video, MapPin, Trash2, Share2 } from 'lucide-react';
+import { Camera as CameraIcon, Video, MapPin, Trash2, Share2, UserPlus } from 'lucide-react';
 import { Capacitor } from '@capacitor/core';
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
 
 import mealService from '../../../services/mealService';
+import tribeService from '../../../services/tribeService';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useChatDrawer } from '../../../contexts/ChatDrawerContext';
 import {
@@ -217,6 +218,27 @@ const MealDetailPage = () => {
   const currentUserId = getUserId(user);
   const hostId = getMealHostId(meal);
   const pending = isPending(meal._id);
+
+  const canInviteToTribe = (targetId) =>
+    isAuthenticated &&
+    (isHost || isParticipant) &&
+    targetId &&
+    String(targetId) !== String(currentUserId);
+
+  const handleInviteToTribe = async (targetId) => {
+    try {
+      await tribeService.sendInvite(targetId, meal._id);
+      toast.success(t('tribe.inviteSent', 'Invito inviato!'));
+    } catch (err) {
+      const status = err?.response?.status;
+      const msg =
+        err?.response?.data?.message ||
+        (status === 409
+          ? t('tribe.inviteDuplicate', 'Invito già inviato o utente già nella tua tribù.')
+          : t('tribe.inviteError', 'Impossibile inviare l’invito.'));
+      toast.error(msg);
+    }
+  };
 
   const mealDate = new Date(meal.date);
   const now = new Date();
@@ -640,14 +662,27 @@ const MealDetailPage = () => {
                   {t('detail.participantsTitle', 'Partecipanti')} ({seatsFilled})
                 </h2>
                 <div className={styles.avatarList}>
-                  <button
-                    type="button"
-                    className={styles.participantBtn}
-                    title={`Host: ${hostName}`}
-                    onClick={() => goToUserProfile(hostId)}
-                  >
-                    <Avatar src={hostAvatarSrc} name={hostName} size="md" tone="primary" />
-                  </button>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                    <button
+                      type="button"
+                      className={styles.participantBtn}
+                      title={`Host: ${hostName}`}
+                      onClick={() => goToUserProfile(hostId)}
+                    >
+                      <Avatar src={hostAvatarSrc} name={hostName} size="md" tone="primary" />
+                    </button>
+                    {canInviteToTribe(hostId) && (
+                      <button
+                        type="button"
+                        title={t('tribe.inviteToTribe', 'Invita nella tribù')}
+                        aria-label={t('tribe.inviteToTribe', 'Invita nella tribù')}
+                        onClick={() => handleInviteToTribe(hostId)}
+                        style={{ border: 'none', background: 'transparent', cursor: 'pointer', fontSize: 16 }}
+                      >
+                        <UserPlus size={16} />
+                      </button>
+                    )}
+                  </span>
 
                   {Array.isArray(meal.participants) &&
                     meal.participants.map((p) => {
@@ -660,15 +695,30 @@ const MealDetailPage = () => {
                           ? getHostAvatarUrl(p.profileImage)
                           : '';
                       return (
-                        <button
-                          type="button"
+                        <span
                           key={pid}
-                          className={styles.participantBtn}
-                          title={pName}
-                          onClick={() => goToUserProfile(pid)}
+                          style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}
                         >
-                          <Avatar src={pImg} name={pName} size="md" tone="accent" />
-                        </button>
+                          <button
+                            type="button"
+                            className={styles.participantBtn}
+                            title={pName}
+                            onClick={() => goToUserProfile(pid)}
+                          >
+                            <Avatar src={pImg} name={pName} size="md" tone="accent" />
+                          </button>
+                          {canInviteToTribe(pid) && (
+                            <button
+                              type="button"
+                              title={t('tribe.inviteToTribe', 'Invita nella tribù')}
+                              aria-label={t('tribe.inviteToTribe', 'Invita nella tribù')}
+                              onClick={() => handleInviteToTribe(pid)}
+                              style={{ border: 'none', background: 'transparent', cursor: 'pointer' }}
+                            >
+                              <UserPlus size={16} />
+                            </button>
+                          )}
+                        </span>
                       );
                     })}
                 </div>

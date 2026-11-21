@@ -20,6 +20,10 @@ export const isRouteActive = (key, pathname = '/') => {
       return path === '/map' || path.startsWith('/map/');
     case 'mine':
       return path === '/my-meals' || path === '/meals/history';
+    case 'tribe':
+      return path === '/tribe';
+    case 'surprise':
+      return path === '/surprise';
     case 'profile':
       return path.startsWith('/impostazioni/profilo');
     default:

@@ -1,0 +1,116 @@
+.page {
+  width: 100%;
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 26px 0 40px;
+  color: var(--tt-text);
+  box-sizing: border-box;
+}
+
+.headTitleRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.headIcon {
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background-color: var(--tt-primary);
+  color: var(--tt-on-primary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pageHead h1 {
+  font-family: var(--tt-font-heading);
+  font-size: 1.55rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.pageHead p {
+  color: var(--tt-text-muted);
+  font-size: 0.94rem;
+  margin: 4px 0 0;
+}
+
+.loadingBox {
+  padding: 36px 0;
+  text-align: center;
+  color: var(--tt-text-muted);
+}
+
+.sections {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  margin-top: 22px;
+}
+
+.sectionTitle {
+  font-family: var(--tt-font-heading);
+  font-size: 1.05rem;
+  font-weight: 700;
+  margin: 0 0 12px;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background-color: var(--tt-surface);
+  border: 1px solid var(--tt-border);
+  border-radius: var(--tt-radius-md);
+  padding: 12px 14px;
+  flex-wrap: wrap;
+}
+
+.userLink {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-decoration: none;
+  color: inherit;
+  min-width: 0;
+  flex: 1;
+}
+
+.userInfo {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.userName {
+  font-weight: 600;
+  font-size: 0.96rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.userMeta {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.8rem;
+  color: var(--tt-text-muted);
+}
+
+.rowActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}

@@ -9,6 +9,7 @@ function registerApiRoutes(app) {
   app.use('/api/notifications', require('./notifications'));
   app.use('/api/users', require('./users'));
   app.use('/api/invitations', require('./invitations'));
+  app.use('/api/tribe', require('./tribe'));
   app.use('/api/join-requests', require('./joinRequests'));
   app.use('/api/reports', require('./reports'));
   app.use('/api/analytics', require('./analytics'));
