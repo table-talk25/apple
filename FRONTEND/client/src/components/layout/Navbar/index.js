@@ -78,10 +78,18 @@ const Navbar = () => {
           <Button
             variant="primary"
             size="sm"
-            to="/meals/create"
+            to="/tribe"
             className={styles.createBtn}
           >
-            ＋ {t('nav.create', 'Crea')}
+            {t('nav.tribe', 'Tribù')}
+          </Button>
+          <Button
+            variant="primary"
+            size="sm"
+            to="/surprise"
+            className={styles.createBtn}
+          >
+            {t('nav.surprise', 'Sorpresa')}
           </Button>
 
           <div className={styles.langWrap}>

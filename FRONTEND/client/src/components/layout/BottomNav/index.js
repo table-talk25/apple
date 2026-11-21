@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Home, Search, Plus, MapPin, CalendarDays } from 'lucide-react';
+import { Home, Search, Users, Shuffle, MapPin, CalendarDays } from 'lucide-react';
 import { useAuth } from '../../../contexts/AuthContext';
 import { isRouteActive } from '../navRoutes';
 import styles from './BottomNav.module.css';
@@ -23,13 +23,8 @@ const BottomNav = () => {
       ? []
       : [{ key: 'home', to: '/', label: t('nav.home', 'Home'), Icon: Home }]),
     { key: 'explore', to: '/explore', label: t('nav.explore', 'Esplora'), Icon: Search },
-    {
-      key: 'create',
-      to: '/meals/create',
-      label: t('nav.create', 'Crea'),
-      Icon: Plus,
-      isCenter: true,
-    },
+    { key: 'tribe', to: '/tribe', label: t('nav.tribe', 'Tribù'), Icon: Users },
+    { key: 'surprise', to: '/surprise', label: t('nav.surprise', 'Sorpresa'), Icon: Shuffle },
     { key: 'map', to: '/map', label: t('nav.map', 'Mappa'), Icon: MapPin },
     {
       key: 'mine',

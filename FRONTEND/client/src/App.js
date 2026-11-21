@@ -39,6 +39,9 @@ const ChatListPage = lazy(() => import('./pages/ChatListPage'));
 const MapPage = lazy(() => import('./pages/MapPage'));
 const PrivacyPolicyPage = lazy(() => import('./pages/PrivacyPolicyPage'));
 const TermsAndConditionsPage = lazy(() => import('./pages/TermsAndConditionsPage'));
+// New pages for Tribe and Surprise
+const TribePage = lazy(() => import('./pages/Tribe'));
+const SurpriseTalkPage = lazy(() => import('./pages/SurpriseTalk'));
 
 const App = () => {
   console.log('--- L\'APP SI STA CARICANDO ---');
@@ -142,6 +145,8 @@ const App = () => {
                 <Route path="meals/edit/:id" element={<PrivateRoute requireCompleteProfile={true}><EditMealPage /></PrivateRoute>} />
                 <Route path="meals/:mealId" element={<PrivateRoute requireCompleteProfile={true}><MealDetailPage /></PrivateRoute>} />
 
+                <Route path="tribe" element={<PrivateRoute requireCompleteProfile={true}><TribePage /></PrivateRoute>} />
+                <Route path="surprise" element={<PrivateRoute requireCompleteProfile={true}><SurpriseTalkPage /></PrivateRoute>} />
                 {/* Rotte Auth, Legali e 404 — tutte nello shell unificato */}
                 <Route path="login" element={<LoginPage />} />
                 <Route path="register" element={<RegisterPage />} />
