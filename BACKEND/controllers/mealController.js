@@ -260,7 +260,8 @@ const buildGetMealsQuery = async (queryParams, user) => {
     query.$or = [
       { isPublic: true },
       { host: user.id },
-      { participants: user.id }
+      { participants: user.id },
+      { invitedUsers: user.id }
     ];
   } else {
     query.isPublic = true;
@@ -329,7 +330,8 @@ exports.getMeal = asyncHandler(async (req, res, next) => {
       const pid = (p && p._id) ? p._id.toString() : p.toString();
       return pid === userId;
     });
-    if (!isHost && !isParticipant) {
+    const isInvited = userId && Array.isArray(meal.invitedUsers) && meal.invitedUsers.some(u => u.toString() === userId);
+    if (!isHost && !isParticipant && !isInvited) {
       return next(new ErrorResponse(`Pasto non trovato`, 404));
     }
   }
@@ -361,8 +363,30 @@ exports.createMeal = asyncHandler(async (req, res, next) => {
     } catch (error) { mealData.location = { address: String(req.body.location) }; }
   }
 
+  // t2t privato con invitati scelti dalla tribù
+  let invitedUserIds = [];
+  if (req.body.invitedUserIds) {
+    let raw = req.body.invitedUserIds;
+    try { if (typeof raw === 'string') raw = JSON.parse(raw); } catch (_) { raw = [raw]; }
+    if (!Array.isArray(raw)) raw = [raw];
+    const unique = [...new Set(raw.map(String))];
+    const tribeIds = await require('./tribeController').getTribeMemberIds(req.user.id);
+    invitedUserIds = unique.filter(id => tribeIds.includes(id));
+    if (invitedUserIds.length !== unique.length) {
+      return next(new ErrorResponse('Puoi invitare solo membri della tua tribù', 403));
+    }
+  }
+  delete mealData.invitedUserIds;
+  if (invitedUserIds.length > 0) {
+    mealData.isPublic = false;
+    mealData.invitedUsers = invitedUserIds;
+  }
+
   try {
     const meal = await mealCreationService.createFullMeal(mealData, req.user, req.file);
+    if (invitedUserIds.length > 0) {
+      await require('./tribeController').notifyMealInvitees(meal, req.user, invitedUserIds);
+    }
     const populatedMeal = await Meal.findById(meal._id).populate('host', 'nickname profileImage');
     await sendMealNotifications(meal, 'new_meal_nearby');
     res.status(201).json({ success: true, data: populatedMeal });
@@ -493,7 +517,8 @@ exports.joinMeal = asyncHandler(async (req, res, next) => {
   const hostId = (meal.host && meal.host._id) ? meal.host._id.toString() : meal.host.toString();
   if (hostId === req.user.id) return next(new ErrorResponse('Sei l\'host', 400));
   if (meal.participants.some(p => p.toString() === req.user.id)) return next(new ErrorResponse('Già iscritto', 400));
-  if (meal.isPublic === false) {
+  const isInvitedUser = Array.isArray(meal.invitedUsers) && meal.invitedUsers.some(u => u.toString() === req.user.id);
+  if (meal.isPublic === false && !isInvitedUser) {
     return next(new ErrorResponse('Questo TableTalk® è privato. Puoi unirti solo su invito dell\'host.', 403));
   }
   
@@ -584,6 +609,7 @@ exports.searchMeals = asyncHandler(async (req, res, next) => {
         { isPublic: true },
         { host: req.user.id },
         { participants: req.user.id },
+        { invitedUsers: req.user.id },
       ],
     });
 

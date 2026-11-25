@@ -7,7 +7,7 @@ import styles from './ExplorePage.module.css';
 /**
  * Hub "Esplora": tre macro-sezioni.
  * 1. Mangiamo assieme  → lista t2t disponibili / crea un t2t (attiva)
- * 2. Tribù             → tavoli privati su invito tra amici (prossimamente)
+ * 2. Tribù             → tavoli privati su invito tra amici (attiva)
  * 3. Talk a sorpresa   → 1 a 1 casuale filtrato per lingua/interessi (prossimamente)
  */
 function ExplorePage() {
@@ -47,8 +47,7 @@ function ExplorePage() {
         </section>
 
         {/* --- 2. TRIBÙ --- */}
-        <section className={`${styles.card} ${styles.cardSoon}`}>
-          <span className={styles.soonBadge}>{soon}</span>
+        <section className={`${styles.card} ${styles.cardPrimary}`}>
           <div className={styles.cardIcon} aria-hidden="true">
             <Users size={26} strokeWidth={2} />
           </div>
@@ -63,6 +62,11 @@ function ExplorePage() {
             <div className={styles.metaRow}>
               <Lock size={14} aria-hidden="true" />
               <span>{t('exploreHub.tribe.meta', 'Solo su invito')}</span>
+            </div>
+            <div className={styles.cardActions}>
+              <Button variant="primary" to="/tribe">
+                {t('exploreHub.tribe.cta', 'Vai alla tua tribù')}
+              </Button>
             </div>
           </div>
         </section>

@@ -841,7 +841,8 @@
     "organizedMeals": "Organized t2t",
     "noOrganizedMeals": "This user hasn't organized any t2t yet.",
     "recentParticipations": "Recent Participations",
-    "noParticipations": "This user hasn't participated in any t2t."
+    "noParticipations": "This user hasn't participated in any t2t.",
+    "privateMeal": "Create private t2t"
   },
   "videoCall": {
     "connecting": "Connecting...",
@@ -1010,7 +1011,9 @@
     "locationHint": "Enter an address or pick a spot on the map.",
     "locationSelected": "Selected location",
     "estimatedCostLabel": "Estimated cost (€)",
-    "estimatedCostHint": "Average cost per person (optional)"
+    "estimatedCostHint": "Average cost per person (optional)",
+    "privateToggle": "🔒 Private t2t: invite people from my tribe",
+    "privateHint": "Only the selected people will see the t2t and can join."
   },
   "mine": {
     "title": "My t2t",
@@ -1117,12 +1120,56 @@
     "tribe": {
       "title": "Tribe",
       "description": "Your dinner with friends: private, invite-only tables with your own group.",
-      "meta": "Invite only"
+      "meta": "Invite only",
+      "cta": "Go to your tribe"
     },
     "surprise": {
       "title": "Surprise talk",
       "description": "A one-to-one video chat with a random person, matched by language and interests.",
       "meta": "Verified adults only · report and block"
+    }
+  },
+  "tribe": {
+    "lists": {
+      "nameRequired": "Give the list a name.",
+      "saved": "List saved.",
+      "title": "Your lists",
+      "empty": "No members",
+      "edit": "Edit list",
+      "delete": "Delete list",
+      "namePlaceholder": "List name (e.g. Five-a-side friends)",
+      "save": "Save list",
+      "new": "New list"
+    },
+    "actionError": "Operation failed.",
+    "loadError": "Unable to load your tribe.",
+    "acceptedToast": "New member added to your tribe!",
+    "declinedToast": "Invitation declined.",
+    "cancelledToast": "Invitation cancelled.",
+    "removedToast": "Removed from your tribe.",
+    "title": "Your tribe",
+    "subtitle": "People you met at t2ts to share private tables with friends.",
+    "privateMeal": "Create private t2t",
+    "receivedTitle": "Invitations received",
+    "metAt": "Met at:",
+    "accept": "Accept",
+    "decline": "Decline",
+    "membersTitle": "Members",
+    "privateMealShort": "private t2t",
+    "remove": "Remove",
+    "emptyTitle": "Your tribe is still empty",
+    "emptyDescription": "Join a t2t and invite the participants to your tribe from the table page.",
+    "exploreCta": "See available t2ts",
+    "cancel": "Cancel",
+    "sentTitle": "Pending invitations",
+    "pending": "Waiting for a reply",
+    "picker": {
+      "selected": "{{count}} selected",
+      "placeholder": "Choose from your tribe",
+      "search": "Search a contact...",
+      "selectAll": "Select all",
+      "noMembers": "Your tribe is still empty.",
+      "noResults": "No contact found."
     }
   }
 }

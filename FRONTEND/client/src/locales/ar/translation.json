@@ -806,7 +806,8 @@
     "organizedMeals": "t2t المنظمة",
     "noOrganizedMeals": "لم ينظم هذا المستخدم أي t2t بعد.",
     "recentParticipations": "المشاركات الأخيرة",
-    "noParticipations": "لم يشارك هذا المستخدم في أي t2t."
+    "noParticipations": "لم يشارك هذا المستخدم في أي t2t.",
+    "privateMeal": "إنشاء t2t خاص"
   },
   "videoCall": {
     "connecting": "جاري الاتصال...",
@@ -854,6 +855,75 @@
     },
     "modal": {
       "close": "Close"
+    }
+  },
+  "tribe": {
+    "lists": {
+      "nameRequired": "أعطِ القائمة اسمًا.",
+      "saved": "تم حفظ القائمة.",
+      "title": "قوائمك",
+      "empty": "لا يوجد أعضاء",
+      "edit": "تعديل القائمة",
+      "delete": "حذف القائمة",
+      "namePlaceholder": "اسم القائمة (مثل: أصدقاء كرة القدم)",
+      "save": "حفظ القائمة",
+      "new": "قائمة جديدة"
+    },
+    "actionError": "فشلت العملية.",
+    "loadError": "تعذّر تحميل قبيلتك.",
+    "acceptedToast": "تمت إضافة عضو جديد إلى قبيلتك!",
+    "declinedToast": "تم رفض الدعوة.",
+    "cancelledToast": "تم إلغاء الدعوة.",
+    "removedToast": "تمت الإزالة من قبيلتك.",
+    "title": "قبيلتك",
+    "subtitle": "الأشخاص الذين التقيت بهم في t2t لمشاركة طاولات خاصة مع الأصدقاء.",
+    "privateMeal": "إنشاء t2t خاص",
+    "receivedTitle": "الدعوات المستلمة",
+    "metAt": "التقيتما في:",
+    "accept": "قبول",
+    "decline": "رفض",
+    "membersTitle": "الأعضاء",
+    "privateMealShort": "t2t خاص",
+    "remove": "إزالة",
+    "emptyTitle": "قبيلتك فارغة بعد",
+    "emptyDescription": "شارك في t2t وادعُ المشاركين إلى قبيلتك من صفحة الطاولة.",
+    "exploreCta": "عرض t2t المتاحة",
+    "cancel": "إلغاء",
+    "sentTitle": "دعوات قيد الانتظار",
+    "pending": "في انتظار الرد",
+    "picker": {
+      "selected": "تم اختيار {{count}}",
+      "placeholder": "اختر من قبيلتك",
+      "search": "ابحث عن جهة اتصال...",
+      "selectAll": "تحديد الكل",
+      "noMembers": "قبيلتك فارغة بعد.",
+      "noResults": "لم يتم العثور على جهة اتصال."
+    }
+  },
+  "create": {
+    "privateToggle": "🔒 t2t خاص: ادعُ أشخاصًا من قبيلتي",
+    "privateHint": "فقط الأشخاص المحددون سيرون الـ t2t ويمكنهم الانضمام."
+  },
+  "exploreHub": {
+    "title": "استكشف",
+    "subtitle": "اختر كيف تريد الجلوس إلى الطاولة اليوم.",
+    "comingSoon": "قريبًا",
+    "together": {
+      "title": "لنأكل معًا",
+      "description": "انضم إلى t2t مجدول أو جهّز طاولة جديدة مفتوحة للمجتمع.",
+      "browse": "عرض t2t المتاحة",
+      "create": "إنشاء t2t"
+    },
+    "tribe": {
+      "title": "القبيلة",
+      "description": "وجبتك بين الأصدقاء: طاولات خاصة بدعوة فقط مع مجموعتك الثابتة.",
+      "meta": "بدعوة فقط",
+      "cta": "اذهب إلى قبيلتك"
+    },
+    "surprise": {
+      "title": "حديث مفاجئ",
+      "description": "لقاء مرئي وجهًا لوجه مع شخص عشوائي يتم اختياره حسب اللغة والاهتمامات.",
+      "meta": "للبالغين الموثّقين فقط · أبلغ واحظر"
     }
   }
 }

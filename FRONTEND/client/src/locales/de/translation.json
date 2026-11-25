@@ -788,7 +788,8 @@
     "organizedMeals": "Organisierte t2t",
     "noOrganizedMeals": "Dieser Benutzer hat noch keine t2t organisiert.",
     "recentParticipations": "Aktuelle Teilnahmen",
-    "noParticipations": "Dieser Benutzer hat an keinem t2t teilgenommen."
+    "noParticipations": "Dieser Benutzer hat an keinem t2t teilgenommen.",
+    "privateMeal": "Privaten t2t erstellen"
   },
   "videoCall": {
     "connecting": "Verbinde...",
@@ -836,6 +837,75 @@
     },
     "modal": {
       "close": "Close"
+    }
+  },
+  "tribe": {
+    "lists": {
+      "nameRequired": "Gib der Liste einen Namen.",
+      "saved": "Liste gespeichert.",
+      "title": "Deine Listen",
+      "empty": "Keine Mitglieder",
+      "edit": "Liste bearbeiten",
+      "delete": "Liste löschen",
+      "namePlaceholder": "Listenname (z. B. Fußballfreunde)",
+      "save": "Liste speichern",
+      "new": "Neue Liste"
+    },
+    "actionError": "Vorgang fehlgeschlagen.",
+    "loadError": "Dein Stamm konnte nicht geladen werden.",
+    "acceptedToast": "Neues Mitglied zu deinem Stamm hinzugefügt!",
+    "declinedToast": "Einladung abgelehnt.",
+    "cancelledToast": "Einladung zurückgezogen.",
+    "removedToast": "Aus deinem Stamm entfernt.",
+    "title": "Dein Stamm",
+    "subtitle": "Menschen, die du bei t2ts kennengelernt hast, um private Tische mit Freunden zu teilen.",
+    "privateMeal": "Privaten t2t erstellen",
+    "receivedTitle": "Erhaltene Einladungen",
+    "metAt": "Kennengelernt bei:",
+    "accept": "Annehmen",
+    "decline": "Ablehnen",
+    "membersTitle": "Mitglieder",
+    "privateMealShort": "privater t2t",
+    "remove": "Entfernen",
+    "emptyTitle": "Dein Stamm ist noch leer",
+    "emptyDescription": "Nimm an einem t2t teil und lade die Teilnehmer von der Tischseite in deinen Stamm ein.",
+    "exploreCta": "Verfügbare t2ts ansehen",
+    "cancel": "Abbrechen",
+    "sentTitle": "Ausstehende Einladungen",
+    "pending": "Warten auf Antwort",
+    "picker": {
+      "selected": "{{count}} ausgewählt",
+      "placeholder": "Aus deinem Stamm wählen",
+      "search": "Kontakt suchen...",
+      "selectAll": "Alle auswählen",
+      "noMembers": "Dein Stamm ist noch leer.",
+      "noResults": "Kein Kontakt gefunden."
+    }
+  },
+  "create": {
+    "privateToggle": "🔒 Privater t2t: Leute aus meinem Stamm einladen",
+    "privateHint": "Nur die ausgewählten Personen sehen den t2t und können beitreten."
+  },
+  "exploreHub": {
+    "title": "Entdecken",
+    "subtitle": "Wähle, wie du heute am Tisch sitzen möchtest.",
+    "comingSoon": "Demnächst",
+    "together": {
+      "title": "Gemeinsam essen",
+      "description": "Nimm an einem geplanten t2t teil oder deck selbst einen neuen Tisch für die Community.",
+      "browse": "Verfügbare t2ts ansehen",
+      "create": "t2t erstellen"
+    },
+    "tribe": {
+      "title": "Stamm",
+      "description": "Dein Essen unter Freunden: private Tische, nur auf Einladung, mit deiner festen Gruppe.",
+      "meta": "Nur auf Einladung",
+      "cta": "Zu deinem Stamm"
+    },
+    "surprise": {
+      "title": "Überraschungs-Talk",
+      "description": "Ein Video-Gespräch unter vier Augen mit einer zufälligen Person, ausgewählt nach Sprache und Interessen.",
+      "meta": "Nur verifizierte Erwachsene · melden und blockieren"
     }
   }
 }

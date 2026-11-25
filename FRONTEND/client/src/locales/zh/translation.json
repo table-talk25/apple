@@ -789,7 +789,8 @@
     "organizedMeals": "组织的t2t",
     "noOrganizedMeals": "此用户尚未组织任何t2t。",
     "recentParticipations": "最近参与",
-    "noParticipations": "此用户尚未参与任何t2t。"
+    "noParticipations": "此用户尚未参与任何t2t。",
+    "privateMeal": "创建私人 t2t"
   },
   "videoCall": {
     "connecting": "连接中...",
@@ -837,6 +838,75 @@
     },
     "modal": {
       "close": "Close"
+    }
+  },
+  "tribe": {
+    "lists": {
+      "nameRequired": "请为列表命名。",
+      "saved": "列表已保存。",
+      "title": "你的列表",
+      "empty": "暂无成员",
+      "edit": "编辑列表",
+      "delete": "删除列表",
+      "namePlaceholder": "列表名称（例如：足球好友）",
+      "save": "保存列表",
+      "new": "新建列表"
+    },
+    "actionError": "操作失败。",
+    "loadError": "无法加载你的部落。",
+    "acceptedToast": "新成员已加入你的部落！",
+    "declinedToast": "已拒绝邀请。",
+    "cancelledToast": "已取消邀请。",
+    "removedToast": "已从你的部落移除。",
+    "title": "你的部落",
+    "subtitle": "你在 t2t 中认识的人，可与他们共享朋友间的私人饭局。",
+    "privateMeal": "创建私人 t2t",
+    "receivedTitle": "收到的邀请",
+    "metAt": "认识于：",
+    "accept": "接受",
+    "decline": "拒绝",
+    "membersTitle": "成员",
+    "privateMealShort": "私人 t2t",
+    "remove": "移除",
+    "emptyTitle": "你的部落还是空的",
+    "emptyDescription": "参加一个 t2t，并在饭局页面邀请参与者加入你的部落。",
+    "exploreCta": "查看可参加的 t2t",
+    "cancel": "取消",
+    "sentTitle": "待处理的邀请",
+    "pending": "等待回复",
+    "picker": {
+      "selected": "已选择 {{count}} 人",
+      "placeholder": "从你的部落中选择",
+      "search": "搜索联系人...",
+      "selectAll": "全选",
+      "noMembers": "你的部落还是空的。",
+      "noResults": "未找到联系人。"
+    }
+  },
+  "create": {
+    "privateToggle": "🔒 私人 t2t：邀请我部落的成员",
+    "privateHint": "只有选中的人才能看到该 t2t 并加入。"
+  },
+  "exploreHub": {
+    "title": "探索",
+    "subtitle": "选择你今天想怎样入座。",
+    "comingSoon": "即将推出",
+    "together": {
+      "title": "一起吃饭",
+      "description": "加入已安排的 t2t，或为社区开设一个新饭局。",
+      "browse": "查看可参加的 t2t",
+      "create": "创建 t2t"
+    },
+    "tribe": {
+      "title": "部落",
+      "description": "朋友间的饭局：仅限受邀的私人饭局，和你的固定小团体一起。",
+      "meta": "仅限受邀",
+      "cta": "前往你的部落"
+    },
+    "surprise": {
+      "title": "惊喜聊天",
+      "description": "与按语言和兴趣随机选出的人进行一对一视频交流。",
+      "meta": "仅限已验证的成年人 · 可举报和屏蔽"
     }
   }
 }

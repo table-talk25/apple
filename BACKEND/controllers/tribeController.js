@@ -3,6 +3,7 @@ const asyncHandler = require('express-async-handler');
 const mongoose = require('mongoose');
 const TribeInvite = require('../models/TribeInvite');
 const User = require('../models/User');
+const TribeList = require('../models/TribeList');
 const Meal = require('../models/Meal');
 const ErrorResponse = require('../utils/errorResponse');
 
@@ -290,3 +291,106 @@ exports.markTribeNotificationsRead = async (userId) => {
     ),
   ]);
 };
+
+
+/** ID (stringhe) dei membri accettati nella tribù di userId */
+exports.getTribeMemberIds = async (userId) => {
+  const accepted = await TribeInvite.find({
+    status: 'accepted',
+    $or: [{ fromUser: userId }, { toUser: userId }],
+  }).lean();
+  return accepted.map((inv) => (idOf(inv.fromUser) === String(userId) ? idOf(inv.toUser) : idOf(inv.fromUser)));
+};
+
+/** Notifica i membri invitati a un t2t privato */
+exports.notifyMealInvitees = async (meal, host, inviteeIds) => {
+  const hostName = host.nickname || 'Qualcuno';
+  const message = `🔒 ${hostName} ti ha invitato a un t2t privato: ${meal.title}`;
+  await Promise.all(
+    inviteeIds.map((uid) =>
+      notifyUser(
+        String(uid),
+        { message, type: 'private_meal_invite', data: { mealId: meal._id.toString() } },
+        { title: 'Invito a un t2t privato', body: message, data: { type: 'private_meal_invite', mealId: meal._id.toString() } }
+      )
+    )
+  );
+};
+
+/* ---------------- Liste personalizzate ---------------- */
+
+const validateListMembers = async (me, memberIds) => {
+  if (!Array.isArray(memberIds)) return [];
+  const tribeIds = await exports.getTribeMemberIds(me);
+  return [...new Set(memberIds.map(String))].filter((id) => tribeIds.includes(id));
+};
+
+const cleanName = (n) => (typeof n === 'string' ? n.trim().slice(0, 40) : '');
+
+/** @route GET /api/tribe/lists */
+exports.getLists = asyncHandler(async (req, res) => {
+  const tribeIds = await exports.getTribeMemberIds(req.user.id);
+  const lists = await TribeList.find({ owner: req.user.id }).sort({ name: 1 }).lean();
+  // Esclude al volo chi non è più in tribù
+  const data = lists.map((l) => ({
+    ...l,
+    members: (l.members || []).map(String).filter((id) => tribeIds.includes(id)),
+  }));
+  res.status(200).json({ success: true, data });
+});
+
+/** @route POST /api/tribe/lists  body { name, members } */
+exports.createList = asyncHandler(async (req, res, next) => {
+  const name = cleanName(req.body?.name);
+  if (!name) return next(new ErrorResponse('Dai un nome alla lista', 400));
+  const members = await validateListMembers(req.user.id, req.body?.members);
+  try {
+    const list = await TribeList.create({ owner: req.user.id, name, members });
+    res.status(201).json({ success: true, data: list });
+  } catch (err) {
+    if (err.code === 11000) return next(new ErrorResponse('Hai già una lista con questo nome', 409));
+    throw err;
+  }
+});
+
+const loadOwnList = async (req, next) => {
+  if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+    next(new ErrorResponse('Lista non valida', 400));
+    return null;
+  }
+  const list = await TribeList.findById(req.params.id);
+  if (!list || idOf(list.owner) !== req.user.id) {
+    next(new ErrorResponse('Lista non trovata', 404));
+    return null;
+  }
+  return list;
+};
+
+/** @route PUT /api/tribe/lists/:id  body { name?, members? } */
+exports.updateList = asyncHandler(async (req, res, next) => {
+  const list = await loadOwnList(req, next);
+  if (!list) return undefined;
+  if (req.body?.name !== undefined) {
+    const name = cleanName(req.body.name);
+    if (!name) return next(new ErrorResponse('Dai un nome alla lista', 400));
+    list.name = name;
+  }
+  if (req.body?.members !== undefined) {
+    list.members = await validateListMembers(req.user.id, req.body.members);
+  }
+  try {
+    await list.save();
+  } catch (err) {
+    if (err.code === 11000) return next(new ErrorResponse('Hai già una lista con questo nome', 409));
+    throw err;
+  }
+  return res.status(200).json({ success: true, data: list });
+});
+
+/** @route DELETE /api/tribe/lists/:id */
+exports.deleteList = asyncHandler(async (req, res, next) => {
+  const list = await loadOwnList(req, next);
+  if (!list) return undefined;
+  await list.deleteOne();
+  return res.status(200).json({ success: true });
+});

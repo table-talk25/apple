@@ -788,7 +788,8 @@
     "organizedMeals": "t2t Organizados",
     "noOrganizedMeals": "Este usuario aún no ha organizado ningún t2t.",
     "recentParticipations": "Participaciones Recientes",
-    "noParticipations": "Este usuario no ha participado en ningún t2t."
+    "noParticipations": "Este usuario no ha participado en ningún t2t.",
+    "privateMeal": "Crear t2t privado"
   },
   "videoCall": {
     "connecting": "Conectando...",
@@ -836,6 +837,75 @@
     },
     "modal": {
       "close": "Close"
+    }
+  },
+  "tribe": {
+    "lists": {
+      "nameRequired": "Ponle un nombre a la lista.",
+      "saved": "Lista guardada.",
+      "title": "Tus listas",
+      "empty": "Sin miembros",
+      "edit": "Editar lista",
+      "delete": "Eliminar lista",
+      "namePlaceholder": "Nombre de la lista (p. ej. Amigos del fútbol)",
+      "save": "Guardar lista",
+      "new": "Nueva lista"
+    },
+    "actionError": "La operación ha fallado.",
+    "loadError": "No se pudo cargar tu tribu.",
+    "acceptedToast": "¡Nuevo miembro añadido a tu tribu!",
+    "declinedToast": "Invitación rechazada.",
+    "cancelledToast": "Invitación cancelada.",
+    "removedToast": "Eliminado de tu tribu.",
+    "title": "Tu tribu",
+    "subtitle": "Personas que conociste en los t2t para compartir mesas privadas con amigos.",
+    "privateMeal": "Crear t2t privado",
+    "receivedTitle": "Invitaciones recibidas",
+    "metAt": "Conocido en:",
+    "accept": "Aceptar",
+    "decline": "Rechazar",
+    "membersTitle": "Miembros",
+    "privateMealShort": "t2t privado",
+    "remove": "Quitar",
+    "emptyTitle": "Tu tribu aún está vacía",
+    "emptyDescription": "Participa en un t2t e invita a los participantes a tu tribu desde la ficha de la mesa.",
+    "exploreCta": "Ver t2t disponibles",
+    "cancel": "Cancelar",
+    "sentTitle": "Invitaciones pendientes",
+    "pending": "Esperando respuesta",
+    "picker": {
+      "selected": "{{count}} seleccionados",
+      "placeholder": "Elige de tu tribu",
+      "search": "Buscar un contacto...",
+      "selectAll": "Seleccionar todos",
+      "noMembers": "Tu tribu aún está vacía.",
+      "noResults": "No se encontró ningún contacto."
+    }
+  },
+  "create": {
+    "privateToggle": "🔒 t2t privado: invita a gente de mi tribu",
+    "privateHint": "Solo las personas seleccionadas verán el t2t y podrán unirse."
+  },
+  "exploreHub": {
+    "title": "Explorar",
+    "subtitle": "Elige cómo quieres sentarte a la mesa hoy.",
+    "comingSoon": "Próximamente",
+    "together": {
+      "title": "Comamos juntos",
+      "description": "Únete a un t2t ya programado o prepara tú una nueva mesa abierta a la comunidad.",
+      "browse": "Ver t2t disponibles",
+      "create": "Crear un t2t"
+    },
+    "tribe": {
+      "title": "Tribu",
+      "description": "Tu comida entre amigos: mesas privadas, solo por invitación, con tu grupo fijo.",
+      "meta": "Solo por invitación",
+      "cta": "Ir a tu tribu"
+    },
+    "surprise": {
+      "title": "Charla sorpresa",
+      "description": "Un cara a cara por vídeo con una persona al azar, elegida por idioma e intereses.",
+      "meta": "Solo adultos verificados · denuncia y bloquea"
     }
   }
 }

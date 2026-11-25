@@ -842,7 +842,8 @@
     "organizedMeals": "主催したt2t",
     "noOrganizedMeals": "このユーザーはまだt2tを主催していません。",
     "recentParticipations": "最近の参加",
-    "noParticipations": "このユーザーはまだt2tに参加していません。"
+    "noParticipations": "このユーザーはまだt2tに参加していません。",
+    "privateMeal": "プライベートt2tを作成"
   },
   "videoCall": {
     "connecting": "接続中...",
@@ -890,6 +891,75 @@
     },
     "modal": {
       "close": "Close"
+    }
+  },
+  "tribe": {
+    "lists": {
+      "nameRequired": "リストに名前を付けてください。",
+      "saved": "リストを保存しました。",
+      "title": "あなたのリスト",
+      "empty": "メンバーなし",
+      "edit": "リストを編集",
+      "delete": "リストを削除",
+      "namePlaceholder": "リスト名（例：フットサル仲間）",
+      "save": "リストを保存",
+      "new": "新しいリスト"
+    },
+    "actionError": "操作に失敗しました。",
+    "loadError": "トライブを読み込めませんでした。",
+    "acceptedToast": "トライブに新しいメンバーが追加されました！",
+    "declinedToast": "招待を辞退しました。",
+    "cancelledToast": "招待をキャンセルしました。",
+    "removedToast": "トライブから削除しました。",
+    "title": "あなたのトライブ",
+    "subtitle": "t2tで出会った人たちと、友達同士のプライベートなテーブルを楽しめます。",
+    "privateMeal": "プライベートt2tを作成",
+    "receivedTitle": "受け取った招待",
+    "metAt": "出会った場所：",
+    "accept": "承認",
+    "decline": "辞退",
+    "membersTitle": "メンバー",
+    "privateMealShort": "プライベートt2t",
+    "remove": "削除",
+    "emptyTitle": "トライブはまだ空です",
+    "emptyDescription": "t2tに参加し、テーブルのページから参加者をトライブに招待しましょう。",
+    "exploreCta": "参加可能なt2tを見る",
+    "cancel": "キャンセル",
+    "sentTitle": "保留中の招待",
+    "pending": "返信待ち",
+    "picker": {
+      "selected": "{{count}}人を選択中",
+      "placeholder": "トライブから選ぶ",
+      "search": "連絡先を検索...",
+      "selectAll": "すべて選択",
+      "noMembers": "トライブはまだ空です。",
+      "noResults": "連絡先が見つかりません。"
+    }
+  },
+  "create": {
+    "privateToggle": "🔒 プライベートt2t：トライブの人を招待",
+    "privateHint": "選択した人だけがt2tを見て参加できます。"
+  },
+  "exploreHub": {
+    "title": "さがす",
+    "subtitle": "今日はどんなふうに食卓を囲みますか？",
+    "comingSoon": "近日公開",
+    "together": {
+      "title": "いっしょに食べよう",
+      "description": "予定されているt2tに参加するか、コミュニティに開かれた新しいテーブルを用意しましょう。",
+      "browse": "参加可能なt2tを見る",
+      "create": "t2tを作成"
+    },
+    "tribe": {
+      "title": "トライブ",
+      "description": "友達と楽しむ食事：招待制のプライベートなテーブルを、いつものメンバーと。",
+      "meta": "招待制",
+      "cta": "トライブを開く"
+    },
+    "surprise": {
+      "title": "サプライズトーク",
+      "description": "言語や興味で選ばれたランダムな相手との1対1のビデオ会話。",
+      "meta": "確認済みの成人のみ・通報とブロックが可能"
     }
   }
 }

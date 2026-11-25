@@ -114,3 +114,33 @@
   gap: 8px;
   flex-wrap: wrap;
 }
+
+.headActions {
+  margin-top: 14px;
+}
+
+.editor {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 12px;
+  padding: 12px;
+  background-color: var(--tt-surface);
+  border: 1px solid var(--tt-border);
+  border-radius: var(--tt-radius-md);
+}
+
+.input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px 12px;
+  border: 1px solid var(--tt-border);
+  border-radius: var(--tt-radius-md);
+  background: transparent;
+  color: var(--tt-text);
+  font: inherit;
+}
+
+.newListBtn {
+  margin-top: 12px;
+}

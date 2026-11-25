@@ -95,6 +95,11 @@ const MealSchema = new mongoose.Schema({
     type: mongoose.Schema.ObjectId,
     ref: 'User'
   }],
+  // Membri della tribù invitati a un t2t privato (possono vederlo e unirsi)
+  invitedUsers: [{
+    type: mongoose.Schema.ObjectId,
+    ref: 'User'
+  }],
   participantsCount: {
     type: Number,
     default: 0

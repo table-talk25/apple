@@ -1,10 +1,11 @@
 // File: src/pages/PublicProfile/index.js (Versione con Layout Finale)
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../contexts/AuthContext';
 import profileService from '../../services/profileService';
+import tribeService from '../../services/tribeService';
 import styles from './PublicProfilePage.module.css';
 import { Container, Row, Col, Card, Spinner, Alert, Button, Badge, Accordion } from 'react-bootstrap';
 import { FaBirthdayCake, FaMapMarkerAlt, FaHeart, FaUtensils, FaStar, FaComments, FaGlobe } from 'react-icons/fa';
@@ -23,6 +24,19 @@ const PublicProfilePage = () => {
     const [error, setError] = useState('');
     const [isBlocked, setIsBlocked] = useState(false);
     const isOwner = loggedInUser?._id === userId;
+    const navigate = useNavigate();
+    const [inMyTribe, setInMyTribe] = useState(false);
+
+    useEffect(() => {
+        if (isOwner) return;
+        let cancelled = false;
+        tribeService.getMyTribe()
+            .then((tribe) => {
+                if (!cancelled) setInMyTribe((tribe.members || []).some((m) => String(m._id) === String(userId)));
+            })
+            .catch(() => {});
+        return () => { cancelled = true; };
+    }, [userId, isOwner]);
 
     const fetchPublicProfile = useCallback(async () => {
         console.log('👤 [PublicProfile] Fetching profile for userId:', userId);
@@ -97,11 +111,22 @@ const PublicProfilePage = () => {
                                     {t('publicProfile.editProfile')}
                                 </Button>
                             ) : (
+                                <>
+                                {inMyTribe && (
+                                    <Button
+                                        variant="primary"
+                                        size="sm"
+                                        onClick={() => navigate('/meals/create', { state: { inviteeIds: [userId] } })}
+                                    >
+                                        🔒 {t('publicProfile.privateMeal', 'Crea t2t privato')}
+                                    </Button>
+                                )}
                                 <BlockUserMenu 
                                     userId={userId}
                                     reportedUser={profile}
                                     onBlockChange={handleBlockChange}
                                 />
+                                </>
                             )}
                         </div>
                     </div>

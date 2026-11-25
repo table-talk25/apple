@@ -785,7 +785,8 @@
     "organizedMeals": "t2t Organizzati",
     "noOrganizedMeals": "Questo utente non ha ancora organizzato t2t.",
     "recentParticipations": "Partecipazioni Recenti",
-    "noParticipations": "Questo utente non ha partecipato a nessun t2t."
+    "noParticipations": "Questo utente non ha partecipato a nessun t2t.",
+    "privateMeal": "Crea t2t privato"
   },
   "test": {
     "title": "Test di Connessione Socket",
@@ -1072,7 +1073,9 @@
     "locationHint": "Inserisci l’indirizzo o seleziona il punto sulla mappa.",
     "locationSelected": "Posizione selezionata",
     "estimatedCostLabel": "Costo stimato (€)",
-    "estimatedCostHint": "Costo medio a persona (facoltativo)"
+    "estimatedCostHint": "Costo medio a persona (facoltativo)",
+    "privateToggle": "🔒 t2t privato: invita persone della mia tribù",
+    "privateHint": "Solo le persone selezionate vedranno il t2t e potranno unirsi."
   },
   "mine": {
     "title": "I miei t2t",
@@ -1179,12 +1182,56 @@
     "tribe": {
       "title": "Tribù",
       "description": "La tua mangiata tra amici: tavoli privati, solo su invito, con il tuo gruppo fisso.",
-      "meta": "Solo su invito"
+      "meta": "Solo su invito",
+      "cta": "Vai alla tua tribù"
     },
     "surprise": {
       "title": "Talk a sorpresa",
       "description": "Un faccia a faccia in video con una persona a caso, scelta per lingua e interessi.",
       "meta": "Solo maggiorenni verificati · segnala e blocca"
+    }
+  },
+  "tribe": {
+    "lists": {
+      "nameRequired": "Dai un nome alla lista.",
+      "saved": "Lista salvata.",
+      "title": "Le tue liste",
+      "empty": "Nessun membro",
+      "edit": "Modifica lista",
+      "delete": "Elimina lista",
+      "namePlaceholder": "Nome della lista (es. Amici del calcetto)",
+      "save": "Salva lista",
+      "new": "Nuova lista"
+    },
+    "actionError": "Operazione non riuscita.",
+    "loadError": "Impossibile caricare la tua tribù.",
+    "acceptedToast": "Nuovo membro aggiunto alla tua tribù!",
+    "declinedToast": "Invito rifiutato.",
+    "cancelledToast": "Invito annullato.",
+    "removedToast": "Rimosso dalla tribù.",
+    "title": "La tua tribù",
+    "subtitle": "Le persone conosciute nei t2t con cui condividere tavoli privati tra amici.",
+    "privateMeal": "Crea t2t privato",
+    "receivedTitle": "Inviti ricevuti",
+    "metAt": "Conosciuto a:",
+    "accept": "Accetta",
+    "decline": "Rifiuta",
+    "membersTitle": "Membri",
+    "privateMealShort": "t2t privato",
+    "remove": "Rimuovi",
+    "emptyTitle": "La tua tribù è ancora vuota",
+    "emptyDescription": "Partecipa a un t2t e invita i partecipanti nella tua tribù dalla scheda del tavolo.",
+    "exploreCta": "Vedi i t2t disponibili",
+    "cancel": "Annulla",
+    "sentTitle": "Inviti in attesa",
+    "pending": "In attesa di risposta",
+    "picker": {
+      "selected": "{{count}} selezionati",
+      "placeholder": "Scegli dalla tua tribù",
+      "search": "Cerca un contatto...",
+      "selectAll": "Seleziona tutti",
+      "noMembers": "La tua tribù è ancora vuota.",
+      "noResults": "Nessun contatto trovato."
     }
   }
 }

@@ -1,11 +1,12 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'react-toastify';
-import { Users, Check, X, UserMinus, Clock } from 'lucide-react';
+import { Users, Check, X, UserMinus, Clock, Lock, Plus, Pencil, Trash2 } from 'lucide-react';
 import tribeService from '../../services/tribeService';
 import { getHostAvatarUrl } from '../../constants/mealConstants';
 import { Avatar, Button, EmptyState } from '../../components/ui';
+import MemberPicker from '../../components/tribe/MemberPicker';
 import styles from './TribePage.module.css';
 
 function TribePage() {
@@ -13,6 +14,48 @@ function TribePage() {
   const [data, setData] = useState({ members: [], received: [], sent: [] });
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState(null);
+  const navigate = useNavigate();
+  const [lists, setLists] = useState([]);
+  // { id: string|null, name: string, members: string[] } quando si crea/modifica una lista
+  const [editor, setEditor] = useState(null);
+
+  const startPrivateMeal = (inviteeIds = []) =>
+    navigate('/meals/create', { state: { inviteeIds } });
+
+  const loadLists = useCallback(async () => {
+    try {
+      setLists(await tribeService.getLists());
+    } catch (_) {
+      /* le liste sono accessorie: nessun toast bloccante */
+    }
+  }, []);
+
+  const handleSaveList = async () => {
+    if (!editor) return;
+    const name = editor.name.trim();
+    if (!name) {
+      toast.error(t('tribe.lists.nameRequired', 'Dai un nome alla lista.'));
+      return;
+    }
+    try {
+      if (editor.id) await tribeService.updateList(editor.id, { name, members: editor.members });
+      else await tribeService.createList(name, editor.members);
+      toast.success(t('tribe.lists.saved', 'Lista salvata.'));
+      setEditor(null);
+      await loadLists();
+    } catch (err) {
+      toast.error(err?.response?.data?.message || t('tribe.actionError', 'Operazione non riuscita.'));
+    }
+  };
+
+  const handleDeleteList = async (id) => {
+    try {
+      await tribeService.deleteList(id);
+      await loadLists();
+    } catch (err) {
+      toast.error(err?.response?.data?.message || t('tribe.actionError', 'Operazione non riuscita.'));
+    }
+  };
 
   const loadTribe = useCallback(async () => {
     try {
@@ -31,7 +74,8 @@ function TribePage() {
 
   useEffect(() => {
     loadTribe();
-  }, [loadTribe]);
+    loadLists();
+  }, [loadTribe, loadLists]);
 
   const handleAccept = async (inviteId) => {
     setBusyId(inviteId);
@@ -102,6 +146,14 @@ function TribePage() {
             </p>
           </div>
         </div>
+        {data.members.length > 0 && (
+          <div className={styles.headActions}>
+            <Button variant="primary" size="sm" onClick={() => startPrivateMeal([])}>
+              <Lock size={15} aria-hidden="true" />
+              <span>{t('tribe.privateMeal', 'Crea t2t privato')}</span>
+            </Button>
+          </div>
+        )}
       </header>
 
       {loading ? (
@@ -181,6 +233,14 @@ function TribePage() {
                       </Link>
                       <div className={styles.rowActions}>
                         <Button
+                          variant="primary"
+                          size="sm"
+                          onClick={() => startPrivateMeal([member._id])}
+                        >
+                          <Lock size={15} aria-hidden="true" />
+                          <span>{t('tribe.privateMealShort', 't2t privato')}</span>
+                        </Button>
+                        <Button
                           variant="ghost"
                           size="sm"
                           disabled={isBusy}
@@ -208,6 +268,95 @@ function TribePage() {
               />
             )}
           </section>
+
+          {/* Liste personalizzate */}
+          {data.members.length > 0 && (
+            <section className={styles.section}>
+              <h2 className={styles.sectionTitle}>
+                {t('tribe.lists.title', 'Le tue liste')} ({lists.length})
+              </h2>
+              <div className={styles.list}>
+                {lists.map((l) => (
+                  <div key={l._id} className={styles.row}>
+                    <div className={styles.userInfo}>
+                      <span className={styles.userName}>{l.name}</span>
+                      <span className={styles.userMeta}>
+                        {(l.members || [])
+                          .map((id) => data.members.find((m) => String(m._id) === String(id))?.nickname)
+                          .filter(Boolean)
+                          .join(', ') || t('tribe.lists.empty', 'Nessun membro')}
+                      </span>
+                    </div>
+                    <div className={styles.rowActions}>
+                      <Button
+                        variant="primary"
+                        size="sm"
+                        disabled={(l.members || []).length === 0}
+                        onClick={() => startPrivateMeal(l.members)}
+                      >
+                        <Lock size={15} aria-hidden="true" />
+                        <span>{t('tribe.privateMealShort', 't2t privato')}</span>
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setEditor({ id: l._id, name: l.name, members: l.members || [] })}
+                        aria-label={t('tribe.lists.edit', 'Modifica lista')}
+                      >
+                        <Pencil size={15} aria-hidden="true" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleDeleteList(l._id)}
+                        aria-label={t('tribe.lists.delete', 'Elimina lista')}
+                      >
+                        <Trash2 size={15} aria-hidden="true" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {editor ? (
+                <div className={styles.editor}>
+                  <input
+                    type="text"
+                    className={styles.input}
+                    maxLength={40}
+                    value={editor.name}
+                    onChange={(e) => setEditor({ ...editor, name: e.target.value })}
+                    placeholder={t('tribe.lists.namePlaceholder', 'Nome della lista (es. Amici del calcetto)')}
+                    aria-label={t('tribe.lists.namePlaceholder', 'Nome della lista (es. Amici del calcetto)')}
+                  />
+                  <MemberPicker
+                    members={data.members}
+                    selectedIds={editor.members}
+                    onChange={(ids) => setEditor({ ...editor, members: ids })}
+                    defaultOpen
+                  />
+                  <div className={styles.rowActions}>
+                    <Button variant="primary" size="sm" onClick={handleSaveList}>
+                      {t('tribe.lists.save', 'Salva lista')}
+                    </Button>
+                    <Button variant="ghost" size="sm" onClick={() => setEditor(null)}>
+                      {t('tribe.cancel', 'Annulla')}
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className={styles.newListBtn}
+                  onClick={() => setEditor({ id: null, name: '', members: [] })}
+                >
+                  <Plus size={15} aria-hidden="true" />
+                  <span>{t('tribe.lists.new', 'Nuova lista')}</span>
+                </Button>
+              )}
+            </section>
+          )}
 
           {/* Inviti inviati */}
           {data.sent.length > 0 && (
